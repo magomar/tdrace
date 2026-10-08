@@ -221,118 +221,118 @@ pub enum Common<T> { Same(T), Mixed, Empty }
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Human chooses the inspector layout before implementation**
-  - [ ] **Given** two layout mockups and two surface-picker mockups at 1280×720 for the Waypoint, Jump Ramp, multi-waypoint and track-level views
-  - [ ] **When** the implementer presents them to the user at checkpoint HC-1
-  - [ ] **Then** no inspector code is changed until the user picks a layout, a picker style and the wheel rule in chat, and the choice is recorded on the Beads task
+  - [x] **Given** two layout mockups and two surface-picker mockups at 1280×720 for the Waypoint, Jump Ramp, multi-waypoint and track-level views
+  - [x] **When** the implementer presents them to the user at checkpoint HC-1
+  - [x] **Then** no inspector code is changed until the user picks a layout, a picker style and the wheel rule in chat, and the choice is recorded on the Beads task
 
 - **Scenario: Every single-entity view fits without scrolling**
-  - [ ] **Given** the editor at 1280×720 with the fixture circuit and all sections expanded
-  - [ ] **When** a single waypoint, surface zone, obstacle, jump ramp, checkpoint, grid slot or pit box is selected
-  - [ ] **Then** the row model height is at most the card body height, no scrollbar is shown, and the footer actions are visible
+  - [x] **Given** the editor at 1280×720 with the fixture circuit and all sections expanded
+  - [x] **When** a single waypoint, surface zone, obstacle, jump ramp, checkpoint, grid slot or pit box is selected
+  - [x] **Then** the row model height is at most the card body height, no scrollbar is shown, and the footer actions are visible
 
 - **Scenario: Nothing draws or reacts outside the inspector card**
-  - [ ] **Given** the track-level view with the Road Spline tool active, whose content is taller than the card
-  - [ ] **When** the user scrolls the inspector and clicks on the status bar area below the card
-  - [ ] **Then** the content is clipped to the card, a scrollbar shows the position, all controls are reachable by scrolling, and the status-bar click changes no inspector value
+  - [x] **Given** the track-level view with the Road Spline tool active, whose content is taller than the card
+  - [x] **When** the user scrolls the inspector and clicks on the status bar area below the card
+  - [x] **Then** the content is clipped to the card, a scrollbar shows the position, all controls are reachable by scrolling, and the status-bar click changes no inspector value
 
 - **Scenario: Surface is chosen from one compact dropdown**
-  - [ ] **Given** a selected waypoint, surface zone or jump ramp, or the track-level off-track setting
-  - [ ] **When** the user opens the surface control
-  - [ ] **Then** one dropdown opens with a colour swatch per entry, in one shared order and naming, inside the screen, and choosing an entry applies it and closes the dropdown
+  - [x] **Given** a selected waypoint, surface zone or jump ramp, or the track-level off-track setting
+  - [x] **When** the user opens the surface control
+  - [x] **Then** one dropdown opens with a colour swatch per entry, in one shared order and naming, inside the screen, and choosing an entry applies it and closes the dropdown
 
 - **Scenario: Off-track surface list is complete**
-  - [ ] **Given** the track-level view
-  - [ ] **When** the off-track surface dropdown is opened
-  - [ ] **Then** it lists every entry of `SurfaceType::OFF_TRACK_TYPES`, including Sheet Ice
+  - [x] **Given** the track-level view
+  - [x] **When** the off-track surface dropdown is opened
+  - [x] **Then** it lists every entry of `SurfaceType::OFF_TRACK_TYPES`, including Sheet Ice
 
 - **Scenario: Several waypoints show the same controls as one waypoint**
-  - [ ] **Given** three selected waypoints with equal width and different banking
-  - [ ] **When** the inspector is shown
-  - [ ] **Then** it shows the same sections and controls as for one waypoint, the header shows "3 selected", width shows the common value, and banking shows the mixed state
+  - [x] **Given** three selected waypoints with equal width and different banking
+  - [x] **When** the inspector is shown
+  - [x] **Then** it shows the same sections and controls as for one waypoint, the header shows "3 selected", width shows the common value, and banking shows the mixed state
 
 - **Scenario: Absolute and relative edits on a multi-selection**
-  - [ ] **Given** three selected waypoints with banking 0°, 5° and 10°
-  - [ ] **When** the user chooses the 18° preset, undoes, and then presses `[+]` once on the 1° step
-  - [ ] **Then** the preset sets all three to 18°, the undo restores 0°/5°/10°, and the step gives 1°/6°/11°
+  - [x] **Given** three selected waypoints with banking 0°, 5° and 10°
+  - [x] **When** the user chooses the 18° preset, undoes, and then presses `[+]` once on the 1° step
+  - [x] **Then** the preset sets all three to 18°, the undo restores 0°/5°/10°, and the step gives 1°/6°/11°
 
 - **Scenario: Several zones and several ramps keep their controls**
-  - [ ] **Given** two selected surface zones, and separately two selected jump ramps
-  - [ ] **When** the inspector is shown for each selection
-  - [ ] **Then** the zones show material and layer controls, the ramps show angle, length, width, height, pitch, fit actions and material, and an edit applies to both entities
+  - [x] **Given** two selected surface zones, and separately two selected jump ramps
+  - [x] **When** the inspector is shown for each selection
+  - [x] **Then** the zones show material and layer controls, the ramps show angle, length, width, height, pitch, fit actions and material, and an edit applies to both entities
 
 - **Scenario: Mixed-kind selection follows the human's choice**
-  - [ ] **Given** a selection with waypoints, a surface zone and a jump ramp, and the option the user picked at HC-3
-  - [ ] **When** the inspector is shown
-  - [ ] **Then** each kind's controls are reachable as that option describes, and an edit changes only entities of the kind whose control was used
+  - [x] **Given** a selection with waypoints, a surface zone and a jump ramp, and the option the user picked at HC-3
+  - [x] **When** the inspector is shown
+  - [x] **Then** each kind's controls are reachable as that option describes, and an edit changes only entities of the kind whose control was used
 
 - **Scenario: Single and batch paths share clamp ranges**
-  - [ ] **Given** one selected waypoint, and separately three selected waypoints
-  - [ ] **When** the user types a width and a wall distance above the maximum and below the minimum
-  - [ ] **Then** both selections clamp to the same minimum and maximum values
+  - [x] **Given** one selected waypoint, and separately three selected waypoints
+  - [x] **When** the user types a width and a wall distance above the maximum and below the minimum
+  - [x] **Then** both selections clamp to the same minimum and maximum values
 
 - **Scenario: One slider drag is one undo step**
-  - [ ] **Given** an undo history with at least one earlier edit
-  - [ ] **When** the user drags the width slider for two seconds across many values and then presses undo once
-  - [ ] **Then** the width returns to its value before the drag and the earlier edit is still in the history
+  - [x] **Given** an undo history with at least one earlier edit
+  - [x] **When** the user drags the width slider for two seconds across many values and then presses undo once
+  - [x] **Then** the width returns to its value before the drag and the earlier edit is still in the history
 
 - **Scenario: Holding a step button repeats with a delay and one undo step**
-  - [ ] **Given** a selected waypoint
-  - [ ] **When** the user holds `[+]` on width for one second and then presses undo once
-  - [ ] **Then** the first step happens on press, repeats start after 400 ms, and one undo restores the original width
+  - [x] **Given** a selected waypoint
+  - [x] **When** the user holds `[+]` on width for one second and then presses undo once
+  - [x] **Then** the first step happens on press, repeats start after 400 ms, and one undo restores the original width
 
 - **Scenario: The mouse wheel never edits a slider by accident**
-  - [ ] **Given** the user clicked a slider and then clicked on the canvas
-  - [ ] **When** the user scrolls the mouse wheel over the canvas and over the inspector body
-  - [ ] **Then** the canvas zooms, the inspector scrolls (if it can), and no slider value changes
+  - [x] **Given** the user clicked a slider and then clicked on the canvas
+  - [x] **When** the user scrolls the mouse wheel over the canvas and over the inspector body
+  - [x] **Then** the canvas zooms, the inspector scrolls (if it can), and no slider value changes
 
 - **Scenario: Slider drag keeps working outside the bar**
-  - [ ] **Given** the user pressed the mouse on the width slider
-  - [ ] **When** the user moves the pointer outside the bar while holding the button and releases it there
-  - [ ] **Then** the value follows the pointer until release, and pressing outside then moving onto the bar does not start a drag
+  - [x] **Given** the user pressed the mouse on the width slider
+  - [x] **When** the user moves the pointer outside the bar while holding the button and releases it there
+  - [x] **Then** the value follows the pointer until release, and pressing outside then moving onto the bar does not start a drag
 
 - **Scenario: Footer actions are always visible**
-  - [ ] **Given** any non-empty selection, at any scroll position
-  - [ ] **When** the inspector is shown
-  - [ ] **Then** Duplicate and Delete are visible in the footer with their shortcuts, and they act on the whole selection
+  - [x] **Given** any non-empty selection, at any scroll position
+  - [x] **When** the inspector is shown
+  - [x] **Then** Duplicate and Delete are visible in the footer with their shortcuts, and they act on the whole selection
 
 - **Scenario: Tooltips show shortcuts**
-  - [ ] **Given** a control that has a keyboard shortcut (banking presets, ramp rotate, zone layer, duplicate, delete)
-  - [ ] **When** the pointer rests on it for 500 ms
-  - [ ] **Then** a tooltip shows the control name and its shortcut, inside the screen
+  - [x] **Given** a control that has a keyboard shortcut (banking presets, ramp rotate, zone layer, duplicate, delete)
+  - [x] **When** the pointer rests on it for 500 ms
+  - [x] **Then** a tooltip shows the control name and its shortcut, inside the screen
 
 - **Scenario: Grid slot selection is not empty**
-  - [ ] **Given** a selected grid slot
-  - [ ] **When** the inspector is shown
-  - [ ] **Then** it shows "Grid Slot #N", its position, and the footer
+  - [x] **Given** a selected grid slot
+  - [x] **When** the inspector is shown
+  - [x] **Then** it shows "Grid Slot #N", its position, and the footer
 
 - **Scenario: Shared dropdown change does not alter existing screens**
-  - [ ] **Given** the settings screens that use `DropdownWidget` today
-  - [ ] **When** they are rendered after the `cabinet` change
-  - [ ] **Then** they look and behave as before, and `cargo test -p cabinet` passes
+  - [x] **Given** the settings screens that use `DropdownWidget` today
+  - [x] **When** they are rendered after the `cabinet` change
+  - [x] **Then** they look and behave as before, and `cargo test -p cabinet` passes
 
 - **Scenario: Human hands-on acceptance**
-  - [ ] **Given** the finished inspector and the HC-4 checklist
-  - [ ] **When** the user runs the checklist in the real editor
-  - [ ] **Then** the user signs off in chat, or each requested change is fixed or filed as a bead before closure
+  - [x] **Given** the finished inspector and the HC-4 checklist
+  - [x] **When** the user runs the checklist in the real editor
+  - [x] **Then** the user signs off in chat, or each requested change is fixed or filed as a bead before closure
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Created/Modified Files
-- `[ ]` `crates/tdrace-app/src/editor/ui.rs` -> `render_inspector` rebuilt on the row model, sections, footer, clip and scroll; `is_mouse_over_editor_ui` uses the same panel rectangle as drawing; `draw_bar_control`, `draw_counter`, `draw_toggle` updated or replaced.
-- `[ ]` `crates/tdrace-app/src/editor/inspector.rs` (new, if `ui.rs` would grow) -> row model, `common_value`, section definitions, shared surface catalogue.
-- `[ ]` `crates/tdrace-app/src/editor/tools.rs` -> inspector view state, shared clamp constants, undo-per-gesture, per-side wall distance, batch zone layer, focus clearing.
-- `[ ]` `crates/tdrace-app/src/editor/state.rs` -> undo gesture grouping if `HistoryStack` needs it.
-- `[ ]` `crates/tdrace-app/src/game/mod.rs` -> wheel routing (canvas zoom vs inspector scroll vs focused slider).
-- `[ ]` `crates/tdrace-app/src/main.rs` -> dev-only `--editor-select <kind>` argument.
-- `[ ]` `crates/cabinet/src/ui/widgets.rs` -> additive `DropdownWidget` extensions; segmented control if needed.
-- `[ ]` `crates/cabinet/tests/` -> dropdown extension tests.
-- `[ ]` `crates/tdrace-app/tests/fixtures/editor_inspector_fixture.json` -> fixture circuit with every entity kind.
-- `[ ]` `crates/tdrace-app/tests/track_editor_tests.rs` and/or `crates/tdrace-app/tests/editor_inspector_tests.rs` -> new tests listed above.
-- `[ ]` `docs/design/086/` -> HC-1 mockups, HC-2/HC-3 screenshots, closure before/after screenshots.
-- `[ ]` `docs/engineering/screens_and_navigation.md` -> Track Studio entry (around line 595) describes the new inspector layout.
-- `[ ]` `crates/tdrace-app/src/editor/ui.rs` (`render_help_modal`) -> "Tools 1-8" corrected to the real tool keys (1-0 and -).
+- `[x]` `crates/tdrace-app/src/editor/ui.rs` -> `render_inspector` rebuilt on the row model, sections, footer, clip and scroll; `is_mouse_over_editor_ui` uses the same panel rectangle as drawing; `draw_bar_control`, `draw_counter`, `draw_toggle` updated or replaced.
+- `[x]` `crates/tdrace-app/src/editor/inspector.rs` (new, if `ui.rs` would grow) -> row model, `common_value`, section definitions, shared surface catalogue.
+- `[x]` `crates/tdrace-app/src/editor/tools.rs` -> inspector view state, shared clamp constants, undo-per-gesture, per-side wall distance, batch zone layer, focus clearing.
+- `[x]` `crates/tdrace-app/src/editor/state.rs` -> undo gesture grouping if `HistoryStack` needs it.
+- `[x]` `crates/tdrace-app/src/game/mod.rs` -> wheel routing (canvas zoom vs inspector scroll vs focused slider).
+- `[x]` `crates/tdrace-app/src/main.rs` -> dev-only `--editor-select <kind>` argument.
+- `[x]` `crates/cabinet/src/ui/widgets.rs` -> additive `DropdownWidget` extensions; segmented control if needed.
+- `[x]` `crates/cabinet/tests/` -> dropdown extension tests.
+- `[x]` `crates/tdrace-app/tests/fixtures/editor_inspector_fixture.json` -> fixture circuit with every entity kind.
+- `[x]` `crates/tdrace-app/tests/track_editor_tests.rs` and/or `crates/tdrace-app/tests/editor_inspector_tests.rs` -> new tests listed above.
+- `[x]` `docs/design/086/` -> HC-1 mockups, HC-2/HC-3 screenshots, closure before/after screenshots.
+- `[x]` `docs/engineering/screens_and_navigation.md` -> Track Studio entry (around line 595) describes the new inspector layout.
+- `[x]` `crates/tdrace-app/src/editor/ui.rs` (`render_help_modal`) -> "Tools 1-8" corrected to the real tool keys (1-0 and -).
 
 ### Verification Assertions
 - The inspector module header comment references `specs/086_compact_track_studio_inspector_with_unified_single_and_multiselection_editing.md`.
