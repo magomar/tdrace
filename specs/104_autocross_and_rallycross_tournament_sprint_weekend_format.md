@@ -3,7 +3,8 @@ type: Feature Spec
 template: feature
 title: "Autocross and Rallycross Tournament Sprint Weekend Format"
 description: "Implements the authentic 3-stage tournament weekend format (4 Qualifying Heats -> 2 Semifinals -> Grand Final & Consolation B-Final) across a 32-driver field for Autocross and Rallycross championships, providing dynamic grid seeding, Option A continuous player racing, bracket visualization, and 64-driver 4-stage scalability."
-status: draft
+status: approved
+verified: { by: human:mario, at: 2026-10-08T21:40:00Z, hash: "7bf904cb7151" }
 created: 2026-10-08
 generated: { by: agent/antigravity, at: 2026-10-08T23:01:00Z }
 depends_on:
