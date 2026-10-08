@@ -14,7 +14,7 @@ pub use curve::{
     CurveApproachStatus, CurveDirection, TrackCurve,
 };
 pub use network::{
-    compute_split_width_envelope, GoreConfig, JunctionId, JunctionKind, MergeConfig,
+    compute_split_width_envelope, GoreConfig, JunctionId, JunctionKind, LaunchChuteConfig, MergeConfig,
     RoadJunction, RoadSegment, SegmentId, SocketId, SplineSocket, TrackLayout, TrackNetwork,
 };
 pub use geometry::{
@@ -27,7 +27,7 @@ pub use scenery::{
     Building, BuildingStyle, Grandstand, GrandstandStyle, Rock, RockType, Tree, TreeType,
 };
 pub use presets::{
-    classic_template, create_prototypical_track, generate_arena_grid, generate_checkpoints, generate_grid_positions, generate_grid_positions_at_distance, generate_horizontal_eight_waypoints, generate_oval_waypoints, generate_walls_from_spline, generate_walls_from_spline_raw, gt_template, kart_template, merge_collinear_walls, rally_template, RaceDirection, TrackShape,
+    classic_template, create_prototypical_track, generate_arena_grid, generate_checkpoints, generate_grid_positions, generate_grid_positions_at_distance, generate_horizontal_eight_waypoints, generate_oval_waypoints, generate_walls_from_spline, generate_packed_launch_grid, generate_walls_from_spline_raw, gt_template, kart_template, merge_collinear_walls, rally_template, PackedGridPattern, RaceDirection, TrackShape,
 };
 pub use spline::{SplineProjection, SplineSample, TrackSpline, TrackWaypoint};
 pub use validation::{validate_track, TrackValidationError, ValidationSeverity};
