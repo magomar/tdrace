@@ -4,6 +4,7 @@ template: feature
 title: "Classic Circuits Revamp"
 description: "The Classic module replaces its 10 flat, bare circuits with 18 new fictional circuits (3 indoor karting, 3 rallycross, 3 autocross, 3 GT, 3 stock car, 3 all-terrain) and gains 3 Autocross fantasy cars; the circuits are built and play-tested first (Stage 1) and decorated with stands, trees, rocks, water and buildings second (Stage 2)."
 status: in_progress
+receipt: "docs/receipts/spec-055-receipt.md"
 created: 2026-09-29
 generated: { by: agent/claude-opus-5-5, at: 2026-09-29T07:47:27Z }
 verified: { by: "human:mario", at: "2026-10-08T19:08:33Z", hash: "e4cce1e0f122" }
