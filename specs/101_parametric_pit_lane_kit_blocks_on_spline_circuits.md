@@ -139,7 +139,7 @@ Let `D = track_half_width(s) + divider_gap + road_width / 2` (centre-to-centre o
 
 **`TurnOff { angle_deg }`**
 - The pit road starts parallel to the main track at `s`. A circular arc of length `length` then turns it away from the track by `angle_deg`.
-- The start offset is set so that the gap between the track edge and the pit road edge at the free end is exactly `divider_gap` (as for `Taper`). On a straight it is `D − r · (1 − cos(angle_rad))`, with `r` the arc radius. If the start offset would be smaller than 0, the junction fails rule 1 (`length`).
+- The start offset is set so that the gap between the track edge and the pit road edge at the free end is exactly `divider_gap` (as for `Taper`). On a straight it is `D − r · (1 − cos(angle_rad))`, with `r` the arc radius. The start offset must lie between 0 (pit road centre on the main centreline) and `track_half_width(s) − road_width / 2` (pit road outer edge flush with the main edge), so the pit road starts on the main road. Outside that range the junction fails rule 1 (`length`).
 - The free end heading is the main tangent rotated by `angle_deg` toward `side`.
 - The arc radius is `length / angle_rad`.
 - The exit is the mirror image: a circular arc that rejoins tangent to the track edge at `s`.
