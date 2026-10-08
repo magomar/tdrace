@@ -1810,11 +1810,11 @@ fn test_marina_bay_singapore_aliases_and_osm_calibration() {
     assert!(t_mb.modules.contains(&"gt".to_string()));
     assert_eq!(t_mb.default_laps, 3);
 
-    // Verify 50% length scaling (FIA: 4940m -> ~2300-2480m)
+    // Verify 75% length scaling, spec 097 (FIA: 4940m -> ~3450-3720m)
     let len = t_mb.spline.total_length();
     assert!(
-        len >= 2300.0 && len <= 2480.0,
-        "Marina Bay length should be ~2470m (50% FIA), got {:.1}m",
+        len >= 3450.0 && len <= 3720.0,
+        "Marina Bay length should be ~3705m (75% FIA), got {:.1}m",
         len
     );
 
