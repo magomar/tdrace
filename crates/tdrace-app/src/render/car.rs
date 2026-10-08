@@ -93,12 +93,7 @@ pub fn render_car_lights(
         draw_circle(head_r.x, head_r.y, 0.12, Color::new(1.0, 1.0, 1.0, 0.95));
     }
 
-    // 2. Auxiliary Rally Hood Spotlight Pods
-    if cfg.has_rally_pods && cfg.lights_on {
-        crate::render::lighting::render_rally_hood_pods(pos, fwd, right, half_len, half_w);
-    }
-
-    // 3. Tail / LED Brake Lights with glow halo
+    // 2. Tail / LED Brake Lights with glow halo
     if cfg.has_brake_lights {
         let tail_l = pos - fwd * (half_len - 0.05) - right * (half_w * 0.65);
         let tail_r = pos - fwd * (half_len - 0.05) + right * (half_w * 0.65);
@@ -114,7 +109,7 @@ pub fn render_car_lights(
         }
     }
 
-    // 4. High-Mount Amber Dust Chase Strobe (SCORE / Baja Off-Road)
+    // 3. High-Mount Amber Dust Chase Strobe (SCORE / Baja Off-Road)
     if cfg.has_dust_chase_light && cfg.lights_on {
         crate::render::lighting::render_dust_chase_strobe(pos, fwd, half_len);
     }

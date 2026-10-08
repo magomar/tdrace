@@ -10,7 +10,7 @@ pub mod trophy_textures;
 pub mod vehicle_assets;
 
 pub use lighting::{
-    render_dust_chase_strobe, render_headlight_track_beams, render_rally_hood_pods,
+    render_dust_chase_strobe, render_headlight_track_beams,
     resolve_vehicle_lighting, VehicleLightingConfig,
 };
 pub use trophy_textures::{draw_trophy_badge, get_trophy_texture, normalize_discipline, trophy_filename};

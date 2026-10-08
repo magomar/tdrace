@@ -1,6 +1,6 @@
 use glam::Vec2;
 use macroquad::color::Color;
-use macroquad::shapes::{draw_circle, draw_line};
+use macroquad::shapes::draw_circle;
 use super::track::draw_quad;
 use crate::module::VehicleVisualType;
 
@@ -13,8 +13,6 @@ pub struct VehicleLightingConfig {
     pub has_brake_lights: bool,
     /// Enables high-intensity 4-to-5 pod roof-mounted off-road lightbar.
     pub has_roof_lightbar: bool,
-    /// Enables hood-mounted auxiliary rally spotlight pods.
-    pub has_rally_pods: bool,
     /// Enables high-mount rear amber dust chase strobe for off-road/desert racing.
     pub has_dust_chase_light: bool,
     /// Core color of the front headlights (e.g. Pure White for GT3, Selective Yellow for GTE/LMGT3).
@@ -42,7 +40,6 @@ impl VehicleLightingConfig {
             has_headlights: false,
             has_brake_lights: false,
             has_roof_lightbar: false,
-            has_rally_pods: false,
             has_dust_chase_light: false,
             headlight_color: Color::new(1.0, 1.0, 1.0, 0.0),
             project_track_beams: false,
@@ -58,7 +55,6 @@ impl VehicleLightingConfig {
             has_headlights: true,
             has_brake_lights: true,
             has_roof_lightbar: false,
-            has_rally_pods: false,
             has_dust_chase_light: false,
             headlight_color: Color::new(0.95, 0.98, 1.0, 0.95),
             project_track_beams: true,
@@ -68,13 +64,12 @@ impl VehicleLightingConfig {
         }
     }
 
-    /// WRC / Rallycross lighting: headlights, reactive brake lights, hood light pods, forward beam.
+    /// WRC / Rallycross lighting: headlights, reactive brake lights, forward beam.
     pub fn rally() -> Self {
         Self {
             has_headlights: true,
             has_brake_lights: true,
             has_roof_lightbar: false,
-            has_rally_pods: true,
             has_dust_chase_light: false,
             headlight_color: Color::new(1.0, 0.98, 0.90, 0.95),
             project_track_beams: true,
@@ -90,7 +85,6 @@ impl VehicleLightingConfig {
             has_headlights: true,
             has_brake_lights: true,
             has_roof_lightbar: true,
-            has_rally_pods: false,
             has_dust_chase_light: true,
             headlight_color: Color::new(1.0, 0.95, 0.82, 0.98),
             project_track_beams: true,
@@ -103,7 +97,7 @@ impl VehicleLightingConfig {
     /// Returns whether this vehicle archetype is equipped with electrical road/track lights.
     #[inline]
     pub fn has_lights(&self) -> bool {
-        self.has_headlights || self.has_roof_lightbar || self.has_rally_pods
+        self.has_headlights || self.has_roof_lightbar
     }
 
     /// Returns a copy of the lighting config with `lights_on` set.
@@ -235,34 +229,6 @@ pub fn render_headlight_track_beams(
             prev_d = d;
             prev_hw = next_hw;
         }
-    }
-}
-
-/// Renders hood-mounted quad rally spotlight cluster on the front fascia.
-pub fn render_rally_hood_pods(
-    pos: Vec2,
-    fwd: Vec2,
-    right: Vec2,
-    half_len: f32,
-    half_w: f32,
-) {
-    let pod_center = pos + fwd * (half_len * 0.75);
-    let pod_hw = half_w * 0.40;
-
-    // Mounting bracket bar
-    let b_l = pod_center - right * pod_hw;
-    let b_r = pod_center + right * pod_hw;
-    draw_line(b_l.x, b_l.y, b_r.x, b_r.y, 0.04, Color::new(0.12, 0.12, 0.15, 1.0));
-
-    // 4 high-output round rally lights
-    for step in [-0.75, -0.25, 0.25, 0.75] {
-        let p = pod_center + right * (pod_hw * step);
-        // Outer housing
-        draw_circle(p.x, p.y, 0.08, Color::new(0.20, 0.20, 0.24, 1.0));
-        // Lens glow halo
-        draw_circle(p.x, p.y, 0.14, Color::new(1.0, 0.95, 0.75, 0.35));
-        // Bright core
-        draw_circle(p.x, p.y, 0.05, Color::new(1.0, 1.0, 0.90, 0.98));
     }
 }
 
