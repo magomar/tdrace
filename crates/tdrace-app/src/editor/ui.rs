@@ -14,7 +14,7 @@ use tdrace_core::track::validation::{validate_track, ValidationSeverity};
 use crate::editor::camera::EditorCamera;
 use crate::editor::inspector::{
     apply_edit, begin_inspector_frame, build_inspector, content_height, row_height, row_tooltip, Action as InspectorAction, Common, Edit,
-    InspectorModel, Options, Prop, Row, StepperDrag, TOOLTIP_DELAY, BODY_PAD, FOOTER_H, HEADER_H, RAMP_PROFILE_H, ROW_H, SECTION_GAP, SECTION_HEADER_H,
+    InspectorModel, Options, Prop, Row, StepperDrag, DragOutcome, update_stepper_drag, TOOLTIP_DELAY, BODY_PAD, FOOTER_H, HEADER_H, RAMP_PROFILE_H, ROW_H, SECTION_GAP, SECTION_HEADER_H,
     TITLE_H,
 };
 use crate::editor::state::{EditorState, GridSnapSetting};
@@ -2848,35 +2848,19 @@ fn draw_inspector_stepper(
         if let Some(v) = stepper_text_entry(tools, &id, min, max, clicked && !over_bar) {
             edit = Some(Edit::Set(prop, v));
         }
-    } else if clicked && over_bar {
+    } else if let Some(drag) = StepperDrag::press(prop, clicked && over_bar, raw_mouse.x, value.same().unwrap_or(anchor)) {
         tools.select_bar(&id);
-        let start = value.same().unwrap_or(anchor);
-        tools.inspector.stepper_drag = Some(StepperDrag { prop, start_x: raw_mouse.x, start_value: start, moved: false, last_value: start });
+        tools.inspector.stepper_drag = Some(drag);
     }
 
     // Drag: the press captured the pointer; the value follows it until release, even off the bar.
-    if let Some(mut drag) = tools.inspector.stepper_drag.filter(|d| d.prop == prop) {
-        if down {
-            let dx = raw_mouse.x - drag.start_x;
-            if dx.abs() > scaler.s(3.0) {
-                drag.moved = true;
-            }
-            if drag.moved {
-                let raw = drag.start_value + dx / bar.2 * (max - min);
-                let v = ((raw / step).round() * step).clamp(min, max);
-                if (v - drag.last_value).abs() > f32::EPSILON || value.same().is_none() {
-                    edit = Some(Edit::Set(prop, v));
-                    drag.last_value = v;
-                }
-            }
-            tools.inspector.stepper_drag = Some(drag);
-        } else {
-            tools.inspector.stepper_drag = None;
-            if !drag.moved {
-                let text = value.same().map(|v| format_stepper_value(v, "", false, step)).unwrap_or_default();
-                tools.start_editing_bar(&id, &text);
-            }
+    match update_stepper_drag(&mut tools.inspector.stepper_drag, prop, down, raw_mouse.x, bar.2, (min, max, step), scaler.s(3.0), value.same().is_none()) {
+        DragOutcome::Set(v) => edit = Some(Edit::Set(prop, v)),
+        DragOutcome::OpenTextEntry => {
+            let text = value.same().map(|v| format_stepper_value(v, "", false, step)).unwrap_or_default();
+            tools.start_editing_bar(&id, &text);
         }
+        DragOutcome::None => {}
     }
 
     // Wheel: only while this stepper has focus and the pointer is over the inspector (W1).

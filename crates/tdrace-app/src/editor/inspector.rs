@@ -62,6 +62,52 @@ pub struct StepperDrag {
     pub last_value: f32,
 }
 
+/// What a captured stepper drag did this frame.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum DragOutcome {
+    None,
+    /// New absolute value for the selection.
+    Set(f32),
+    /// The press was released without a drag: open text entry.
+    OpenTextEntry,
+}
+
+impl StepperDrag {
+    /// A drag starts only from a press on the bar; a press elsewhere never captures it.
+    pub fn press(prop: Prop, pressed_on_bar: bool, mouse_x: f32, start_value: f32) -> Option<Self> {
+        pressed_on_bar.then_some(Self { prop, start_x: mouse_x, start_value, moved: false, last_value: start_value })
+    }
+}
+
+/// Advances the captured drag of stepper `prop` by one frame. `mouse_x` is the raw pointer x, so
+/// the value keeps following the pointer off the bar until release. `slop` is the distance the
+/// pointer must move before the press counts as a drag; `mixed` re-sends the value every frame.
+#[allow(clippy::too_many_arguments)]
+pub fn update_stepper_drag(drag: &mut Option<StepperDrag>, prop: Prop, down: bool, mouse_x: f32, bar_w: f32, (min, max, step): (f32, f32, f32), slop: f32, mixed: bool) -> DragOutcome {
+    let Some(mut d) = drag.filter(|d| d.prop == prop) else {
+        return DragOutcome::None;
+    };
+    if !down {
+        *drag = None;
+        return if d.moved { DragOutcome::None } else { DragOutcome::OpenTextEntry };
+    }
+    let dx = mouse_x - d.start_x;
+    if dx.abs() > slop {
+        d.moved = true;
+    }
+    let mut outcome = DragOutcome::None;
+    if d.moved {
+        let raw = d.start_value + dx / bar_w.max(1.0) * (max - min);
+        let v = ((raw / step).round() * step).clamp(min, max);
+        if (v - d.last_value).abs() > f32::EPSILON || mixed {
+            outcome = DragOutcome::Set(v);
+            d.last_value = v;
+        }
+    }
+    *drag = Some(d);
+    outcome
+}
+
 /// Per-session interaction state of the inspector panel.
 #[derive(Debug, Clone, Default)]
 pub struct InspectorView {

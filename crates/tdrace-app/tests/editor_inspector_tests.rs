@@ -591,3 +591,33 @@ fn tooltips_name_the_control_and_its_shortcut() {
     let zone = build_inspector(&with_selection(Selection::SurfaceZone(0)), &ToolSettings::default()).unwrap();
     assert!(row_tooltip(find_row(&zone, "Layer")).unwrap().contains("Ctrl+F"));
 }
+
+#[test]
+fn slider_drag_keeps_working_off_the_bar_and_only_starts_from_a_press_on_it() {
+    use tdrace_app::editor::inspector::{update_stepper_drag, DragOutcome, StepperDrag};
+    // Bar from x=100 to x=250 (150 px), range 4-50 m, step 0.5.
+    let range = (4.0, 50.0, 0.5);
+    let mut drag = StepperDrag::press(Prop::WpWidth, true, 120.0, 12.0);
+    assert_eq!(update_stepper_drag(&mut drag, Prop::WpWidth, true, 121.0, 150.0, range, 3.0, false), DragOutcome::None, "inside the slop");
+    // Far right of the bar, outside it: the value follows to the maximum.
+    assert_eq!(update_stepper_drag(&mut drag, Prop::WpWidth, true, 600.0, 150.0, range, 3.0, false), DragOutcome::Set(50.0));
+    // Back to the left of the bar, still held: the value follows down.
+    assert_eq!(update_stepper_drag(&mut drag, Prop::WpWidth, true, 40.0, 150.0, range, 3.0, false), DragOutcome::Set(4.0));
+    // Release off the bar ends the drag without opening text entry.
+    assert_eq!(update_stepper_drag(&mut drag, Prop::WpWidth, false, 40.0, 150.0, range, 3.0, false), DragOutcome::None);
+    assert!(drag.is_none());
+
+    // A press without a drag opens text entry on release.
+    let mut drag = StepperDrag::press(Prop::WpWidth, true, 120.0, 12.0);
+    update_stepper_drag(&mut drag, Prop::WpWidth, true, 120.0, 150.0, range, 3.0, false);
+    assert_eq!(update_stepper_drag(&mut drag, Prop::WpWidth, false, 120.0, 150.0, range, 3.0, false), DragOutcome::OpenTextEntry);
+
+    // A press outside the bar, then moving onto it while held, never starts a drag.
+    let mut drag = StepperDrag::press(Prop::WpWidth, false, 20.0, 12.0);
+    assert!(drag.is_none());
+    assert_eq!(update_stepper_drag(&mut drag, Prop::WpWidth, true, 150.0, 150.0, range, 3.0, false), DragOutcome::None);
+
+    // A drag captured by one stepper is ignored by the others.
+    let mut drag = StepperDrag::press(Prop::WpWidth, true, 120.0, 12.0);
+    assert_eq!(update_stepper_drag(&mut drag, Prop::WpBanking, true, 600.0, 150.0, (-45.0, 45.0, 1.0), 3.0, false), DragOutcome::None);
+}
