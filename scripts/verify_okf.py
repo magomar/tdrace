@@ -32,9 +32,13 @@ def verify_docs(docs_dir: Path) -> int:
                 errors.append(f"[{file_path.relative_to(docs_dir)}] Missing required field '{req_field}' in frontmatter")
 
         # Check index.md has okf_version: "0.2"
-        if file_path.name == "index.md" and file_path.parent == docs_dir:
-            if 'okf_version: "0.2"' not in frontmatter and "okf_version: '0.2'" not in frontmatter:
-                errors.append(f"[{file_path.relative_to(docs_dir)}] Root index.md missing okf_version: '0.2'")
+        if (
+            file_path.name == "index.md"
+            and file_path.parent == docs_dir
+            and 'okf_version: "0.2"' not in frontmatter
+            and "okf_version: '0.2'" not in frontmatter
+        ):
+            errors.append(f"[{file_path.relative_to(docs_dir)}] Root index.md missing okf_version: '0.2'")
 
         # 2. Check relative markdown links
         # Strip fenced code blocks first, then inline backticks

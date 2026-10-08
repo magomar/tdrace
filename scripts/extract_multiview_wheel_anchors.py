@@ -373,7 +373,7 @@ def generate_diagnostic_overlay(
 
 def generate_html_review_gallery(anchors_data: list, out_path: Path):
     """Generates the interactive Gate 1 Human-in-the-Loop review HTML gallery."""
-    modules = sorted(list(set(item["module"] for item in anchors_data)))
+    modules = sorted({item["module"] for item in anchors_data})
     
     html = f"""<!DOCTYPE html>
 <html lang="en">

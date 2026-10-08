@@ -214,12 +214,12 @@ def generate_assets():
                 "is_inspired": is_inspired,
                 "length_meters": round(length_m, 1) if length_m > 0 else 2500.0,
                 "turns_count": len([wp for wp in waypoints if wp.get("left_curb") or wp.get("right_curb")]),
-                "surfaces": sorted(list(surfaces_present)),
+                "surfaces": sorted(surfaces_present),
                 "has_jumps": has_jumps,
                 "image_url": image_url,
                 "rel_path": str(json_file.relative_to(root))
             })
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - deliberate catch-all: log and carry on
             print(f"  ⚠️ Failed parsing {json_file.name}: {e}")
 
     print(f"  ✅ Generated SVG miniatures for {len(circuits)} circuits.")

@@ -67,7 +67,7 @@ def clean_image(img: Image.Image) -> tuple[Image.Image, int, int]:
 
 
 def process_directory(target_dir: Path, dry_run: bool = False, verbose: bool = False):
-    png_files = sorted(list(target_dir.rglob("*.png")))
+    png_files = sorted(target_dir.rglob("*.png"))
     total_files = len(png_files)
     modified_files = 0
     total_despilled = 0
@@ -94,7 +94,7 @@ def process_directory(target_dir: Path, dry_run: bool = False, verbose: bool = F
                 if not dry_run:
                     clean_img.save(p, format="PNG")
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - deliberate catch-all: log and carry on
             print(f"❌ Error processing {p}: {e}", file=sys.stderr)
 
     print("\n" + "=" * 60)

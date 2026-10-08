@@ -3,7 +3,7 @@ Gymnasium Environment implementations for TDRace.
 Compliant with Gymnasium 1.0+ standards.
 """
 
-from typing import Any
+from typing import Any, ClassVar
 
 import gymnasium as gym
 import numpy as np
@@ -24,7 +24,7 @@ class TDRaceEnv(gym.Env):
     - Configurable tracks, vehicles, and reward shaping.
     """
 
-    metadata = {
+    metadata: ClassVar[dict[str, Any]] = {
         "render_modes": ["rgb_array", "human"],
         "render_fps": 60,
     }

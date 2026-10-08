@@ -3147,7 +3147,7 @@ def smooth_hairpin_arc_fans(waypoints, target_radius=26.0, min_deflection_deg=80
 
         w_curr = waypoints[idx]
 
-        def make_wp(pt):
+        def make_wp(pt, w_curr=w_curr, is_left=is_left):
             wp = dict(w_curr)
             if "point" in wp:
                 wp["point"] = [round(pt[0], 1), round(pt[1], 1)]

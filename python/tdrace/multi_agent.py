@@ -2,7 +2,7 @@
 Multi-agent racing environment supporting N simultaneous cars with full physics collision resolution.
 """
 
-from typing import Any
+from typing import Any, ClassVar
 
 import gymnasium as gym
 import numpy as np
@@ -23,7 +23,7 @@ class TDRaceMultiAgentEnv(gym.Env):
     - Independent per-agent reward shaping, observation vectors, and lap progress tracking.
     """
 
-    metadata = {
+    metadata: ClassVar[dict[str, Any]] = {
         "render_modes": ["rgb_array", "human"],
         "render_fps": 60,
     }
@@ -146,7 +146,7 @@ class TDRaceMultiAgentEnv(gym.Env):
                 for i in range(actions.shape[0]):
                     rust_actions.append(self._parse_single_action(actions[i]))
         else:
-            raise ValueError(f"Unsupported actions type: {type(actions)}")
+            raise ValueError(f"Unsupported actions type: {type(actions)}")  # noqa: TRY004 - public API raises ValueError; TypeError would break callers
 
         # Ensure correct length
         while len(rust_actions) < self.num_agents:

@@ -70,8 +70,8 @@ def process_vehicle_sprite(
 
     # Bounding box along X with 15% safety margin
     half_len = tlen * 0.5 * 1.15
-    x0 = max(0, int(round(axle_x - half_len)))
-    x1 = min(512, int(round(axle_x + half_len)))
+    x0 = max(0, round(axle_x - half_len))
+    x1 = min(512, round(axle_x + half_len))
 
     r, g, b = arr[:, :, 0].astype(int), arr[:, :, 1].astype(int), arr[:, :, 2].astype(int)
     brightness = np.maximum(r, np.maximum(g, b))
@@ -103,8 +103,8 @@ def process_vehicle_sprite(
     # Open wheel (OverChassis):
     # Clear tire rubber in front wheel bounding boxes while strictly preserving wishbones/nosecone
     for y_center in [y_fl, y_fr]:
-        y0 = max(0, int(round(y_center - half_wid)))
-        y1 = min(512, int(round(y_center + half_wid)))
+        y0 = max(0, round(y_center - half_wid))
+        y1 = min(512, round(y_center + half_wid))
         box = np.zeros((512, 512), dtype=bool)
         box[y0:y1, x0:x1] = True
 
@@ -178,7 +178,7 @@ def process_vehicle_sprite(
 
 def generate_gate3_html(processed_entries: list, out_html: Path):
     """Generates Gate 3 HTML inspection report."""
-    modules = sorted(list(set(e["module"] for e in processed_entries)))
+    modules = sorted({e["module"] for e in processed_entries})
 
     html = """<!DOCTYPE html>
 <html lang="en">

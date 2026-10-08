@@ -83,8 +83,8 @@ def render_steered_vehicle(
     fr_y = 256.0 + track_w * 0.5
 
     kw, kh = get_padding_factor(anchor["archetype"])
-    quad_w = int(round(anchor["tire_wid_px"] * kw))
-    quad_h = int(round(anchor["tire_len_px"] * kh))
+    quad_w = round(anchor["tire_wid_px"] * kw)
+    quad_h = round(anchor["tire_len_px"] * kh)
 
     # Resize wheel texture to quad dimensions
     scaled_wheel = wheel_img.resize((quad_w, quad_h), Image.Resampling.LANCZOS)
@@ -104,16 +104,16 @@ def render_steered_vehicle(
 
     # 1. UnderChassis wheels
     if layering == "UnderChassis":
-        canvas.paste(rot_fl, (int(round(axle_x - rot_fl.width * 0.5)), int(round(fl_y - rot_fl.height * 0.5))), rot_fl)
-        canvas.paste(rot_fr, (int(round(axle_x - rot_fr.width * 0.5)), int(round(fr_y - rot_fr.height * 0.5))), rot_fr)
+        canvas.paste(rot_fl, (round(axle_x - rot_fl.width * 0.5), round(fl_y - rot_fl.height * 0.5)), rot_fl)
+        canvas.paste(rot_fr, (round(axle_x - rot_fr.width * 0.5), round(fr_y - rot_fr.height * 0.5)), rot_fr)
 
     # 2. Chassis body
     canvas.paste(chassis_img, (0, 0), chassis_img)
 
     # 3. OverChassis wheels
     if layering == "OverChassis":
-        canvas.paste(rot_fl, (int(round(axle_x - rot_fl.width * 0.5)), int(round(fl_y - rot_fl.height * 0.5))), rot_fl)
-        canvas.paste(rot_fr, (int(round(axle_x - rot_fr.width * 0.5)), int(round(fr_y - rot_fr.height * 0.5))), rot_fr)
+        canvas.paste(rot_fl, (round(axle_x - rot_fl.width * 0.5), round(fl_y - rot_fl.height * 0.5)), rot_fl)
+        canvas.paste(rot_fr, (round(axle_x - rot_fr.width * 0.5), round(fr_y - rot_fr.height * 0.5)), rot_fr)
 
     return canvas
 

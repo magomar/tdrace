@@ -30,7 +30,7 @@ class HumanViewer:
                 pygame.display.set_caption(self.caption)
                 self._clock = pygame.time.Clock()
                 self._is_open = True
-            except Exception:
+            except Exception:  # noqa: BLE001 - deliberate catch-all: any pygame failure falls back to headless
                 self._is_open = True
                 self._pygame = None
 

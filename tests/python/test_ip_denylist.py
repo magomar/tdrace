@@ -133,7 +133,7 @@ def load_denylist_terms(registry_path: Path) -> list[str]:
     raw_terms: set[str] = set()
 
     # 1. Brands
-    for brand in data.get("brands", {}).keys():
+    for brand in data.get("brands", {}):
         raw_terms.add(brand)
 
     # 2. Car models & makers
@@ -144,27 +144,27 @@ def load_denylist_terms(registry_path: Path) -> list[str]:
             raw_terms.add(car_info["real_manufacturer"])
 
     # 3. Series & sanctioning bodies
-    for series in data.get("series_and_bodies", {}).keys():
+    for series in data.get("series_and_bodies", {}):
         raw_terms.add(series)
 
     # 4. Teams
-    for team in data.get("teams", {}).keys():
+    for team in data.get("teams", {}):
         raw_terms.add(team)
 
     # 5. Drivers & nicknames
-    for driver in data.get("drivers", {}).keys():
+    for driver in data.get("drivers", {}):
         raw_terms.add(driver)
 
     # 6. Circuits & track brands
-    for circuit in data.get("circuits", {}).keys():
+    for circuit in data.get("circuits", {}):
         raw_terms.add(circuit)
 
     # 7. Corner names & venue text
-    for corner in data.get("corners_and_venue_text", {}).keys():
+    for corner in data.get("corners_and_venue_text", {}):
         raw_terms.add(corner)
 
     # 8. Sponsors
-    for sponsor in data.get("sponsors", {}).keys():
+    for sponsor in data.get("sponsors", {}):
         raw_terms.add(sponsor)
 
     # Filter out generic allowlisted tokens
@@ -232,7 +232,7 @@ def scan_series_directory(
             with open(toml_file, "r", encoding="utf-8", errors="replace") as f:
                 lines = f.readlines()
             hits.extend(scan_text_lines(rel_path, lines, patterns))
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - deliberate catch-all: log and carry on
             print(f"Warning: Failed to read {rel_path}: {e}")
 
     return hits
@@ -274,7 +274,7 @@ def scan_crates_source(
                                     line_preview=line.strip()[:120],
                                 )
                             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - deliberate catch-all: log and carry on
             print(f"Warning: Failed to read {rel_path}: {e}")
 
     return hits
@@ -335,7 +335,7 @@ def scan_track_json_files(
                                         line_preview=f"[scenery.feature] {feat_name}",
                                     )
                                 )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - deliberate catch-all: log and carry on
             print(f"Warning: Failed to read {rel_path}: {e}")
 
     return hits

@@ -24,7 +24,7 @@ def benchmark_env(
     env_id: str,
     num_steps: int = 100_000,
     warmup_steps: int = 2_000,
-    env_kwargs: dict[str, Any] = None,
+    env_kwargs: dict[str, Any] | None = None,
     is_multi_agent: bool = False,
     num_agents: int = 1,
 ) -> dict[str, Any]:
@@ -111,7 +111,7 @@ def benchmark_carracing(num_steps: int = 10_000, warmup_steps: int = 500) -> dic
             "is_multi_agent": False,
             "num_agents": 1,
         }
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - deliberate catch-all: log and carry on
         print(f"Warning: Could not benchmark CarRacing-v3 ({e})")
         return {
             "env_id": "CarRacing-v3",

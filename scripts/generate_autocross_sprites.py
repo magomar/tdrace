@@ -38,6 +38,7 @@ Design & IP Removal Rules:
 
 import argparse
 import math
+import sys
 from pathlib import Path
 
 from PIL import Image, ImageDraw
@@ -1017,4 +1018,4 @@ def main():
 
 
 if __name__ == "__main__":
-    exit(main())
+    sys.exit(main())

@@ -579,7 +579,7 @@ def trace(circuit, segments=None, density_mode=MODE_ANGULAR_45):
                 for pt in profile_ts_per_piece[k]:
                     if 0.0 <= pt < 1.0:
                         step_ts.append(pt)
-            step_ts = sorted(list(set(step_ts)))
+            step_ts = sorted(set(step_ts))
 
             # Filter step_ts to enforce MIN_WAYPOINT_GAP_M between steps
             valid_ts = [step_ts[0]]
