@@ -3,7 +3,8 @@ type: Architecture Spec
 template: architecture
 title: "Turn-Preserving Nonlinear Circuit Rescaling, 0.75x Scale Expansion, and Global Apex Smoothing"
 description: "Systematically upgrades GT modality scaling from 0.5x to 0.75x, introduces curvature-selective non-linear geometric rescaling so straights absorb longitudinal compression while corner radii and arc lengths mirror authentic real-world dimensions, strictly respects official circuit lengths and authentic track widths, integrates 3D elevation rollercoaster profiles, models authentic corner banking, and applies curvature smoothing and multi-waypoint filleting to 1:1 Rallycross circuits and joker lap junctions."
-status: in_progress
+status: implemented
+receipt: "docs/receipts/spec-097-receipt.md"
 verified: { by: "human:mario", at: "2026-10-06T19:01:35Z", hash: "9b97388f1999" }
 created: 2026-10-06
 generated: { by: agent/antigravity, at: 2026-10-06T17:38:44Z }
@@ -295,69 +296,69 @@ All modified circuits reside in the `tracks/` git submodule:
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 #### Scenario 1: Portimão (Algarve) Turn 3 Bottleneck Elimination & Elevation
-- [ ] **Given** the Autódromo Internacional do Algarve (`portimao_gp`) re-imported with non-linear $0.75\times$ scaling
-- [ ] **When** measuring the road geometry at Turn 3 (Lagos hairpin)
-- [ ] **Then** the road width at the apex should be at least $13.5\text{ m}$ (restored from $7.5\text{ m}$)
-- [ ] **And** the centerline radius of curvature $R$ should be $\ge 16.0\text{ m}$ (expanded from $5.27\text{ m}$)
-- [ ] **And** the inner curb radius should be $\ge 9.0\text{ m}$ (expanded from $1.48\text{ m}$)
-- [ ] **And** Turn 3 must feature positive camber with `bank_angle >= 3.0` degrees
-- [ ] **And** the total elevation relief across the lap must exceed $18\text{ m}$ ($z_{\max} - z_{\min} \ge 18.0\text{ m}$), faithfully reproducing the crest at Turn 5 (Torre VIP) and the plunging Galp drop at Turn 15
-- [ ] **And** a full 10-car AI grid entering Turn 3 simultaneously should navigate the corner cleanly without triggering a stationary roadblock.
+- [x] **Given** the Autódromo Internacional do Algarve (`portimao_gp`) re-imported with non-linear $0.75\times$ scaling
+- [x] **When** measuring the road geometry at Turn 3 (Lagos hairpin)
+- [x] **Then** the road width at the apex should be at least $13.5\text{ m}$ (restored from $7.5\text{ m}$)
+- [x] **And** the centerline radius of curvature $R$ should be $\ge 16.0\text{ m}$ (expanded from $5.27\text{ m}$)
+- [x] **And** the inner curb radius should be $\ge 9.0\text{ m}$ (expanded from $1.48\text{ m}$)
+- [x] **And** Turn 3 must feature positive camber with `bank_angle >= 3.0` degrees
+- [x] **And** the total elevation relief across the lap must exceed $18\text{ m}$ ($z_{\max} - z_{\min} \ge 18.0\text{ m}$), faithfully reproducing the crest at Turn 5 (Torre VIP) and the plunging Galp drop at Turn 15
+- [x] **And** a full 10-car AI grid entering Turn 3 simultaneously should navigate the corner cleanly without triggering a stationary roadblock.
 
 #### Scenario 2: GT Modality Scale Declaration & Strict Length Invariant
-- [ ] **Given** all 18 official GT circuits loaded from `tdrace_core::catalog`
-- [ ] **When** inspecting the `scale()` metadata and total spline length on each track
-- [ ] **Then** every GT circuit should declare `scale == "0.75x"`
-- [ ] **And** the total centerline length should be within $\pm 0.5\%$ of $0.75 \times L_{\text{FIA}}$.
+- [x] **Given** all 18 official GT circuits loaded from `tdrace_core::catalog`
+- [x] **When** inspecting the `scale()` metadata and total spline length on each track
+- [x] **Then** every GT circuit should declare `scale == "0.75x"`
+- [x] **And** the total centerline length should be within $\pm 0.5\%$ of $0.75 \times L_{\text{FIA}}$.
 
 #### Scenario 3: Curvature-Selective Nonlinear Compression & Width Fidelity
-- [ ] **Given** any real-world circuit re-scaled to $0.75\times$ target length
-- [ ] **When** comparing the corner radii $R_k$ of hairpins ($R_{\text{real}} \le 30\text{ m}$) against the original OSM survey data
-- [ ] **Then** the corner radii in the game should preserve at least $90\%$ of their real-world radius ($R_{\text{game}} \ge 0.90 \cdot R_{\text{real}}$)
-- [ ] **And** straightaway lengths should absorb the required longitudinal contraction ($s_{\text{straight}} < 0.75$)
-- [ ] **And** track width throughout standard sections must match authentic FIA dimensions ($W \ge 13.5\text{ m}$) with zero artificial pinches.
+- [x] **Given** any real-world circuit re-scaled to $0.75\times$ target length
+- [x] **When** comparing the corner radii $R_k$ of hairpins ($R_{\text{real}} \le 30\text{ m}$) against the original OSM survey data
+- [x] **Then** the corner radii in the game should preserve at least $90\%$ of their real-world radius ($R_{\text{game}} \ge 0.90 \cdot R_{\text{real}}$)
+- [x] **And** straightaway lengths should absorb the required longitudinal contraction ($s_{\text{straight}} < 0.75$)
+- [x] **And** track width throughout standard sections must match authentic FIA dimensions ($W \ge 13.5\text{ m}$) with zero artificial pinches.
 
 #### Scenario 4: Corner Banking Physics Integration
-- [ ] **Given** banked circuits including Zandvoort, Portimão, Spa-Francorchamps, and Daytona
-- [ ] **When** inspecting waypoint and sample `bank_angle` values across banked curves
-- [ ] **Then** Zandvoort Turn 3 and Turn 14 must have `bank_angle >= 17.0` degrees
-- [ ] **And** Portimão Galp curve must have `bank_angle >= 5.0` degrees
-- [ ] **And** when a GT car drives through banked samples, `state.road_bank_angle` must update dynamically and provide lateral grip assistance.
+- [x] **Given** banked circuits including Zandvoort, Portimão, Spa-Francorchamps, and Daytona
+- [x] **When** inspecting waypoint and sample `bank_angle` values across banked curves
+- [x] **Then** Zandvoort Turn 3 and Turn 14 must have `bank_angle >= 17.0` degrees
+- [x] **And** Portimão Galp curve must have `bank_angle >= 5.0` degrees
+- [x] **And** when a GT car drives through banked samples, `state.road_bank_angle` must update dynamically and provide lateral grip assistance.
 
 #### Scenario 5: Global Absence of Boundary Self-Intersections
-- [ ] **Given** all 134 official circuits across GT, NASCAR, Rallycross, Autocross, Karting, and Extreme Off-Road
-- [ ] **When** running `validate_track()` across the entire embedded catalog
-- [ ] **Then** `ERR_ROAD_SELF_INTERSECTION` must return zero errors
-- [ ] **And** `ERR_CURB_SELF_INTERSECTION` must return zero errors
-- [ ] **And** `ERR_MINIMUM_RADIUS_VIOLATION` must return zero errors.
+- [x] **Given** all 134 official circuits across GT, NASCAR, Rallycross, Autocross, Karting, and Extreme Off-Road
+- [x] **When** running `validate_track()` across the entire embedded catalog
+- [x] **Then** `ERR_ROAD_SELF_INTERSECTION` must return zero errors
+- [x] **And** `ERR_CURB_SELF_INTERSECTION` must return zero errors
+- [x] **And** `ERR_MINIMUM_RADIUS_VIOLATION` must return zero errors.
 
 #### Scenario 6: 1:1 Rallycross & Joker Lap Junction Smoothing
-- [ ] **Given** all 17 World RX circuits and their Joker Lap alternative routes
-- [ ] **When** evaluating spline curvature along mainline hairpins and joker divergence/convergence nodes
-- [ ] **Then** the minimum centerline radius must satisfy $R_{\min} \ge 7.0\text{ m}$ everywhere
-- [ ] **And** the entry and exit divergence angles of joker splits must be $\le 25^\circ$ with $C^1$ tangent continuity.
+- [x] **Given** all 17 World RX circuits and their Joker Lap alternative routes
+- [x] **When** evaluating spline curvature along mainline hairpins and joker divergence/convergence nodes
+- [x] **Then** the minimum centerline radius must satisfy $R_{\min} \ge 7.0\text{ m}$ everywhere
+- [x] **And** the entry and exit divergence angles of joker splits must be $\le 25^\circ$ with $C^1$ tangent continuity.
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Modified Scripts & Tooling
-- `[ ]` `scripts/osm_importer.py`: Implement `rescale_circuit_nonlinear()`, update GT circuits to $0.75\times$, integrate DEM 3D elevation profiling, add corner banking dictionary (`corner_banks`), remove $6.5\text{m}/7.5\text{m}$ width overrides, add multi-waypoint arc filleting.
-- `[ ]` `scripts/track_bake.py`: Support batch re-baking under non-linear scaling with elevation and banking propagation.
-- `[ ]` `crates/arcade-race-core/src/track/validation.rs`: Enforce $R_{\min} \ge W/2 + 3.0\text{ m}$ for GT road courses and $R_{\min} \ge W/2 + 2.0\text{ m}$ for rallycross.
+- `[x]` `scripts/osm_importer.py`: Implement `rescale_circuit_nonlinear()`, update GT circuits to $0.75\times$, integrate DEM 3D elevation profiling, add corner banking dictionary (`corner_banks`), remove $6.5\text{m}/7.5\text{m}$ width overrides, add multi-waypoint arc filleting.
+- `[x]` `scripts/track_bake.py`: Support batch re-baking under non-linear scaling with elevation and banking propagation.
+- `[x]` `crates/arcade-race-core/src/track/validation.rs`: Enforce $R_{\min} \ge W/2 + 3.0\text{ m}$ for GT road courses and $R_{\min} \ge W/2 + 2.0\text{ m}$ for rallycross.
 
 ### Modified Tests & Assertions
-- `[ ]` `crates/tdrace-app/tests/gt_circuit_geometry_tests.rs`: Update `test_gt_tracks_declare_half_scale` to verify $0.75\times$ scale declaration.
-- `[ ]` `crates/tdrace-app/tests/nascar_circuit_scale_tests.rs`: Verify Road America $0.75\times$ scale parity.
-- `[ ]` `crates/tdrace-core/tests/official_catalog_tests.rs`: Verify zero boundary errors, length tolerance ($\pm 0.5\%$), and banking presence across re-baked catalog.
+- `[x]` `crates/tdrace-app/tests/gt_circuit_geometry_tests.rs`: Update `test_gt_tracks_declare_half_scale` to verify $0.75\times$ scale declaration.
+- `[x]` `crates/tdrace-app/tests/nascar_circuit_scale_tests.rs`: Verify Road America $0.75\times$ scale parity.
+- `[x]` `crates/tdrace-core/tests/official_catalog_tests.rs`: Verify zero boundary errors, length tolerance ($\pm 0.5\%$), and banking presence across re-baked catalog.
 
 ### Modified Documentation & Catalogs
-- `[ ]` `docs/circuits/index.md`: Update Circuit Scale Rule table ($0.5\text{x} \to 0.75\text{x}$ for GT).
-- `[ ]` `docs/circuits/f1_gt.md`: Update lengths, elevations, banking notes, and descriptions for 18 GT circuits.
-- `[ ]` `specs/constitution/ROADMAP.md`: Link Spec 097 under Phase 4.
+- `[x]` `docs/circuits/index.md`: Update Circuit Scale Rule table ($0.5\text{x} \to 0.75\text{x}$ for GT).
+- `[x]` `docs/circuits/f1_gt.md`: Update lengths, elevations, banking notes, and descriptions for 18 GT circuits.
+- `[x]` `specs/constitution/ROADMAP.md`: Link Spec 097 under Phase 4.
 
 ### Submodule Asset Re-bakes
-- `[ ]` `tracks/gt/*.json` (18 circuits): Portimão, Catalunya, Nürburgring GP, Spa, Silverstone, Monza, etc., with 3D elevation and banking.
-- `[ ]` `tracks/nascar/*.json`: Road America, Watkins Glen, Chicago Street.
-- `[ ]` `tracks/rally/*.json`: 17 RX circuits with smoothed hairpins and joker junctions.
-- `[ ]` `tracks/autocross/*.json`: 10 AX circuits with smoothed hairpin turns.
+- `[x]` `tracks/gt/*.json` (18 circuits): Portimão, Catalunya, Nürburgring GP, Spa, Silverstone, Monza, etc., with 3D elevation and banking.
+- `[x]` `tracks/nascar/*.json`: Road America, Watkins Glen, Chicago Street.
+- `[x]` `tracks/rally/*.json`: 17 RX circuits with smoothed hairpins and joker junctions.
+- `[x]` `tracks/autocross/*.json`: 10 AX circuits with smoothed hairpin turns.

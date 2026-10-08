@@ -593,12 +593,13 @@ For AI agents and automated testing frameworks, the screen catalog is formalized
   - Track elevation & overpass bridge extrusion tool.
   - Jump ramp, obstacle, and checkpoint gate placement tools.
   - Live track validation inspector (identifies self-intersections, missing finish lines, overlapping grid slots).
+  - Property inspector (right card, [spec 086](../../specs/086_compact_track_studio_inspector_with_unified_single_and_multiselection_editing.md)): collapsible sections in a clipped, scrollable body; compact controls (`[-] bar [+]` steppers, surface dropdown with colour swatches, segmented and L/R toggles); Duplicate / Delete fixed at the bottom. One item or many items of a kind show the same controls; differing values show "Mixed" or "—". The wheel scrolls the card and changes a slider only after that slider is clicked; a press without a drag on a slider opens text entry; hovering a control shows its shortcut.
 * **Navigation & Shortcuts**:
 
 | Key / Input | Action | Target / Result |
 | :--- | :--- | :--- |
 | `Space` / `P` | Test Drive Track | Launches full Time Trial race with default car -> `GameState::StartingGrid` (returns to Studio on exit) |
-| `1` - `8` | Tool Selection | Selects active drawing/editing tool |
+| `1` - `0`, `-` | Tool Selection | Selects active drawing/editing tool (11 tools) |
 | `Ctrl+S` / `S` | Save Track | Serializes track to JSON |
 | `Escape` | Exit Studio | Returns to `GameState::TrackManager` (with unsaved changes prompt if dirty) |
 

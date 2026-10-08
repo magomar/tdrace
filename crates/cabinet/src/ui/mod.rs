@@ -44,10 +44,11 @@ pub use theme::{CabinetTheme, Palette};
 pub use toast::{ToastItem, ToastOverlay, ToastSeverity};
 pub use tooltip::{HelpChip, Tooltip};
 pub use widgets::{
-    draw_action_button, draw_chip, draw_dropdown, draw_dropdown_popup, draw_slider,
-    draw_stat_bar, draw_stepper, draw_tab_bar, Counter, CounterAction, CyclerAction,
-    DropdownWidget, OptionCycler, RadioAction, RadioGroup, SliderWidget, TabBar, Toggle,
-    ToggleAction, ValueStepper,
+    draw_action_button, draw_chip, draw_dropdown, draw_dropdown_popup, draw_field_dropdown,
+    draw_field_dropdown_popup, draw_segmented, draw_slider, draw_stat_bar, draw_stepper,
+    draw_tab_bar, segment_at, Counter, CounterAction, CyclerAction, DropdownWidget,
+    FieldDropdown, FieldDropdownEvent, FieldDropdownInput, FieldPopupLayout, OptionCycler,
+    RadioAction, RadioGroup, SliderWidget, TabBar, Toggle, ToggleAction, ValueStepper,
 };
 pub use crate::net::ui::{
     VirtualKeypad, VirtualKeypadAction, VirtualKeypadButton, VirtualKeypadMode,

@@ -1432,10 +1432,14 @@ fn couple_axle(
         let corner_mass_r = static_rear_load * 0.5 / g;
         let sqrt_k_m_f = (susp.front.spring_rate * corner_mass_f.max(1.0)).sqrt();
         let sqrt_k_m_r = (susp.rear.spring_rate * corner_mass_r.max(1.0)).sqrt();
-        // A curb raises the wheels on it by 4 cm. With every wheel on the curb the whole car sits higher and no
-        // spring is compressed (tdrace-le75: the springs were compressed, so cars on curbs had odd loads).
-        let all_on_curb = surfaces.iter().all(|s| *s == SurfaceType::Curb);
-        let curb_bump = |i: usize| if surfaces[i] == SurfaceType::Curb && !all_on_curb { 0.04 } else { 0.0 };
+        // A curb raises the wheels on it by 4 cm. The car takes up the part of that a plane through the four
+        // wheels can follow (rise, pitch and roll) by moving as a whole, so only the twist (FL + RR against FR +
+        // RL) compresses springs (tdrace-le75: with every wheel on the curb the springs were compressed and cars
+        // had odd loads; with both front wheels on it a kart put all its weight on them, its rear-drive wheels
+        // had 3 N and it could not move).
+        const TWIST_SIGN: [f32; 4] = [1.0, -1.0, -1.0, 1.0];
+        let curb_twist = (0..4).map(|i| if surfaces[i] == SurfaceType::Curb { 0.04 * TWIST_SIGN[i] } else { 0.0 }).sum::<f32>() * 0.25;
+        let curb_bump = |i: usize| (curb_twist * TWIST_SIGN[i]).max(0.0);
 
         for i in 0..4 {
             let wheel_id = WheelId::ALL[i];
@@ -2167,12 +2171,22 @@ fn couple_axle(
                 base_rr_mult
             };
             let rr_coeff = self.config.rolling_resistance_coefficient * effective_rr_mult;
-            let rr_force = -rr_coeff * fz * fast_tanh_clip(w_v_long / 0.5);
+            // Rolling resistance (on deep ground mostly the wheel ploughing through it) opposes the way the
+            // contact patch moves, not the way the wheel points. Along the wheel it pushed a steered front wheel
+            // sideways: in deep snow and mud the classic off-road car turned right when it steered left, and a
+            // bot could not turn round there (tdrace-le75).
+            let patch_speed = wheel_v_world.length();
+            let rr_mag = rr_coeff * fz * fast_tanh_clip(patch_speed / 0.5);
+            let (rr_force, rr_lat) = if patch_speed > 1e-4 {
+                (-rr_mag * w_v_long / patch_speed, -rr_mag * wheel_v_world.dot(wheel_right) / patch_speed)
+            } else {
+                (0.0, 0.0)
+            };
 
             // Low-speed lateral stabilization: below ~3.0 m/s the explicit chassis integration of
             // tire yaw damping violates its stability limit, so lateral force fades out.
             let low_speed_blend = (w_v_long.abs() / 3.0).clamp(0.05, 1.0);
-            let fy = fy_tire * low_speed_blend;
+            let fy = fy_tire * low_speed_blend + rr_lat;
             // Rolling resistance shares the tire's longitudinal budget (braking on grass is still
             // grip-limited), but its own drag is always available so off-track coasting slows the car.
             let fx_room = (envelope * envelope - fy * fy)

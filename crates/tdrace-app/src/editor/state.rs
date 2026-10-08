@@ -428,6 +428,34 @@ impl Selection {
     }
 }
 
+/// Dev-only fixed selection for `--editor-select <kind>` inspector screenshots (spec 086).
+/// Indices the track does not have are dropped; an unknown kind selects nothing.
+pub fn dev_selection(kind: &str, track: &Track) -> Selection {
+    let first = |n: usize, len: usize| (0..n.min(len)).collect::<Vec<usize>>();
+    let wp = track.spline.waypoints.len();
+    let zones = track.geometry.surface_zones.len();
+    let obs = track.geometry.obstacles.len();
+    let ramps = track.geometry.jump_ramps.len();
+    let cps = track.checkpoints.len();
+    let grid = track.grid_positions.len();
+    let none = Vec::new;
+    match kind {
+        "waypoint" => Selection::from_multi(first(1, wp), none(), none(), none(), none(), none(), false),
+        "waypoints" => Selection::from_multi(first(3, wp), none(), none(), none(), none(), none(), false),
+        "zone" => Selection::from_multi(none(), first(1, zones), none(), none(), none(), none(), false),
+        "zones" => Selection::from_multi(none(), first(2, zones), none(), none(), none(), none(), false),
+        "obstacle" => Selection::from_multi(none(), none(), first(1, obs), none(), none(), none(), false),
+        "obstacles" => Selection::from_multi(none(), none(), first(3, obs), none(), none(), none(), false),
+        "ramp" => Selection::from_multi(none(), none(), none(), first(1, ramps), none(), none(), false),
+        "ramps" => Selection::from_multi(none(), none(), none(), first(2, ramps), none(), none(), false),
+        "checkpoint" => Selection::from_multi(none(), none(), none(), none(), first(1, cps), none(), false),
+        "grid" => Selection::from_multi(none(), none(), none(), none(), none(), first(1, grid), false),
+        "pit" => Selection::from_multi(none(), none(), none(), none(), none(), none(), track.pit_lane.is_some() || track.pit_box_area.is_some()),
+        "mixed" => Selection::from_multi(first(2, wp), first(1, zones), none(), first(1, ramps), none(), none(), false),
+        _ => Selection::None,
+    }
+}
+
 /// Robust snapshot-based Undo / Redo history ring buffer.
 #[derive(Debug, Clone)]
 pub struct HistoryStack {
@@ -512,6 +540,9 @@ pub struct EditorState {
     // Generator settings
     pub barrier_offset: f32,
     pub barrier_type: BarrierType,
+
+    /// Open undo gesture: `Some(recorded)` while one press-to-release interaction is in progress.
+    undo_gesture: Option<bool>,
 }
 
 impl EditorState {
@@ -536,13 +567,31 @@ impl EditorState {
             diagnostics,
             barrier_offset,
             barrier_type,
+            undo_gesture: None,
         }
     }
 
     /// Records current state in undo history before making modifications.
+    /// Inside an undo gesture only the first call records, so one gesture is one undo step.
     pub fn record_undo(&mut self) {
-        self.history.push_snapshot(&self.track);
         self.is_dirty = true;
+        if let Some(recorded) = &mut self.undo_gesture {
+            if *recorded {
+                return;
+            }
+            *recorded = true;
+        }
+        self.history.push_snapshot(&self.track);
+    }
+
+    /// Starts grouping edits into one undo step (e.g. a slider drag or a held step button).
+    pub fn begin_undo_gesture(&mut self) {
+        self.undo_gesture = Some(false);
+    }
+
+    /// Ends the current undo gesture; later edits record their own undo steps again.
+    pub fn end_undo_gesture(&mut self) {
+        self.undo_gesture = None;
     }
 
     /// Performs undo operation.

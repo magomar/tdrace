@@ -9,6 +9,10 @@ use tdrace_core::track::spline::{TrackSpline, TrackWaypoint};
 use tdrace_core::track::{CarCategory, TrackKind};
 
 use super::camera::EditorCamera;
+use super::inspector::{
+    InspectorView, BANKING_RANGE, GLOBAL_WALL_OFFSET_RANGE, RAMP_HEIGHT_RANGE, RAMP_LENGTH_RANGE, RAMP_PITCH_RANGE, RAMP_WIDTH_RANGE,
+    WALL_DISTANCE_RANGE, WIDTH_RANGE,
+};
 use super::state::{EditorState, Selection};
 use crate::render::color::Palette;
 
@@ -125,6 +129,7 @@ pub struct ToolSettings {
     // Bar control selection and inline manual text editing
     pub selected_bar: Option<String>,
     pub editing_bar: Option<(String, String)>,
+    pub inspector: InspectorView,
 
     // Road split and branching track settings
     pub active_branch_socket: Option<SocketId>,
@@ -194,6 +199,7 @@ impl Default for ToolSettings {
             drag_initial_pit_box: None,
             selected_bar: None,
             editing_bar: None,
+            inspector: InspectorView::default(),
             active_branch_socket: None,
             split_divergence_angle: 30.0,
             split_branch_count: 2,
@@ -699,7 +705,7 @@ impl ToolSettings {
         true
     }
 
-    /// Sets the exact 2D orientation angle in degrees for selected jump ramp(s) (e.g. 0 to 365 degrees).
+    /// Sets the exact 2D orientation angle in degrees for selected jump ramp(s) (0 to 360 degrees).
     pub fn set_selected_jump_ramp_angle_deg(&mut self, state: &mut EditorState, angle_deg: f32) -> bool {
         self.set_selected_jump_ramp_angle(state, angle_deg.to_radians())
     }
@@ -748,7 +754,7 @@ impl ToolSettings {
         state.record_undo();
         for &idx in &indices {
             if let Some(ramp) = state.track.geometry.jump_ramps.get_mut(idx) {
-                ramp.ramp_angle_deg = (ramp.ramp_angle_deg + delta_deg).clamp(1.0, 60.0);
+                ramp.ramp_angle_deg = (ramp.ramp_angle_deg + delta_deg).clamp(RAMP_PITCH_RANGE.0, RAMP_PITCH_RANGE.1);
             }
         }
         state.revalidate();
@@ -765,7 +771,7 @@ impl ToolSettings {
         state.record_undo();
         for &idx in &indices {
             if let Some(ramp) = state.track.geometry.jump_ramps.get_mut(idx) {
-                ramp.height = (ramp.height + delta_h).clamp(0.2, 20.0);
+                ramp.height = (ramp.height + delta_h).clamp(RAMP_HEIGHT_RANGE.0, RAMP_HEIGHT_RANGE.1);
             }
         }
         state.revalidate();
@@ -798,7 +804,7 @@ impl ToolSettings {
         }
 
         state.record_undo();
-        let clamped_len = length.clamp(2.0, 100.0);
+        let clamped_len = length.clamp(RAMP_LENGTH_RANGE.0, RAMP_LENGTH_RANGE.1);
         for &idx in &indices {
             if let Some(ramp) = state.track.geometry.jump_ramps.get_mut(idx) {
                 ramp.set_length(clamped_len);
@@ -816,7 +822,7 @@ impl ToolSettings {
         }
 
         state.record_undo();
-        let clamped_wid = width.clamp(1.0, 100.0);
+        let clamped_wid = width.clamp(RAMP_WIDTH_RANGE.0, RAMP_WIDTH_RANGE.1);
         for &idx in &indices {
             if let Some(ramp) = state.track.geometry.jump_ramps.get_mut(idx) {
                 ramp.set_width(clamped_wid);
@@ -834,7 +840,7 @@ impl ToolSettings {
         }
 
         state.record_undo();
-        let clamped_h = height.clamp(0.2, 20.0);
+        let clamped_h = height.clamp(RAMP_HEIGHT_RANGE.0, RAMP_HEIGHT_RANGE.1);
         for &idx in &indices {
             if let Some(ramp) = state.track.geometry.jump_ramps.get_mut(idx) {
                 ramp.height = clamped_h;
@@ -852,7 +858,7 @@ impl ToolSettings {
         }
 
         state.record_undo();
-        let clamped_pitch = pitch_deg.clamp(1.0, 60.0);
+        let clamped_pitch = pitch_deg.clamp(RAMP_PITCH_RANGE.0, RAMP_PITCH_RANGE.1);
         for &idx in &indices {
             if let Some(ramp) = state.track.geometry.jump_ramps.get_mut(idx) {
                 ramp.ramp_angle_deg = clamped_pitch;
@@ -1032,7 +1038,7 @@ impl ToolSettings {
             state.record_undo();
             for idx in indices {
                 if idx < state.track.spline.waypoints.len() {
-                    state.track.spline.waypoints[idx].width = width.clamp(6.0, 40.0);
+                    state.track.spline.waypoints[idx].width = width.clamp(WIDTH_RANGE.0, WIDTH_RANGE.1);
                 }
             }
             state.rebuild_geometry();
@@ -1049,7 +1055,7 @@ impl ToolSettings {
             for idx in indices {
                 if idx < state.track.spline.waypoints.len() {
                     let w = state.track.spline.waypoints[idx].width;
-                    state.track.spline.waypoints[idx].width = (w + delta).clamp(6.0, 40.0);
+                    state.track.spline.waypoints[idx].width = (w + delta).clamp(WIDTH_RANGE.0, WIDTH_RANGE.1);
                 }
             }
             state.rebuild_geometry();
@@ -1160,9 +1166,9 @@ impl ToolSettings {
                         .right_wall_distance
                         .unwrap_or(state.barrier_offset);
                     state.track.spline.waypoints[idx].left_wall_distance =
-                        Some((current_l + delta).clamp(0.0, 25.0));
+                        Some((current_l + delta).clamp(WALL_DISTANCE_RANGE.0, WALL_DISTANCE_RANGE.1));
                     state.track.spline.waypoints[idx].right_wall_distance =
-                        Some((current_r + delta).clamp(0.0, 25.0));
+                        Some((current_r + delta).clamp(WALL_DISTANCE_RANGE.0, WALL_DISTANCE_RANGE.1));
                 }
             }
             state.rebuild_geometry();
@@ -1174,7 +1180,7 @@ impl ToolSettings {
     /// Sets global default barrier offset for the circuit and rebuilds geometry.
     pub fn set_global_barrier_offset(&mut self, state: &mut EditorState, offset: f32) {
         state.record_undo();
-        state.barrier_offset = offset.clamp(0.0, 25.0);
+        state.barrier_offset = offset.clamp(GLOBAL_WALL_OFFSET_RANGE.0, GLOBAL_WALL_OFFSET_RANGE.1);
         state.rebuild_geometry();
     }
 
@@ -1226,7 +1232,7 @@ impl ToolSettings {
             for idx in indices {
                 if idx < state.track.spline.waypoints.len() {
                     let bank = state.track.spline.waypoints[idx].bank_angle;
-                    state.track.spline.waypoints[idx].bank_angle = (bank + delta).clamp(-45.0, 45.0);
+                    state.track.spline.waypoints[idx].bank_angle = (bank + delta).clamp(BANKING_RANGE.0, BANKING_RANGE.1);
                 }
             }
             state.rebuild_geometry();
@@ -1242,7 +1248,7 @@ impl ToolSettings {
             state.record_undo();
             for idx in indices {
                 if idx < state.track.spline.waypoints.len() {
-                    state.track.spline.waypoints[idx].bank_angle = bank_angle.clamp(-45.0, 45.0);
+                    state.track.spline.waypoints[idx].bank_angle = bank_angle.clamp(BANKING_RANGE.0, BANKING_RANGE.1);
                 }
             }
             state.rebuild_geometry();

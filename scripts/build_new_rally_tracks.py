@@ -170,8 +170,10 @@ def create_spa_rx():
         (-5.0, 90.0, "Dirt", 8.0),
         # Fast descent transition to tarmac (Asphalt)
         (5.0, 55.0, "Asphalt", 5.0),
-        (-15.0, 25.0, "Asphalt", 2.0),
-        (-25.0, 5.0, "Asphalt", 0.5),
+        (-10.0, 32.0, "Asphalt", 3.0),
+        (-16.0, 16.0, "Asphalt", 1.8),
+        (-10.0, 4.0, "Asphalt", 0.8),
+        (-2.0, 0.5, "Asphalt", 0.2),
     ]
 
     pts = resample_polygon(raw_outline, target_length=1055.0, num_waypoints=28)
