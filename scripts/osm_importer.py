@@ -483,7 +483,8 @@ def build_pit_lane(cid, cfg, root, nodes, ways, transform_ctx, final_track_pts):
         ty = dy / L
         nx = ty
         ny = -tx  # pointing right
-        u_entry, u_start, u_end, u_exit = 10.0, 30.0, 105.0, 130.0
+        # 0.75x straight (spec 097) is 125.8 m to the Tarzan corner at wp 0; end the exit taper ~21 m before it
+        u_entry, u_start, u_end, u_exit = -15.0, 5.0, 80.0, 105.0
         d_split = 7.6
         d_parallel = 12.5
         w_pit = 7.0
