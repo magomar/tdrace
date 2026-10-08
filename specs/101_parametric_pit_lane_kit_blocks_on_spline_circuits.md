@@ -49,7 +49,7 @@ A study compared tdrace pit lanes with a 3D-printed modular F1 circuit kit. That
 
 | Idea | Decision |
 |------|----------|
-| Separate entry variants: leave a straight with a taper, or turn off at an angle | **Taken.** `JunctionKind::Taper` and `JunctionKind::TurnOff`. |
+| Separate entry variants: leave a straight with a taper, or turn off at an angle | **Taken.** `JunctionShape::Taper` and `JunctionShape::TurnOff`. |
 | Garage box and stall as one unit along the pit road | **Taken.** The box row places a stall and a `PitGarage` building together. |
 | Continuous pit wall between the main straight and the pit road | **Already present.** `generate_pit_lane_walls` builds it. It now starts and ends at the junction components. |
 | Fixed piece sizes on a grid | **Rejected.** It distorts real circuits. Junction parameters stay continuous. |
@@ -60,16 +60,19 @@ A study compared tdrace pit lanes with a 3D-printed modular F1 circuit kit. That
 
 ### Pillar I: Data Model
 
-New module `crates/arcade-race-core/src/track/pit_kit.rs`:
+New module `crates/arcade-race-core/src/track/pit_kit.rs`.
+
+The junction types (`Side`, `JunctionShape`, `JunctionComponent`, `JunctionError`) and the junction geometry are one self-contained block in this module. They use the names of spec 102, so spec 102 can move the block to `junction_kit.rs` without a rename.
+
 
 ```rust
 /// Side of the main track (relative to driving direction) on which the pit lane runs.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum PitSide { Left, Right }
+pub enum Side { Left, Right }
 
 /// Shape of a junction between the main track and the pit road.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
-pub enum JunctionKind {
+pub enum JunctionShape {
     /// Smooth sideways taper; the pit road ends parallel to the main track.
     Taper,
     /// Pit road leaves (or rejoins) the main track at a fixed angle through a circular arc.
@@ -78,11 +81,11 @@ pub enum JunctionKind {
 
 /// Predefined junction component anchored to the main spline.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PitJunction {
+pub struct JunctionComponent {
     /// Arc length on the main spline where the junction touches the track (m).
     /// Entry: where the split starts. Exit: where the merge ends.
     pub s: f32,
-    pub kind: JunctionKind,
+    pub kind: JunctionShape,
     /// Length of the junction along its own centreline (m).
     pub length: f32,
     /// Gap between main track edge and pit road edge at the junction's free end (m).
@@ -105,9 +108,9 @@ pub struct PitBoxRow {
 /// Source of truth for a pit lane. Compiled at bake time into `PitLane`.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PitLaneLayout {
-    pub side: PitSide,
-    pub entry: PitJunction,
-    pub exit: PitJunction,
+    pub side: Side,
+    pub entry: JunctionComponent,
+    pub exit: JunctionComponent,
     /// Interior control points of the free pit road, between the junction ends.
     /// May be empty: the road then joins the two junction ends directly.
     pub road_waypoints: Vec<Vec2>,
@@ -135,7 +138,8 @@ Let `D = track_half_width(s) + divider_gap + road_width / 2` (centre-to-centre o
 - Maximum divergence angle is `atan(1.5 · D / length)`.
 
 **`TurnOff { angle_deg }`**
-- The pit road starts tangent to the track edge at `s`. A circular arc of length `length` then turns it away from the track by `angle_deg`.
+- The pit road starts parallel to the main track at `s`. A circular arc of length `length` then turns it away from the track by `angle_deg`.
+- The start offset is set so that the gap between the track edge and the pit road edge at the free end is exactly `divider_gap` (as for `Taper`). On a straight it is `D − r · (1 − cos(angle_rad))`, with `r` the arc radius. If the start offset would be smaller than 0, the junction fails rule 1 (`length`).
 - The free end heading is the main tangent rotated by `angle_deg` toward `side`.
 - The arc radius is `length / angle_rad`.
 - The exit is the mirror image: a circular arc that rejoins tangent to the track edge at `s`.
@@ -157,6 +161,8 @@ The two guide points fix the road heading at both joints. The compiled pit lane 
 ### Pillar V: Guards (Fail Before Bake)
 
 `PitLaneLayout::compile(&Track) -> Result<CompiledPitLane, PitKitError>` checks every rule. It returns an error and no lane when a rule fails.
+
+The junction rules (1 for `length`, `divider_gap` and `angle_deg`, and 2, 3, 4 and 6) are `JunctionError` variants, returned as `PitKitError::Junction(JunctionError)`. The other rules are `PitKitError` variants.
 
 | # | Rule | Error |
 |---|------|-------|
