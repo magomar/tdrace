@@ -3,6 +3,7 @@ pub mod checkpoint;
 pub mod curve;
 pub mod geometry;
 pub mod network;
+pub mod pit_kit;
 pub mod presets;
 pub mod scenery;
 pub mod spline;

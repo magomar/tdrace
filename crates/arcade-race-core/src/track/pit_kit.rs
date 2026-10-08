@@ -1,0 +1,431 @@
+//! Parametric pit lane kit: predefined junction components on a free-form main spline.
+//!
+//! See `specs/101_parametric_pit_lane_kit_blocks_on_spline_circuits.md`. A pit lane is an entry junction, a free
+//! pit road and an exit junction. The junction block below (`Side`, `JunctionShape`, `JunctionComponent`,
+//! `JunctionError`, `build_junction`) is self-contained and uses the names of spec 102, which moves it to
+//! `junction_kit.rs` for road branches.
+
+use glam::Vec2;
+use serde::{Deserialize, Serialize};
+
+use super::geometry::{LineSegment, PitLaneChevron};
+use super::spline::TrackSpline;
+
+// ---------------------------------------------------------------------------------------------------------------
+// Junction component (shared with spec 102)
+// ---------------------------------------------------------------------------------------------------------------
+
+/// Side of the main track (relative to driving direction) on which the branch runs.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum Side {
+    Left,
+    Right,
+}
+
+impl Side {
+    /// +1 for the left-pointing spline normal, -1 for the right.
+    #[inline]
+    pub fn sign(self) -> f32 {
+        match self {
+            Side::Left => 1.0,
+            Side::Right => -1.0,
+        }
+    }
+}
+
+/// Shape of a junction between the main track and the branch road.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub enum JunctionShape {
+    /// Smooth sideways taper; the branch ends parallel to the main track.
+    Taper,
+    /// Branch leaves (or rejoins) the main track at a fixed angle through a circular arc.
+    TurnOff { angle_deg: f32 },
+}
+
+/// Predefined junction component anchored to the main spline.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct JunctionComponent {
+    /// Arc length on the main spline where the junction touches the track (m).
+    /// Entry: where the split starts. Exit: where the merge ends.
+    pub s: f32,
+    pub kind: JunctionShape,
+    /// Length of the junction (m): main-spline span for `Taper`, arc length for `TurnOff`.
+    pub length: f32,
+    /// Gap between main track edge and branch road edge at the junction's free end (m).
+    pub divider_gap: f32,
+}
+
+/// Which end of the branch a junction is.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum JunctionRole {
+    /// Leaves the main track (pit entry, branch split).
+    Entry,
+    /// Rejoins the main track (pit exit, branch merge).
+    Exit,
+}
+
+/// Junction rule violations (spec 101 guards 1-4 and 6).
+#[derive(Debug, Clone, PartialEq)]
+pub enum JunctionError {
+    InvalidParameter { name: &'static str },
+    JunctionTooSteep { junction: JunctionRole, angle_deg: f32 },
+    OffsetExceedsCurvature { junction: JunctionRole, s: f32, radius: f32 },
+    ArcTooTight { junction: JunctionRole, radius: f32 },
+    JointKink { junction: JunctionRole, angle_deg: f32 },
+}
+
+/// Clearance kept between a curve's centre and the outer branch edge, and the minimum arc radius margin (m).
+pub const JUNCTION_RADIUS_MARGIN: f32 = 3.0;
+/// Edge gap at which a dividing wall fits between the main track and the branch (m).
+pub const DIVIDER_WALL_MIN_GAP: f32 = 1.2;
+/// Sampling step along a junction (m).
+const JUNCTION_STEP: f32 = 0.5;
+
+/// Geometry of one compiled junction. Every point list is in driving order.
+#[derive(Debug, Clone, PartialEq)]
+pub struct JunctionGeometry {
+    pub role: JunctionRole,
+    /// Branch centreline samples. Entry: from `s` to the free end. Exit: from the free end to `s`.
+    pub centreline: Vec<Vec2>,
+    /// Point where the branch road starts (entry) or ends (exit).
+    pub free_end: Vec2,
+    /// Unit driving direction at the free end.
+    pub free_heading: Vec2,
+    /// Line across the branch road at the free end.
+    pub gate: LineSegment,
+    /// Edge gap (branch inner edge minus main edge, m) at each centreline sample.
+    pub edge_gaps: Vec<f32>,
+    /// Main track edge point at each centreline sample, on the branch side.
+    pub track_edges: Vec<Vec2>,
+    /// Branch inner edge point at each centreline sample.
+    pub branch_edges: Vec<Vec2>,
+    /// Point where the branch inner edge leaves (entry) or rejoins (exit) the main track edge.
+    pub apex: Vec2,
+    /// Paved quads between the main edge and the branch inner edge: entry from `s` to the apex, exit from the
+    /// last station with a wall-wide gap to `s`.
+    pub quads: Vec<[Vec2; 4]>,
+    /// Gore chevrons between `s` and the apex (entry only).
+    pub chevrons: Vec<PitLaneChevron>,
+    /// End of the dividing wall: the first (entry) or last (exit) station with a wall-wide gap.
+    pub divider_end: Vec2,
+}
+
+/// Builds a junction component on `main`, checking guards 1-4. Guard 6 (joint kink) needs the road and is
+/// checked by the caller with [`joint_kink_deg`].
+pub fn build_junction(
+    main: &TrackSpline,
+    comp: &JunctionComponent,
+    role: JunctionRole,
+    side: Side,
+    road_width: f32,
+) -> Result<JunctionGeometry, JunctionError> {
+    // Guard 1: parameter ranges. Written so NaN fails.
+    if !(comp.length > 0.0 && comp.length.is_finite()) {
+        return Err(JunctionError::InvalidParameter { name: "length" });
+    }
+    if !(comp.divider_gap >= 0.0 && comp.divider_gap.is_finite()) {
+        return Err(JunctionError::InvalidParameter { name: "divider_gap" });
+    }
+    if !comp.s.is_finite() {
+        return Err(JunctionError::InvalidParameter { name: "s" });
+    }
+    if let JunctionShape::TurnOff { angle_deg } = comp.kind {
+        if !(10.0..60.0).contains(&angle_deg) {
+            return Err(JunctionError::InvalidParameter { name: "angle_deg" });
+        }
+    }
+    if main.samples.len() < 2 {
+        return Err(JunctionError::InvalidParameter { name: "s" });
+    }
+
+    let sigma = side.sign();
+    let anchor = main.sample_at_distance(comp.s);
+    let offset_d = anchor.width * 0.5 + comp.divider_gap + road_width * 0.5;
+    // Main-spline span the junction covers, in driving order.
+    let span_main = match comp.kind {
+        JunctionShape::Taper => comp.length,
+        JunctionShape::TurnOff { angle_deg } => {
+            let theta = angle_deg.to_radians();
+            comp.length / theta * theta.sin()
+        }
+    };
+    let (span_start, span_end) = match role {
+        JunctionRole::Entry => (comp.s, comp.s + span_main),
+        JunctionRole::Exit => (comp.s - span_main, comp.s),
+    };
+
+    // Guard 2: Taper divergence.
+    if let JunctionShape::Taper = comp.kind {
+        let angle_deg = (1.5 * offset_d / comp.length).atan().to_degrees();
+        if angle_deg >= 60.0 {
+            return Err(JunctionError::JunctionTooSteep { junction: role, angle_deg });
+        }
+    }
+
+    // Guard 3: fold. The outer branch edge must stay inside the radius of a main curve that bends toward it.
+    let outer = offset_d + road_width * 0.5;
+    let mut s_probe = span_start;
+    while s_probe <= span_end + 1e-3 {
+        let kappa = signed_curvature(main, s_probe);
+        if kappa * sigma > 0.0 {
+            let radius = 1.0 / kappa.abs();
+            if outer >= radius - JUNCTION_RADIUS_MARGIN {
+                return Err(JunctionError::OffsetExceedsCurvature { junction: role, s: s_probe, radius });
+            }
+        }
+        s_probe += 1.0;
+    }
+
+    let centreline = match comp.kind {
+        JunctionShape::Taper => taper_centreline(main, comp, role, sigma, offset_d),
+        JunctionShape::TurnOff { angle_deg } => {
+            let theta = angle_deg.to_radians();
+            let radius = comp.length / theta;
+            // Guard 4: arc radius.
+            if radius < road_width * 0.5 + JUNCTION_RADIUS_MARGIN {
+                return Err(JunctionError::ArcTooTight { junction: role, radius });
+            }
+            turnoff_centreline(main, comp, role, side, road_width, theta, radius)?
+        }
+    };
+
+    Ok(finish_junction(main, role, sigma, road_width, centreline))
+}
+
+/// Heading jump (degrees) between a junction's free-end heading and the road heading next to it.
+pub fn joint_kink_deg(junction_heading: Vec2, road_heading: Vec2) -> f32 {
+    let a = junction_heading.normalize_or_zero();
+    let b = road_heading.normalize_or_zero();
+    a.perp_dot(b).atan2(a.dot(b)).abs().to_degrees()
+}
+
+/// Signed curvature of `main` at `s` (1/m, positive when the track turns left), from tangents 1 m either side.
+pub fn signed_curvature(main: &TrackSpline, s: f32) -> f32 {
+    const H: f32 = 1.0;
+    let t0 = main.sample_at_distance(s - H).tangent;
+    let t1 = main.sample_at_distance(s + H).tangent;
+    t0.perp_dot(t1).atan2(t0.dot(t1)) / (2.0 * H)
+}
+
+/// Branch edge gap at `p`: distance from the main track edge to the branch inner edge, positive when apart.
+fn edge_gap_at(main: &TrackSpline, sigma: f32, road_width: f32, p: Vec2) -> (f32, Vec2, Vec2, Vec2) {
+    let proj = main.project_point(p);
+    let n = proj.normal;
+    let track_edge = proj.closest_point + n * (sigma * proj.track_width * 0.5);
+    let branch_edge = p - n * (sigma * road_width * 0.5);
+    let gap = (branch_edge - track_edge).dot(n * sigma);
+    (gap, track_edge, branch_edge, n)
+}
+
+fn taper_centreline(main: &TrackSpline, comp: &JunctionComponent, role: JunctionRole, sigma: f32, offset_d: f32) -> Vec<Vec2> {
+    let n = ((comp.length / JUNCTION_STEP).ceil() as usize).max(2);
+    (0..=n)
+        .map(|i| {
+            let t = i as f32 / n as f32;
+            let (s_main, u) = match role {
+                JunctionRole::Entry => (comp.s + t * comp.length, t),
+                JunctionRole::Exit => (comp.s - comp.length + t * comp.length, 1.0 - t),
+            };
+            let smooth = u * u * (3.0 - 2.0 * u);
+            let sample = main.sample_at_distance(s_main);
+            sample.point + sample.normal * (sigma * offset_d * smooth)
+        })
+        .collect()
+}
+
+/// Circular arc that starts parallel to the main track at `s` and turns `theta` toward `side`. The start offset is
+/// solved so the free-end edge gap equals `divider_gap`.
+fn turnoff_centreline(
+    main: &TrackSpline,
+    comp: &JunctionComponent,
+    role: JunctionRole,
+    side: Side,
+    road_width: f32,
+    theta: f32,
+    radius: f32,
+) -> Result<Vec<Vec2>, JunctionError> {
+    let sigma = side.sign();
+    let anchor = main.sample_at_distance(comp.s);
+    let half_w = anchor.width * 0.5;
+    let n = ((comp.length / JUNCTION_STEP).ceil() as usize).max(2);
+
+    // Arc in driving order for a given start offset `d0`.
+    let arc = |d0: f32| -> Vec<Vec2> {
+        let t0 = anchor.tangent;
+        let n0 = anchor.normal * sigma;
+        let start = anchor.point + n0 * d0;
+        let centre = start + n0 * radius;
+        (0..=n)
+            .map(|i| {
+                let f = i as f32 / n as f32;
+                match role {
+                    JunctionRole::Entry => {
+                        let phi = f * theta;
+                        centre - n0 * (radius * phi.cos()) + t0 * (radius * phi.sin())
+                    }
+                    JunctionRole::Exit => {
+                        let phi = (1.0 - f) * theta;
+                        centre - n0 * (radius * phi.cos()) - t0 * (radius * phi.sin())
+                    }
+                }
+            })
+            .collect()
+    };
+    let free_end_of = |pts: &[Vec2]| match role {
+        JunctionRole::Entry => pts[pts.len() - 1],
+        JunctionRole::Exit => pts[0],
+    };
+
+    // On a straight: d0 + r(1 - cos θ) = D. Correct for main curvature with a few fixed-point steps.
+    let target = comp.divider_gap;
+    let mut d0 = half_w + comp.divider_gap + road_width * 0.5 - radius * (1.0 - theta.cos());
+    for _ in 0..6 {
+        let (gap, ..) = edge_gap_at(main, sigma, road_width, free_end_of(&arc(d0)));
+        let err = target - gap;
+        d0 += err;
+        if err.abs() < 1e-3 {
+            break;
+        }
+    }
+    // The branch must start on the main road: centre at or beyond the main centreline, outer edge at most flush
+    // with the main edge. Outside that range the arc is too short or too long for the gap.
+    if !(d0 >= 0.0 && d0 <= half_w - road_width * 0.5) {
+        return Err(JunctionError::InvalidParameter { name: "length" });
+    }
+    Ok(arc(d0))
+}
+
+fn finish_junction(main: &TrackSpline, role: JunctionRole, sigma: f32, road_width: f32, centreline: Vec<Vec2>) -> JunctionGeometry {
+    let count = centreline.len();
+    let mut edge_gaps = Vec::with_capacity(count);
+    let mut track_edges = Vec::with_capacity(count);
+    let mut branch_edges = Vec::with_capacity(count);
+    for &p in &centreline {
+        let (gap, te, be, _) = edge_gap_at(main, sigma, road_width, p);
+        edge_gaps.push(gap);
+        track_edges.push(te);
+        branch_edges.push(be);
+    }
+
+    let (free_end, free_heading) = match role {
+        JunctionRole::Entry => (centreline[count - 1], (centreline[count - 1] - centreline[count - 2]).normalize_or_zero()),
+        JunctionRole::Exit => (centreline[0], (centreline[1] - centreline[0]).normalize_or_zero()),
+    };
+    let across = free_heading.perp() * (road_width * 0.5);
+    let gate = LineSegment::new(free_end - across, free_end + across);
+
+    // Apex: where the gap crosses zero, walking away from `s`.
+    let lerp_at = |i: usize, j: usize| -> (Vec2, Vec2, f32) {
+        let (g0, g1) = (edge_gaps[i], edge_gaps[j]);
+        let f = if (g1 - g0).abs() > 1e-6 { (-g0 / (g1 - g0)).clamp(0.0, 1.0) } else { 0.0 };
+        (track_edges[i].lerp(track_edges[j], f), branch_edges[i].lerp(branch_edges[j], f), f)
+    };
+    let order: Vec<usize> = match role {
+        JunctionRole::Entry => (0..count).collect(),
+        JunctionRole::Exit => (0..count).rev().collect(),
+    };
+    let mut apex_te = track_edges[order[count - 1]];
+    let mut apex_be = branch_edges[order[count - 1]];
+    let mut apex_k = count - 1;
+    for k in 1..count {
+        if edge_gaps[order[k]] >= 0.0 {
+            let (te, be, _) = lerp_at(order[k - 1], order[k]);
+            apex_te = te;
+            apex_be = be;
+            apex_k = k;
+            break;
+        }
+    }
+    let apex = (apex_te + apex_be) * 0.5;
+
+    let divider_k = (0..count).find(|&k| edge_gaps[order[k]] >= DIVIDER_WALL_MIN_GAP).unwrap_or(count - 1);
+    let divider_end = {
+        let i = order[divider_k];
+        let gap = edge_gaps[i].max(0.0);
+        let n = (branch_edges[i] - track_edges[i]).normalize_or_zero();
+        branch_edges[i] - n * (gap * 0.5).min(1.0)
+    };
+
+    let mut quads = Vec::new();
+    let mut chevrons = Vec::new();
+    match role {
+        JunctionRole::Entry => {
+            for k in 0..apex_k {
+                let (i, j) = (order[k], order[k + 1]);
+                let (te1, be1) = if k + 1 == apex_k { (apex_te, apex_be) } else { (track_edges[j], branch_edges[j]) };
+                quads.push([track_edges[i], te1, be1, branch_edges[i]]);
+            }
+            let te_start = track_edges[0];
+            let pe_start = branch_edges[0];
+            let v_track = (apex_te - te_start).normalize_or_zero();
+            let v_pit = (apex_be - pe_start).normalize_or_zero();
+            let gore_len = (apex - te_start).length();
+            if gore_len > 8.0 {
+                let bisect = -(v_track + v_pit).normalize_or_zero();
+                let num = ((gore_len - 4.0) / 3.0).floor() as usize;
+                for step in 1..=num {
+                    let d = step as f32 * 3.0;
+                    if d >= gore_len - 2.0 {
+                        break;
+                    }
+                    let f = d / gore_len;
+                    let pt_track = te_start.lerp(apex_te, f);
+                    let pt_pit = pe_start.lerp(apex_be, f);
+                    chevrons.push(PitLaneChevron { apex: (pt_track + pt_pit) * 0.5 + bisect * 1.2, pt_track, pt_pit });
+                }
+            }
+        }
+        JunctionRole::Exit => {
+            let first = order[divider_k];
+            for i in first..count - 1 {
+                quads.push([track_edges[i], track_edges[i + 1], branch_edges[i + 1], branch_edges[i]]);
+            }
+        }
+    }
+
+    JunctionGeometry {
+        role,
+        centreline,
+        free_end,
+        free_heading,
+        gate,
+        edge_gaps,
+        track_edges,
+        branch_edges,
+        apex,
+        quads,
+        chevrons,
+        divider_end,
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Pit lane layout
+// ---------------------------------------------------------------------------------------------------------------
+
+/// Predefined box row component placed along the pit road.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PitBoxRow {
+    /// Arc length along the compiled pit lane where the first box centre sits (m).
+    pub start_s: f32,
+    /// Number of stalls, >= 1.
+    pub count: u32,
+    /// Distance between stall centres (m).
+    pub spacing: f32,
+    /// Place one PitGarage building behind each stall.
+    pub garages: bool,
+}
+
+/// Source of truth for a pit lane. Compiled at bake time into `PitLane`.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PitLaneLayout {
+    pub side: Side,
+    pub entry: JunctionComponent,
+    pub exit: JunctionComponent,
+    /// Interior control points of the free pit road, between the junction ends.
+    /// May be empty: the road then joins the two junction ends directly.
+    pub road_waypoints: Vec<Vec2>,
+    pub road_width: f32,
+    pub speed_limit: f32,
+    pub box_row: PitBoxRow,
+}
