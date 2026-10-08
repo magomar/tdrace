@@ -383,3 +383,81 @@ fn box_row_places_stalls_and_garages() {
         }
     }
 }
+
+// ---------------------------------------------------------------------------------------------------------------
+// Bake and load (Pillar VI)
+// ---------------------------------------------------------------------------------------------------------------
+
+use arcade_race_core::track::bake::{bake, BakeOptions};
+use arcade_race_core::track::BuildingStyle;
+
+fn baked_track_with_layout() -> Track {
+    let mut track = track_on(stadium());
+    track.name = "pit kit test".to_string();
+    track.pit_lane_layout = Some(straight_layout());
+    bake(&mut track, &BakeOptions { rebuild: true, ..BakeOptions::default() }).expect("bake succeeds");
+    track
+}
+
+fn garage_count(track: &Track) -> usize {
+    track.geometry.buildings.iter().filter(|b| b.style == BuildingStyle::PitGarage).count()
+}
+
+#[test]
+fn bake_writes_the_compiled_lane_and_garages() {
+    let track = baked_track_with_layout();
+    let compiled = straight_layout().compile(&track).unwrap();
+    assert_eq!(track.pit_lane.as_ref(), Some(&compiled.lane));
+    assert_eq!(garage_count(&track), 6);
+}
+
+#[test]
+fn bake_is_deterministic_and_does_not_duplicate_garages() {
+    let mut track = baked_track_with_layout();
+    let first = serde_json::to_string(&track).unwrap();
+    bake(&mut track, &BakeOptions { rebuild: true, ..BakeOptions::default() }).unwrap();
+    let second = serde_json::to_string(&track).unwrap();
+    assert!(first == second, "second bake changed the circuit");
+    assert_eq!(garage_count(&track), track.pit_lane.as_ref().unwrap().pit_boxes.len());
+}
+
+#[test]
+fn bake_fails_on_a_bad_layout_without_writing_a_lane() {
+    let mut track = track_on(stadium());
+    let mut layout = straight_layout();
+    layout.box_row.start_s = 10.0;
+    track.pit_lane_layout = Some(layout);
+    let err = bake(&mut track, &BakeOptions { rebuild: true, ..BakeOptions::default() }).unwrap_err();
+    assert!(err.contains("pit lane layout") && err.contains("BoxRowOffRoad"), "{err}");
+    assert!(track.pit_lane.is_none());
+}
+
+#[test]
+fn loaded_junctions_and_divider_wall_come_from_the_components() {
+    let track = baked_track_with_layout();
+    let json = serde_json::to_string(&track).unwrap();
+    let loaded = Track::from_json(&json).unwrap();
+    let compiled = straight_layout().compile(&loaded).unwrap();
+    assert_eq!(loaded.pit_lane_junctions.as_ref(), Some(&compiled.junctions));
+    let walls: Vec<_> = loaded.geometry.inner_walls.iter().chain(&loaded.geometry.outer_walls).collect();
+    let touches = |p: Vec2| walls.iter().any(|w| w.segment.start.distance(p) < 0.01 || w.segment.end.distance(p) < 0.01);
+    assert!(touches(compiled.divider_start), "no wall starts at the entry divider point");
+    assert!(touches(compiled.divider_end), "no wall ends at the exit divider point");
+}
+
+#[test]
+fn layout_free_tracks_keep_the_searched_junctions() {
+    let mut track = baked_track_with_layout();
+    let lane = track.pit_lane.clone();
+    track.pit_lane_layout = None;
+    let json = serde_json::to_string(&track).unwrap();
+    assert!(!json.contains("pit_lane_layout"));
+    let loaded = Track::from_json(&json).unwrap();
+    // Compare what the JSON stores (TrackSpline caches such as sample_segments are not saved).
+    let (a, b) = (loaded.pit_lane.as_ref().unwrap(), lane.as_ref().unwrap());
+    assert_eq!(a.spline.waypoints, b.spline.waypoints);
+    assert_eq!(a.pit_boxes, b.pit_boxes);
+    assert_eq!((a.entry_gate, a.exit_gate), (b.entry_gate, b.exit_gate));
+    assert_eq!(loaded.pit_lane_junctions, loaded.compute_pit_lane_junctions());
+    assert!(loaded.pit_lane_junctions.is_some());
+}

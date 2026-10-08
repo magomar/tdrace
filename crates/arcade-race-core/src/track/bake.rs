@@ -9,6 +9,7 @@ use super::presets::{
     adaptive_checkpoint_count, generate_checkpoints, generate_walls_from_spline,
     generate_walls_from_spline_raw,
 };
+use super::scenery::BuildingStyle;
 use super::spline::TrackSpline;
 use super::Track;
 
@@ -102,7 +103,21 @@ pub fn bake(track: &mut Track, opts: &BakeOptions) -> Result<BakeReport, String>
         .or_else(|| track.checkpoints.iter().map(|c| c.sector + 1).max())
         .unwrap_or(3);
     let grid_layout = current_grid_layout(track);
-    if let Some(lane) = &mut track.pit_lane {
+    if let Some(layout) = track.pit_lane_layout.clone() {
+        // Spec 101: the layout is the source of truth for the pit lane and the only source of pit garages.
+        let compiled = layout
+            .compile(track)
+            .map_err(|e| format!("'{}': pit lane layout: {:?}", track.name, e))?;
+        track.pit_lane = Some(compiled.lane);
+        let buildings = &mut track.geometry.buildings;
+        buildings.retain(|b| b.style != BuildingStyle::PitGarage);
+        let mut next_id = buildings.iter().map(|b| b.id + 1).max().unwrap_or(0);
+        for mut garage in compiled.garages {
+            garage.id = next_id;
+            next_id += 1;
+            buildings.push(garage);
+        }
+    } else if let Some(lane) = &mut track.pit_lane {
         if opts.rebuild || lane.spline.samples.is_empty() {
             lane.spline = TrackSpline::new(lane.spline.waypoints.clone(), false);
         }
