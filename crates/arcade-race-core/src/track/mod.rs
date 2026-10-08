@@ -2,6 +2,7 @@ pub mod bake;
 pub mod checkpoint;
 pub mod curve;
 pub mod geometry;
+pub mod launch_chute;
 pub mod network;
 pub mod presets;
 pub mod scenery;
@@ -17,6 +18,7 @@ pub use network::{
     compute_split_width_envelope, GoreConfig, JunctionId, JunctionKind, LaunchChuteConfig, MergeConfig,
     RoadJunction, RoadSegment, SegmentId, SocketId, SplineSocket, TrackLayout, TrackNetwork,
 };
+pub use launch_chute::{ChuteSide, LaunchChuteError, LaunchChuteSpec};
 pub use geometry::{
     point_in_polygon, point_in_quad_2d, point_in_triangle_2d, BarrierType, JumpRamp,
     JumpRampCarExt, LineSegment, Obstacle, ObstacleShape, PitBox, PitLane, PitLaneChevron,
@@ -959,8 +961,13 @@ impl Track {
         };
 
         let mut walls = Vec::new();
+        // The launch chute's side walls and rear wall are kept in its config (spec 103).
+        let chute_id = net.launch_chute.as_ref().map(|c| c.segment_id);
+        let mut chute_walls = Vec::new();
+        let mut rear_corners = [None, None];
         for seg in branch_segments(net) {
             if seg.samples.len() < 2 { continue; }
+            let first_wall = walls.len();
             // The track-wide offset comes from the first main samples, which can sit on a wide
             // run-off (Riga RX: 14.9 m). Measure the main walls around this branch instead.
             let (min, max) = seg.samples.iter().fold((Vec2::splat(f32::MAX), Vec2::splat(f32::MIN)), |(lo, hi), s| {
@@ -979,7 +986,8 @@ impl Track {
             // 0.5 m inside the main wall line, so a joker wall that runs just outside it is kept, and at most
             // 3.5 m: riga_rx's main walls stand ~10 m off on its run-off, and its side-by-side joker lost its walls.
             let main_gap = (barrier_offset - 0.5).clamp(0.3, 3.5);
-            for side in [left, right] {
+            for (side_idx, side) in [left, right].into_iter().enumerate() {
+                let walls_before_side = walls.len();
                 let kept: Vec<WallBarrier> = side
                     .into_iter()
                     .filter(|w| wall_clear_of_roads(&net.segments, w, f32::INFINITY, 0.3) && clear_of_main(w, main_gap))
@@ -997,7 +1005,31 @@ impl Track {
                         walls.push(w);
                     }
                 }
+                if Some(seg.id) == chute_id {
+                    // The rear corner of this side: the end of its walls nearest the first sample's wall point.
+                    let rear = seg.samples[0];
+                    let sign = if side_idx == 0 { 1.0 } else { -1.0 };
+                    let expected = rear.point + rear.normal * (sign * (rear.width * 0.5 + barrier_offset));
+                    rear_corners[side_idx] = walls[walls_before_side..]
+                        .iter()
+                        .flat_map(|w| [w.segment.start, w.segment.end])
+                        .min_by(|a, b| a.distance_squared(expected).total_cmp(&b.distance_squared(expected)))
+                        .filter(|p| p.distance(expected) < 1.0);
+                }
             }
+            if Some(seg.id) == chute_id {
+                chute_walls = walls[first_wall..].to_vec();
+            }
+        }
+        if let [Some(left), Some(right)] = rear_corners {
+            let rear_wall = WallBarrier::new(left, right, barrier_type);
+            walls.push(rear_wall);
+            if let Some(chute) = self.network.as_mut().and_then(|n| n.launch_chute.as_mut()) {
+                chute.terminal_barrier = rear_wall;
+            }
+        }
+        if let Some(chute) = self.network.as_mut().and_then(|n| n.launch_chute.as_mut()) {
+            chute.side_barriers = chute_walls;
         }
         self.geometry.network_walls = walls;
     }
@@ -1666,6 +1698,11 @@ impl Track {
     /// - Aligns slots behind finish line checkpoint or at arena centroid.
     /// Returns `true` if grid positions were successfully generated.
     pub fn auto_generate_grid(&mut self, num_slots: usize, spacing: f32, stagger: f32) -> bool {
+        // A launch chute holds the starting grid (spec 103): its packed slots stay as they are.
+        if let Some(chute) = self.launch_chute() {
+            self.grid_positions = chute.grid_slots.clone();
+            return true;
+        }
         let Some(finish_cp) = self.checkpoints.iter().find(|cp| cp.is_finish_line) else {
             return false;
         };
