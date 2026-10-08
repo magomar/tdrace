@@ -1240,7 +1240,7 @@
       "osm_url": "https://www.openstreetmap.org/way/166701854",
       "is_inspired": false,
       "default_laps": 6,
-      "length_m": 1045.5,
+      "length_m": 1060.0,
       "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
@@ -1271,7 +1271,7 @@
       "osm_url": "https://www.openstreetmap.org/way/159576897",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 996.1,
+      "length_m": 999.9,
       "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
@@ -1302,7 +1302,7 @@
       "osm_url": "https://www.openstreetmap.org/way/100006815",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 977.3,
+      "length_m": 980.0,
       "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
@@ -1333,8 +1333,8 @@
       "osm_url": "https://www.openstreetmap.org/way/1363616670",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1129.1,
-      "min_width_m": 6.0,
+      "length_m": 1180.0,
+      "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
         {
@@ -1364,7 +1364,7 @@
       "osm_url": "https://www.openstreetmap.org/way/119083954",
       "is_inspired": false,
       "default_laps": 4,
-      "length_m": 1138.3,
+      "length_m": 1170.0,
       "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
@@ -1395,8 +1395,8 @@
       "osm_url": "https://www.openstreetmap.org/way/134067270",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1146.7,
-      "min_width_m": 9.5,
+      "length_m": 1199.9,
+      "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
         {
@@ -1426,7 +1426,7 @@
       "osm_url": "https://www.openstreetmap.org/way/62020741",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 805.6,
+      "length_m": 810.0,
       "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
@@ -1457,8 +1457,8 @@
       "osm_url": "https://www.openstreetmap.org/way/674904429",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 914.4,
-      "min_width_m": 7.5,
+      "length_m": 940.1,
+      "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
         {
@@ -1488,8 +1488,8 @@
       "osm_url": "https://www.openstreetmap.org/way/808191053",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1105.5,
-      "min_width_m": 7.0,
+      "length_m": 1149.9,
+      "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
         {
@@ -1519,7 +1519,7 @@
       "osm_url": "https://www.openstreetmap.org/way/685441292",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1241.6,
+      "length_m": 1260.0,
       "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
@@ -1550,8 +1550,8 @@
       "osm_url": "https://www.openstreetmap.org/way/803500149",
       "is_inspired": false,
       "default_laps": 4,
-      "length_m": 1025.3,
-      "min_width_m": 6.0,
+      "length_m": 1050.0,
+      "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
         {
@@ -1581,7 +1581,7 @@
       "osm_url": "https://www.openstreetmap.org/way/152379106",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1349.1,
+      "length_m": 1389.9,
       "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
@@ -1612,8 +1612,8 @@
       "osm_url": "https://www.openstreetmap.org/way/131117868",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1076.0,
-      "min_width_m": 9.5,
+      "length_m": 1120.0,
+      "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
         {
@@ -1643,8 +1643,8 @@
       "osm_url": "https://www.openstreetmap.org/way/431154657",
       "is_inspired": false,
       "default_laps": 4,
-      "length_m": 1256.4,
-      "min_width_m": 9.5,
+      "length_m": 880.0,
+      "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
         {
@@ -1674,7 +1674,7 @@
       "osm_url": "https://www.openstreetmap.org/way/192380335",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1317.8,
+      "length_m": 1325.1,
       "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
@@ -1705,7 +1705,7 @@
       "osm_url": "https://www.openstreetmap.org/way/854048813",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 950.0,
+      "length_m": 964.9,
       "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
@@ -1736,7 +1736,7 @@
       "osm_url": "https://www.openstreetmap.org/way/436180509",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1206.0,
+      "length_m": 1250.0,
       "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
@@ -2353,7 +2353,7 @@
       "category": "rally",
       "tag": "WORLD RX SPA RAIDILLON",
       "category_label": "World RX",
-      "description": "World RX stadium circuit at Spa-Francorchamps charging backwards up the iconic Raidillon crest with banked dirt bowl and high-speed descent.",
+      "description": "World RX stadium circuit at Spa-Francorchamps charging backwards up the iconic Raidillon crest with banked gravel bowl and high-speed descent.",
       "kind": "circuit",
       "country_code": "BE",
       "country_name": "Belgium",
@@ -2362,17 +2362,17 @@
       "osm_url": "https://www.openstreetmap.org/way/234804574",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1023.1,
+      "length_m": 1033.0,
       "min_width_m": 13.0,
       "max_width_m": 14.0,
       "surfaces": [
         {
           "surface": "Asphalt",
-          "share_pct": 67.3
+          "share_pct": 67.7
         },
         {
           "surface": "Dirt",
-          "share_pct": 32.7
+          "share_pct": 32.3
         }
       ],
       "has_jumps": true,
@@ -2462,12 +2462,12 @@
       "kind": "circuit",
       "country_code": "IT",
       "country_name": "Italy",
-      "scale": "0.5x",
+      "scale": "0.75x",
       "wikipedia_url": "https://en.wikipedia.org/wiki/Monza_Circuit",
       "osm_url": "https://www.openstreetmap.org/relation/284565",
       "is_inspired": false,
       "default_laps": 3,
-      "length_m": 2838.4,
+      "length_m": 4344.7,
       "min_width_m": 13.5,
       "max_width_m": 15.0,
       "surfaces": [
@@ -2493,12 +2493,12 @@
       "kind": "circuit",
       "country_code": "AT",
       "country_name": "Austria",
-      "scale": "0.5x",
+      "scale": "0.75x",
       "wikipedia_url": "https://en.wikipedia.org/wiki/Red_Bull_Ring",
       "osm_url": "https://www.openstreetmap.org/relation/5309181",
       "is_inspired": false,
       "default_laps": 3,
-      "length_m": 2059.6,
+      "length_m": 3238.7,
       "min_width_m": 13.0,
       "max_width_m": 14.5,
       "surfaces": [
@@ -2524,13 +2524,13 @@
       "kind": "circuit",
       "country_code": "DE",
       "country_name": "Germany",
-      "scale": "0.5x",
+      "scale": "0.75x",
       "wikipedia_url": "https://en.wikipedia.org/wiki/N%C3%BCrburgring",
       "osm_url": "https://www.openstreetmap.org/relation/38567",
       "is_inspired": false,
       "default_laps": 3,
-      "length_m": 2389.2,
-      "min_width_m": 9.5,
+      "length_m": 3861.0,
+      "min_width_m": 13.5,
       "max_width_m": 15.0,
       "surfaces": [
         {
@@ -2555,13 +2555,13 @@
       "kind": "circuit",
       "country_code": "GB",
       "country_name": "United Kingdom",
-      "scale": "0.5x",
+      "scale": "0.75x",
       "wikipedia_url": "https://en.wikipedia.org/wiki/Silverstone_Circuit",
       "osm_url": "https://www.openstreetmap.org/relation/51160",
       "is_inspired": false,
       "default_laps": 3,
-      "length_m": 2794.1,
-      "min_width_m": 6.5,
+      "length_m": 4418.3,
+      "min_width_m": 13.5,
       "max_width_m": 13.5,
       "surfaces": [
         {
@@ -2586,13 +2586,13 @@
       "kind": "circuit",
       "country_code": "ES",
       "country_name": "Spain",
-      "scale": "0.5x",
+      "scale": "0.75x",
       "wikipedia_url": "https://en.wikipedia.org/wiki/Circuit_de_Barcelona-Catalunya",
       "osm_url": "https://www.openstreetmap.org/way/831804327",
       "is_inspired": false,
       "default_laps": 3,
-      "length_m": 2217.0,
-      "min_width_m": 9.5,
+      "length_m": 3492.7,
+      "min_width_m": 13.0,
       "max_width_m": 14.5,
       "surfaces": [
         {
@@ -2617,12 +2617,12 @@
       "kind": "circuit",
       "country_code": "AU",
       "country_name": "Australia",
-      "scale": "0.5x",
+      "scale": "0.75x",
       "wikipedia_url": "https://en.wikipedia.org/wiki/Mount_Panorama_Circuit",
       "osm_url": "https://www.openstreetmap.org/relation/6942508",
       "is_inspired": false,
       "default_laps": 3,
-      "length_m": 2977.3,
+      "length_m": 4659.8,
       "min_width_m": 12.5,
       "max_width_m": 14.5,
       "surfaces": [
@@ -2648,13 +2648,13 @@
       "kind": "circuit",
       "country_code": "BE",
       "country_name": "Belgium",
-      "scale": "0.5x",
+      "scale": "0.75x",
       "wikipedia_url": "https://en.wikipedia.org/wiki/Circuit_de_Spa-Francorchamps",
       "osm_url": "https://www.openstreetmap.org/relation/284560",
       "is_inspired": false,
       "default_laps": 3,
-      "length_m": 3320.9,
-      "min_width_m": 7.5,
+      "length_m": 5253.1,
+      "min_width_m": 14.0,
       "max_width_m": 15.0,
       "surfaces": [
         {
@@ -2679,13 +2679,13 @@
       "kind": "circuit",
       "country_code": "NL",
       "country_name": "Netherlands",
-      "scale": "0.5x",
+      "scale": "0.75x",
       "wikipedia_url": "https://en.wikipedia.org/wiki/Circuit_Zandvoort",
       "osm_url": "https://www.openstreetmap.org/relation/13545573",
       "is_inspired": false,
       "default_laps": 3,
-      "length_m": 1991.8,
-      "min_width_m": 9.0,
+      "length_m": 3194.4,
+      "min_width_m": 12.5,
       "max_width_m": 14.0,
       "surfaces": [
         {
@@ -2710,13 +2710,13 @@
       "kind": "circuit",
       "country_code": "PT",
       "country_name": "Portugal",
-      "scale": "0.5x",
+      "scale": "0.75x",
       "wikipedia_url": "https://en.wikipedia.org/wiki/Algarve_International_Circuit",
       "osm_url": "https://www.openstreetmap.org/relation/7509968",
       "is_inspired": false,
       "default_laps": 3,
-      "length_m": 2217.6,
-      "min_width_m": 6.5,
+      "length_m": 3489.9,
+      "min_width_m": 14.0,
       "max_width_m": 15.0,
       "surfaces": [
         {
@@ -2741,13 +2741,13 @@
       "kind": "circuit",
       "country_code": "JP",
       "country_name": "Japan",
-      "scale": "0.5x",
+      "scale": "0.75x",
       "wikipedia_url": "https://en.wikipedia.org/wiki/Suzuka_International_Racing_Course",
       "osm_url": "https://www.openstreetmap.org/relation/284570",
       "is_inspired": false,
       "default_laps": 3,
-      "length_m": 2755.6,
-      "min_width_m": 9.0,
+      "length_m": 4355.3,
+      "min_width_m": 11.5,
       "max_width_m": 14.5,
       "surfaces": [
         {
@@ -2772,13 +2772,13 @@
       "kind": "circuit",
       "country_code": "BR",
       "country_name": "Brazil",
-      "scale": "0.5x",
+      "scale": "0.75x",
       "wikipedia_url": "https://en.wikipedia.org/wiki/Interlagos_Circuit",
       "osm_url": "https://www.openstreetmap.org/relation/6781071",
       "is_inspired": false,
       "default_laps": 3,
-      "length_m": 2083.5,
-      "min_width_m": 8.5,
+      "length_m": 3231.6,
+      "min_width_m": 13.0,
       "max_width_m": 14.5,
       "surfaces": [
         {
@@ -2803,12 +2803,12 @@
       "kind": "circuit",
       "country_code": "FR",
       "country_name": "France",
-      "scale": "0.5x",
+      "scale": "0.75x",
       "wikipedia_url": "https://en.wikipedia.org/wiki/Circuit_de_la_Sarthe",
       "osm_url": "https://www.openstreetmap.org/relation/2126739",
       "is_inspired": false,
       "default_laps": 3,
-      "length_m": 6587.8,
+      "length_m": 10219.6,
       "min_width_m": 13.5,
       "max_width_m": 15.0,
       "surfaces": [
@@ -2834,14 +2834,14 @@
       "kind": "circuit",
       "country_code": "MC",
       "country_name": "Monaco",
-      "scale": "0.5x",
+      "scale": "0.75x",
       "wikipedia_url": "https://en.wikipedia.org/wiki/Circuit_de_Monaco",
       "osm_url": "https://www.openstreetmap.org/relation/148194",
       "is_inspired": false,
       "default_laps": 3,
-      "length_m": 1492.1,
-      "min_width_m": 7.0,
-      "max_width_m": 11.5,
+      "length_m": 2482.1,
+      "min_width_m": 6.5,
+      "max_width_m": 10.5,
       "surfaces": [
         {
           "surface": "Asphalt",
@@ -2865,12 +2865,12 @@
       "kind": "circuit",
       "country_code": "ES",
       "country_name": "Spain",
-      "scale": "0.5x",
+      "scale": "0.75x",
       "wikipedia_url": "https://en.wikipedia.org/wiki/Circuito_del_Jarama",
       "osm_url": "https://www.openstreetmap.org/relation/18813472",
       "is_inspired": false,
       "default_laps": 3,
-      "length_m": 2615.4,
+      "length_m": 4105.5,
       "min_width_m": 13.0,
       "max_width_m": 14.5,
       "surfaces": [
@@ -2896,12 +2896,12 @@
       "kind": "circuit",
       "country_code": "SG",
       "country_name": "Singapore",
-      "scale": "0.5x",
+      "scale": "0.75x",
       "wikipedia_url": "https://en.wikipedia.org/wiki/Marina_Bay_Street_Circuit",
       "osm_url": "https://www.openstreetmap.org/relation/421263",
       "is_inspired": false,
       "default_laps": 3,
-      "length_m": 2305.4,
+      "length_m": 3705.0,
       "min_width_m": 11.5,
       "max_width_m": 13.0,
       "surfaces": [
@@ -2927,13 +2927,13 @@
       "kind": "circuit",
       "country_code": "BH",
       "country_name": "Bahrain",
-      "scale": "0.5x",
+      "scale": "0.75x",
       "wikipedia_url": "https://en.wikipedia.org/wiki/Bahrain_International_Circuit",
       "osm_url": "https://www.openstreetmap.org/relation/284538",
       "is_inspired": false,
       "default_laps": 3,
-      "length_m": 2530.4,
-      "min_width_m": 5.0,
+      "length_m": 4059.0,
+      "min_width_m": 13.5,
       "max_width_m": 15.0,
       "surfaces": [
         {
@@ -2958,13 +2958,13 @@
       "kind": "circuit",
       "country_code": "CA",
       "country_name": "Canada",
-      "scale": "0.5x",
+      "scale": "0.75x",
       "wikipedia_url": "https://en.wikipedia.org/wiki/Circuit_Gilles_Villeneuve",
       "osm_url": "https://www.openstreetmap.org/relation/284595",
       "is_inspired": false,
       "default_laps": 3,
-      "length_m": 2062.6,
-      "min_width_m": 9.0,
+      "length_m": 3270.7,
+      "min_width_m": 13.0,
       "max_width_m": 14.5,
       "surfaces": [
         {
@@ -2989,13 +2989,13 @@
       "kind": "circuit",
       "country_code": "US",
       "country_name": "United States",
-      "scale": "0.5x",
+      "scale": "0.75x",
       "wikipedia_url": "https://en.wikipedia.org/wiki/Circuit_of_the_Americas",
       "osm_url": "https://www.openstreetmap.org/relation/6537729",
       "is_inspired": false,
       "default_laps": 3,
-      "length_m": 2555.8,
-      "min_width_m": 7.0,
+      "length_m": 4134.7,
+      "min_width_m": 13.5,
       "max_width_m": 15.0,
       "surfaces": [
         {
@@ -3334,12 +3334,12 @@
       "kind": "circuit",
       "country_code": "US",
       "country_name": "United States",
-      "scale": "0.5x",
+      "scale": "0.75x",
       "wikipedia_url": "https://en.wikipedia.org/wiki/Road_America",
       "osm_url": "https://www.openstreetmap.org/relation/6432758",
       "is_inspired": false,
       "default_laps": 3,
-      "length_m": 3237.4,
+      "length_m": 4856.1,
       "min_width_m": 14.0,
       "max_width_m": 14.0,
       "surfaces": [
