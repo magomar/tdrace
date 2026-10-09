@@ -6,6 +6,7 @@ use std::collections::HashSet;
 use cabinet::ui::FieldDropdown;
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::geometry::{BarrierType, JumpRamp, ObstacleShape, SurfaceLayer, SurfaceShape};
+use tdrace_core::track::pit_kit::{JunctionComponent, JunctionShape};
 use tdrace_core::CarCategory;
 
 use super::state::{EditorState, Selection};
@@ -220,6 +221,17 @@ pub const SURFACES: [SurfaceType; 15] = [
 
 pub const WALL_TYPES: [BarrierType; 3] = [BarrierType::Concrete, BarrierType::Steel, BarrierType::TireWall];
 pub const WALL_TYPE_LABELS: [&str; 3] = ["Concrete", "Steel", "Tyres"];
+pub const PIT_MODE_LABELS: [&str; 2] = ["Layout", "Free-form"];
+pub const PIT_SHAPE_LABELS: [&str; 2] = ["Taper", "TurnOff"];
+pub const PIT_JUNCTION_LENGTH_RANGE: (f32, f32) = (5.0, 200.0);
+/// The TurnOff guard accepts 10 <= angle < 60 degrees.
+pub const PIT_ANGLE_RANGE: (f32, f32) = (10.0, 59.0);
+pub const DEFAULT_TURNOFF_ANGLE: f32 = 30.0;
+pub const PIT_GAP_RANGE: (f32, f32) = (0.0, 15.0);
+pub const PIT_ROAD_WIDTH_RANGE: (f32, f32) = (4.0, 12.0);
+pub const PIT_BOX_START_RANGE: (f32, f32) = (0.0, 2000.0);
+pub const PIT_BOX_COUNT_RANGE: (f32, f32) = (1.0, 40.0);
+pub const PIT_BOX_SPACING_RANGE: (f32, f32) = (4.0, 40.0);
 pub const LAYER_LABELS: [&str; 2] = ["Back", "Front"];
 pub const BRANCH_LABELS: [&str; 2] = ["2 branches", "3 branches"];
 pub const CATEGORY_LABELS: [&str; 6] = ["GT", "Stock Car", "Rallycross", "Kart", "Off-Road", "Autocross"];
@@ -297,6 +309,19 @@ pub enum Prop {
     OffTrack,
     Category,
     GridSlots,
+    PitMode,
+    PitEntryShape,
+    PitEntryLength,
+    PitEntryAngle,
+    PitExitShape,
+    PitExitLength,
+    PitExitAngle,
+    PitGap,
+    PitRoadWidth,
+    PitBoxStart,
+    PitBoxCount,
+    PitBoxSpacing,
+    PitGarages,
 }
 
 impl Prop {
@@ -436,6 +461,8 @@ pub enum Row {
     /// Side view of a jump ramp profile.
     RampProfile(Box<JumpRamp>),
     Info(String),
+    /// A red message, e.g. a failed pit layout guard.
+    Error(String),
 }
 
 /// A collapsible group of rows.
@@ -501,7 +528,7 @@ pub const BODY_PAD: f32 = 8.0;
 /// Reference-pixel height of one row, including its gap.
 pub fn row_height(row: &Row) -> f32 {
     match row {
-        Row::Info(_) => INFO_H,
+        Row::Info(_) | Row::Error(_) => INFO_H,
         Row::RampProfile(_) => RAMP_PROFILE_H + ROW_GAP,
         _ => ROW_H + ROW_GAP,
     }
@@ -563,7 +590,7 @@ pub fn build_inspector(state: &EditorState, tools: &ToolSettings) -> Option<Insp
         Selection::JumpRamp(_) => build_ramps(state),
         Selection::Checkpoint(_) => build_checkpoints(state),
         Selection::GridSlot(_) => build_grid_slots(state),
-        Selection::PitBox => Some(build_pit(state)),
+        Selection::PitBox => Some(build_pit(state, tools)),
         Selection::Multi { waypoints, surface_zones, obstacles, jump_ramps, checkpoints, grid_slots, pit_box } => {
             // Several entities of one kind get that kind's view; mixed kinds wait for HC-3.
             let kinds = [!waypoints.is_empty(), !surface_zones.is_empty(), !obstacles.is_empty(), !jump_ramps.is_empty(), !checkpoints.is_empty(), !grid_slots.is_empty(), *pit_box];
@@ -583,7 +610,7 @@ pub fn build_inspector(state: &EditorState, tools: &ToolSettings) -> Option<Insp
             } else if !grid_slots.is_empty() {
                 build_grid_slots(state)
             } else {
-                Some(build_pit(state))
+                Some(build_pit(state, tools))
             }
         }
     }
@@ -599,7 +626,7 @@ fn build_mixed(state: &EditorState, tools: &ToolSettings) -> InspectorModel {
         (MixedKind::Ramps, sel.selected_jump_ramp_indices().len(), build_ramps),
         (MixedKind::Gates, sel.selected_checkpoint_indices().len(), build_checkpoints),
         (MixedKind::GridSlots, sel.selected_grid_slot_indices().len(), build_grid_slots),
-        (MixedKind::PitLane, usize::from(sel.is_pit_box_selected()), |s: &EditorState| Some(build_pit(s))),
+        (MixedKind::PitLane, usize::from(sel.is_pit_box_selected()), |s: &EditorState| Some(build_pit(s, &ToolSettings::default()))),
     ]
     .into_iter()
     .filter(|(_, n, _)| *n > 0)
@@ -793,7 +820,47 @@ fn build_grid_slots(state: &EditorState) -> Option<InspectorModel> {
     })
 }
 
-fn build_pit(state: &EditorState) -> InspectorModel {
+/// Pit lane layout controls (spec 101 Pillar VII).
+fn pit_layout_sections(state: &EditorState, tools: &ToolSettings) -> Vec<Section> {
+    let mut rows = vec![Row::Segmented { prop: Prop::PitMode, label: "Mode", labels: &PIT_MODE_LABELS, value: Common::Same(usize::from(!tools.pit_layout_mode)) }];
+    let Some(layout) = state.track.pit_lane_layout.as_ref().filter(|_| tools.pit_layout_mode) else {
+        if tools.pit_layout_mode {
+            let hint = if tools.pit_layout_entry.is_some() { "Click the main track at the pit exit." } else { "Click the main track at the pit entry." };
+            rows.push(Row::Info(hint.to_string()));
+        }
+        return vec![Section::new("pit.mode", "PIT LANE TOOL", rows)];
+    };
+    if let Some(err) = &tools.pit_layout_error {
+        rows.push(Row::Error(format!("Guard failed: {err}")));
+    }
+    let shape = |s: JunctionShape| usize::from(matches!(s, JunctionShape::TurnOff { .. }));
+    let angle = |s: JunctionShape| match s {
+        JunctionShape::TurnOff { angle_deg } => angle_deg,
+        JunctionShape::Taper => DEFAULT_TURNOFF_ANGLE,
+    };
+    let junction_rows = |shape_prop, length_prop, angle_prop, j: &JunctionComponent| {
+        vec![
+            Row::Segmented { prop: shape_prop, label: "Shape", labels: &PIT_SHAPE_LABELS, value: Common::Same(shape(j.kind)) },
+            stepper(length_prop, "Length", Common::Same(j.length), j.length, PIT_JUNCTION_LENGTH_RANGE, 5.0, "m"),
+            stepper(angle_prop, "Angle", Common::Same(angle(j.kind)), angle(j.kind), PIT_ANGLE_RANGE, 1.0, "°"),
+        ]
+    };
+    let mut sections = vec![Section::new("pit.mode", "PIT LANE TOOL", rows)];
+    sections.push(Section::new("pit.entry", "ENTRY JUNCTION", junction_rows(Prop::PitEntryShape, Prop::PitEntryLength, Prop::PitEntryAngle, &layout.entry)));
+    sections.push(Section::new("pit.exit", "EXIT JUNCTION", junction_rows(Prop::PitExitShape, Prop::PitExitLength, Prop::PitExitAngle, &layout.exit)));
+    let row = &layout.box_row;
+    sections.push(Section::new("pit.road", "PIT ROAD", vec![
+        stepper(Prop::PitGap, "Gap", Common::Same(layout.entry.divider_gap), layout.entry.divider_gap, PIT_GAP_RANGE, 0.5, "m"),
+        stepper(Prop::PitRoadWidth, "Width", Common::Same(layout.road_width), layout.road_width, PIT_ROAD_WIDTH_RANGE, 0.5, "m"),
+        stepper(Prop::PitBoxStart, "Box start", Common::Same(row.start_s), row.start_s, PIT_BOX_START_RANGE, 1.0, "m"),
+        stepper(Prop::PitBoxCount, "Boxes", Common::Same(row.count as f32), row.count as f32, PIT_BOX_COUNT_RANGE, 1.0, ""),
+        stepper(Prop::PitBoxSpacing, "Spacing", Common::Same(row.spacing), row.spacing, PIT_BOX_SPACING_RANGE, 1.0, "m"),
+        Row::Toggle { prop: Prop::PitGarages, label: "Garages", value: Common::Same(row.garages) },
+    ]));
+    sections
+}
+
+fn build_pit(state: &EditorState, tools: &ToolSettings) -> InspectorModel {
     let rows = match &state.track.pit_lane {
         Some(lane) => vec![
             Row::Info(format!("Length: {} m", lane.spline.total_length as u32)),
@@ -807,7 +874,7 @@ fn build_pit(state: &EditorState) -> InspectorModel {
         count: 1,
         subtitle: None,
         footer: Some(Footer { duplicate: false, delete_label: "Clear pit lane" }),
-        sections: vec![Section::new("pit.info", "PIT LANE", rows)],
+        sections: std::iter::once(Section::new("pit.info", "PIT LANE", rows)).chain(pit_layout_sections(state, tools)).collect(),
     }
 }
 
@@ -941,8 +1008,54 @@ pub fn apply_edit(state: &mut EditorState, tools: &mut ToolSettings, edit: Edit)
                 state.revalidate();
             }
         }
+        (Some(PitMode | PitEntryShape | PitEntryLength | PitEntryAngle | PitExitShape | PitExitLength | PitExitAngle | PitGap | PitRoadWidth | PitBoxStart | PitBoxCount | PitBoxSpacing | PitGarages), _) => {
+            apply_pit_layout_edit(state, tools, edit)
+        }
         _ => apply_track_edit(state, tools, edit),
     }
+}
+
+/// Applies a pit layout edit and recompiles the layout (spec 101).
+fn apply_pit_layout_edit(state: &mut EditorState, tools: &mut ToolSettings, edit: Edit) {
+    if let Edit::Pick(Prop::PitMode, k) = edit {
+        tools.pit_layout_mode = k == 0;
+        tools.pit_layout_entry = None;
+        return;
+    }
+    let step = |v: f32, e: Edit, range: (f32, f32)| match e {
+        Edit::Set(_, x) => clamp_to(x, range),
+        Edit::Step(_, d) => clamp_to(v + d, range),
+        _ => v,
+    };
+    let shape_of = |k: usize, current: JunctionShape| match (k, current) {
+        (0, _) => JunctionShape::Taper,
+        (_, JunctionShape::TurnOff { angle_deg }) => JunctionShape::TurnOff { angle_deg },
+        _ => JunctionShape::TurnOff { angle_deg: DEFAULT_TURNOFF_ANGLE },
+    };
+    let set_angle = |j: &mut JunctionComponent, e: Edit| {
+        if let JunctionShape::TurnOff { angle_deg } = j.kind {
+            j.kind = JunctionShape::TurnOff { angle_deg: step(angle_deg, e, PIT_ANGLE_RANGE) };
+        }
+    };
+    tools.update_pit_layout(state, |l| match edit {
+        Edit::Pick(Prop::PitEntryShape, k) => l.entry.kind = shape_of(k, l.entry.kind),
+        Edit::Pick(Prop::PitExitShape, k) => l.exit.kind = shape_of(k, l.exit.kind),
+        Edit::Set(Prop::PitEntryLength, _) | Edit::Step(Prop::PitEntryLength, _) => l.entry.length = step(l.entry.length, edit, PIT_JUNCTION_LENGTH_RANGE),
+        Edit::Set(Prop::PitExitLength, _) | Edit::Step(Prop::PitExitLength, _) => l.exit.length = step(l.exit.length, edit, PIT_JUNCTION_LENGTH_RANGE),
+        Edit::Set(Prop::PitEntryAngle, _) | Edit::Step(Prop::PitEntryAngle, _) => set_angle(&mut l.entry, edit),
+        Edit::Set(Prop::PitExitAngle, _) | Edit::Step(Prop::PitExitAngle, _) => set_angle(&mut l.exit, edit),
+        Edit::Set(Prop::PitGap, _) | Edit::Step(Prop::PitGap, _) => {
+            let gap = step(l.entry.divider_gap, edit, PIT_GAP_RANGE);
+            l.entry.divider_gap = gap;
+            l.exit.divider_gap = gap;
+        }
+        Edit::Set(Prop::PitRoadWidth, _) | Edit::Step(Prop::PitRoadWidth, _) => l.road_width = step(l.road_width, edit, PIT_ROAD_WIDTH_RANGE),
+        Edit::Set(Prop::PitBoxStart, _) | Edit::Step(Prop::PitBoxStart, _) => l.box_row.start_s = step(l.box_row.start_s, edit, PIT_BOX_START_RANGE),
+        Edit::Set(Prop::PitBoxCount, _) | Edit::Step(Prop::PitBoxCount, _) => l.box_row.count = step(l.box_row.count as f32, edit, PIT_BOX_COUNT_RANGE).round() as u32,
+        Edit::Set(Prop::PitBoxSpacing, _) | Edit::Step(Prop::PitBoxSpacing, _) => l.box_row.spacing = step(l.box_row.spacing, edit, PIT_BOX_SPACING_RANGE),
+        Edit::Flag(Prop::PitGarages, on) => l.box_row.garages = on,
+        _ => {}
+    });
 }
 
 fn apply_waypoint_edit(state: &mut EditorState, tools: &mut ToolSettings, edit: Edit) {

@@ -2938,6 +2938,11 @@ fn draw_inspector_row(
             fonts.draw_ui_regular(&fitted, x, y + scaler.s(12.0), scaler.font_s(11.0), Palette::UI_TEXT_MUTED);
             None
         }
+        Row::Error(text) => {
+            let fitted = fonts.fit_ui_regular(text, scaler.font_s(11.0), w);
+            fonts.draw_ui_regular(&fitted, x, y + scaler.s(12.0), scaler.font_s(11.0), Palette::CURB_RED);
+            None
+        }
         Row::Stepper { prop, label, value, anchor, min, max, step, unit, signed } => {
             draw_label(label);
             draw_inspector_stepper(fonts, scaler, tools, (ctrl_x, y, ctrl_w, h), *prop, *value, *anchor, (*min, *max, *step), unit, *signed, mouse, raw_mouse, clicked)

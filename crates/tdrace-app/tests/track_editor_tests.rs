@@ -2714,3 +2714,109 @@ fn test_road_split_wall_trimming_and_zero_collision() {
 
 
 
+
+// ---------------------------------------------------------------------------------------------------------------
+// Spec 101 Pillar VII: Pit Lane tool Layout mode
+// ---------------------------------------------------------------------------------------------------------------
+
+/// Start and end arc length of the longest stretch with radius >= 300 m (in 5 m steps).
+fn longest_straight(track: &tdrace_core::track::Track) -> (f32, f32) {
+    use tdrace_core::track::pit_kit::signed_curvature;
+    let main = &track.spline;
+    let (mut best, mut run_start) = ((0.0, 0.0), None);
+    let mut s = 0.0;
+    while s < main.total_length {
+        let straight = signed_curvature(main, s).abs() < 1.0 / 300.0;
+        match (straight, run_start) {
+            (true, None) => run_start = Some(s),
+            (false, Some(a)) => {
+                if s - a > best.1 - best.0 {
+                    best = (a, s);
+                }
+                run_start = None;
+            }
+            _ => {}
+        }
+        s += 5.0;
+    }
+    best
+}
+
+fn point_beside(track: &tdrace_core::track::Track, s: f32, lateral_right: f32) -> Vec2 {
+    let sample = track.spline.sample_at_distance(s);
+    sample.point - sample.normal * lateral_right
+}
+
+/// Scenario: Track Studio Layout mode builds a pit lane
+#[test]
+fn test_pit_lane_layout_mode_builds_a_pit_lane() {
+    use tdrace_app::editor::inspector::{apply_edit, build_inspector, Edit, Prop, Row};
+    use tdrace_core::track::pit_kit::Side;
+
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
+    assert!(track.pit_lane.is_none() && track.pit_lane_layout.is_none());
+    let (a, b) = longest_straight(&track);
+    assert!(b - a > 240.0, "no long straight on the test circuit ({a}..{b})");
+    let mut state = EditorState::new(track);
+    let mut tools = ToolSettings::default();
+    tools.active_tool = EditorToolType::PitLane;
+    assert!(tools.pit_layout_mode, "Layout mode is the default");
+
+    // Given/When: click the entry, then the exit, on the right half of the main road.
+    let (entry_click, exit_click) = (point_beside(&state.track, a + 10.0, 2.0), point_beside(&state.track, b - 10.0, 2.0));
+    tools.handle_mouse_down(&mut state, entry_click);
+    tools.handle_mouse_up(&mut state, entry_click);
+    assert!(state.track.pit_lane_layout.is_none(), "one click only places the entry");
+    tools.handle_mouse_down(&mut state, exit_click);
+    tools.handle_mouse_up(&mut state, exit_click);
+
+    // Then: a preview with default junctions, a parallel road and a box row on the clicked side.
+    let layout = state.track.pit_lane_layout.clone().expect("layout created");
+    assert_eq!(tools.pit_layout_error, None);
+    assert_eq!(layout.side, Side::Right);
+    assert!(!layout.road_waypoints.is_empty());
+    let lane = state.track.pit_lane.clone().expect("preview compiled");
+    assert_eq!(lane.pit_boxes.len(), 6);
+    let mid = lane.spline.sample_at_distance(lane.spline.total_length * 0.5).point;
+    assert!(state.track.spline.project_point(mid).lateral_offset > 0.0, "lane is on the right");
+
+    // And: dragging a road point bends the road; the joint guide points stay locked (they are not draggable).
+    // Pushing one point out makes the curve dip toward the track beside it (about 7 % of the push); guard 7 allows
+    // 0.25 m, so bend gently and without grid snap.
+    state.grid_snap = tdrace_app::editor::GridSnapSetting::Off;
+    let k = layout.road_waypoints.len() / 2;
+    let p = layout.road_waypoints[k];
+    let moved = p + (p - state.track.spline.project_point(p).closest_point).normalize() * 1.5;
+    tools.handle_mouse_down(&mut state, p);
+    tools.handle_mouse_drag(&mut state, moved);
+    tools.handle_mouse_up(&mut state, moved);
+    let bent = state.track.pit_lane_layout.clone().unwrap();
+    assert_eq!(bent.road_waypoints[k], moved, "road point follows the drag");
+    assert_eq!(bent.road_waypoints.len(), layout.road_waypoints.len());
+    assert_eq!((bent.entry.clone(), bent.exit.clone()), (layout.entry.clone(), layout.exit.clone()), "junctions do not move");
+    let lane = state.track.pit_lane.as_ref().unwrap_or_else(|| panic!("bent preview did not compile: {:?}", tools.pit_layout_error));
+    assert!(lane.spline.project_point(bent.road_waypoints[k]).distance_to_spline < 0.1, "lane passes through the moved point");
+
+    // And: a parameter that fails a guard shows a red error with the rule name and hides the preview.
+    apply_edit(&mut state, &mut tools, Edit::Set(Prop::PitEntryLength, 5.0));
+    let err = tools.pit_layout_error.clone().expect("guard error shown");
+    assert!(err.contains("JunctionTooSteep"), "{err}");
+    assert!(state.track.pit_lane.is_none(), "preview hidden");
+    let model = build_inspector(&state, &tools).expect("inspector");
+    assert!(model.sections.iter().flat_map(|s| &s.rows).any(|r| matches!(r, Row::Error(t) if t.contains("JunctionTooSteep"))));
+
+    // Fixing the parameter brings the preview back.
+    apply_edit(&mut state, &mut tools, Edit::Set(Prop::PitEntryLength, 40.0));
+    assert_eq!(tools.pit_layout_error, None);
+    assert!(state.track.pit_lane.is_some());
+}
+
+/// Track Studio keeps a pit lane layout through save and load.
+#[test]
+fn test_pit_lane_layout_round_trips_through_json() {
+    let track = tdrace_core::catalog::official_track("gt", "monza");
+    let layout = track.pit_lane_layout.clone().expect("monza has a layout");
+    let json = serde_json::to_string(&track).unwrap();
+    let loaded = tdrace_core::track::Track::from_json(&json).unwrap();
+    assert_eq!(loaded.pit_lane_layout, Some(layout));
+}
