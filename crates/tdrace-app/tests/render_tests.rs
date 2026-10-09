@@ -2625,6 +2625,45 @@ fn test_spec_095_multiview_wheel_anchor_extraction_and_archetype_integration() {
 }
 
 #[test]
+fn test_vortex_dune_crusher_front_tyre_matches_sprite_rear_tyre() {
+    use macroquad::texture::Image;
+    use tdrace_app::render::vehicle_assets::get_visual_wheel_anchor;
+
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../assets/textures/vehicles/topdown/classic/classic_offroad.png");
+    let bytes = std::fs::read(&path).expect("classic_offroad sprite");
+    let img = Image::from_file_with_format(&bytes, None).expect("parse sprite");
+    let w = img.width as usize;
+
+    // Rear-left tyre box: the painted tyre in the upper-left corner of the 512 px sprite.
+    let (mut x0, mut x1, mut y0, mut y1) = (usize::MAX, 0usize, usize::MAX, 0usize);
+    for y in 105..170 {
+        for x in 20..150 {
+            if img.bytes[(y * w + x) * 4 + 3] > 100 {
+                x0 = x0.min(x);
+                x1 = x1.max(x);
+                y0 = y0.min(y);
+                y1 = y1.max(y);
+            }
+        }
+    }
+    let rear_len = (x1 - x0 + 1) as f32;
+    let rear_wid = (y1 - y0 + 1) as f32;
+
+    let anchor = get_visual_wheel_anchor("classic_offroad").expect("classic_offroad anchor");
+    assert!(
+        (anchor.tire_len_px / rear_len - 1.0).abs() < 0.05,
+        "front tyre length {} px must be within 5% of sprite rear tyre {} px",
+        anchor.tire_len_px, rear_len
+    );
+    assert!(
+        (anchor.tire_wid_px / rear_wid - 1.0).abs() < 0.05,
+        "front tyre width {} px must be within 5% of sprite rear tyre {} px",
+        anchor.tire_wid_px, rear_wid
+    );
+}
+
+#[test]
 fn test_spec_095_closed_wheel_chassis_sprites_remain_intact_without_cutouts() {
     use macroquad::texture::Image;
     use std::path::Path;

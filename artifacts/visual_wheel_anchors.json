@@ -1349,8 +1349,8 @@
     "archetype": "buggy_allterrain_front",
     "axle_x_px": 398.0,
     "track_width_px": 210.0,
-    "tire_len_px": 145.5,
-    "tire_wid_px": 64.0
+    "tire_len_px": 117.0,
+    "tire_wid_px": 57.0
   },
   "classic_rally": {
     "model_id": "classic_rally",
