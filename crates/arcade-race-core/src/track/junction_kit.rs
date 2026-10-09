@@ -127,7 +127,7 @@ pub struct JunctionGeometry {
 pub struct NosePoint {
     /// Midpoint between the two road edges, on the bisector of the wedge.
     pub point: Vec2,
-    /// Main track edge point and branch edge point, [`NOSE_GAP`] apart across the wedge.
+    /// Main track edge point (beyond its curb, if any) and branch edge point, [`NOSE_GAP`] apart across the wedge.
     pub track_edge: Vec2,
     pub branch_edge: Vec2,
     /// Unit vector from `track_edge` to `branch_edge`: perpendicular to the bisector of the two road edges.
@@ -156,6 +156,23 @@ pub struct Wedge {
     pub cos_half: f32,
     /// Angle between the two edge directions (degrees).
     pub divergence_deg: f32,
+    /// Width of the curb on the main edge here, measured across the main edge (m); 0 without a curb. A wall stands
+    /// beyond it.
+    pub curb: f32,
+}
+
+impl Wedge {
+    /// The main edge with its curb: where a wall next to the main road can start. Measured along `across`.
+    #[inline]
+    pub fn main_wall_edge(&self) -> Vec2 {
+        self.main_edge + self.across * (self.curb / self.cos_half)
+    }
+
+    /// Gap between the main curb and the branch edge along `across` (m).
+    #[inline]
+    pub fn clear_width(&self) -> f32 {
+        self.width - self.curb / self.cos_half
+    }
 }
 
 /// The wedge at branch point `p` driving along `heading`, on `side` of the main track. `half_width` is half the width
@@ -182,6 +199,7 @@ pub fn wedge_at(main: &TrackSpline, side: Side, p: Vec2, heading: Vec2, half_wid
     } else {
         (n_m, lateral, 1.0)
     };
+    let has_curb = if sigma > 0.0 { proj.left_curb } else { proj.right_curb };
     Wedge {
         main_edge: edge - across * width,
         branch_edge: edge,
@@ -189,6 +207,7 @@ pub fn wedge_at(main: &TrackSpline, side: Side, p: Vec2, heading: Vec2, half_wid
         width,
         cos_half,
         divergence_deg: cos_phi.acos().to_degrees(),
+        curb: if has_curb { TrackSpline::DEFAULT_CURB_WIDTH } else { 0.0 },
     }
 }
 
@@ -626,10 +645,10 @@ fn finish_junction(
         None => apex,
     };
     let nose = first_open.and_then(|open| {
-        let k = (open..count).find(|&k| wedges[order[k]].width >= NOSE_GAP)?;
+        let k = (open..count).find(|&k| wedges[order[k]].clear_width() >= NOSE_GAP)?;
         let (a, b) = (&wedges[order[k - 1]], &wedges[order[k]]);
-        let f = ((NOSE_GAP - a.width) / (b.width - a.width).max(1e-6)).clamp(0.0, 1.0);
-        let (m, e) = (a.main_edge.lerp(b.main_edge, f), a.branch_edge.lerp(b.branch_edge, f));
+        let f = ((NOSE_GAP - a.clear_width()) / (b.clear_width() - a.clear_width()).max(1e-6)).clamp(0.0, 1.0);
+        let (m, e) = (a.main_wall_edge().lerp(b.main_wall_edge(), f), a.branch_edge.lerp(b.branch_edge, f));
         Some(NosePoint {
             point: (m + e) * 0.5,
             track_edge: m,

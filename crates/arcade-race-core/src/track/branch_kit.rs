@@ -221,7 +221,7 @@ impl BranchLayout {
         for i in first..=last.max(first) {
             let heading = (c[(i + 1).min(c.len() - 1)] - c[i.saturating_sub(1)]).normalize_or_zero();
             let wedge = wedge_at(main, self.side, c[i], heading, self.road_width * 0.5);
-            if wedge.width < NOSE_GAP - DIVIDER_GAP_TOLERANCE {
+            if wedge.clear_width() < NOSE_GAP - DIVIDER_GAP_TOLERANCE {
                 return Err(BranchKitError::DividerTooNarrow { s: arcs[i] });
             }
         }
@@ -801,9 +801,9 @@ fn island_dividers(
         let heading = (c[i + 1] - c[i - 1]).normalize_or_zero();
         let half_branch = seg.map_or(layout.road_width * 0.5, |s| s.project_point(p).track_width * 0.5);
         let wedge = wedge_at(main, layout.side, p, heading, half_branch);
-        // Each wall stands `o` from its own road edge, measured across the wedge.
-        let o = gap.min((wedge.width - NOSE_LENGTH) * 0.5).max(NOSE_CLEARANCE) / wedge.cos_half;
-        on_main.push(wedge.main_edge + wedge.across * o);
+        // Each wall stands `o` from its own road edge (the main one beyond its curb), measured across the wedge.
+        let o = gap.min((wedge.clear_width() - NOSE_LENGTH) * 0.5).max(NOSE_CLEARANCE) / wedge.cos_half;
+        on_main.push(wedge.main_wall_edge() + wedge.across * o);
         on_branch.push(wedge.branch_edge - wedge.across * o);
     }
     on_main.push(cap.segment.start);
