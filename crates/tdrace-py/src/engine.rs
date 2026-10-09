@@ -18,6 +18,15 @@ use tdrace_core::track::Track;
 use crate::config::{parse_car_config, parse_lidar_config, RewardConfig};
 use crate::rasterizer::{FastRasterizer, SkidMark};
 
+/// Advances a car's progress tracker. A circuit with a launch chute (spec 103) is tracked on its network, which
+/// knows the chute that the cars start in; any other circuit on its main spline.
+fn advance_tracker(tracker: &mut TrackProgressTracker, car: &Car, track: &Track, dt: f32) {
+    match &track.network {
+        Some(net) if track.launch_chute().is_some() => tracker.update_network(car, net, &track.checkpoints, dt),
+        _ => tracker.update(car, &track.spline, &track.checkpoints, dt),
+    }
+}
+
 /// Deterministic Xorshift64 PRNG.
 #[inline]
 fn xorshift64(state: &mut u64) -> u64 {
@@ -245,7 +254,7 @@ impl PyEngine {
 
             self.cars[i] = Car::new(self.car_configs[i]).with_pose(pos, heading);
             self.trackers[i].reset();
-            self.trackers[i].update(&self.cars[i], &self.track.spline, &self.track.checkpoints, 0.0);
+            advance_tracker(&mut self.trackers[i], &self.cars[i], &self.track, 0.0);
             self.prev_steer[i] = 0.0;
         }
 
@@ -309,7 +318,7 @@ impl PyEngine {
         }
 
         // 4. Update track progress tracker
-        self.trackers[0].update(&self.cars[0], &self.track.spline, &self.track.checkpoints, self.dt);
+        advance_tracker(&mut self.trackers[0], &self.cars[0], &self.track, self.dt);
 
         // 5. Update skid marks
         self.record_skid_marks(0);
@@ -471,7 +480,7 @@ impl PyEngine {
                 wall_hits[i] = true;
             }
 
-            self.trackers[i].update(&self.cars[i], &self.track.spline, &self.track.checkpoints, self.dt);
+            advance_tracker(&mut self.trackers[i], &self.cars[i], &self.track, self.dt);
             self.record_skid_marks(i);
         }
 

@@ -314,7 +314,7 @@ fn test_rallycross_circuits_have_jumps_and_mixed_surfaces() {
             t.geometry.jump_ramps.len(),
             min_jumps
         );
-        assert!(t.grid_positions.len() >= 10, "{}: grid slots", id);
+        assert!(t.grid_positions.len() >= 8, "{}: grid slots (the launch chute holds 8)", id);
     }
 }
 
@@ -431,7 +431,7 @@ fn test_classic_rallycross_circuits_have_joker_track_networks() {
         assert!(joker_spline.is_some(), "{}: failed to build composite spline for joker layout", id);
 
         // Verify split and merge junctions exist
-        assert_eq!(network.junctions.len(), 2, "{}: expected 2 junctions (split and merge)", id);
+        assert_eq!(network.junctions.len(), 3, "{}: expected 3 junctions (joker split and merge, launch chute merge)", id);
 
         // Verify joker checkpoints exist
         let has_joker_cp = track.checkpoints.iter().any(|cp| cp.is_joker);

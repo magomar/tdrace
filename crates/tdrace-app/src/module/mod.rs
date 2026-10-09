@@ -859,7 +859,7 @@ mod tests {
             assert!(track_def.default_laps >= 3 && track_def.default_laps <= 7);
             let track = tdrace_core::catalog::official_track("autocross", track_def.id);
             assert!(!track.name.is_empty(), "Track name cannot be empty for {}", track_def.id);
-            assert!(track.grid_positions.len() >= 12, "Grid slots check for {}", track_def.id);
+            assert!(track.grid_positions.len() >= 8, "Grid slots check for {}", track_def.id);
 
             let diagnostics = tdrace_core::track::validation::validate_track(&track);
             let errors: Vec<_> = diagnostics

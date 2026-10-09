@@ -492,12 +492,18 @@ const MAX_TARGET_TURN_RAD: f32 = 75.0 * std::f32::consts::PI / 180.0;
 const MIN_TIGHT_LOOKAHEAD_M: f32 = 3.0;
 /// How far the line to the target stays from a close wall: half a car plus a margin (m).
 const WALL_CLEARANCE_M: f32 = 1.2;
+/// Gap a recovering bot keeps between its body and a wall end on the line to its target (m).
+const WALL_END_MARGIN_M: f32 = 0.4;
+/// How far a recovering bot moves its target sideways to clear a wall end (m).
+const WALL_END_PUSH_M: f32 = 8.0;
 /// How strongly a car closer than WALL_CLEARANCE_M to a close wall aims away from it (m per m).
 const CAR_WALL_PUSH: f32 = 3.0;
 /// How far outside its own road a bot's car must be before it follows another branch it is on (m).
 const OFF_ROUTE_MARGIN_M: f32 = 2.0;
 /// How far past the edge of a branch road a bot's car still counts as on that branch (m).
 const BRANCH_REACH_M: f32 = 8.0;
+/// How far past the end of the launch chute a bot's car is before it follows the loop instead (spec 103) (m).
+const LAUNCH_CHUTE_MERGED_MARGIN_M: f32 = 20.0;
 /// A slow bot pointing farther than this from its target turns round with a three-point turn (rad).
 const TURN_START_RAD: f32 = 1.75;
 /// The turn ends, driving forward, once the nose points this close to the target (rad).
@@ -526,6 +532,9 @@ const TURN_MIN_LEG_S: f32 = 0.3;
 /// Longest single forward or reverse leg, and longest whole turn (s).
 const TURN_LEG_S: f32 = 3.0;
 const TURN_MAX_S: f32 = 12.0;
+/// A reverse leg that the heading alone could end must first back the nose this far from every wall (m): a car
+/// that is nose-first against a wall end already points right, and a half-second reverse leg left its nose on the wall.
+const TURN_NOSE_CLEAR_M: f32 = 1.5;
 
 /// A three-point turn in progress (tdrace-le75): forward at full lock towards the target until the front
 /// nears the edge of the drivable ground, then reverse at the opposite lock until the rear does, and so on.
@@ -650,6 +659,13 @@ pub struct BotAiDriver {
     pub cached_layout_id: Option<String>,
     /// Precomputed composite spline for active layout to prevent per-frame allocations.
     pub cached_layout_spline: Option<TrackSpline>,
+    /// First-lap route of a layout with a launch chute (spec 103), with the layout it was built for and the
+    /// length of the chute. The bot follows it until it has merged onto the loop.
+    pub cached_entry_route: Option<(String, TrackSpline, f32)>,
+    /// Whether the bot has left the launch chute (true from the start on a circuit without one).
+    pub left_launch_chute: bool,
+    /// The route changed under the bot: project onto it without the continuity window on the next tick.
+    pub reproject: bool,
     /// Current lap tracked by this bot.
     pub current_lap: u32,
     /// Number of joker laps completed by this bot.
@@ -699,6 +715,9 @@ impl BotAiDriver {
             active_layout_id: None,
             cached_layout_id: None,
             cached_layout_spline: None,
+            cached_entry_route: None,
+            left_launch_chute: false,
+            reproject: false,
             current_lap: 1,
             joker_laps_taken: 0,
             was_in_joker: false,
@@ -892,7 +911,24 @@ impl BotAiDriver {
             }
         }
 
-        let spline = self.cached_layout_spline.as_ref().unwrap_or(&track.spline);
+        // Lap 1 from a launch chute (spec 103): follow the chute and the loop to the merge point until the bot
+        // has merged onto the loop, then the closed route of the layout.
+        if !self.left_launch_chute {
+            let layout_id = self.active_layout_id.clone();
+            let built_for = self.cached_entry_route.as_ref().map(|(id, _, _)| id.clone());
+            if layout_id.is_some() && built_for != layout_id {
+                self.cached_entry_route = layout_id.as_deref().zip(track.network.as_ref()).and_then(|(id, net)| {
+                    let chute = net.get_segment(net.get_layout(id)?.entry_segment?)?;
+                    Some((id.to_string(), net.build_entry_spline_for_layout(id)?, chute.length))
+                });
+                self.left_launch_chute = self.cached_entry_route.is_none();
+            }
+        }
+        let entry_route = self.cached_entry_route.as_ref().filter(|_| !self.left_launch_chute);
+        let spline = match entry_route {
+            Some((_, entry, _)) => entry,
+            None => self.cached_layout_spline.as_ref().unwrap_or(&track.spline),
+        };
         if spline.samples.is_empty() {
             return CarControls::default();
         }
@@ -903,12 +939,20 @@ impl BotAiDriver {
         let car_right = car.right_vector();
 
         // 1. Project onto spline to find current track distance with continuity constraint
-        let proj = if self.last_pos.is_some() {
+        let proj = if self.last_pos.is_some() && !self.reproject {
             spline.project_point_continuity(car_pos, self.current_target_dist, 50.0)
         } else {
             spline.project_point(car_pos)
         };
+        self.reproject = false;
         let curr_dist = proj.progress_distance;
+        if let Some((_, _, chute_len)) = entry_route {
+            // Merged: the car is on the loop, past the chute.
+            if curr_dist > chute_len + LAUNCH_CHUTE_MERGED_MARGIN_M {
+                self.left_launch_chute = true;
+                self.reproject = true;
+            }
+        }
 
         // A car that is stuck off its route on another branch follows that branch until the next route choice (spec
         // 088). Steering back to the route it left put a holjes_rx bot that ran wide at the split against the
@@ -1133,6 +1177,35 @@ impl BotAiDriver {
             }
         }
 
+        // A bot that has already had to turn round at a wall steers its body clear of the wall ends and corners
+        // ahead of it. A loose wall end (the nose of a joker throat) can sit less than the half width of the car off
+        // the line, and the bot reversed, drove at the end again and sat on it: the front corner touches the end
+        // while the car is still pointing a little to one side of the target, and it cannot turn without moving.
+        if self.recovery_attempts > 0 && car_speed < TURN_START_SPEED {
+            let hull = car.hull();
+            let clear = hull.half_width + WALL_END_MARGIN_M;
+            let chord = target_point - car_pos;
+            let len = chord.length();
+            if len > 1.0 {
+                // The wall end nearest the way the car points that lies within reach of its body.
+                let mut worst: Option<(f32, f32)> = None; // (gap, side of the car it lies on)
+                for w in track.geometry.all_walls() {
+                    for p in [w.segment.start, w.segment.end] {
+                        let rel = p - car_pos;
+                        let along = rel.dot(car_fwd);
+                        let off_car = rel.dot(car_right);
+                        if along > 0.0 && along < len && off_car.abs() < clear && worst.is_none_or(|(g, _)| off_car.abs() < g) {
+                            worst = Some((off_car.abs(), off_car.signum()));
+                        }
+                    }
+                }
+                if let Some((_, wall_side)) = worst {
+                    // Aim away from the end: to the other side of the car, the full push, so the lock saturates.
+                    target_point -= car_right * wall_side * WALL_END_PUSH_M;
+                }
+            }
+        }
+
         // 3. Check heading error to target
         let to_target = target_point - car_pos;
         let desired_heading = to_target.y.atan2(to_target.x);
@@ -1223,10 +1296,15 @@ impl BotAiDriver {
                 // Off the drivable ground, only moving farther out of it counts as reaching the edge. A leg turns the
                 // car a little before it can end there, or a car facing the edge only ever reversed.
                 let at_edge = turn.leg_time > TURN_MIN_LEG_S && past_edge(probe) > past_edge(car_pos).max(0.0);
+                let nose = car_pos + car_fwd * hull.front;
+                let nose_clear_of_walls = || track.geometry.all_walls().all(|w| w.segment.distance_to_point(nose) > TURN_NOSE_CLEAR_M);
                 let leg_done = at_edge
                     || turn.blocked_time > 0.4
                     || turn.leg_time > TURN_LEG_S
-                    || (turn.reversing && turn.leg_time > 0.5 && heading_error.abs() < TURN_REVERSE_DONE_RAD);
+                    || (turn.reversing
+                        && turn.leg_time > 0.5
+                        && heading_error.abs() < TURN_REVERSE_DONE_RAD
+                        && nose_clear_of_walls());
                 if leg_done {
                     turn = ThreePointTurn { reversing: !turn.reversing, leg_time: 0.0, blocked_time: 0.0, ..turn };
                     // Once the car points clearly to one side of the target, the next leg turns the short way. In deep

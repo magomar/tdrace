@@ -1,5 +1,8 @@
+use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
+use super::launch_chute::RAMP_LENGTH_M;
+use super::network::JunctionKind;
 use super::{Track, TrackKind};
 use crate::track::geometry::{point_in_polygon, LineSegment, ObstacleShape, SurfaceShape};
 
@@ -628,7 +631,8 @@ pub fn validate_track(track: &Track) -> Vec<TrackValidationError> {
         for (i, pose) in grid.iter().enumerate() {
             let proj = track.spline.project_point(pose.position);
 
-            if !track.is_arena() {
+            // The slots of a launch chute lie on the chute, not on the loop (see `validate_launch_chute`).
+            if !track.is_arena() && track.launch_chute().is_none() {
                 let half_track_w = proj.track_width * 0.5 + if proj.left_curb || proj.right_curb { 1.4 } else { 0.0 };
 
                 if proj.distance_to_spline > half_track_w + 0.5 {
@@ -1358,6 +1362,162 @@ pub fn validate_track(track: &Track) -> Vec<TrackValidationError> {
         }
     }
 
+    // 12. Launch Chute (Spec 103)
+    diagnostics.extend(validate_launch_chute(track));
+
+    diagnostics
+}
+
+/// Checks the launch chute of a circuit (spec 103); a circuit without one has nothing to check.
+///
+/// The chute must hang together (segment, junction, entry segments), end in a closed wall (the rear barrier
+/// meets both side walls and the side walls leave no gap along the pad), merge tangent to the circuit, keep clear of
+/// the rest of the circuit, and hold its grid inside the drivable pad.
+pub(super) fn validate_launch_chute(track: &Track) -> Vec<TrackValidationError> {
+    let mut diagnostics = Vec::new();
+    let Some(net) = &track.network else { return diagnostics };
+    let Some(chute) = &net.launch_chute else {
+        if net.layouts.iter().any(|l| l.entry_segment.is_some()) {
+            diagnostics.push(TrackValidationError::error(
+                "ERR_CHUTE_NO_CONFIG",
+                "A layout has an entry segment but the track has no launch chute config.",
+            ));
+        }
+        return diagnostics;
+    };
+    let mut fail = |code: &'static str, message: String| diagnostics.push(TrackValidationError::error(code, message));
+
+    // Topology: the spur is an entry segment of every layout, outside the loop, ending in the merge junction.
+    let Some(seg) = net.get_segment(chute.segment_id) else {
+        fail("ERR_CHUTE_TOPOLOGY", format!("Launch chute segment {:?} does not exist.", chute.segment_id));
+        return diagnostics;
+    };
+    if seg.samples.len() < 2 {
+        fail("ERR_CHUTE_TOPOLOGY", "Launch chute segment has no samples.".to_string());
+        return diagnostics;
+    }
+    for layout in &net.layouts {
+        if layout.entry_segment != Some(chute.segment_id) {
+            fail("ERR_CHUTE_TOPOLOGY", format!("Layout '{}' does not start in the launch chute.", layout.id));
+        }
+        if layout.segment_sequence.contains(&chute.segment_id) {
+            fail("ERR_CHUTE_TOPOLOGY", format!("Layout '{}' drives the launch chute every lap.", layout.id));
+        }
+    }
+    let merge_socket = match net.get_junction(chute.merge_junction_id).map(|j| &j.kind) {
+        Some(JunctionKind::Merge { egress_socket, .. }) => *egress_socket,
+        _ => {
+            fail("ERR_CHUTE_TOPOLOGY", "The launch chute does not end in a Merge junction.".to_string());
+            return diagnostics;
+        }
+    };
+
+    // The merge is C1: same place and direction as the circuit.
+    let end = seg.samples[seg.samples.len() - 1];
+    let loop_at_merge = track.spline.project_point(merge_socket.point);
+    let angle = end.tangent.dot(loop_at_merge.tangent).clamp(-1.0, 1.0).acos().to_degrees();
+    if end.point.distance(merge_socket.point) > 0.5 || angle > 3.0 {
+        fail(
+            "ERR_CHUTE_MERGE_NOT_C1",
+            format!(
+                "Launch chute meets the circuit {:.2} m off and at {:.1} deg (limit 0.5 m, 3 deg).",
+                end.point.distance(merge_socket.point),
+                angle
+            ),
+        );
+    }
+
+    // Closed walls: the rear barrier spans the pad and meets a side wall at each end, and the pad has walls on both
+    // sides all along (the merge ramp is where the walls open onto the circuit). A wall of the circuit that stands where the chute's
+    // wall would counts as that wall.
+    let corner_walls = |p: Vec2| {
+        chute.side_barriers.iter().any(|w| w.segment.start.distance(p) < 0.5 || w.segment.end.distance(p) < 0.5)
+    };
+    let rear = &chute.terminal_barrier.segment;
+    if rear.length() < chute.pad_width {
+        fail(
+            "ERR_CHUTE_OPEN_END",
+            format!("Launch chute rear barrier is only {:.1} m long (pad {:.1} m).", rear.length(), chute.pad_width),
+        );
+    } else if !corner_walls(rear.start) || !corner_walls(rear.end) {
+        fail("ERR_CHUTE_OPEN_END", "Launch chute rear barrier does not meet the side walls.".to_string());
+    }
+    // A ray from each road edge outwards meets a wall of the chute, or of the circuit where it stands in its place.
+    let pad_end = (seg.length - RAMP_LENGTH_M).max(0.0);
+    'walls: for sample in seg.samples.iter().filter(|s| s.distance <= pad_end).step_by(3) {
+        for sign in [1.0, -1.0] {
+            let edge = sample.point + sample.normal * (sign * sample.width * 0.5);
+            let ray = LineSegment::new(edge, edge + sample.normal * (sign * 14.0));
+            let walls = chute.side_barriers.iter().chain(&track.geometry.inner_walls).chain(&track.geometry.outer_walls);
+            if !walls.into_iter().any(|w| w.segment.intersect_segment(&ray).is_some()) {
+                fail(
+                    "ERR_CHUTE_WALL_GAP",
+                    format!(
+                        "Launch chute has a wall gap on the {} at ({:.1}, {:.1}).",
+                        if sign > 0.0 { "left" } else { "right" },
+                        edge.x,
+                        edge.y
+                    ),
+                );
+                break 'walls;
+            }
+        }
+    }
+
+    // Clear of the rest of the circuit: beyond the stretch it runs beside, no part of the loop comes near the pad.
+    let loop_len = track.spline.total_length();
+    let merge_dist = loop_at_merge.progress_distance;
+    let beside = seg.length + 20.0;
+    'overlap: for sample in seg.samples.iter().step_by(2) {
+        for other in &track.spline.samples {
+            let behind_merge = (merge_dist - other.distance).rem_euclid(loop_len);
+            let ahead_of_merge = (other.distance - merge_dist).rem_euclid(loop_len);
+            if behind_merge <= beside || ahead_of_merge <= 20.0 {
+                continue;
+            }
+            let clearance = sample.width * 0.5 + other.width * 0.5 + 2.0;
+            if sample.point.distance(other.point) < clearance {
+                fail(
+                    "ERR_CHUTE_OVERLAPS_TRACK",
+                    format!(
+                        "Launch chute runs into another part of the circuit near ({:.1}, {:.1}).",
+                        sample.point.x, sample.point.y
+                    ),
+                );
+                break 'overlap;
+            }
+        }
+    }
+
+    // The grid: the chute's own slots, all on the pad, facing along it.
+    if chute.grid_slots.is_empty() {
+        fail("ERR_CHUTE_GRID", "Launch chute has no grid slots.".to_string());
+    } else if track.grid_positions != chute.grid_slots {
+        fail("ERR_CHUTE_GRID", "The starting grid is not the launch chute grid.".to_string());
+    }
+    for slot in &chute.grid_slots {
+        let proj = seg.project_point(slot.position);
+        let reach = proj.track_width * 0.5 - 1.0;
+        let facing = Vec2::new(slot.angle.cos(), slot.angle.sin()).dot(proj.tangent).clamp(-1.0, 1.0).acos().to_degrees();
+        if proj.distance_to_spline > reach || facing > 20.0 {
+            fail(
+                "ERR_CHUTE_GRID",
+                format!(
+                    "Grid slot #{} is {:.1} m off the pad centre (limit {:.1} m) and {:.0} deg off its direction.",
+                    slot.grid_slot + 1,
+                    proj.distance_to_spline,
+                    reach,
+                    facing
+                ),
+            );
+        }
+    }
+    if !(14.0..=18.0).contains(&chute.pad_width) {
+        diagnostics.push(TrackValidationError::warning(
+            "WARN_CHUTE_PAD_WIDTH",
+            format!("Launch pad width {:.1} m is outside the usual 14-18 m.", chute.pad_width),
+        ));
+    }
     diagnostics
 }
 

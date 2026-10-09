@@ -52,12 +52,12 @@ fn test_new_championship_trims_to_circuit_slots_preserving_player() {
     session.init_race();
 
     let grid_slots = session.max_grid_participants();
-    assert_eq!(grid_slots, 10, "Classic Rallycross circuit has 10 starting grid slots");
-    assert_eq!(session.world.vehicles.len(), 10, "Cars count must trim to circuit grid slots");
-    assert_eq!(session.grid_participants.len(), 10, "Grid participants must trim to circuit grid slots");
+    assert_eq!(grid_slots, 8, "Classic Rallycross circuit has 8 starting grid slots (launch chute)");
+    assert_eq!(session.world.vehicles.len(), 8, "Cars count must trim to circuit grid slots");
+    assert_eq!(session.grid_participants.len(), 8, "Grid participants must trim to circuit grid slots");
 
     let champ_ref = session.championship_session.as_ref().unwrap();
-    assert_eq!(champ_ref.standings.len(), 10, "Championship standings must trim to circuit grid slots");
+    assert_eq!(champ_ref.standings.len(), 8, "Championship standings must trim to circuit grid slots");
     assert!(champ_ref.standings.iter().any(|s| s.driver_id == "player"), "Player must be preserved in standings");
 }
 
@@ -118,18 +118,18 @@ fn test_round_with_fewer_slots_admits_top_ranked_and_player_without_discarding_o
     assert_eq!(champ_after_r0.current_round, 1);
     assert_eq!(champ_after_r0.standings.len(), 18, "All 18 drivers remain in standings after round 0");
 
-    // Advance to Round 1 (Classic Rallycross: 10 slots)
+    // Advance to Round 1 (Classic Rallycross: 8 slots)
     session.init_race();
 
-    assert_eq!(session.max_grid_participants(), 10, "Round 1 has 10 grid slots");
-    assert_eq!(session.world.vehicles.len(), 10, "Only 10 cars participate in Round 1");
-    assert_eq!(session.grid_participants.len(), 10);
+    assert_eq!(session.max_grid_participants(), 8, "Round 1 has 8 grid slots");
+    assert_eq!(session.world.vehicles.len(), 8, "Only 8 cars participate in Round 1");
+    assert_eq!(session.grid_participants.len(), 8);
 
     // Human player is in the grid
     let player_participant = session.grid_participants.iter().find(|p| p.is_player);
     assert!(player_participant.is_some(), "Human player must be in Round 1 grid");
 
-    // The other 9 participants must be the top 9 non-player drivers from standings
+    // The other 7 participants must be the top 7 non-player drivers from standings
     let non_player_standings: Vec<String> = session
         .championship_session
         .as_ref()
@@ -137,7 +137,7 @@ fn test_round_with_fewer_slots_admits_top_ranked_and_player_without_discarding_o
         .standings
         .iter()
         .filter(|s| s.driver_id != "player")
-        .take(9)
+        .take(7)
         .map(|s| s.driver_name.clone())
         .collect();
 
@@ -152,7 +152,7 @@ fn test_round_with_fewer_slots_admits_top_ranked_and_player_without_discarding_o
     let mut expected_drivers = non_player_standings;
     expected_drivers.sort();
 
-    assert_eq!(bot_participants, expected_drivers, "Top 9 ranked AI drivers must be selected");
+    assert_eq!(bot_participants, expected_drivers, "Top 7 ranked AI drivers must be selected");
 
     // Crucial check: championship standings STILL retains all 18 drivers!
     assert_eq!(
@@ -222,21 +222,21 @@ fn test_human_player_always_qualifies_even_when_ranked_last() {
     let champ = session.championship_session.as_ref().unwrap();
     assert_eq!(champ.standings.last().unwrap().driver_id, "player", "Player must be ranked last in standings");
 
-    // Advance to Round 1 on Classic Rallycross (10 slots)
+    // Advance to Round 1 on Classic Rallycross (8 slots)
     session.init_race();
 
-    assert_eq!(session.max_grid_participants(), 10);
-    assert_eq!(session.world.vehicles.len(), 10);
+    assert_eq!(session.max_grid_participants(), 8);
+    assert_eq!(session.world.vehicles.len(), 8);
     // Player MUST still be on the grid in slot 0 despite being 18th in standings!
     let player_participant = session.grid_participants.iter().find(|p| p.is_player);
     assert!(player_participant.is_some(), "Human player must ALWAYS qualify for the round");
-    assert_eq!(session.world.vehicles.len(), 10);
+    assert_eq!(session.world.vehicles.len(), 8);
 }
 
 #[test]
 fn test_subsequent_round_with_more_slots_allows_all_qualified_drivers_to_race_again() {
     let mut session = RaceSession::new();
-    // 3 rounds: Monza (18) -> Classic Rallycross (10) -> Monza (18)
+    // 3 rounds: Monza (18) -> Classic Rallycross (8) -> Monza (18)
     let initial_drivers = [
         ("player", "Player", "Apex GT"),
         ("ai_1", "Alpha One", "Team Alpha"),
@@ -290,13 +290,13 @@ fn test_subsequent_round_with_more_slots_allows_all_qualified_drivers_to_race_ag
         .collect();
     session.championship_session.as_mut().unwrap().submit_round_results("Monza", r0_results);
 
-    // Round 1 (Classic Rallycross: 10 slots)
+    // Round 1 (Classic Rallycross: 8 slots)
     session.init_race();
-    assert_eq!(session.world.vehicles.len(), 10, "Round 1 restricted to 10 slots");
+    assert_eq!(session.world.vehicles.len(), 8, "Round 1 restricted to 8 slots");
     assert_eq!(session.championship_session.as_ref().unwrap().standings.len(), 18);
 
-    // Finish Round 1 with only the 10 participating drivers
-    let r1_results: Vec<RoundDriverResult> = (1..=10)
+    // Finish Round 1 with only the 8 participating drivers
+    let r1_results: Vec<RoundDriverResult> = (1..=8)
         .map(|pos| RoundDriverResult {
             driver_id: if pos == 1 { "player".to_string() } else { format!("driver_{}", pos) },
             driver_name: format!("Driver {}", pos),
