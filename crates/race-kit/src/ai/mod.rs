@@ -1040,6 +1040,19 @@ impl BotAiDriver {
 
                     if self.is_pitting && !self.pit_serviced && !lane.pit_boxes.is_empty() {
                         let num_boxes = lane.pit_boxes.len();
+                        // A bot that rolled past its stall cannot reverse, and the pit walls (spec 101) leave it no
+                        // way round: take the next stall ahead, or drive out without service.
+                        let box_s = |i: usize| lane.spline.project_point(lane.pit_boxes[i].position).progress_distance;
+                        let passed = |i: usize| box_s(i) + lane.pit_boxes[i].stop_radius < pit_proj.progress_distance;
+                        if passed(self.pit_stall_idx % num_boxes) {
+                            match (0..num_boxes).filter(|&i| !passed(i)).min_by(|&a, &b| box_s(a).total_cmp(&box_s(b))) {
+                                Some(next) => self.pit_stall_idx = next,
+                                None => self.pit_serviced = true,
+                            }
+                        }
+                    }
+                    if self.is_pitting && !self.pit_serviced && !lane.pit_boxes.is_empty() {
+                        let num_boxes = lane.pit_boxes.len();
                         let stall_idx = self.pit_stall_idx % num_boxes;
                         let pbox = &lane.pit_boxes[stall_idx];
                         let dist_to_box = (pbox.position - car_pos).length();
