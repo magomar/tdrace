@@ -112,22 +112,84 @@ pub struct JunctionGeometry {
     pub chevrons: Vec<PitLaneChevron>,
     /// End of the dividing wall, between the main edge and the branch inner edge at the free end.
     pub divider_end: Vec2,
-    /// First point after the apex where the edge gap reaches [`NOSE_GAP`]; `None` when the junction never gets that wide.
+    /// Where the branch road's own edge leaves (entry) or rejoins (exit) the main track edge. `apex` measures the gap
+    /// along the main normal (spec 101, the pit markings); on a steep taper the true edge leaves up to a couple of metres later.
+    pub edge_apex: Vec2,
+    /// First point after `edge_apex` where the wedge between the two edges is [`NOSE_GAP`] wide; `None` when the
+    /// junction never gets that wide.
     pub nose: Option<NosePoint>,
     /// Main-spline arc lengths (start, end) of the junction in driving order. Not wrapped: `end` can pass the lap length.
     pub span: (f32, f32),
 }
 
-/// Where the edge gap between the main track and the branch road first reaches [`NOSE_GAP`] (spec 102).
+/// Where the wedge between the main track edge and the branch road edge first is [`NOSE_GAP`] wide (spec 102).
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct NosePoint {
-    /// Midpoint between the two road edges.
+    /// Midpoint between the two road edges, on the bisector of the wedge.
     pub point: Vec2,
-    /// Main track edge point and branch inner edge point, [`NOSE_GAP`] apart.
+    /// Main track edge point and branch edge point, [`NOSE_GAP`] apart across the wedge.
     pub track_edge: Vec2,
     pub branch_edge: Vec2,
+    /// Unit vector from `track_edge` to `branch_edge`: perpendicular to the bisector of the two road edges.
+    pub across: Vec2,
+    /// Angle between the two road edges at the nose (degrees).
+    pub divergence_deg: f32,
     /// Index into `centreline` of the first sample at or past the nose, walking away from `s`.
     pub index: usize,
+}
+
+/// Cross-section of the wedge between the main track edge and the edge of the branch road that faces it (spec 102).
+///
+/// Measured across the bisector of the two edges, so a barrier that fits across it keeps its clearance from both
+/// edges even where the branch leaves at a steep angle. Where the edges are not within 75 degrees of each other the
+/// section runs along the shortest line between them.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Wedge {
+    /// Where the cross-section meets the main track edge, and the branch edge point it starts from.
+    pub main_edge: Vec2,
+    pub branch_edge: Vec2,
+    /// Unit vector from `main_edge` to `branch_edge`.
+    pub across: Vec2,
+    /// Gap between the edges along `across` (m). Negative while the branch edge is still inside the main ribbon.
+    pub width: f32,
+    /// Cosine of half the angle between the edges: a wall `o` from an edge stands `o / cos_half` along `across`.
+    pub cos_half: f32,
+    /// Angle between the two edge directions (degrees).
+    pub divergence_deg: f32,
+}
+
+/// The wedge at branch point `p` driving along `heading`, on `side` of the main track. `half_width` is half the width
+/// of the branch road there.
+pub fn wedge_at(main: &TrackSpline, side: Side, p: Vec2, heading: Vec2, half_width: f32) -> Wedge {
+    let sigma = side.sign();
+    let t_b = heading.normalize_or_zero();
+    let n_b = Vec2::new(-t_b.y, t_b.x);
+    // The branch edge that faces the main track.
+    let edge = p - n_b * (sigma * half_width);
+    let proj = main.project_point(edge);
+    let t_m = proj.tangent;
+    let n_m = proj.normal * sigma;
+    let lateral = (edge - proj.closest_point).dot(n_m) - proj.track_width * 0.5;
+    let cos_phi = t_m.dot(t_b).clamp(-1.0, 1.0);
+    let (across, width, cos_half) = if cos_phi > 0.25 {
+        let bisector = (t_m + t_b).normalize_or_zero();
+        let mut across = bisector.perp();
+        if across.dot(n_m) < 0.0 {
+            across = -across;
+        }
+        let cos_half = across.dot(n_m).max(0.5);
+        (across, lateral / cos_half, cos_half)
+    } else {
+        (n_m, lateral, 1.0)
+    };
+    Wedge {
+        main_edge: edge - across * width,
+        branch_edge: edge,
+        across,
+        width,
+        cos_half,
+        divergence_deg: cos_phi.acos().to_degrees(),
+    }
 }
 
 /// One station of the outer envelope of a junction: the outer edge, on the branch side, of the union of the main
@@ -305,7 +367,7 @@ pub fn build_junction(
         }
     };
 
-    Ok(finish_junction(main, role, sigma, road_width, centreline, (span_start, span_end)))
+    Ok(finish_junction(main, role, side, road_width, centreline, (span_start, span_end)))
 }
 
 /// Distance of the guide points that fix the road heading at both junction joints (m).
@@ -498,11 +560,12 @@ fn turnoff_centreline(
 fn finish_junction(
     main: &TrackSpline,
     role: JunctionRole,
-    sigma: f32,
+    side: Side,
     road_width: f32,
     centreline: Vec<Vec2>,
     span: (f32, f32),
 ) -> JunctionGeometry {
+    let sigma = side.sign();
     let count = centreline.len();
     let mut edge_gaps = Vec::with_capacity(count);
     let mut track_edges = Vec::with_capacity(count);
@@ -545,13 +608,36 @@ fn finish_junction(
     }
     let apex = (apex_te + apex_be) * 0.5;
 
-    // Nose: the first point after the apex where the edge gap reaches NOSE_GAP.
-    let nose = (apex_k..count).find(|&k| edge_gaps[order[k]] >= NOSE_GAP).map(|k| {
-        let (i, j) = (order[k.max(1) - 1], order[k]);
-        let (g0, g1) = (edge_gaps[i], edge_gaps[j]);
-        let f = if (g1 - g0).abs() > 1e-6 { ((NOSE_GAP - g0) / (g1 - g0)).clamp(0.0, 1.0) } else { 1.0 };
-        let (te, be) = (track_edges[i].lerp(track_edges[j], f), branch_edges[i].lerp(branch_edges[j], f));
-        NosePoint { point: (te + be) * 0.5, track_edge: te, branch_edge: be, index: j }
+    // Spec 102: apex and nose from the branch road's true edge, across the wedge between the two edges.
+    let wedges: Vec<Wedge> = (0..count)
+        .map(|i| {
+            let heading = (centreline[(i + 1).min(count - 1)] - centreline[i.saturating_sub(1)]).normalize_or_zero();
+            wedge_at(main, side, centreline[i], heading, road_width * 0.5)
+        })
+        .collect();
+    let first_open = (1..count).find(|&k| wedges[order[k]].width >= 0.0);
+    let edge_apex = match first_open {
+        Some(k) => {
+            let (a, b) = (&wedges[order[k - 1]], &wedges[order[k]]);
+            let f = (-a.width / (b.width - a.width).max(1e-6)).clamp(0.0, 1.0);
+            let (m, e) = (a.main_edge.lerp(b.main_edge, f), a.branch_edge.lerp(b.branch_edge, f));
+            (m + e) * 0.5
+        }
+        None => apex,
+    };
+    let nose = first_open.and_then(|open| {
+        let k = (open..count).find(|&k| wedges[order[k]].width >= NOSE_GAP)?;
+        let (a, b) = (&wedges[order[k - 1]], &wedges[order[k]]);
+        let f = ((NOSE_GAP - a.width) / (b.width - a.width).max(1e-6)).clamp(0.0, 1.0);
+        let (m, e) = (a.main_edge.lerp(b.main_edge, f), a.branch_edge.lerp(b.branch_edge, f));
+        Some(NosePoint {
+            point: (m + e) * 0.5,
+            track_edge: m,
+            branch_edge: e,
+            across: (e - m).normalize_or_zero(),
+            divergence_deg: a.divergence_deg + (b.divergence_deg - a.divergence_deg) * f,
+            index: order[k],
+        })
     });
 
     let divider_k = (0..count).find(|&k| edge_gaps[order[k]] >= DIVIDER_WALL_MIN_GAP).unwrap_or(count - 1);
@@ -614,6 +700,7 @@ fn finish_junction(
         quads,
         chevrons,
         divider_end,
+        edge_apex,
         nose,
         span,
     }

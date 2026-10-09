@@ -133,27 +133,20 @@ fn sockets_are_real_and_continuous_with_the_main_road() {
 #[test]
 fn the_split_apex_lies_where_the_branch_edge_leaves_the_main_edge() {
     let track = bare_track();
-    // A long taper: its edge leaves the main edge at a shallow angle, where the gap along the main normal and the
-    // gap between the true edges agree.
-    let mut l = layout();
-    l.split = junction(100.0, 4.0, 80.0);
-    l.road_waypoints = vec![road_point(215.0, -30.0, SurfaceType::Dirt), road_point(240.0, -30.0, SurfaceType::Dirt)];
-    let compiled = l.compile(&track).unwrap();
+    let compiled = layout().compile(&track).unwrap();
     let seg = compiled.network.get_segment(SegmentId(2)).unwrap();
     // Right side of a +x straight is -y. Branch inner edge is its left edge; the main edge is y = -6.
     let leaves = seg
         .samples
         .iter()
-        .find(|s| {
-            let inner_edge = s.point + s.normal * (s.width * 0.5);
-            s.point.x > 100.0 && inner_edge.y < -TRACK_WIDTH * 0.5
-        })
+        .map(|s| s.point + s.normal * (s.width * 0.5))
+        .find(|edge| edge.x > 100.0 && edge.y < -TRACK_WIDTH * 0.5)
         .expect("the branch leaves the main road");
-    let apex = compiled.geometry.split.apex;
+    let apex = compiled.geometry.split.edge_apex;
     assert!(
-        (leaves.point.x - apex.x).abs() < 0.5,
+        (leaves.x - apex.x).abs() < 0.5,
         "branch edge leaves at x {:.2}, apex at x {:.2}",
-        leaves.point.x,
+        leaves.x,
         apex.x
     );
 }
@@ -396,8 +389,8 @@ fn the_island_is_a_closed_loop_with_a_collidable_nose() {
     let walls = track.geometry.network_walls.clone();
     let main = &track.spline;
 
-    let (nose, _) = nose_barrier(main, &compiled.geometry.split, BarrierType::TireWall);
-    let (cap, _) = nose_barrier(main, &compiled.geometry.merge, BarrierType::TireWall);
+    let (nose, _) = nose_barrier(&compiled.geometry.split, BarrierType::TireWall);
+    let (cap, _) = nose_barrier(&compiled.geometry.merge, BarrierType::TireWall);
     let nose_i = walls.iter().position(|w| w.segment == nose.segment).expect("nose is a network wall");
     let cap_i = walls.iter().position(|w| w.segment == cap.segment).expect("cap is a network wall");
     assert!((nose.segment.length() - 1.6).abs() < 1e-3 && (cap.segment.length() - 1.6).abs() < 1e-3);

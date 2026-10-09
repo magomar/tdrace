@@ -47,6 +47,22 @@ fn apex_is_where_the_edge_gap_is_zero_on_the_main_edge() {
 }
 
 #[test]
+fn edge_apex_is_on_the_true_edge_of_the_branch() {
+    let main = stadium();
+    // A steep taper: the branch edge point at a sample lies ahead of the centreline point, so the edge leaves the main
+    // edge later than the gap along the main normal says.
+    let c = comp(100.0, JunctionShape::Taper, 20.0, 4.0);
+    let j = build_junction(&main, &c, JunctionRole::Entry, Side::Left, ROAD_WIDTH).unwrap();
+    assert!(j.edge_apex.x > j.apex.x, "edge apex {:?} should be past the normal-gap apex {:?}", j.edge_apex, j.apex);
+    assert!((j.edge_apex.y - TRACK_WIDTH * 0.5).abs() < 0.2);
+    // The branch edge facing the main road, one sample past the apex, is outside the main edge.
+    let k = j.centreline.iter().position(|p| p.x > j.edge_apex.x + 0.5).unwrap();
+    let t = (j.centreline[k + 1] - j.centreline[k - 1]).normalize();
+    let inner = j.centreline[k] - Vec2::new(-t.y, t.x) * (ROAD_WIDTH * 0.5);
+    assert!(inner.y > TRACK_WIDTH * 0.5, "inner edge {inner:?} is outside the main edge");
+}
+
+#[test]
 fn nose_point_is_the_first_point_with_the_nose_gap() {
     let main = stadium();
     let c = comp(100.0, JunctionShape::Taper, 30.0, 4.0);
@@ -55,9 +71,9 @@ fn nose_point_is_the_first_point_with_the_nose_gap() {
     assert!(((nose.branch_edge - nose.track_edge).length() - NOSE_GAP).abs() < 0.05);
     assert!((nose.point - (nose.track_edge + nose.branch_edge) * 0.5).length() < 1e-4);
     assert!(nose.point.x > j.apex.x, "the nose lies past the apex");
-    // No earlier centreline sample has the nose gap.
-    assert!(j.edge_gaps[..nose.index].iter().all(|&g| g < NOSE_GAP));
-    assert!(j.edge_gaps[nose.index] >= NOSE_GAP);
+    // The nose is on the branch side of the main edge, across the wedge from the main edge point.
+    assert!(((nose.branch_edge - nose.track_edge).normalize() - nose.across).length() < 1e-4);
+    assert!(nose.across.y > 0.5, "Left of a +x straight is +y");
 }
 
 #[test]

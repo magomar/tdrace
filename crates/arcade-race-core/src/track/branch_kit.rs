@@ -16,7 +16,7 @@ use super::geometry::{BarrierType, LineSegment, WallBarrier};
 use super::presets::merge_collinear_walls;
 use super::junction_kit::{
     build_junction, cumulative_lengths, free_road, EnvelopePoint, FreeRoad, JunctionComponent, JunctionError,
-    JunctionGeometry, JunctionRole, JunctionShape, NosePoint, Side, NOSE_GAP, NOSE_LENGTH,
+    wedge_at, JunctionGeometry, JunctionRole, JunctionShape, Side, NOSE_CLEARANCE, NOSE_GAP, NOSE_LENGTH,
 };
 use super::network::{
     GoreConfig, JunctionId, MergeConfig, RoadJunction, RoadSegment, SegmentId, SocketId, SplineSocket, TrackLayout,
@@ -212,15 +212,16 @@ impl BranchLayout {
         }
     }
 
-    /// Guard 4: between the two noses the edge gap between the main road and the branch stays at the nose gap.
+    /// Guard 4: between the two noses the wedge between the main road edge and the branch edge stays at the nose gap.
     fn check_divider(&self, main: &TrackSpline, geom: &BranchGeometry) -> Result<(), BranchKitError> {
         let first = geom.split.nose.map_or(0, |n| n.index);
         let last = geom.road_end + geom.merge.nose.map_or(0, |n| n.index);
         let arcs = cumulative_lengths(&geom.centreline);
+        let c = &geom.centreline;
         for i in first..=last.max(first) {
-            let proj = main.project_point(geom.centreline[i]);
-            let gap = proj.distance_to_spline - proj.track_width * 0.5 - self.road_width * 0.5;
-            if gap < NOSE_GAP - DIVIDER_GAP_TOLERANCE {
+            let heading = (c[(i + 1).min(c.len() - 1)] - c[i.saturating_sub(1)]).normalize_or_zero();
+            let wedge = wedge_at(main, self.side, c[i], heading, self.road_width * 0.5);
+            if wedge.width < NOSE_GAP - DIVIDER_GAP_TOLERANCE {
                 return Err(BranchKitError::DividerTooNarrow { s: arcs[i] });
             }
         }
@@ -349,8 +350,8 @@ impl BranchLayout {
         let merge_i0 = merge_eg;
         let merge_i1 = branch_socket(&geom.merge, self.merge.s, false);
 
-        let gore = self.gore_config(main, geom);
-        let merge_config = self.merge_config(main, geom);
+        let gore = self.gore_config(geom);
+        let merge_config = self.merge_config(geom);
         let split_junction = RoadJunction::split(
             JunctionId(0),
             format!("{} Split", self.name),
@@ -445,12 +446,12 @@ impl BranchLayout {
     }
 
     /// Gore of the split: the apex of the component, the nose barrier and the length to the nose.
-    fn gore_config(&self, main: &TrackSpline, geom: &BranchGeometry) -> GoreConfig {
+    fn gore_config(&self, geom: &BranchGeometry) -> GoreConfig {
         let junction = &geom.split;
-        let (nose, angle) = nose_barrier(main, junction, self.nose_barrier);
-        let length = junction.nose.map_or(0.0, |n| junction.apex.distance(n.point));
+        let (nose, angle) = nose_barrier(junction, self.nose_barrier);
+        let length = junction.nose.map_or(0.0, |n| junction.edge_apex.distance(n.point));
         GoreConfig {
-            apex_point: junction.apex,
+            apex_point: junction.edge_apex,
             divergence_angle: angle,
             gore_length: length,
             nose_barrier: nose,
@@ -458,13 +459,13 @@ impl BranchLayout {
         }
     }
 
-    fn merge_config(&self, main: &TrackSpline, geom: &BranchGeometry) -> MergeConfig {
+    fn merge_config(&self, geom: &BranchGeometry) -> MergeConfig {
         let junction = &geom.merge;
-        let (_, angle) = nose_barrier(main, junction, self.nose_barrier);
+        let (_, angle) = nose_barrier(junction, self.nose_barrier);
         MergeConfig {
-            convergence_point: junction.apex,
+            convergence_point: junction.edge_apex,
             merge_angle: angle,
-            merge_length: junction.nose.map_or(0.0, |n| junction.apex.distance(n.point)),
+            merge_length: junction.nose.map_or(0.0, |n| junction.edge_apex.distance(n.point)),
         }
     }
 }
@@ -495,39 +496,15 @@ fn anchor_waypoint(main: &TrackSpline, s: f32, junction: JunctionRole) -> Result
         .ok_or(BranchKitError::AnchorOffWaypoint { junction })
 }
 
-/// The nose barrier of a junction: a [`NOSE_LENGTH`] segment at the nose point, perpendicular to the bisector of the
-/// two road edges, and the divergence angle between them in degrees. A junction with no nose gives an empty barrier at
-/// the apex.
-pub fn nose_barrier(main: &TrackSpline, junction: &JunctionGeometry, barrier: BarrierType) -> (WallBarrier, f32) {
+/// The nose barrier of a junction: a [`NOSE_LENGTH`] segment across the wedge at the nose point, perpendicular to the
+/// bisector of the two road edges, and the divergence angle between them in degrees. A junction with no nose gives an
+/// empty barrier at the apex.
+pub fn nose_barrier(junction: &JunctionGeometry, barrier: BarrierType) -> (WallBarrier, f32) {
     let Some(nose) = junction.nose else {
-        return (WallBarrier::new(junction.apex, junction.apex, barrier), 0.0);
+        return (WallBarrier::new(junction.edge_apex, junction.edge_apex, barrier), 0.0);
     };
-    let (dir_main, dir_branch) = edge_directions(main, junction, &nose);
-    let bisector = (dir_main + dir_branch).normalize_or_zero();
-    let across = bisector.perp();
-    let (a, b) = (nose.point - across * (NOSE_LENGTH * 0.5), nose.point + across * (NOSE_LENGTH * 0.5));
-    // Start on the main track's side.
-    let (start, end) = if a.distance(nose.track_edge) <= b.distance(nose.track_edge) { (a, b) } else { (b, a) };
-    let angle = dir_main.perp_dot(dir_branch).atan2(dir_main.dot(dir_branch)).abs().to_degrees();
-    (WallBarrier::new(start, end, barrier), angle)
-}
-
-/// Unit driving directions of the main track edge and of the branch road at the nose: the main tangent beside the
-/// nose's main edge point, and the direction of the branch centreline beside its branch edge point.
-fn edge_directions(main: &TrackSpline, junction: &JunctionGeometry, nose: &NosePoint) -> (Vec2, Vec2) {
-    let main_dir = main.project_point(nose.track_edge).tangent;
-    let c = &junction.centreline;
-    let branch = c
-        .windows(2)
-        .min_by(|a, b| {
-            let da = LineSegment::new(a[0], a[1]).distance_to_point(nose.branch_edge);
-            let db = LineSegment::new(b[0], b[1]).distance_to_point(nose.branch_edge);
-            da.total_cmp(&db)
-        })
-        .map(|w| (w[1] - w[0]).normalize_or_zero())
-        .unwrap_or(main_dir);
-    // The centreline of an exit junction is stored in driving order too, so both point the way cars drive.
-    (main_dir, branch)
+    let half = nose.across * (NOSE_LENGTH * 0.5);
+    (WallBarrier::new(nose.point - half, nose.point + half, barrier), nose.divergence_deg)
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -703,8 +680,8 @@ pub fn build_walls(track: &Track, compiled: &CompiledBranch) -> Vec<WallBarrier>
     push_polyline(&mut walls, &merge_chain, barrier_type);
 
     // Island: divider walls along both road edges, the nose and the cap.
-    let (nose_wall, _) = nose_barrier(main, &geom.split, layout.nose_barrier);
-    let (cap_wall, _) = nose_barrier(main, &geom.merge, layout.nose_barrier);
+    let (nose_wall, _) = nose_barrier(&geom.split, layout.nose_barrier);
+    let (cap_wall, _) = nose_barrier(&geom.merge, layout.nose_barrier);
     let (main_divider, branch_divider) = island_dividers(track, compiled, g_island, &nose_wall, &cap_wall);
     push_polyline(&mut walls, &main_divider, barrier_type);
     push_polyline(&mut walls, &branch_divider, barrier_type);
@@ -821,21 +798,21 @@ fn island_dividers(
 
     let mut on_main = vec![nose.segment.start];
     let mut on_branch = vec![nose.segment.end];
-    let mut last_p = geom.centreline[from];
+    let c = &geom.centreline;
+    let mut last_p = c[from];
     for i in from + 1..to {
-        let p = geom.centreline[i];
+        let p = c[i];
         if p.distance(last_p) < WALL_STEP {
             continue;
         }
         last_p = p;
-        let proj = main.project_point(p);
-        let c = proj.closest_point;
-        let out = (p - c).normalize_or_zero();
+        let heading = (c[i + 1] - c[i - 1]).normalize_or_zero();
         let half_branch = seg.map_or(layout.road_width * 0.5, |s| s.project_point(p).track_width * 0.5);
-        let g = proj.distance_to_spline - proj.track_width * 0.5 - half_branch;
-        let o = gap.min((g - NOSE_LENGTH) * 0.5).max(0.0);
-        on_main.push(c + out * (proj.track_width * 0.5 + o));
-        on_branch.push(p - out * (half_branch + o));
+        let wedge = wedge_at(main, layout.side, p, heading, half_branch);
+        // Each wall stands `o` from its own road edge, measured across the wedge.
+        let o = gap.min((wedge.width - NOSE_LENGTH) * 0.5).max(NOSE_CLEARANCE) / wedge.cos_half;
+        on_main.push(wedge.main_edge + wedge.across * o);
+        on_branch.push(wedge.branch_edge - wedge.across * o);
     }
     on_main.push(cap.segment.start);
     on_branch.push(cap.segment.end);
