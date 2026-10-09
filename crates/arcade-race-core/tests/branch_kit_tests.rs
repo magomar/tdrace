@@ -325,7 +325,7 @@ fn the_outer_wall_is_unbroken_from_the_main_road_round_the_branch() {
             (Vec2::new(x, -TRACK_WIDTH * 0.5), Vec2::new(0.0, -1.0))
         } else if x <= free {
             let e = env[(x - anchor).round() as usize];
-            (e.point(), e.outward)
+            (e.point(), e.normal())
         } else {
             // Past the free end the branch road leaves along its own heading: take its outer edge from the segment.
             let s = seg.samples.iter().find(|s| s.point.x >= x).unwrap();
@@ -349,7 +349,7 @@ fn the_outer_wall_is_unbroken_from_the_main_road_round_the_branch() {
             (s.point - s.normal * (s.width * 0.5), -s.normal)
         } else if x <= 300.0 {
             let e = env[(x - 270.0).round() as usize];
-            (e.point(), e.outward)
+            (e.point(), e.normal())
         } else {
             (Vec2::new(x, -TRACK_WIDTH * 0.5), Vec2::new(0.0, -1.0))
         };
@@ -555,7 +555,7 @@ fn validation_rejects_a_broken_compiled_junction() {
     let mut no_chain_piece = track.clone();
     let env = compiled.geometry.split.outer_envelope(&track.spline, Side::Right, ROAD_WIDTH);
     let e = env[15];
-    let ray = LineSegment::new(e.point(), e.point() + e.outward * (G + 1.0));
+    let ray = LineSegment::new(e.point(), e.point() + e.normal() * (G + 1.0));
     let hit = no_chain_piece
         .geometry
         .network_walls

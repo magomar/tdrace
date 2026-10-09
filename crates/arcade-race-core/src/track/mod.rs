@@ -910,20 +910,28 @@ impl Track {
     /// or cross within the drivable road ribbon of any segment in `self.network`. Against the
     /// branch segments (not on the default layout) the check ignores elevation: on Spa RX the
     /// joker data sits ~4 m below the main road it overlaps, and a main wall blocked the joker.
+    ///
+    /// Spec 102: a compiled branch (`branch_layout`) replaces the main wall beside it by arc length
+    /// (`branch_kit::trim_main_walls`), so no wall is searched against the branch. The main road still clears the
+    /// walls of other parts of the lap that lie on it.
     pub fn trim_walls_for_network(&mut self) {
-        // Spec 102: a compiled branch replaces the main wall by arc length, not by searching for roads.
-        if self.branch_layout.is_some() {
-            if self.network.is_some() {
-                branch_kit::trim_main_walls(self);
-            }
-            return;
+        let compiled = self.branch_layout.is_some();
+        if compiled && self.network.is_some() {
+            branch_kit::trim_main_walls(self);
         }
         let Some(net) = &self.network else { return; };
         if net.segments.is_empty() { return; }
-        let branches = branch_segments(net);
+        let branches = if compiled { Vec::new() } else { branch_segments(net) };
+        let main_roads: Vec<&RoadSegment> = if compiled {
+            let default = net.active_or_default_layout(None).map(|l| l.segment_sequence.as_slice()).unwrap_or(&[]);
+            net.segments.iter().filter(|s| default.contains(&s.id)).collect()
+        } else {
+            net.segments.iter().collect()
+        };
 
         let keep = |w: &WallBarrier| {
-            wall_clear_of_roads(&net.segments, w, 2.0, -0.2) && wall_clear_of_roads(branches.iter().copied(), w, f32::INFINITY, -0.2)
+            wall_clear_of_roads(main_roads.iter().copied(), w, 2.0, -0.2)
+                && wall_clear_of_roads(branches.iter().copied(), w, f32::INFINITY, -0.2)
         };
         // A wall that runs onto a road loses only the part on it. A merged straight wall used to go whole: on
         // rx_canyon_flyer that left an 11 m gap beside the joker split, and a bot slid out through it behind the

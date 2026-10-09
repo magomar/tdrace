@@ -136,3 +136,27 @@ fn turnoff_envelope_wall_keeps_its_gap_from_the_slanted_branch_edge() {
     }).fold(f32::MAX, f32::min);
     assert!((d - (ROAD_WIDTH * 0.5 + gap)).abs() < 0.3, "wall is {d} m from the branch centreline");
 }
+
+#[test]
+fn envelope_normal_is_perpendicular_to_the_edge_it_stands_on() {
+    let main = stadium();
+    let c = comp(100.0, JunctionShape::TurnOff { angle_deg: 40.0 }, 40.0, 4.0);
+    let j = build_junction(&main, &c, JunctionRole::Entry, Side::Left, ROAD_WIDTH).unwrap();
+    let env = j.outer_envelope(&main, Side::Left, ROAD_WIDTH);
+    // On the anchor the main road is the edge: the normal is the main normal. At the free end the branch is: the
+    // normal turns back toward the main direction by the branch angle.
+    assert!((env[0].normal() - env[0].outward).length() < 1e-3);
+    let last = env.last().unwrap();
+    let turn = last.normal().dot(last.outward).clamp(-1.0, 1.0).acos().to_degrees();
+    assert!((turn - 40.0).abs() < 3.0, "normal is {turn} degrees from the main normal");
+    assert!(last.normal().dot(last.tangent) < 0.0, "the normal of a diverging edge leans back");
+    // A wall `gap` along the normal from an envelope point is `gap` from the branch edge.
+    let e = env[env.len() - 11];
+    let wall = e.point() + e.normal() * 3.0;
+    let d = j
+        .centreline
+        .windows(2)
+        .map(|w| arcade_race_core::track::geometry::LineSegment::new(w[0], w[1]).distance_to_point(wall))
+        .fold(f32::MAX, f32::min);
+    assert!((d - (ROAD_WIDTH * 0.5 + 3.0)).abs() < 0.3, "{d}");
+}

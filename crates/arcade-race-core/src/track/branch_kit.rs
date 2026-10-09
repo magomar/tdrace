@@ -951,7 +951,7 @@ fn compiled_checks(track: &Track, layout: &BranchLayout) -> Option<JunctionCheck
     // Split: main edge before the anchor, the envelope over the junction, the branch road after its free end.
     let split_env = geom.split.outer_envelope(main, side, layout.road_width);
     let mut rays = main_edge_stations(main, side, layout.split.s - REGION_MARGIN, layout.split.s);
-    rays.extend(split_env.iter().map(|e| (e.point(), e.outward)));
+    rays.extend(split_env.iter().map(|e| (e.point(), e.normal())));
     rays.extend(branch_edge_stations(side, seg, a0 + CHECK_STEP, a0 + REGION_MARGIN));
     let split_span = geom.split.span.1 - geom.split.span.0;
     let split = JunctionRegion {
@@ -965,7 +965,7 @@ fn compiled_checks(track: &Track, layout: &BranchLayout) -> Option<JunctionCheck
     // Merge: the branch road before its free end, the envelope, the main edge after the anchor.
     let merge_env = geom.merge.outer_envelope(main, side, layout.road_width);
     let mut rays = branch_edge_stations(side, seg, a1 - REGION_MARGIN, a1);
-    rays.extend(merge_env.iter().map(|e| (e.point(), e.outward)));
+    rays.extend(merge_env.iter().map(|e| (e.point(), e.normal())));
     rays.extend(main_edge_stations(main, side, layout.merge.s + CHECK_STEP, layout.merge.s + REGION_MARGIN + CHECK_STEP));
     let merge_span = geom.merge.span.1 - geom.merge.span.0;
     let merge = JunctionRegion {

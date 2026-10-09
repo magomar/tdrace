@@ -157,7 +157,7 @@ pub struct Wedge {
     /// Angle between the two edge directions (degrees).
     pub divergence_deg: f32,
     /// Width of the curb on the main edge here, measured across the main edge (m); 0 without a curb. A wall stands
-    /// beyond it.
+    /// beyond it. A curb on either side of the main road counts (the wall rules treat the road as curbed on both).
     pub curb: f32,
 }
 
@@ -199,7 +199,8 @@ pub fn wedge_at(main: &TrackSpline, side: Side, p: Vec2, heading: Vec2, half_wid
     } else {
         (n_m, lateral, 1.0)
     };
-    let has_curb = if sigma > 0.0 { proj.left_curb } else { proj.right_curb };
+    // A curb on either side counts: the wall rules of `validate_track` keep walls off the curbs of both sides.
+    let has_curb = proj.left_curb || proj.right_curb;
     Wedge {
         main_edge: edge - across * width,
         branch_edge: edge,
@@ -227,6 +228,10 @@ pub struct EnvelopePoint {
     /// 1 / cos of the heading difference between the branch and the main track: a wall that stands `g` from the
     /// branch edge is `g * branch_slant` from it along `outward`.
     pub branch_slant: f32,
+    /// Unit main driving direction at the station, and the sine of the angle the branch turns away from it toward
+    /// `outward` (positive while it diverges).
+    pub tangent: Vec2,
+    pub branch_tilt: f32,
 }
 
 impl EnvelopePoint {
@@ -246,6 +251,16 @@ impl EnvelopePoint {
     #[inline]
     pub fn wall_offset(&self, gap: f32) -> f32 {
         (self.main_half + gap).max(self.branch_edge + gap * self.branch_slant)
+    }
+
+    /// Unit normal of the envelope's outer edge: the main normal where the main road is the edge, the branch edge
+    /// normal where the branch reaches past it. A wall `gap` outside the edge lies `gap` along it.
+    pub fn normal(&self) -> Vec2 {
+        if self.branch_edge > self.main_half {
+            (self.outward / self.branch_slant - self.tangent * self.branch_tilt).normalize_or_zero()
+        } else {
+            self.outward
+        }
     }
 
     /// Point of a wall that stands `gap` outside the envelope.
@@ -274,7 +289,7 @@ impl JunctionGeometry {
 
         // Station, branch outer edge and slant of every centreline sample.
         let n = self.centreline.len();
-        let mut rows: Vec<(f32, f32, f32)> = Vec::with_capacity(n);
+        let mut rows: Vec<(f32, f32, f32, f32)> = Vec::with_capacity(n);
         for i in 0..n {
             let p = self.centreline[i];
             let heading = (self.centreline[(i + 1).min(n - 1)] - self.centreline[i.saturating_sub(1)]).normalize_or_zero();
@@ -282,7 +297,8 @@ impl JunctionGeometry {
             let lateral = (p - proj.closest_point).dot(proj.normal * sigma);
             let cos = heading.dot(proj.tangent).clamp(0.2, 1.0);
             let station = unwrap(proj.progress_distance).max(rows.last().map_or(f32::NEG_INFINITY, |r| r.0));
-            rows.push((station, lateral + road_width * 0.5 / cos, 1.0 / cos));
+            let tilt = heading.dot(proj.normal * sigma).clamp(-1.0, 1.0);
+            rows.push((station, lateral + road_width * 0.5 / cos, 1.0 / cos, tilt));
         }
 
         let length = s_end - s_start;
@@ -301,6 +317,8 @@ impl JunctionGeometry {
                     main_half: sample.width * 0.5,
                     branch_edge: a.1 + (b.1 - a.1) * f,
                     branch_slant: a.2 + (b.2 - a.2) * f,
+                    tangent: sample.tangent,
+                    branch_tilt: a.3 + (b.3 - a.3) * f,
                 }
             })
             .collect()
