@@ -443,7 +443,7 @@ fn test_classic_rallycross_circuits_have_joker_track_networks() {
 const AUTOCROSS: [(&str, f32, &str, f32, f32, u32); 3] = [
     ("ax_meadow_sprint", 800.0, "classic_ax_mudlark", 6.0, 2.0, 6),
     ("ax_clay_bowl", 1000.0, "classic_ax_brawler", 6.0, 5.0, 5),
-    ("ax_hillside_hammer", 1250.0, "classic_ax_talon", 6.0, 8.0, 4),
+    ("ax_hillside_hammer", 1250.0, "classic_ax_mudlark", 6.0, 8.0, 4),
 ];
 
 /// Scenario: Autocross circuits are all-dirt sprint circuits

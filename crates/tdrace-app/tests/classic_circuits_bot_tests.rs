@@ -16,7 +16,7 @@ const CIRCUITS: [(&str, fn() -> CarConfig); 18] = [
     ("rx_canyon_flyer", ClassicGameModule::car_classic_rally),
     ("ax_meadow_sprint", ClassicGameModule::car_classic_ax_mudlark),
     ("ax_clay_bowl", ClassicGameModule::car_classic_ax_brawler),
-    ("ax_hillside_hammer", ClassicGameModule::car_classic_ax_talon),
+    ("ax_hillside_hammer", ClassicGameModule::car_classic_ax_mudlark),
     ("gt_velocity_park", ClassicGameModule::car_classic_gt),
     ("gt_ridge_ring", ClassicGameModule::car_classic_gt),
     ("gt_coastal_grand_prix", ClassicGameModule::car_classic_gt),

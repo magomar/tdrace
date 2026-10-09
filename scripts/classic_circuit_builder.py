@@ -1917,7 +1917,7 @@ HILLSIDE_HAMMER = Circuit(
     tag="HILLSIDE AX",
     category_label="Autocross",
     car_category="autocross",
-    car_model_id="classic_ax_talon",
+    car_model_id="classic_ax_mudlark",
     default_laps=4,
     default_surface="Grass",
     road=Road(width=13.0, left_wall_distance=3.5, right_wall_distance=3.5, surface="Dirt"),
