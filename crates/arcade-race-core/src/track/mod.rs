@@ -875,7 +875,13 @@ impl Track {
     /// Projects a 2D world position onto the track centerline with continuity constraint around `hint_dist`,
     /// automatically falling back to check any active network segments if off the primary spline.
     pub fn project_point_near(&self, point: Vec2, hint_dist: f32) -> SplineProjection {
-        let proj = self.spline.project_point_continuity(point, hint_dist, 45.0);
+        self.project_point_continuity(point, hint_dist, 45.0)
+    }
+
+    /// `project_point_near` with the continuity window `max_dist_delta` (m) of
+    /// `TrackSpline::project_point_continuity`.
+    pub fn project_point_continuity(&self, point: Vec2, hint_dist: f32, max_dist_delta: f32) -> SplineProjection {
+        let proj = self.spline.project_point_continuity(point, hint_dist, max_dist_delta);
         if proj.is_on_track || proj.is_on_curb {
             return proj;
         }
@@ -1042,8 +1048,14 @@ impl Track {
             }
         }
         let mut rear_wall = None;
+        // `WallBarrier::new` stands at 0 m, and a car more than 1.8 m above a wall drives through it: these walls
+        // take the height of the road beside them (rx_hilltop_leap's chute is ~3 m up, tdrace-joker-wall-ghost-ebrgn).
+        let at_road_height = |mut w: WallBarrier| {
+            w.elevation = self.project_point((w.segment.start + w.segment.end) * 0.5).elevation;
+            w
+        };
         if let [Some(left), Some(right)] = rear_corners {
-            let wall = WallBarrier::new(left, right, barrier_type);
+            let wall = at_road_height(WallBarrier::new(left, right, barrier_type));
             walls.push(wall);
             rear_wall = Some(wall);
         }
@@ -1054,6 +1066,7 @@ impl Track {
                 .filter(|b| !main.clone().chain(&walls).any(|w| w.segment.intersect_segment(&b.segment).is_some_and(|hit| {
                     hit.distance(b.segment.start) > 0.05 && hit.distance(b.segment.end) > 0.05
                 })))
+                .map(at_road_height)
                 .collect();
             walls.extend(&bridges);
             chute_walls.extend(bridges);

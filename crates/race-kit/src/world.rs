@@ -263,7 +263,9 @@ impl<V: Vehicle> RaceWorld<V> {
         // Step individual vehicle dynamics and update road elevation & cross-slope banking
         for i in 0..n_cars {
             let prev_prog = self.trackers.get(i).map(|tp| tp.progress_distance).unwrap_or(0.0);
-            let proj = track.spline.project_point_continuity(self.vehicles[i].position(), prev_prog, 50.0);
+            // Off the main road the joker or chute road gives the height: the walls there stand at its height, and
+            // a car at the main road's height drove through them (tdrace-joker-wall-ghost-ebrgn).
+            let proj = track.project_point_continuity(self.vehicles[i].position(), prev_prog, 50.0);
             self.vehicles[i].set_road(&proj);
 
             let mut ctrl = match self.finish[i] {
