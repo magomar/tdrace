@@ -160,36 +160,36 @@ pub fn generate_packed_launch_grid(
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Packed Launch Grid Formation Generation**
-  - [ ] **Given** an Autocross launch pad spline with a width of 16.0 meters and tangent vector `(1.0, 0.0)`
-  - [ ] **When** `generate_packed_launch_grid` is called with pattern `AutocrossFiveThree`
-  - [ ] **Then** 8 spawn poses should be generated
-  - [ ] **And** poses 0 through 4 should occupy Row 1 with identical longitudinal distances and spaced lateral offsets
-  - [ ] **And** poses 5 through 7 should occupy Row 2 offset backwards by `row_spacing` (4.0m)
+  - [x] **Given** an Autocross launch pad spline with a width of 16.0 meters and tangent vector `(1.0, 0.0)`
+  - [x] **When** `generate_packed_launch_grid` is called with pattern `AutocrossFiveThree`
+  - [x] **Then** 8 spawn poses should be generated
+  - [x] **And** poses 0 through 4 should occupy Row 1 with identical longitudinal distances and spaced lateral offsets
+  - [x] **And** poses 5 through 7 should occupy Row 2 offset backwards by `row_spacing` (4.0m)
 
 - **Scenario: Lap 1 Execution from Launch Chute into Main Circuit**
-  - [ ] **Given** a circuit loaded with `entry_segment` pointing to the launch chute
-  - [ ] **When** vehicles spawn at race start and green lights activate
-  - [ ] **Then** vehicle initial positions should be located within the launch chute segment
-  - [ ] **And** passing through the merge junction should smoothly transition vehicles onto the main dirt ribbon without wall snagging
-  - [ ] **And** crossing the primary Start/Finish line on the main ribbon should register the completion of Lap 1
+  - [x] **Given** a circuit loaded with `entry_segment` pointing to the launch chute
+  - [x] **When** vehicles spawn at race start and green lights activate
+  - [x] **Then** vehicle initial positions should be located within the launch chute segment
+  - [x] **And** passing through the merge junction should smoothly transition vehicles onto the main dirt ribbon without wall snagging
+  - [x] **And** crossing the primary Start/Finish line on the main ribbon should register the completion of Lap 1
 
 - **Scenario: Subsequent Laps Exclude the Launch Chute**
-  - [ ] **Given** a vehicle navigating Lap 2 or higher on the main circuit loop
-  - [ ] **When** the vehicle approaches the merge junction zone
-  - [ ] **Then** the racing line and track boundaries should keep the car on the main circuit ribbon
-  - [ ] **And** AI bots should not divert backwards or turn into the launch chute
+  - [x] **Given** a vehicle navigating Lap 2 or higher on the main circuit loop
+  - [x] **When** the vehicle approaches the merge junction zone
+  - [x] **Then** the racing line and track boundaries should keep the car on the main circuit ribbon
+  - [x] **And** AI bots should not divert backwards or turn into the launch chute
 
 - **Scenario: Track Studio Launch Chute Insertion**
-  - [ ] **Given** the Track Studio editor active on a user-authored or official circuit
-  - [ ] **When** the user clicks `[ + INSERT LAUNCH CHUTE ]` and selects a target waypoint
-  - [ ] **Then** a templated launch spur segment, walled end cap, and 8 packed grid slots should be appended
-  - [ ] **And** saving the circuit should preserve the `LaunchChuteConfig` and valid `TrackNetwork` topology
+  - [x] **Given** the Track Studio editor active on a user-authored or official circuit
+  - [x] **When** the user clicks `[ + INSERT LAUNCH CHUTE ]` and selects a target waypoint
+  - [x] **Then** a templated launch spur segment, walled end cap, and 8 packed grid slots should be appended
+  - [x] **And** saving the circuit should preserve the `LaunchChuteConfig` and valid `TrackNetwork` topology
 
 - **Scenario: Global AX and RX Circuit Validation**
-  - [ ] **Given** the 17 official Autocross circuits and 23 official Rallycross circuits
-  - [ ] **When** `validate_track()` is executed on every circuit definition
-  - [ ] **Then** all 40 circuits should contain a valid `LaunchChuteConfig`
-  - [ ] **And** zero boundary wall gaps or invalid spawn poses should be detected
+  - [x] **Given** the 17 official Autocross circuits and 23 official Rallycross circuits
+  - [x] **When** `validate_track()` is executed on every circuit definition
+  - [x] **Then** all 40 circuits should contain a valid `LaunchChuteConfig`
+  - [x] **And** zero boundary wall gaps or invalid spawn poses should be detected
 
 ---
 
