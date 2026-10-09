@@ -1915,7 +1915,7 @@ impl RaceSession {
             if let Some(ref model_id) = self.track.car_model_id {
                 let choice = match model_id.as_str() {
                     "classic_ax_mudlark" => CarChoice::CrossCar,
-                    "classic_ax_brawler" => CarChoice::RallyCar,
+                    "classic_ax_brawler" => CarChoice::TouringAX,
                     "classic_ax_talon" => CarChoice::SandRail,
                     _ => CarChoice::classic_car_for_category(cat),
                 };

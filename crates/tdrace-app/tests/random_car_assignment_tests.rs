@@ -60,6 +60,22 @@ fn test_eligible_opponent_cars_per_category() {
 }
 
 #[test]
+fn test_classic_autocross_opponents_match_the_circuit_car() {
+    let mut session = RaceSession::new();
+    session.switch_to_classic();
+    session.track.car_category = tdrace_core::CarCategory::Autocross;
+
+    for (model_id, expected) in [
+        ("classic_ax_mudlark", CarChoice::CrossCar),
+        ("classic_ax_brawler", CarChoice::TouringAX),
+        ("classic_ax_talon", CarChoice::SandRail),
+    ] {
+        session.track.car_model_id = Some(model_id.to_string());
+        assert_eq!(session.eligible_opponent_cars(), vec![expected], "{model_id}");
+    }
+}
+
+#[test]
 fn test_random_car_assignment_variety_in_gt_race() {
     let mut session = RaceSession::new();
     session.switch_to_gt();
