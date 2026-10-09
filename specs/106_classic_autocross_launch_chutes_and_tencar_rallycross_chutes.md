@@ -63,36 +63,37 @@ No access rules change. Determinism: grid slots are fixed data in the circuit fi
 ### Automated Tests
 - `cargo test --workspace --exclude tdrace-py --no-fail-fast`
 - `cargo test -p tdrace-core --test ax_rx_circuit_launch_chute_validation`
+- `cargo test -p tdrace-core --test classic_scenery_clearance_tests`
 - `cargo test --release -p tdrace-app --test launch_chute_race_tests -- --include-ignored` (bot race on all 43 circuits)
 
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Ten-car Rallycross grid**
-  - [ ] **Given** a 16 m launch pad
-  - [ ] **When** `generate_packed_launch_grid` is called with `RallycrossThreeTwoThreeTwo`
-  - [ ] **Then** 10 spawn poses are generated in rows of 3, 2, 3 and 2
-  - [ ] **And** every pose stays inside the pad, and no car of a two-car row stands directly behind a car of the row in front
+  - [x] **Given** a 16 m launch pad
+  - [x] **When** `generate_packed_launch_grid` is called with `RallycrossThreeTwoThreeTwo`
+  - [x] **Then** 10 spawn poses are generated in rows of 3, 2, 3 and 2
+  - [x] **And** every pose stays inside the pad, and no car of a two-car row stands directly behind a car of the row in front
 
 - **Scenario: Every Autocross and Rallycross circuit has a chute of the right size**
-  - [ ] **Given** the 20 official Autocross circuits (17 Autocross module + 3 Classic) and the 23 official Rallycross circuits
-  - [ ] **When** `validate_track()` runs on each
-  - [ ] **Then** all 43 have a valid `LaunchChuteConfig` with no validation errors
-  - [ ] **And** each Autocross chute holds 8 slots (`AutocrossFiveThree`) and each Rallycross chute 10 (`RallycrossThreeTwoThreeTwo`), equal to the circuit's grid
+  - [x] **Given** the 20 official Autocross circuits (17 Autocross module + 3 Classic) and the 23 official Rallycross circuits
+  - [x] **When** `validate_track()` runs on each
+  - [x] **Then** all 43 have a valid `LaunchChuteConfig` with no validation errors
+  - [x] **And** each Autocross chute holds 8 slots (`AutocrossFiveThree`) and each Rallycross chute 10 (`RallycrossThreeTwoThreeTwo`), equal to the circuit's grid
 
 - **Scenario: Rallycross chutes keep their place**
-  - [ ] **Given** the 23 Rallycross circuits before and after this spec
-  - [ ] **When** the chute's merge point and rear pad point are compared
-  - [ ] **Then** none moved by more than 0.05 m, and no data outside the chute grid changed
+  - [x] **Given** the 23 Rallycross circuits before and after this spec
+  - [x] **When** the chute's merge point and rear pad point are compared
+  - [x] **Then** none moved by more than 0.05 m, and no data outside the chute grid changed
 
 - **Scenario: Bots launch from every chute**
-  - [ ] **Given** each of the 43 circuits with a full chute grid of its own category's car (8 on Autocross, 10 on Rallycross)
-  - [ ] **When** the bots race 3 laps
-  - [ ] **Then** every bot starts on the pad and leaves the chute, none returns to it after lap 1, and at most 2 bots miss lap 1
+  - [x] **Given** each of the 43 circuits with a full chute grid of its own category's car (8 on Autocross, 10 on Rallycross)
+  - [x] **When** the bots race 3 laps
+  - [x] **Then** every bot starts on the pad and leaves the chute, none returns to it after lap 1, and at most 2 bots miss lap 1
 
 - **Scenario: No grandstand inside the walls**
-  - [ ] **Given** the 18 Classic circuits
-  - [ ] **When** each grandstand and building footprint is compared with the road and its wall line
-  - [ ] **Then** none stands on the road or inside the wall line
+  - [x] **Given** the 18 Classic circuits
+  - [x] **When** each grandstand and building footprint is compared with the road and its wall line
+  - [x] **Then** none stands on the road or inside the wall line
 
 ---
 
@@ -103,6 +104,7 @@ No access rules change. Determinism: grid slots are fixed data in the circuit fi
 - `[x]` `crates/tdrace-app/src/bin/build_launch_chutes.rs` -> Classic Autocross in `--all`, 10-car Rallycross template.
 - `[x]` `crates/tdrace-app/src/editor/inspector.rs` -> `RX 3-2-3-2` label.
 - `[x]` `crates/tdrace-core/tests/ax_rx_circuit_launch_chute_validation.rs` -> 43 circuits, 8/10 slots.
+- `[x]` `crates/tdrace-core/tests/classic_scenery_clearance_tests.rs` -> no Classic grandstand or building inside a wall line.
 - `[x]` `crates/tdrace-app/tests/launch_chute_race_tests.rs` -> 43-circuit sweep, Classic Autocross cars, 10 bots on Rallycross.
 - `[x]` `crates/arcade-race-core/tests/launch_chute_tests.rs`, `crates/tdrace-app/tests/track_editor_launch_chute_tests.rs`, `crates/tdrace-app/tests/grid_positions_sync_tests.rs`, `crates/tdrace-app/tests/championship_grid_slot_tests.rs`, `crates/tdrace-app/tests/controls_ui_tests.rs` -> grid counts.
 - `[x]` `tracks/classic/*.json`, `tracks/rally/*.json` -> chutes and grandstands (tdrace-tracks `c3267d3`).

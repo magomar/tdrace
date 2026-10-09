@@ -72,12 +72,13 @@ fn test_packed_grid_stays_inside_the_pad() {
 }
 
 #[test]
-fn test_packed_grid_staggers_the_two_car_row() {
+fn test_packed_grid_staggers_the_two_car_rows() {
     let slots = generate_packed_launch_grid(Vec2::ZERO, Vec2::X, 16.0, PackedGridPattern::RallycrossThreeTwoThreeTwo, 6.0);
-    let front: Vec<f32> = slots[0..3].iter().map(|s| s.position.y).collect();
-    let middle: Vec<f32> = slots[3..5].iter().map(|s| s.position.y).collect();
-    // No car of the middle row stands directly behind a car of the front row.
-    assert!(middle.iter().all(|m| front.iter().all(|f| (m - f).abs() > 1.5)));
+    let lateral = |range: std::ops::Range<usize>| -> Vec<f32> { slots[range].iter().map(|s| s.position.y).collect() };
+    // No car of a two-car row (rows 2 and 4) stands directly behind a car of the three-car row in front of it.
+    for (three, two) in [(lateral(0..3), lateral(3..5)), (lateral(5..8), lateral(8..10))] {
+        assert!(two.iter().all(|m| three.iter().all(|f| (m - f).abs() > 1.5)));
+    }
 }
 
 fn spur_network() -> TrackNetwork {
