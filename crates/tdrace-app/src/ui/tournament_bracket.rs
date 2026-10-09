@@ -243,12 +243,14 @@ pub fn render_tournament_bracket_screen(fonts: &Fonts, champ: &SeriesSession) {
         }
     }
 
-    let btn_w = scaler.s(520.0).min(sw - 2.0 * margin);
+    // The button sits under the finals column, which is the emptiest one.
+    let btn_w = col_w;
     let btn_h = scaler.s(40.0);
-    let btn_x = (sw - btn_w) * 0.5;
+    let btn_x = left + (cols - 1.0) * (col_w + gap);
     let btn_y = sh - scaler.s(96.0);
     draw_rectangle(btn_x, btn_y, btn_w, btn_h, Color::new(amber().r * 0.25, amber().g * 0.25, amber().b * 0.25, 0.95));
     draw_rectangle_lines(btn_x, btn_y, btn_w, btn_h, scaler.s(2.5), amber());
-    fonts.draw_ui_bold_centered(&format!("[ {} ]", view.launch_label), sw * 0.5, btn_y + btn_h * 0.64, scaler.font_s(16.0), amber());
-    fonts.draw_ui_bold_centered("[Enter / A] Launch Race     [Esc / B] Exit", sw * 0.5, sh - scaler.s(30.0), scaler.font_s(11.0), Palette::UI_TEXT_MUTED);
+    let label = fonts.fit_ui_bold(&format!("[ {} ]", view.launch_label), scaler.font_s(15.0), btn_w - scaler.s(16.0));
+    fonts.draw_ui_bold_centered(&label, btn_x + btn_w * 0.5, btn_y + btn_h * 0.64, scaler.font_s(15.0), amber());
+    fonts.draw_ui_bold_centered("[Enter / A] Launch Race     [Esc / B] Exit", btn_x + btn_w * 0.5, sh - scaler.s(30.0), scaler.font_s(11.0), Palette::UI_TEXT_MUTED);
 }
