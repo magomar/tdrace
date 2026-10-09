@@ -3,7 +3,7 @@ type: Architecture Spec
 template: architecture
 title: "Parametric Pit Lane Kit Blocks on Spline Circuits"
 description: "Builds pit lanes from predefined parametric junction components (entry and exit, in Taper or TurnOff variants) anchored to the main spline by arc length, joined by a free-form pit road spline, with a box row component that places stalls and garages; compiled at bake time into the existing PitLane and PitLaneJunctionData structs, with guards that fail before bake, and a migration of the 18 GT pit lanes."
-status: in_progress
+status: implemented
 receipt: "docs/receipts/spec-101-receipt.md"
 verified: { by: human:mario, at: 2026-10-09T13:35:05Z, hash: "0bd2c461212e" }
 created: 2026-10-07
