@@ -635,15 +635,7 @@ pub fn build_walls(track: &Track, compiled: &CompiledBranch) -> Vec<WallBarrier>
     let geom = &compiled.geometry;
     let sigma = layout.side.sign();
     let barrier_type = track.dominant_barrier_type().unwrap_or(BarrierType::TireWall);
-    let near = |points: &[Vec2]| {
-        let (min, max) = points
-            .iter()
-            .fold((Vec2::splat(f32::MAX), Vec2::splat(f32::MIN)), |(lo, hi), p| (lo.min(*p), hi.max(*p)));
-        track
-            .local_barrier_offset(min - Vec2::splat(20.0), max + Vec2::splat(20.0))
-            .unwrap_or_else(|| track.effective_barrier_offset())
-    };
-    let (g_split, g_merge) = (near(&geom.split.centreline), near(&geom.merge.centreline));
+    let (g_split, g_merge) = (local_wall_gap(track, &geom.split.centreline), local_wall_gap(track, &geom.merge.centreline));
     let g_island = g_split.min(g_merge);
     let main_walls = if layout.side == Side::Left { &track.geometry.inner_walls } else { &track.geometry.outer_walls };
     let elevation_at = |p: Vec2| main.project_point(p).elevation;
@@ -817,4 +809,263 @@ fn island_dividers(
     on_main.push(cap.segment.start);
     on_branch.push(cap.segment.end);
     (on_main, on_branch)
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Junction wall checks (Pillar VI)
+// ---------------------------------------------------------------------------------------------------------------
+
+/// Reach of the legacy junction regions beyond the throat, and of the stretch checked before an anchor (m).
+const REGION_MARGIN: f32 = 10.0;
+/// Spacing of the check stations (m).
+const CHECK_STEP: f32 = 1.0;
+/// Longest stretch a legacy junction's free end is searched over (m).
+const LEGACY_THROAT_LIMIT: f32 = 60.0;
+/// A wall end this close to another wall end counts as joined (m).
+pub const END_JOINED: f32 = 0.05;
+
+/// One junction of a branch, as the wall validation sees it.
+#[derive(Debug, Clone, PartialEq)]
+pub struct JunctionRegion {
+    pub name: &'static str,
+    /// Points on the outer road edge, every metre from 10 m before the anchor (after it, for a merge) to 10 m past
+    /// the free end, each with the unit outward normal.
+    pub rays: Vec<(Vec2, Vec2)>,
+    /// How far a wall may stand from the road edge: the local wall gap plus 1 m.
+    pub reach: f32,
+    /// Main-spline arc length window (from, to) in which wall ends on `side` belong to the region.
+    pub window: (f32, f32),
+    pub side: Side,
+}
+
+/// What `validate_track` checks around the junctions of a branch.
+#[derive(Debug, Clone, PartialEq)]
+pub struct JunctionChecks {
+    /// Compiled from a `branch_layout` (errors) or searched in a legacy network (warnings).
+    pub compiled: bool,
+    pub regions: Vec<JunctionRegion>,
+    /// Chords across the island, from the main edge to the branch edge, between the nose and the cap. Empty for a
+    /// legacy network.
+    pub island: Vec<LineSegment>,
+}
+
+/// True when main station `s` lies in `window` (from, to), going forward and wrapping on a closed spline.
+pub fn in_window(main: &TrackSpline, window: (f32, f32), s: f32) -> bool {
+    if main.closed {
+        (s - window.0).rem_euclid(main.total_length) <= window.1 - window.0
+    } else {
+        s >= window.0 && s <= window.1
+    }
+}
+
+/// The median gap between main road edge and main wall within 20 m of `points` (spec 102 Pillar IV: `g`).
+fn local_wall_gap(track: &Track, points: &[Vec2]) -> f32 {
+    let (min, max) = points
+        .iter()
+        .fold((Vec2::splat(f32::MAX), Vec2::splat(f32::MIN)), |(lo, hi), p| (lo.min(*p), hi.max(*p)));
+    track
+        .local_barrier_offset(min - Vec2::splat(20.0), max + Vec2::splat(20.0))
+        .unwrap_or_else(|| track.effective_barrier_offset())
+}
+
+/// The junction checks for `track`: from its `branch_layout` when it has one, else from a legacy joker network.
+/// `None` when there is no branch or the layout does not compile.
+pub fn junction_checks(track: &Track) -> Option<JunctionChecks> {
+    match &track.branch_layout {
+        Some(layout) => compiled_checks(track, layout),
+        None => legacy_checks(track),
+    }
+}
+
+/// Outer edge points of the union of the main road and a branch road at the branch samples `from..=to`, every
+/// [`CHECK_STEP`] metres: the branch's outer edge where it reaches past the main edge, else the main edge.
+fn envelope_stations(
+    main: &TrackSpline,
+    side: Side,
+    seg: &RoadSegment,
+    from: f32,
+    to: f32,
+) -> Vec<(Vec2, Vec2)> {
+    let sigma = side.sign();
+    let mut out = Vec::new();
+    let mut d = from;
+    while d <= to + 1e-3 {
+        let s = seg.sample_at_distance(d);
+        let proj = main.project_point(s.point);
+        let n_main = proj.normal * sigma;
+        let lateral = (s.point - proj.closest_point).dot(n_main);
+        let cos = s.tangent.dot(proj.tangent).clamp(0.2, 1.0);
+        let branch_edge = lateral + s.width * 0.5 / cos;
+        if branch_edge > proj.track_width * 0.5 {
+            let n_b = s.normal * sigma;
+            out.push((s.point + n_b * (s.width * 0.5), n_b));
+        } else {
+            out.push((proj.closest_point + n_main * (proj.track_width * 0.5), n_main));
+        }
+        d += CHECK_STEP;
+    }
+    out
+}
+
+/// Main road edge points on `side` for stations `from..to` metres of arc length, with their outward normals.
+fn main_edge_stations(main: &TrackSpline, side: Side, from: f32, to: f32) -> Vec<(Vec2, Vec2)> {
+    let sigma = side.sign();
+    let mut out = Vec::new();
+    let mut s = from;
+    while s < to - 1e-3 {
+        let c = main.sample_at_distance(s);
+        out.push((c.point + c.normal * (sigma * c.width * 0.5), c.normal * sigma));
+        s += CHECK_STEP;
+    }
+    out
+}
+
+/// Outer edge points of the branch road itself, from branch distance `from` to `to`.
+fn branch_edge_stations(side: Side, seg: &RoadSegment, from: f32, to: f32) -> Vec<(Vec2, Vec2)> {
+    let sigma = side.sign();
+    let mut out = Vec::new();
+    let mut d = from;
+    while d < to - 1e-3 {
+        let s = seg.sample_at_distance(d);
+        out.push((s.point + s.normal * (sigma * s.width * 0.5), s.normal * sigma));
+        d += CHECK_STEP;
+    }
+    out
+}
+
+fn compiled_checks(track: &Track, layout: &BranchLayout) -> Option<JunctionChecks> {
+    let compiled = layout.compile(track).ok()?;
+    let main = &track.spline;
+    let geom = &compiled.geometry;
+    let seg = compiled.network.get_segment(compiled.branch_segment)?;
+    let side = layout.side;
+    let (g_split, g_merge) = (
+        local_wall_gap(track, &geom.split.centreline),
+        local_wall_gap(track, &geom.merge.centreline),
+    );
+    let (a0, a1) = (
+        seg.project_point(geom.split.free_end).progress_distance,
+        seg.project_point(geom.merge.free_end).progress_distance,
+    );
+
+    // Split: main edge before the anchor, the envelope over the junction, the branch road after its free end.
+    let split_env = geom.split.outer_envelope(main, side, layout.road_width);
+    let mut rays = main_edge_stations(main, side, layout.split.s - REGION_MARGIN, layout.split.s);
+    rays.extend(split_env.iter().map(|e| (e.point(), e.outward)));
+    rays.extend(branch_edge_stations(side, seg, a0 + CHECK_STEP, a0 + REGION_MARGIN));
+    let split_span = geom.split.span.1 - geom.split.span.0;
+    let split = JunctionRegion {
+        name: "split",
+        rays,
+        reach: g_split + 1.0,
+        window: (layout.split.s - REGION_MARGIN, layout.split.s + split_span + REGION_MARGIN),
+        side,
+    };
+
+    // Merge: the branch road before its free end, the envelope, the main edge after the anchor.
+    let merge_env = geom.merge.outer_envelope(main, side, layout.road_width);
+    let mut rays = branch_edge_stations(side, seg, a1 - REGION_MARGIN, a1);
+    rays.extend(merge_env.iter().map(|e| (e.point(), e.outward)));
+    rays.extend(main_edge_stations(main, side, layout.merge.s + CHECK_STEP, layout.merge.s + REGION_MARGIN + CHECK_STEP));
+    let merge_span = geom.merge.span.1 - geom.merge.span.0;
+    let merge = JunctionRegion {
+        name: "merge",
+        rays,
+        reach: g_merge + 1.0,
+        window: (layout.merge.s - merge_span - REGION_MARGIN, layout.merge.s + REGION_MARGIN),
+        side,
+    };
+
+    // Island chords from the nose to the cap, every 2 m.
+    let mut island = Vec::new();
+    if let (Some(first), Some(last)) = (geom.split.nose, geom.merge.nose) {
+        let c = &geom.centreline;
+        let to = geom.road_end + last.index;
+        let mut at = c[first.index];
+        for i in first.index..=to.min(c.len() - 2) {
+            if i == first.index || c[i].distance(at) >= 2.0 {
+                at = c[i];
+                let heading = (c[i + 1] - c[i.saturating_sub(1)]).normalize_or_zero();
+                let half = seg.project_point(c[i]).track_width * 0.5;
+                let wedge = wedge_at(main, side, c[i], heading, half);
+                island.push(LineSegment::new(wedge.main_edge, wedge.branch_edge));
+            }
+        }
+    }
+    Some(JunctionChecks { compiled: true, regions: vec![split, merge], island })
+}
+
+/// Legacy networks: one branch segment between a split and a merge, whose junction sockets all sit on one point.
+/// The free end is where the branch edge is [`NOSE_GAP`] clear of the main road.
+fn legacy_checks(track: &Track) -> Option<JunctionChecks> {
+    let net = track.network.as_ref()?;
+    let branches = super::branch_segments(net);
+    let [seg] = branches.as_slice() else { return None };
+    if seg.samples.len() < 4 || seg.length < 4.0 * REGION_MARGIN {
+        return None;
+    }
+    let main = &track.spline;
+
+    // The side the branch lies on, from where it is farthest from the main road.
+    let lateral = |p: Vec2| {
+        let proj = main.project_point(p);
+        (p - proj.closest_point).dot(proj.normal)
+    };
+    let widest = seg.samples.iter().map(|s| lateral(s.point)).fold(0.0f32, |a, b| if b.abs() > a.abs() { b } else { a });
+    if widest.abs() < 5.0 {
+        return None;
+    }
+    let side = if widest > 0.0 { Side::Left } else { Side::Right };
+    let sigma = side.sign();
+
+    // Distance along the branch where its facing edge is NOSE_GAP clear of the main road.
+    let clear = |d: f32| {
+        let s = seg.sample_at_distance(d);
+        let proj = main.project_point(s.point);
+        (s.point - proj.closest_point).dot(proj.normal * sigma) - proj.track_width * 0.5 - s.width * 0.5
+    };
+    let mut free_in = 0.0;
+    while free_in < LEGACY_THROAT_LIMIT.min(seg.length * 0.5) && clear(free_in) < NOSE_GAP {
+        free_in += CHECK_STEP;
+    }
+    let mut free_out = seg.length;
+    while seg.length - free_out < LEGACY_THROAT_LIMIT.min(seg.length * 0.5) && clear(free_out) < NOSE_GAP {
+        free_out -= CHECK_STEP;
+    }
+    if free_out - free_in < 2.0 * REGION_MARGIN {
+        return None;
+    }
+
+    let near = |from: f32, to: f32| {
+        let pts: Vec<Vec2> = [from, to].iter().map(|d| seg.sample_at_distance(*d).point).collect();
+        local_wall_gap(track, &pts)
+    };
+    let (anchor_in, anchor_out) = (
+        main.project_point(seg.samples[0].point).progress_distance,
+        main.project_point(seg.samples[seg.samples.len() - 1].point).progress_distance,
+    );
+    let split_free = main.project_point(seg.sample_at_distance(free_in).point).progress_distance;
+    let merge_free = main.project_point(seg.sample_at_distance(free_out).point).progress_distance;
+
+    let mut rays = main_edge_stations(main, side, anchor_in - REGION_MARGIN, anchor_in);
+    rays.extend(envelope_stations(main, side, seg, 0.0, free_in));
+    rays.extend(branch_edge_stations(side, seg, free_in + CHECK_STEP, free_in + REGION_MARGIN));
+    let split = JunctionRegion {
+        name: "split",
+        rays,
+        reach: near(0.0, free_in + REGION_MARGIN) + 1.0,
+        window: (anchor_in - REGION_MARGIN, split_free + REGION_MARGIN),
+        side,
+    };
+    let mut rays = branch_edge_stations(side, seg, free_out - REGION_MARGIN, free_out);
+    rays.extend(envelope_stations(main, side, seg, free_out, seg.length));
+    rays.extend(main_edge_stations(main, side, anchor_out + CHECK_STEP, anchor_out + REGION_MARGIN + CHECK_STEP));
+    let merge = JunctionRegion {
+        name: "merge",
+        rays,
+        reach: near(free_out - REGION_MARGIN, seg.length) + 1.0,
+        window: (merge_free - REGION_MARGIN, anchor_out + REGION_MARGIN),
+        side,
+    };
+    Some(JunctionChecks { compiled: false, regions: vec![split, merge], island: Vec::new() })
 }

@@ -536,3 +536,50 @@ fn junction_surfaces_follow_the_ribbons_not_forced_asphalt() {
     let gore = gore_at(260.0..300.0);
     assert_eq!(track.sample_surface(gore), SurfaceType::Grass, "merge gore at {gore:?}");
 }
+
+// ---------------------------------------------------------------------------------------------------------------
+// Validation (Pillar VI)
+// ---------------------------------------------------------------------------------------------------------------
+
+fn error_codes(track: &Track) -> Vec<&'static str> {
+    validate_track(track).into_iter().filter(|d| d.severity == ValidationSeverity::Error).map(|d| d.code).collect()
+}
+
+#[test]
+fn validation_rejects_a_broken_compiled_junction() {
+    let track = track_with(layout());
+    let compiled = layout().compile(&track).unwrap();
+    assert!(error_codes(&track).is_empty());
+
+    // One outer chain piece removed: a hole in the outer wall.
+    let mut no_chain_piece = track.clone();
+    let env = compiled.geometry.split.outer_envelope(&track.spline, Side::Right, ROAD_WIDTH);
+    let e = env[15];
+    let ray = LineSegment::new(e.point(), e.point() + e.outward * (G + 1.0));
+    let hit = no_chain_piece
+        .geometry
+        .network_walls
+        .iter()
+        .position(|w| w.segment.intersect_segment(&ray).is_some())
+        .expect("a chain piece stands at station 15");
+    no_chain_piece.geometry.network_walls.remove(hit);
+    assert!(error_codes(&no_chain_piece).contains(&"ERR_JUNCTION_WALL_GAP"), "{:?}", error_codes(&no_chain_piece));
+
+    // The merge cap removed: the island is open and its divider ends touch nothing.
+    let mut no_cap = track.clone();
+    let (cap, _) = nose_barrier(&compiled.geometry.merge, BarrierType::TireWall);
+    let at = no_cap.geometry.network_walls.iter().position(|w| w.segment == cap.segment).expect("cap");
+    no_cap.geometry.network_walls.remove(at);
+    assert!(error_codes(&no_cap).contains(&"ERR_JUNCTION_OPEN_WALL_END"), "{:?}", error_codes(&no_cap));
+}
+
+#[test]
+fn a_legacy_network_without_a_layout_only_warns() {
+    // The same circuit with its branch_layout dropped keeps the compiled network but no longer owns its walls: the
+    // main wall is still cut and the network walls are rebuilt by the legacy rules.
+    let mut track = track_with(layout());
+    track.branch_layout = None;
+    track.generate_network_walls();
+    let diags = validate_track(&track);
+    assert!(diags.iter().all(|d| d.code != "ERR_JUNCTION_WALL_GAP" && d.code != "ERR_JUNCTION_OPEN_WALL_END"));
+}

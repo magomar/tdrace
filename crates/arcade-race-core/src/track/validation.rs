@@ -1358,7 +1358,151 @@ pub fn validate_track(track: &Track) -> Vec<TrackValidationError> {
         }
     }
 
+    // 6. Junction walls of road branches (spec 102 Pillar VI)
+    junction_wall_diagnostics(track, &mut diagnostics);
+
     diagnostics
+}
+
+/// Spec 102 Pillar VI: the walls round the split and merge of a road branch. Compiled branches are errors, legacy
+/// joker networks warnings, so a circuit that could not be converted still validates and lists its holes.
+fn junction_wall_diagnostics(track: &Track, diagnostics: &mut Vec<TrackValidationError>) {
+    use crate::track::branch_kit::{in_window, junction_checks, END_JOINED};
+
+    // Existing wall rules, for the junction walls against every network segment.
+    if let Some(net) = &track.network {
+        for (w_idx, wall) in track.geometry.network_walls.iter().enumerate() {
+            'wall: for seg in net.segments.iter().filter(|s| s.samples.len() >= 2) {
+                for pair in seg.samples.windows(2) {
+                    let elev = (pair[0].elevation + pair[1].elevation) * 0.5;
+                    if (wall.elevation - elev).abs() < 3.0
+                        && wall.segment.intersect_segment(&LineSegment::new(pair[0].point, pair[1].point)).is_some()
+                    {
+                        diagnostics.push(
+                            TrackValidationError::error(
+                                "ERR_WALL_CROSSES_TRACK",
+                                format!("Junction wall #{} crosses the centerline of network segment {}.", w_idx + 1, seg.id.0),
+                            )
+                            .with_index(w_idx),
+                        );
+                        break 'wall;
+                    }
+                }
+                for pt in [wall.segment.start, wall.segment.end, wall.segment.midpoint()] {
+                    let proj = seg.project_point(pt);
+                    if (wall.elevation - proj.elevation).abs() < 2.5 && proj.distance_to_spline < proj.track_width * 0.5 - 0.20 {
+                        diagnostics.push(
+                            TrackValidationError::error(
+                                "ERR_WALL_INTRUDES_TRACK",
+                                format!(
+                                    "Junction wall #{} vertex ({:.1}, {:.1}) intrudes into network segment {}.",
+                                    w_idx + 1,
+                                    pt.x,
+                                    pt.y,
+                                    seg.id.0
+                                ),
+                            )
+                            .with_index(w_idx),
+                        );
+                        break 'wall;
+                    }
+                }
+            }
+        }
+    }
+
+    let Some(checks) = junction_checks(track) else { return };
+    let (gap_code, end_code) = if checks.compiled {
+        ("ERR_JUNCTION_WALL_GAP", "ERR_JUNCTION_OPEN_WALL_END")
+    } else {
+        ("WARN_JUNCTION_WALL_GAP", "WARN_JUNCTION_OPEN_WALL_END")
+    };
+    let report = |code: &'static str, message: String| {
+        if checks.compiled {
+            TrackValidationError::error(code, message)
+        } else {
+            TrackValidationError::warning(code, message)
+        }
+    };
+    let walls: Vec<&crate::track::geometry::WallBarrier> = track.geometry.all_walls().collect();
+    // A ray through the shared end of two wall pieces can miss both.
+    let meets_wall = |ray: &LineSegment| {
+        walls.iter().any(|w| {
+            w.segment.intersect_segment(ray).is_some() || [w.segment.start, w.segment.end].iter().any(|p| ray.distance_to_point(*p) < 0.02)
+        })
+    };
+
+    for region in &checks.regions {
+        let holes: Vec<_> = region
+            .rays
+            .iter()
+            .filter(|(edge, out)| !meets_wall(&LineSegment::new(*edge, *edge + *out * region.reach)))
+            .map(|(edge, _)| *edge)
+            .collect();
+        if let Some(first) = holes.first() {
+            diagnostics.push(
+                report(
+                    gap_code,
+                    format!(
+                        "No wall within {:.1} m of the outer road edge at {} of {} stations round the branch {} (first at ({:.1}, {:.1})).",
+                        region.reach,
+                        holes.len(),
+                        region.rays.len(),
+                        region.name,
+                        first.x,
+                        first.y
+                    ),
+                )
+                .with_details("The outer wall must run unbroken from the main wall round the branch road."),
+            );
+        }
+
+        // Wall ends on the branch side of the junction must meet another wall end.
+        let sigma = region.side.sign();
+        let mut open = Vec::new();
+        for (i, wall) in walls.iter().enumerate() {
+            for p in [wall.segment.start, wall.segment.end] {
+                let proj = track.spline.project_point(p);
+                let on_side = (p - proj.closest_point).dot(proj.normal * sigma) > 0.0;
+                if !(on_side && in_window(&track.spline, region.window, proj.progress_distance)) {
+                    continue;
+                }
+                let joined = walls.iter().enumerate().any(|(j, other)| {
+                    j != i && [other.segment.start, other.segment.end].iter().any(|q| q.distance(p) <= END_JOINED)
+                });
+                if !joined {
+                    open.push(p);
+                }
+            }
+        }
+        if let Some(first) = open.first() {
+            diagnostics.push(
+                report(
+                    end_code,
+                    format!(
+                        "{} wall end(s) in the branch {} region touch no other wall end (first at ({:.1}, {:.1})).",
+                        open.len(),
+                        region.name,
+                        first.x,
+                        first.y
+                    ),
+                )
+                .with_details("Close the wall: every wall end in a junction region must meet another wall end."),
+            );
+        }
+    }
+
+    // Inside the island a line from one road edge to the other must meet a wall first.
+    let open_chords = checks.island.iter().filter(|chord| !walls.iter().any(|w| w.segment.intersect_segment(chord).is_some())).count();
+    if open_chords > 0 {
+        diagnostics.push(
+            report(
+                gap_code,
+                format!("{} of {} lines across the island between the two roads meet no wall.", open_chords, checks.island.len()),
+            )
+            .with_details("The island between the split and the merge must be closed by divider walls, a nose and a cap."),
+        );
+    }
 }
 
 #[cfg(test)]
