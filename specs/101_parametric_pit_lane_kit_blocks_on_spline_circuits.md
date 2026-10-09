@@ -183,10 +183,23 @@ The junction rules (1 for `length`, `divider_gap` and `angle_deg`, and 2, 3, 4 a
   - `pit_lane` (spline, width, speed limit, boxes, gates),
   - `pit_lane_junctions` (from the junction components; no search),
   - `PitGarage` buildings.
-- Then `trim_walls_for_pit_lane` and `generate_pit_lane_walls` run. The dividing wall starts and ends at the points the junction components give.
+- Then `trim_walls_for_pit_lane` and `generate_pit_lane_walls` run. The dividing wall starts and ends at the points the junction components give: between the main edge and the pit road at each junction free end, beside the gate.
 - When it is `None`, the bake keeps the free-form `pit_lane` and searched junctions, as today (legacy path).
 - A compile error fails the bake for that circuit with the error text. The bake never writes a partial lane.
 - Compile is a pure function of the layout and the main spline. Two bakes in a row give the same JSON.
+
+### Pillar VI-b: Pit Lane Perimeter
+
+A pit lane must be fully enclosed, so no car can leave it for open ground.
+
+- It applies to every pit lane whose two ends touch the main road: all layout lanes, and free-form lanes whose end samples lie within the main road plus the pit road half width plus 0.5 m.
+- The pit-side main wall is cut by arc length from 10 m before the entry anchor to 10 m after the exit anchor. A free-form lane uses the main-spline projections of its ends as anchors.
+- One unbroken outer wall replaces it. It runs from the cut main wall end before the entry, 1.5 m outside the pit road edge (never inside the main wall line), to the cut main wall end after the exit. It has the barrier type of the main wall it joins. The garages stay outside it.
+- The dividing wall closes the side toward the main road.
+- Wall points more than 0.5 m past a pit lane end are not inside the lane. `trim_walls_for_pit_lane` and `ERR_WALL_BLOCKS_PIT_LANE` skip them: projection onto the lane clamps to its end there, and that deleted main walls far before and after the lane.
+- The bake's wall-offset estimate skips walls within the pit road half width plus 2.0 m of the pit lane.
+- A free-form lane with an end off the main road cannot be enclosed without walling off the way in. It keeps the legacy walls, and its circuit is listed for a redraw.
+- A pitting bot that rolls past its stall takes the next stall ahead, or drives out without service. The perimeter leaves it no way round.
 
 ### Pillar VII: Track Studio
 
@@ -207,7 +220,7 @@ New script `scripts/fit_pit_layout.py`, for each circuit with a free-form `pit_l
 1. `side`: majority side of pit samples relative to the main spline.
 2. Junctions: project the first and last pit waypoints for `s`. Try `Taper`, then `TurnOff` with the angle measured from the old lane. Pick the variant with the smaller deviation that passes the guards.
 3. Road: keep the old pit waypoints that lie outside the junction spans as `road_waypoints`.
-4. Box row: keep the 6 stalls. Fit `start_s` and `spacing` from the old box positions. Set `garages: true`.
+4. Box row: keep the 6 stalls. Fit `start_s` and `spacing` from the old box positions. Set `garages: true`. The entry junction ends at least 20 m before the first stall edge, so a car at the pit speed limit can stop there.
 
 A circuit converts only if the compiled centreline stays within **3.0 m** of the old centreline (max deviation, sampled every 1 m) and all guards pass. Otherwise it keeps its free-form lane, and the script lists the reason. The script writes `docs/circuits/pit_layout_migration.md`.
 
@@ -353,6 +366,11 @@ Not applicable. No network, accounts or secrets. Circuit JSON is first-party dat
   - [ ] **Then** each circuit is converted with max centreline deviation <= 3.0 m, or keeps its free-form lane with a stated reason
   - [ ] **And** `docs/circuits/pit_layout_migration.md` lists every circuit with its result, junction kinds and deviation
 
+- **Scenario: The pit lane is fully enclosed**
+  - [ ] **Given** a GT circuit whose pit lane touches the main road at both ends
+  - [ ] **When** rays are cast every 2 m from the pit lane to both sides, and from the main edge beside the pit lane outward, at 60 to 120 degrees
+  - [ ] **Then** every ray hits a wall or reaches the main road within 40 m
+
 - **Scenario: Legacy free-form pit lanes still work**
   - [ ] **Given** a circuit JSON with `pit_lane` and no `pit_lane_layout`
   - [ ] **When** it loads and bakes
@@ -382,9 +400,12 @@ Not applicable. No network, accounts or secrets. Circuit JSON is first-party dat
 - `[ ]` `crates/arcade-race-core/tests/pit_kit_tests.rs` -> New. Compile, components, guards, wrap, rescale, garages, determinism.
 - `[ ]` `crates/tdrace-app/src/editor/tools.rs` -> Layout mode for the Pit Lane tool.
 - `[ ]` `crates/tdrace-app/src/editor/ui.rs` -> Layout parameter panel and guard errors.
+- `[ ]` `crates/arcade-race-core/src/track/validation.rs` -> `ERR_WALL_BLOCKS_PIT_LANE` skips wall points past a lane end.
+- `[ ]` `crates/race-kit/src/ai/mod.rs` -> A pitting bot that passed its stall takes the next one ahead.
+- `[ ]` `crates/tdrace-app/tests/pit_lane_integration_tests.rs` -> Pit stops, stall sweep and enclosure on the GT circuits.
 - `[ ]` `scripts/fit_pit_layout.py` -> New. Fits layouts to existing pit lanes and writes the report.
 - `[ ]` `docs/circuits/pit_layout_migration.md` -> New. Per-circuit migration result.
-- `[ ]` `tracks/gt/*.json` (submodule) -> `pit_lane_layout` and `PitGarage` buildings on converted circuits; re-baked.
+- `[ ]` `tracks/gt/*.json` (submodule) -> `pit_lane_layout` and `PitGarage` buildings on converted circuits; every GT circuit re-baked with the perimeter.
 
 ### Verification Assertions
 - `crates/arcade-race-core/src/track/pit_kit.rs` references `specs/101_parametric_pit_lane_kit_blocks_on_spline_circuits.md` in its module header comment.
