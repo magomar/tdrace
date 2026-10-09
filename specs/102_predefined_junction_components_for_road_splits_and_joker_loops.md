@@ -2,8 +2,8 @@
 type: Architecture Spec
 template: architecture
 title: "Predefined Junction Components for Road Splits and Joker Loops"
-description: "Builds the joker branch of the 23 rallycross circuits from the predefined junction components of spec 101 (Taper or TurnOff, anchored to a main waypoint), joined by a free branch road; each junction gives its own throat, gore, collidable nose and closed walls, so no wall is searched and clipped at a split or merge; adds junction wall-gap validation and migrates the two joker builders."
-status: in_progress
+description: "Builds the joker branch of the 23 rallycross circuits from the predefined junction components of spec 101 (Taper or TurnOff, anchored to a main waypoint), joined by a free branch road; each junction gives its own throat, gore, collidable nose and closed walls, so no wall is searched and clipped at a split or merge; adds junction wall-gap validation and a fitting tool and migration report for the two joker builders. Converting the 23 official jokers is spec 105."
+status: draft
 receipt: "docs/receipts/spec-102-receipt.md"
 verified: { by: human:mario, at: 2026-10-08T21:04:21Z, hash: "2cb2f31ae016" }
 created: 2026-10-08
@@ -28,6 +28,8 @@ Each junction gives its own throat, gore, nose barrier and walls. The walls arou
 Spec 101 builds the junction component for pit lanes. This spec moves it into a shared module and uses it for branches. Pit lanes do not change here.
 
 Everything is compiled into the existing `TrackNetwork` (spec 006). The race runtime, joker rules (spec 082) and bot routing do not change.
+
+**Scope.** This spec builds and verifies the kit: the shared junction component, the branch layout and its compile, the walls, the guards, the validation, the rendering, and the builders' fitting tool with its migration report. The fitting tool finds that none of the 23 official jokers fits a 10-40 m Taper or TurnOff within 2.0 m (`docs/circuits/branch_junction_migration.md`), so no official circuit carries a `branch_layout` after this spec. Converting them, by redrawing each joker, is spec 105.
 
 ---
 
@@ -71,9 +73,9 @@ New module `crates/arcade-race-core/src/track/junction_kit.rs`. It receives the 
 - Spec 101's pit tests pass without a change except imports.
 
 `junction_kit.rs` also gets these new outputs. Spec 101's pit compile can use them, but this spec does not change pit lanes.
-- **Apex**: the point where the branch road edge leaves the main road edge (edge gap `G = 0`).
-- **Nose point**: the first point after the apex where `G >= 2.2 m`. `2.2 m` is the 1.6 m nose plus 0.3 m clearance on each side.
-- **Outer envelope**: on `side`, the outer edge of the union of the main and branch ribbons, sampled every 1 m over the junction span.
+- **Apex** (`edge_apex`): the point where the branch road's own edge leaves the main road edge. Spec 101's `apex` (the gap measured along the main normal, used by the pit markings) does not change. On a steep Taper the branch edge point lies ahead of its centreline point, so the edge leaves up to about 2 m after spec 101's apex.
+- **Nose point**: the first point after the edge apex where the wedge between the main road edge and the branch edge is `2.2 m` wide. `2.2 m` is the 1.6 m nose plus 0.3 m clearance on each side. The width is measured across the wedge, perpendicular to the bisector of the two edges, and the main edge counts beyond its curb. A curb on either side of the main road counts, because the wall rules of `validate_track` keep walls off the curbs of both sides.
+- **Outer envelope**: on `side`, the outer edge of the union of the main and branch ribbons, sampled every 1 m over the junction span, with the normal of that edge at each station (the main normal where the main road is the edge, the branch edge normal where the branch reaches past it).
 
 ### Pillar II: Branch Layout Data Model
 
@@ -114,12 +116,13 @@ pub struct BranchLayout {
    - 1: main between the anchors.
    - 2: the branch. It is the split component, then the free road, then the merge component, as one `RoadSegment`.
    - 3: merge anchor to finish.
+   - When the merge lies before the split on the lap (the branch passes the start/finish line) there are 3 segments: 0 the trunk from the merge to the split, 1 the main route through the line, 2 the branch; layouts `main = [0, 1]` and `layout_id = [0, 2]`. No race can count laps on such a network, and no official circuit uses it.
    - The free road is built as in spec 101 Pillar III: centripetal Catmull-Rom through the free ends, with 5 m guide points that fix the heading at both joints.
 2. **Junctions**:
    - Split: the ingress socket and egress socket 0 are the main road at the anchor. Egress socket 1 is the branch start that the component gives.
    - Merge: the mirror image.
    - `GoreConfig`:
-     - `apex_point`: the component apex.
+     - `apex_point`: the edge apex of the component.
      - `gore_length`: the arc length from the apex to the nose point.
      - `divergence_angle`: the heading difference at the nose point.
      - `nose_barrier`: the nose of Pillar IV.
@@ -127,11 +130,12 @@ pub struct BranchLayout {
    - `MergeConfig` is filled the same way at the merge.
 3. **Layouts**: `main = [0, 1, 3]` and `layout_id = [0, 2, 3]`, as today.
 4. **Joker checkpoint**: at the arc-length midpoint of segment 2, as the World RX builder places it today.
+5. **Launch chute (spec 103)**: the chute lives on the network, which the compile replaces on every bake. The bake reads the chute's spec back from the old network and stamps it again on the new one, once the walls are built.
 
 A compiled junction has a throat of length `length` along the main road. In the throat the two ribbons overlap. No throat quad is needed:
 - **Surface**: a point inside the main ribbon takes the main surface. A point in the branch ribbon and outside the main ribbon takes the branch surface. A point in the gore (between the apex and the nose) takes the circuit's run-off surface. No asphalt is forced.
 - **Render**: the branch ribbon is drawn before the main ribbon, so the main road is on top in the throat. `render_network_junctions_pass` skips compiled junctions. Their throat, gore and nose are drawn as normal road ribbons and walls. This follows the rules of spec 085 for these junctions. It does not implement spec 085.
-- **Bots**: bots read `gore.apex_point` and the gates, as today (spec 085). The apex is now the real apex.
+- **Bots**: bots read `gore.apex_point` and the gates, as today (spec 085). The apex is now the real edge apex.
 
 ### Pillar IV: Walls Built by the Component
 
@@ -149,13 +153,13 @@ main wall (side) ─► outer envelope wall (split) ─► branch outer wall ─
    - It joins the branch outer wall at the free end. The merge is the mirror image.
    - The result is one unbroken wall from the main wall before the split, round the branch, to the main wall after the merge.
 2. **Island.** The area between the main road and the branch, from the split nose to the merge nose, is a closed wall loop:
-   - **Divider walls**: one along the main edge and one along the branch inner edge. The offset from each road edge is `o(t) = min(g, (G(t) − 1.6) / 2)`, where `G(t)` is the edge gap. So both walls are 0.3 m off their road at the nose, and `g` off it where the roads are far apart.
+   - **Divider walls**: one along the main edge and one along the branch inner edge. The offset from each road edge is `o(t) = min(g, (G(t) − 1.6) / 2)`, where `G(t)` is the gap between the two edges measured across the wedge (the main edge counted beyond its curb). So both walls are 0.3 m off their road at the nose, measured across the wedge, and `g` off it where the roads are far apart. The ends of the nose barrier are `0.3 m × cos(half the divergence angle)` off the edges: 0.29 m at 30° and 0.26 m at the 60° maximum. The test measures at least 0.28 m, which includes the sampling of the branch spline.
    - **Split nose**: a 1.6 m `nose_barrier` segment at the split nose point. It is perpendicular to the gore bisector and joins the starts of the two divider walls.
    - **Merge cap**: a 1.6 m segment of the same type that joins the ends of the two divider walls at the merge nose point.
    - The nose and the cap are collidable. They go into `geometry.network_walls`, which `race-kit/src/world.rs` already collides.
 3. **Main wall on the far side**: no change.
 4. **Branch outer wall on the free road**: `generate_network_walls` with the rules of spec 088, on the outer side of the free road only. Its ends join the outer chain at the free ends.
-5. **No search-based trim for compiled branches.** Main walls on `side` are replaced by arc length, from the split anchor to the merge anchor. `trim_walls_for_network` stays for legacy networks only.
+5. **No search-based trim against the branch.** Main walls on `side` are replaced by arc length, from the split anchor to the merge anchor. `trim_walls_for_network` still removes main wall pieces that lie on the main road of another part of the lap (a crossing), for compiled branches too, and `generate_network_walls` still builds the walls of a launch chute (spec 103); both leave the branch alone.
 6. Walls are built on load from `branch_layout` and never saved, as network walls are today.
 
 ### Pillar V: Guards (Fail Before Bake)
@@ -166,8 +170,8 @@ main wall (side) ─► outer envelope wall (split) ─► branch outer wall ─
 |---|------|-------|
 | 1 | The junction rules of spec 101 (parameter ranges, Taper too steep, offset wider than the corner radius, TurnOff arc too tight, joint kink > 2°) | `Junction(JunctionError)` |
 | 2 | Each junction `s` is the arc length of a main waypoint, ±0.01 m | `AnchorOffWaypoint { junction }` |
-| 3 | `divider_gap >= 2.2 m`, so the nose lies inside the junction span | `NoseOutsideJunction { junction }` |
-| 4 | Between the split nose and the merge nose, the edge gap between the main road and the branch is `>= 2.2 m` | `DividerTooNarrow { s }` |
+| 3 | `divider_gap >= 2.2 m` and the wedge reaches 2.2 m inside the junction span (a main curb counts), so the nose lies inside it | `NoseOutsideJunction { junction }` |
+| 4 | Between the split nose and the merge nose, the gap across the wedge between the main road (beyond its curb) and the branch is `>= 2.2 m` (0.05 m tolerance) | `DividerTooNarrow { s }` |
 | 5 | Free road minimum radius `>= road_width / 2 + 3.0 m` (as spec 097) | `RoadTooTight { s, radius }` |
 | 6 | The split is before the merge along the driving direction. Wrap across S/F is allowed. | `JunctionOrder` |
 | 7 | `layout_id` is not `main` and not empty | `InvalidParameter { name }` |
@@ -184,9 +188,9 @@ main wall (side) ─► outer envelope wall (split) ─► branch outer wall ─
 - The existing wall checks (`ERR_WALL_CROSSES_TRACK`, `ERR_WALL_INTRUDES_TRACK`, `ERR_WALL_SELF_INTERSECTION`) also run on the junction walls, against every network segment.
 - Legacy junctions only warn, so the circuits that the migration cannot convert still pass validation. The warnings list their holes.
 
-### Pillar VII: Builder Migration of the 23 Circuits
+### Pillar VII: Builder Fitting Tool and Migration Report
 
-`build_world_rx_joker.rs` and `build_classic_rx_joker.rs` write a `branch_layout` and then compile it. They no longer write sockets by hand. For each circuit:
+`build_world_rx_joker.rs` and `build_classic_rx_joker.rs` no longer write sockets by hand. They fit a `branch_layout` to the old joker of each circuit, with the shared code in `bin/rx_joker_fit/mod.rs`. For each circuit:
 
 1. **Anchors and side**: the split and merge waypoints and the side that the builders use today (`JokerCut`, spec 088).
 2. **Shape**: try `Taper`, then `TurnOff` with the angle measured from the old joker. Try `length` from 10 m to 40 m in 5 m steps. Pick the fit with the smallest deviation that passes the guards.
@@ -195,9 +199,9 @@ main wall (side) ─► outer envelope wall (split) ─► branch outer wall ─
    - The compiled branch centreline stays within **2.0 m** of the old joker centreline (max deviation, sampled every 1 m).
    - The joker still costs the lap time that spec 088 requires.
    - Validation reports no error.
-5. **Otherwise** the circuit keeps its legacy network, and the builder prints the reason.
+5. **Otherwise** the circuit keeps its legacy network, untouched, and the builder prints the reason.
 
-The builders write `docs/circuits/branch_junction_migration.md`. It has one row per circuit: result, shape, length, deviation and the reason for a fallback.
+The builders write `docs/circuits/branch_junction_migration.md`. It has one row per circuit: result, shape, length, deviation and the reason for a fallback. With these limits **0 of 23** circuits convert: 10 old jokers leave the main road at more than the 60° that a component allows, 9 have no 10-40 m fit within 4 m, 3 fail a guard, and `kouvola_rx` misses by 0.65 m. `RX_FIT_MAX_DEVIATION_M` and `RX_FIT_REPORT` let a run try a looser limit without touching the committed report. Converting the circuits, by redrawing the jokers, is spec 105.
 
 ### Non-Goals
 
@@ -206,6 +210,7 @@ The builders write `docs/circuits/branch_junction_migration.md`. It has one row 
 - No change to main route waypoints, the far-side main walls, checkpoints (except the joker checkpoint position), joker rules (spec 082) or bot route choice.
 - No Track Studio authoring of branch layouts. Track Studio loads and saves `branch_layout` without a change. The legacy Road Split tool and `GoreConfig::new` do not change.
 - No elevated or bridged junctions.
+- No conversion of the official jokers: spec 105. No official circuit JSON changes in this spec.
 - Spec 085 (pacenote HUD, chevron and bullseye removal for legacy junctions and pit lanes) stays a separate spec.
 
 ---
@@ -249,9 +254,7 @@ graph TD
 
 ### 1. Circuit JSON (`tracks/` submodule)
 - New optional key `branch_layout`. JSON without it loads unchanged.
-- Converted circuits keep `network` in the file as baked output. `branch_layout` is the source of truth.
-- Run each builder, then `track_bake --rebuild` two times on the converted circuits. The second run must give no diff.
-- Push the `tracks` submodule commit before `main` points at it.
+- No official circuit JSON changes in this spec: none carries a `branch_layout` yet. Converting circuits (a builder run, `track_bake --rebuild` twice, a `tracks` commit pushed before `main` points at it) is spec 105.
 
 ### 2. Rollback
 - Remove `branch_layout` from a circuit JSON and restore its `network` from the previous `tracks` commit. The legacy path stays supported.
@@ -268,7 +271,7 @@ Not applicable. No network access, accounts or secrets. Circuit JSON is first-pa
 
 - **Fallback**: a circuit that fails the fit keeps its legacy network. Its junction wall problems show as warnings in validation.
 - **Bake failure**: a compile error stops the bake for that circuit with the error text. The bake never writes a partial network.
-- **Gameplay check**: the bot stall sweep (own-category cars, closed-loop circuits) runs on every converted circuit. Bead `tdrace-xg1x` (bots fail the joker on `kouvola_rx`, `lavare_rx` and `killarney_rx`) is checked again after the migration.
+- **Gameplay check**: the bot stall sweep and bead `tdrace-xg1x` (bots fail the joker on `kouvola_rx`, `lavare_rx` and `killarney_rx`) move with the conversion to spec 105.
 
 ---
 
@@ -284,8 +287,9 @@ Not applicable. No network access, accounts or secrets. Circuit JSON is first-pa
 - `cargo test -p tdrace-app --test classic_circuits_bot_tests`
 - `cargo test -p tdrace-app --test ai_tests`
 - `cargo test -p tdrace-app --test track_editor_tests`
+- `cargo test -p tdrace-app --test branch_junction_circuit_tests`
 - `cargo run --release -p tdrace-app --bin build_world_rx_joker` and `cargo run --release -p tdrace-app --bin build_classic_rx_joker`
-- `cargo run --release -p tdrace-app --bin track_bake -- tracks/rally/*.json tracks/classic/rx_*.json --rebuild` (run two times; `git -C tracks diff --stat` is empty after the second run)
+- `cargo run --release -p tdrace-app --bin track_bake -- tracks/gt/*.json --rebuild` (no file changes)
 
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
@@ -295,11 +299,6 @@ Not applicable. No network access, accounts or secrets. Circuit JSON is first-pa
   - [x] **Then** it returns 4 segments, layouts `main = [0, 1, 3]` and `joker = [0, 2, 3]`, and one Split and one Merge junction
   - [x] **And** the split apex lies within 0.5 m of the point where the branch edge leaves the main edge
   - [x] **And** `TrackNetwork::validate` and `validate_track` report no error
-
-- **Scenario: The main route does not change**
-  - [ ] **Given** a converted circuit
-  - [ ] **When** its main waypoints and main spline samples are compared with the previous `tracks` commit
-  - [ ] **Then** they are identical
 
 - **Scenario: The outer wall is unbroken from the main road round the branch**
   - [x] **Given** a compiled branch
@@ -311,7 +310,7 @@ Not applicable. No network access, accounts or secrets. Circuit JSON is first-pa
   - [x] **Given** a compiled branch
   - [x] **When** the island walls are read
   - [x] **Then** the split nose, the two divider walls and the merge cap form one closed loop
-  - [ ] **And** the nose is 1.6 m long, perpendicular to the gore bisector within 2°, and each divider wall stays at least 0.3 m from its road edge
+  - [x] **And** the nose is 1.6 m long and perpendicular to the gore bisector within 2°, and each divider wall stays at least 0.28 m from its road edge (0.3 m across the wedge, less the sampling of the branch spline)
   - [x] **And** a car driven straight at the nose at 20 m/s stops on it and does not enter the island
 
 - **Scenario: Junction surfaces follow the ribbons, not forced asphalt**
@@ -333,7 +332,6 @@ Not applicable. No network access, accounts or secrets. Circuit JSON is first-pa
   - [x] **Given** `tracks/rally/kouvola_rx.json` from the `tracks` commit before the migration
   - [x] **When** `validate_track` runs
   - [x] **Then** it reports `WARN_JUNCTION_WALL_GAP` at the joker merge
-  - [ ] **And** the same circuit, after conversion, reports no junction warning and no junction error
 
 - **Scenario: Validation rejects a broken compiled junction**
   - [x] **Given** a compiled branch with one outer chain wall piece removed, and a second copy with the merge cap removed
@@ -352,26 +350,10 @@ Not applicable. No network access, accounts or secrets. Circuit JSON is first-pa
   - [x] **Then** each circuit is converted with max centreline deviation <= 2.0 m and a joker lap-time cost that spec 088 accepts, or keeps its legacy network with a stated reason
   - [x] **And** `docs/circuits/branch_junction_migration.md` lists every circuit with its result, shape, length, deviation and reason
 
-- **Scenario: Bake is deterministic and walls are never saved**
-  - [ ] **Given** all converted circuits
-  - [ ] **When** `track_bake --rebuild` runs two times
-  - [ ] **Then** the second run makes no change in the `tracks` submodule
-  - [ ] **And** no circuit JSON contains island or outer chain walls
-
-- **Scenario: Bots take the joker once and do not stall on converted circuits**
-  - [ ] **Given** each converted circuit in a race with RX bots and the joker rule on
-  - [ ] **When** the race runs to the end
-  - [ ] **Then** every bot finishes with exactly one joker, and the bot stall sweep reports no stall
-
 - **Scenario: Legacy networks still work**
   - [x] **Given** a circuit JSON with `network` and no `branch_layout`
   - [x] **When** it loads and bakes
   - [x] **Then** its network and walls are identical to the walls before this spec, and the rally and classic circuit tests pass on it
-
-- **Scenario: Track Studio keeps the branch layout**
-  - [ ] **Given** a converted circuit open in Track Studio
-  - [ ] **When** the author saves it without an edit
-  - [ ] **Then** `branch_layout` in the saved JSON is identical to the loaded one
 
 ---
 
@@ -382,7 +364,7 @@ Not applicable. No network access, accounts or secrets. Circuit JSON is first-pa
 - `[x]` `crates/arcade-race-core/src/track/pit_kit.rs` -> Uses the moved types. `PitKitError::Junction`.
 - `[x]` `crates/arcade-race-core/src/track/branch_kit.rs` -> New. `BranchLayout`, `BranchKitError`, `compile`, island and outer chain walls.
 - `[x]` `crates/arcade-race-core/src/track/mod.rs` -> `Track::branch_layout`; build branch walls on load; replace main walls on `side` by arc length for compiled branches; main-first surface rule in junction throats.
-- `[ ]` `crates/arcade-race-core/src/track/network.rs` -> `sample_surface` uses the ribbons and run-off for compiled junctions.
+- `[x]` `crates/arcade-race-core/src/track/network.rs` -> Not changed: the main spline is sampled before the network, and the segments in order, so the main surface wins in a throat and the gore falls through to the run-off.
 - `[x]` `crates/arcade-race-core/src/track/validation.rs` -> Junction section: `ERR_JUNCTION_WALL_GAP`, `ERR_JUNCTION_OPEN_WALL_END` and their warning forms; wall checks against every network segment for junction walls.
 - `[x]` `crates/arcade-race-core/src/track/bake.rs` -> Compiles `branch_layout` before the wall steps.
 - `[x]` `crates/arcade-race-core/src/track/presets.rs` -> `branch_layout: None` in preset constructors.
@@ -391,15 +373,15 @@ Not applicable. No network access, accounts or secrets. Circuit JSON is first-pa
 - `[x]` `crates/arcade-race-core/tests/branch_kit_tests.rs` -> New. Compile, guards, wrap, walls, surfaces, validation codes.
 - `[x]` `crates/tdrace-app/src/bin/build_world_rx_joker.rs` -> Writes and fits `branch_layout`.
 - `[x]` `crates/tdrace-app/src/bin/build_classic_rx_joker.rs` -> Writes and fits `branch_layout`.
-- `[ ]` `crates/tdrace-app/tests/rally_tracks_tests.rs` -> Remove the 4 m throat skip from the wall-ray tests for converted circuits; nose collision; main route unchanged.
-- `[ ]` `crates/tdrace-app/tests/track_editor_tests.rs` -> `branch_layout` round trip.
+- `[x]` `crates/tdrace-app/src/bin/rx_joker_fit/mod.rs` -> New. The fitting code that both builders share, and the report writer.
+- `[x]` `crates/tdrace-app/tests/branch_junction_circuit_tests.rs` -> New. A branch built on nine official main splines: validation, main route, route lap, nose collision, bots, Track Studio, report check.
 - `[x]` `docs/circuits/branch_junction_migration.md` -> New. Per-circuit migration result.
-- `[ ]` `tracks/rally/*.json`, `tracks/classic/rx_*.json` (submodule) -> `branch_layout` and re-baked `network` on converted circuits.
+- Moved to spec 105: `tracks/rally/*.json`, `tracks/classic/rx_*.json` (submodule) get `branch_layout` and a re-baked `network` on converted circuits.
 
 ### Verification Assertions
 - `junction_kit.rs` and `branch_kit.rs` reference `specs/102_predefined_junction_components_for_road_splits_and_joker_loops.md` in their module header comments.
 - No file outside the list above changes `TrackNetwork`, `RoadJunction`, `SplineSocket` or the multi-route tracker.
 
 ### Beads Mapping
-- Resolves `tdrace-joker-junction-wall-holes-5vqt`, `tdrace-74s5` and `tdrace-070o` on converted circuits.
+- `tdrace-joker-junction-wall-holes-5vqt`, `tdrace-74s5` and `tdrace-070o` are resolved on converted circuits only: no circuit is converted here, so they move to spec 105.
 - Blocked by the spec 101 epic `tdrace-3d7j`.
