@@ -13,9 +13,14 @@ laps_per_round = 4
 bot_count = 7
 ai_difficulty = "standard"
 icon = "dirt"
+weekend_format = "tournament_sprint"
+total_drivers = 32
+heat_laps = 4
+semi_laps = 5
+final_laps = 6
 
 [scoring]
-system = "standard"
+system = "tournament"
 fastest_lap_bonus = true
 stage_win_bonus = false
 clean_race_bonus = false

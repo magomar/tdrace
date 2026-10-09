@@ -5,6 +5,8 @@ pub mod format;
 pub use format::*;
 pub mod manager;
 pub use manager::*;
+pub mod tournament;
+pub use tournament::*;
 
 /// Scoring system for championship tournaments.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -185,6 +187,15 @@ pub struct SeriesSession {
     pub tier: u32,
     #[serde(default)]
     pub round_laps: Vec<Option<u32>>,
+    /// How each round is run. A tournament sprint round is a whole weekend of heats and finals.
+    #[serde(default)]
+    pub weekend_format: WeekendFormat,
+    /// Size and distances of the weekend. Set when `weekend_format` is `TournamentSprint`.
+    #[serde(default)]
+    pub tournament_config: Option<TournamentConfig>,
+    /// The weekend being run in the current round. Built when the round starts, dropped when it is scored.
+    #[serde(default)]
+    pub tournament: Option<TournamentWeekendState>,
 }
 
 pub type ChampionshipSession = SeriesSession;
@@ -213,6 +224,9 @@ impl SeriesSession {
             is_completed: false,
             tier: 1,
             round_laps: Vec::new(),
+            weekend_format: WeekendFormat::default(),
+            tournament_config: None,
+            tournament: None,
         }
     }
 
@@ -244,6 +258,9 @@ impl SeriesSession {
             is_completed: false,
             tier: 1,
             round_laps: Vec::new(),
+            weekend_format: WeekendFormat::default(),
+            tournament_config: None,
+            tournament: None,
         }
     }
 
@@ -305,7 +322,67 @@ impl SeriesSession {
 
     /// Returns the configured lap count for the current round, if specified.
     pub fn current_round_laps(&self) -> Option<u32> {
+        if let Some(race) = self.tournament_race() {
+            return Some(race.laps);
+        }
         self.round_laps.get(self.current_round).copied().flatten()
+    }
+
+    /// Runs every round of this series as a tournament sprint weekend (Spec 104).
+    pub fn with_tournament(mut self, config: TournamentConfig) -> Self {
+        self.weekend_format = WeekendFormat::TournamentSprint;
+        self.tournament_config = Some(config);
+        self
+    }
+
+    /// True when the rounds of this series are tournament sprint weekends.
+    pub fn is_tournament(&self) -> bool {
+        self.weekend_format == WeekendFormat::TournamentSprint && self.tournament_config.is_some()
+    }
+
+    /// Builds the weekend of the current round once the field is complete. Does nothing when the series
+    /// is not a tournament, a weekend is already running, or the series is over.
+    pub fn ensure_tournament_weekend(&mut self) -> Result<(), String> {
+        let Some(config) = self.tournament_config.filter(|_| self.is_tournament()) else {
+            return Ok(());
+        };
+        if self.tournament.is_some() || self.is_completed {
+            return Ok(());
+        }
+        let seed = weekend_seed(&self.name, self.current_round);
+        self.tournament = Some(TournamentWeekendState::new(config, &self.standings, seed)?);
+        Ok(())
+    }
+
+    /// The race the player drives next in the running weekend.
+    pub fn tournament_race(&self) -> Option<&TournamentRace> {
+        self.tournament.as_ref().filter(|t| !t.is_complete).and_then(|t| t.player_race())
+    }
+
+    /// True while a weekend has races left to drive.
+    pub fn tournament_in_progress(&self) -> bool {
+        self.tournament.as_ref().is_some_and(|t| !t.is_complete)
+    }
+
+    /// Scores a race of the running weekend. A stage that is not the last one only moves the weekend on.
+    /// When the Grand Final and the B-Final are done the 32 places are scored as one round.
+    /// Returns true when the weekend was completed and the round scored.
+    pub fn submit_tournament_race(&mut self, track_title: &str, results: Vec<RoundDriverResult>) -> Result<bool, String> {
+        let mut weekend = self.tournament.take().ok_or_else(|| "no tournament weekend is running".to_string())?;
+        if let Err(e) = weekend.submit_player_race(results, &self.standings) {
+            self.tournament = Some(weekend);
+            return Err(e);
+        }
+        match weekend.final_standings() {
+            Some(places) => {
+                self.submit_round_results(track_title, places);
+                Ok(true)
+            }
+            None => {
+                self.tournament = Some(weekend);
+                Ok(false)
+            }
+        }
     }
 
     /// Returns true if this championship session is brand new (at round 0 with no finished rounds).
@@ -461,6 +538,7 @@ impl SeriesSession {
         let latest = self.history.pop()?;
         self.current_round = latest.round_index;
         self.is_completed = false;
+        self.tournament = None;
 
         // Deduct points, time, wins, and podiums awarded in this round
         for res in &latest.results {
