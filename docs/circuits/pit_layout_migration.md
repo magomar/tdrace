@@ -8,21 +8,21 @@ Deviation is measured along the old lane only; see the script header.
 |---------|--------|-------|------|-----------:|----------------:|------------------:|--------|
 | bahrain | kept free-form | - | - | - | - | - | no candidate passed the guards; best fit: Junction(JunctionTooSteep { junction: Entry, angle_deg: 68.42551 }) |
 | bathurst | kept free-form | - | - | - | - | - | old lane overlaps the main road by 5.0 m at the boxes |
-| catalunya | converted | Taper | Taper | 40 / 20 | 1.93 | 1.49 | - |
-| cota | converted | Taper | Taper | 45 / 45 | 4.92 | 1.44 | - |
+| catalunya | kept free-form | - | - | - | - | - | no junction shape fits between the old lane ends and the boxes |
+| cota | kept free-form | - | - | - | - | - | no junction shape fits between the old lane ends and the boxes |
 | interlagos | kept free-form | - | - | - | - | - | no candidate passed the guards; best fit: RoadTooTight { s: 15.23794, radius: 4.7452016 } |
-| le_mans_sarthe | kept free-form | - | - | - | - | - | no candidate passed the guards; best fit: Junction(JunctionTooSteep { junction: Exit, angle_deg: 71.71851 }) |
-| madring | kept free-form | - | - | - | - | - | no candidate passed the guards; best fit: Junction(InvalidParameter { name: "length" }) |
+| le_mans_sarthe | kept free-form | - | - | - | - | - | no junction shape fits between the old lane ends and the boxes |
+| madring | kept free-form | - | - | - | - | - | no junction shape fits between the old lane ends and the boxes |
 | marina_bay | kept free-form | - | - | - | - | - | old lane overlaps the main road by 0.5 m at the boxes |
-| monaco | kept free-form | - | - | - | - | - | no candidate passed the guards; best fit: RoadTooTight { s: 52.309933, radius: 5.2166677 } |
-| montreal | kept free-form | - | - | - | - | - | no candidate passed the guards; best fit: Junction(InvalidParameter { name: "length" }) |
-| monza | converted | Taper | Taper | 85 / 120 | 1.87 | 0.81 | - |
-| nurburgring_gp | converted | Taper | Taper | 85 / 110 | 1.15 | 0.81 | - |
-| portimao_gp | converted | Taper | Taper | 115 / 110 | 1.59 | 0.61 | - |
-| red_bull_ring | kept free-form | - | - | - | - | - | no candidate passed the guards; best fit: Junction(JunctionTooSteep { junction: Entry, angle_deg: 64.381615 }) |
+| monaco | kept free-form | - | - | - | - | - | no junction shape fits between the old lane ends and the boxes |
+| montreal | kept free-form | Taper | Taper | 45 / 30 | 3.28 | 4.90 | best deviation 4.90 m > 3.0 m |
+| monza | converted | TurnOff 12° | Taper | 121 / 120 | 1.87 | 0.94 | - |
+| nurburgring_gp | converted | TurnOff 11° | Taper | 117 / 110 | 1.15 | 0.89 | - |
+| portimao_gp | converted | TurnOff 11° | TurnOff 10° | 100 / 142 | 1.59 | 1.28 | - |
+| red_bull_ring | converted | Taper | Taper | 30 / 40 | 3.88 | 2.80 | - |
 | silverstone | kept free-form | - | - | - | - | - | no candidate passed the guards; best fit: BoxRowOffRoad { box_index: 0 } |
-| spa | kept free-form | Taper | Taper | 20 / 15 | 0.00 | 5.28 | old lane overlaps the main road by 3.1 m at the boxes |
-| suzuka | converted | TurnOff 11° | Taper | 123 / 30 | 2.00 | 2.33 | - |
-| zandvoort | kept free-form | Taper | Taper | 40 / 15 | 2.44 | 3.04 | best deviation 3.04 m > 3.0 m |
+| spa | kept free-form | Taper | Taper | 40 / 15 | 0.00 | 9.41 | old lane overlaps the main road by 3.1 m at the boxes |
+| suzuka | converted | Taper | Taper | 65 / 30 | 2.00 | 2.40 | - |
+| zandvoort | kept free-form | - | - | - | - | - | no junction shape fits between the old lane ends and the boxes |
 
-6 of 18 circuits converted.
+5 of 18 circuits converted.

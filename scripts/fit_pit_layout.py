@@ -39,7 +39,9 @@ GAP_REACHED_TOLERANCE = 0.1
 ROAD_MARGIN = 10.0
 ROAD_GAP_TOLERANCE = 0.2
 BOX_STOP_RADIUS = 3.0
-# Room kept between a junction free end and the nearest stall edge (m).
+# Room kept between a junction free end and the nearest stall edge (m). At the entry a car crosses the gate at up
+# to the pit speed limit and must stop at the first stall: on cota a 3 m gap let bots roll past stall 0.
+BOX_ENTRY_ROOM = 20.0
 BOX_ROAD_MARGIN = 2.0
 DEFAULT_ROAD_WIDTH = 7.0
 
@@ -315,7 +317,7 @@ def fit_junction(fit, entry):
                 room = main.ahead(box_ss[-1], (anchor - sp) % main.total if main.closed else anchor - sp)
             if main.closed and room > main.total / 2:
                 room -= main.total
-            if room < BOX_STOP_RADIUS + BOX_ROAD_MARGIN:
+            if room < BOX_STOP_RADIUS + (BOX_ENTRY_ROOM if entry else BOX_ROAD_MARGIN):
                 continue
             ranked.append((err, kind, length, anchor))
     ranked.sort(key=lambda r: r[0])
