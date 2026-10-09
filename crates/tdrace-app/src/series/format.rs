@@ -42,7 +42,7 @@ pub struct SeriesMeta {
     #[serde(default)]
     pub icon: Option<String>,
     /// `tournament_sprint` runs each round as a heats-to-final weekend (Spec 104).
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "WeekendFormat::is_single_race")]
     pub weekend_format: WeekendFormat,
     /// Drivers in a tournament weekend: 16, 32 (default) or 64.
     #[serde(default)]

@@ -42,6 +42,13 @@ pub enum WeekendFormat {
     TournamentSprint,
 }
 
+impl WeekendFormat {
+    /// For `skip_serializing_if`: a single-race series keeps its TOML free of the weekend keys.
+    pub fn is_single_race(&self) -> bool {
+        *self == Self::StandardSingleRace
+    }
+}
+
 /// A stage of a tournament weekend.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TournamentStage {
@@ -271,7 +278,7 @@ impl TournamentWeekendState {
 
     /// The scheduled race the player drives next. `None` once the weekend is complete.
     pub fn player_race(&self) -> Option<&TournamentRace> {
-        self.active_races.iter().find(|r| r.driver_ids.iter().any(|id| *id == self.player_id))
+        self.active_races.iter().find(|r| r.driver_ids.contains(&self.player_id))
     }
 
     /// Results of the main-bracket races of `round`.
@@ -319,7 +326,7 @@ impl TournamentWeekendState {
         let mut main_results: Vec<(usize, Vec<RoundDriverResult>)> = Vec::new();
         let mut final_round_results: Vec<(TournamentStage, Vec<RoundDriverResult>)> = Vec::new();
         for race in &races {
-            let is_player_race = race.driver_ids.iter().any(|id| *id == self.player_id);
+            let is_player_race = race.driver_ids.contains(&self.player_id);
             let race_results = if is_player_race {
                 player_results.clone()
             } else {
@@ -428,12 +435,12 @@ impl TournamentWeekendState {
             })
             .collect();
 
-        let player_in_main = races.iter().any(|r| r.driver_ids.iter().any(|id| *id == self.player_id));
+        let player_in_main = races.iter().any(|r| r.driver_ids.contains(&self.player_id));
         if round == config.final_round() {
             // B-Final: the drivers who missed the Grand Final from the last semifinal round. A player who
             // came through consolation takes the place of the slowest of them and starts last.
             let mut field: Vec<String> = out.iter().map(|r| r.driver_id.clone()).collect();
-            if !player_in_main && !field.iter().any(|id| *id == self.player_id) {
+            if !player_in_main && !field.contains(&self.player_id) {
                 field.pop();
                 field.push(self.player_id.clone());
             }

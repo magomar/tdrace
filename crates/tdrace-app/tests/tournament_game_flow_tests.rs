@@ -13,6 +13,11 @@ const WORLD_RX: &str = include_str!("../../../series/rally/rally_world_rallycros
 fn launch(toml: &str) -> RaceSession {
     let def = SeriesDefinition::from_toml(toml).unwrap();
     let mut session = RaceSession::new();
+    // A database of its own: the shared test sandbox may hold a championship saved by another test.
+    let db = tdrace_app::db::HallOfFameDb::open_in_memory().unwrap();
+    let _ = db.seed_default_profile_if_empty().unwrap();
+    session.hof_db = Some(db);
+    session.refresh_profiles_and_stats();
     session.launch_or_resume_championship(&def);
     session
 }
@@ -64,15 +69,13 @@ fn next_race(session: &RaceSession) -> tdrace_app::series::TournamentRace {
 #[test]
 fn a_weekend_runs_through_the_game_session() {
     let mut session = launch(SUPERBUGGY);
-    assert_eq!(session.state, GameState::TournamentBracket, "the weekend opens on its bracket");
+    assert_eq!(session.state, GameState::StartingGrid, "the first heat starts from its grid");
     let champ = session.championship_session.as_ref().unwrap();
     assert_eq!(champ.standings.len(), 32);
     let heat = next_race(&session);
     assert_eq!((heat.stage, heat.laps), (TournamentStage::QualifyingHeat, 4));
 
-    // Heat: [LAUNCH RACE] on the bracket starts the 3D race.
-    press_confirm(&mut session);
-    assert_eq!(session.state, GameState::StartingGrid);
+    // Heat.
     assert_eq!((session.total_laps, session.world.vehicles.len()), (4, 8));
     assert_eq!(grid_driver_ids(&session).into_iter().collect::<HashSet<_>>(), heat.driver_ids.iter().cloned().collect::<HashSet<_>>());
     finish_race(&mut session, 1);
@@ -84,10 +87,11 @@ fn a_weekend_runs_through_the_game_session() {
     assert_eq!(champ.current_round, 0, "the round is scored after the finals");
     assert!(champ.standings.iter().all(|s| s.points == 0));
 
-    // Semifinal: 5 laps, the grid is the semifinal field in heat-time order.
+    // Semifinal: 5 laps, the grid is the semifinal field in heat-time order. [LAUNCH RACE] starts the 3D race.
     let semi = next_race(&session);
     assert_eq!((semi.stage, semi.laps), (TournamentStage::Semifinal, 5));
     press_confirm(&mut session);
+    assert_eq!(session.state, GameState::StartingGrid);
     assert_eq!((session.total_laps, session.world.vehicles.len()), (5, 8));
     assert_eq!(grid_driver_ids(&session), semi.driver_ids, "the grid follows the seeding");
     finish_race(&mut session, 3);
@@ -117,7 +121,6 @@ fn a_weekend_runs_through_the_game_session() {
 #[test]
 fn a_player_eliminated_in_the_heat_races_on_in_the_game() {
     let mut session = launch(WORLD_RX);
-    press_confirm(&mut session);
     finish_race(&mut session, 6);
     press_confirm(&mut session);
     assert_eq!(session.state, GameState::TournamentBracket);
@@ -146,7 +149,6 @@ fn a_player_eliminated_in_the_heat_races_on_in_the_game() {
 #[test]
 fn a_wrecked_car_is_classified_last_in_the_game() {
     let mut session = launch(SUPERBUGGY);
-    press_confirm(&mut session);
     let wrecked_car = 1;
     let wrecked_id = session.opponent_drivers[session.grid_participants.iter().find(|p| p.bot_index == Some(wrecked_car - 1)).unwrap().bot_index.unwrap()].id.to_string();
     finish_race(&mut session, 1);

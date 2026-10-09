@@ -3868,7 +3868,6 @@ impl RaceSession {
                     .load_track_by_slug(&track_id)
                     .unwrap_or_else(|_| crate::tracks::official::fallback_track());
                 self.init_race();
-                self.open_tournament_bracket_at_weekend_start();
             } else {
                 if self.game_mode == GameMode::Career && (self.active_module_id == "gt" || self.active_module_id == "gt_challenge") {
                     let tier = self.active_career_progress.level.clamp(1, 5);
@@ -7344,17 +7343,6 @@ impl RaceSession {
             self.track = self.track_manager.load_track_by_slug(&track_id).unwrap_or_else(|_| crate::tracks::official::fallback_track());
         }
         self.init_race();
-    }
-
-    /// Shows the bracket when a round that is a tournament weekend has just been drawn, so the player
-    /// sees the field before heat 1. Does nothing for any other race.
-    pub fn open_tournament_bracket_at_weekend_start(&mut self) {
-        let drawn = self.championship_session.as_ref().is_some_and(|c| {
-            c.tournament.as_ref().is_some_and(|t| !t.is_complete && t.active_round == 0 && t.heat_results.is_empty())
-        });
-        if drawn && self.state == GameState::StartingGrid {
-            self.state = GameState::TournamentBracket;
-        }
     }
 
     /// Handles input and actions for the Profile Manager screen.
@@ -14674,7 +14662,6 @@ impl RaceSession {
         }
 
         self.init_race();
-        self.open_tournament_bracket_at_weekend_start();
     }
 
     /// Resets an active or saved championship season so the player can restart it afresh.

@@ -400,6 +400,27 @@ fn a_weekend_in_progress_survives_serialization() {
     assert!(legacy.tournament_race().is_none());
 }
 
+/// A series that runs one race per round keeps its TOML free of the weekend keys, and a bad size is refused.
+#[test]
+fn weekend_keys_are_declared_only_by_tournament_series() {
+    let gt = include_str!("../../../series/gt/gt4_clubman_sprint.toml");
+    let def = SeriesDefinition::from_toml(gt).unwrap();
+    assert_eq!(def.series.weekend_format, WeekendFormat::StandardSingleRace);
+    assert!(def.series.tournament_config().is_none());
+    assert!(!def.to_session().is_tournament());
+    let toml = def.to_toml().unwrap();
+    assert!(!toml.contains("weekend_format") && !toml.contains("total_drivers"), "{}", toml);
+
+    let tournament = SeriesDefinition::from_toml(SUPERBUGGY).unwrap();
+    let again = SeriesDefinition::from_toml(&tournament.to_toml().unwrap()).unwrap();
+    assert_eq!(again, tournament, "the weekend keys survive a save");
+    assert_eq!(SeriesDefinition::from_session(&tournament.to_session(), "autocross", 5).series.tournament_config(), tournament.series.tournament_config());
+
+    let mut bad = tournament.clone();
+    bad.series.total_drivers = Some(24);
+    assert!(bad.validate().unwrap_err().iter().any(|e| e.contains("16, 32 or 64")));
+}
+
 /// Re-running the round of a finished weekend starts a new weekend.
 #[test]
 fn cancelling_the_latest_round_drops_the_weekend() {
