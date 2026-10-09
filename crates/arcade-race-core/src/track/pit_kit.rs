@@ -11,11 +11,11 @@ use wheelbase::SurfaceType;
 
 use super::geometry::{BarrierType, LineSegment, PitBox, PitLane, PitLaneExitQuad, PitLaneJunctionData};
 use super::junction_kit::{
-    build_junction, joint_kink_deg, signed_curvature, JunctionComponent, JunctionError, JunctionGeometry,
-    JunctionRole, JunctionShape, Side, JUNCTION_RADIUS_MARGIN,
+    build_junction, cumulative_lengths, first_self_crossing, free_road, signed_curvature, JunctionComponent,
+    JunctionError, JunctionGeometry, JunctionRole, JunctionShape, Side, JUNCTION_RADIUS_MARGIN, ROAD_STEP,
 };
 use super::scenery::{Building, BuildingStyle};
-use super::spline::{catmull_rom_centripetal_2d, TrackSpline, TrackWaypoint};
+use super::spline::{TrackSpline, TrackWaypoint};
 use super::Track;
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -82,10 +82,6 @@ pub struct CompiledPitLane {
     pub road_end_s: f32,
 }
 
-/// Distance of the guide points that fix the road heading at both junction joints (m).
-const ROAD_GUIDE_DISTANCE: f32 = 5.0;
-/// Sampling step along the free road (m).
-const ROAD_STEP: f32 = 1.0;
 /// Minimum radius at a stall (m).
 const BOX_MIN_RADIUS: f32 = 50.0;
 /// Upper bound on stalls, so untrusted JSON cannot ask for an unbounded allocation.
@@ -100,8 +96,6 @@ const OUTER_WALL_OFFSET: f32 = 1.5;
 /// Tolerance on the road-to-track gap rule (m). The 5 m guide points make the road bulge up to ~0.13 m toward the
 /// track next to a joint when the road then bends away from it.
 const ROAD_GAP_TOLERANCE: f32 = 0.25;
-/// Largest heading jump allowed at a junction/road joint (degrees).
-const MAX_JOINT_KINK_DEG: f32 = 2.0;
 
 impl PitLaneLayout {
     /// Compiles the layout on `track`'s main spline. Pure: the same layout and main spline give the same lane.
@@ -113,41 +107,9 @@ impl PitLaneLayout {
         let exit = build_junction(main, &self.exit, JunctionRole::Exit, self.side, self.road_width)?;
         self.check_order(main)?;
 
-        // Free road: centripetal Catmull-Rom with guide points that fix the heading at both joints.
-        let h = ROAD_GUIDE_DISTANCE;
-        let mut controls = vec![entry.free_end, entry.free_end + entry.free_heading * h];
-        controls.extend(self.road_waypoints.iter().copied());
-        controls.push(exit.free_end - exit.free_heading * h);
-        controls.push(exit.free_end);
-        let ghost_start = entry.free_end - entry.free_heading * h;
-        let ghost_end = exit.free_end + exit.free_heading * h;
-        let mut road = vec![controls[0]];
-        for i in 0..controls.len() - 1 {
-            let p0 = if i == 0 { ghost_start } else { controls[i - 1] };
-            let p1 = controls[i];
-            let p2 = controls[i + 1];
-            let p3 = if i + 2 < controls.len() { controls[i + 2] } else { ghost_end };
-            let n = (((p2 - p1).length() / ROAD_STEP).ceil() as usize).max(1);
-            for k in 1..=n {
-                road.push(catmull_rom_centripetal_2d(p0, p1, p2, p3, k as f32 / n as f32));
-            }
-        }
-
-        // Guard 6: heading jump at both joints, from the road tangent at the joint itself.
-        let nc = controls.len();
-        const EPS_T: f32 = 1e-3;
-        let road_out = catmull_rom_centripetal_2d(ghost_start, controls[0], controls[1], controls[2], EPS_T) - controls[0];
-        let entry_kink = joint_kink_deg(entry.free_heading, road_out);
-        if entry_kink > MAX_JOINT_KINK_DEG {
-            return Err(JunctionError::JointKink { junction: JunctionRole::Entry, angle_deg: entry_kink }.into());
-        }
-        let road_in = controls[nc - 1]
-            - catmull_rom_centripetal_2d(controls[nc - 3], controls[nc - 2], controls[nc - 1], ghost_end, 1.0 - EPS_T);
+        // Free road, with guard 6 (heading jump at both joints).
+        let road = free_road(&entry, &exit, &self.road_waypoints)?.points;
         let last = road.len() - 1;
-        let exit_kink = joint_kink_deg(exit.free_heading, road_in);
-        if exit_kink > MAX_JOINT_KINK_DEG {
-            return Err(JunctionError::JointKink { junction: JunctionRole::Exit, angle_deg: exit_kink }.into());
-        }
 
         // Guard 7: outside the junctions the road keeps its gap to the main track and does not cross itself.
         let min_gap = self.entry.divider_gap.min(self.exit.divider_gap) - ROAD_GAP_TOLERANCE;
@@ -346,31 +308,6 @@ fn junction_data(lane: &PitLane, entry: &JunctionGeometry, exit: &JunctionGeomet
         chevrons: entry.chevrons.clone(),
         exit_quads,
     }
-}
-
-fn cumulative_lengths(points: &[Vec2]) -> Vec<f32> {
-    let mut out = Vec::with_capacity(points.len());
-    let mut acc = 0.0;
-    for (i, p) in points.iter().enumerate() {
-        if i > 0 {
-            acc += p.distance(points[i - 1]);
-        }
-        out.push(acc);
-    }
-    out
-}
-
-/// Index of the first polyline segment that crosses a non-adjacent segment.
-fn first_self_crossing(points: &[Vec2]) -> Option<usize> {
-    let segs: Vec<LineSegment> = points.windows(2).map(|w| LineSegment::new(w[0], w[1])).collect();
-    for i in 0..segs.len() {
-        for j in i + 2..segs.len() {
-            if segs[i].intersect_segment(&segs[j]).is_some() {
-                return Some(i);
-            }
-        }
-    }
-    None
 }
 
 /// The main wall is cut this far before the entry and after the exit (m); the perimeter runs from the cut ends.

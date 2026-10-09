@@ -9,7 +9,7 @@ use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
 use super::geometry::{LineSegment, PitLaneChevron};
-use super::spline::TrackSpline;
+use super::spline::{catmull_rom_centripetal_2d, TrackSpline};
 
 /// Side of the main track (relative to driving direction) on which the branch runs.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -306,6 +306,90 @@ pub fn build_junction(
     };
 
     Ok(finish_junction(main, role, sigma, road_width, centreline, (span_start, span_end)))
+}
+
+/// Distance of the guide points that fix the road heading at both junction joints (m).
+const ROAD_GUIDE_DISTANCE: f32 = 5.0;
+/// Sampling step along the free road (m).
+pub const ROAD_STEP: f32 = 1.0;
+/// Largest heading jump allowed at a junction/road joint (degrees).
+const MAX_JOINT_KINK_DEG: f32 = 2.0;
+
+/// The free road between two junctions.
+#[derive(Debug, Clone, PartialEq)]
+pub struct FreeRoad {
+    /// Centreline samples from the entry free end to the exit free end, [`ROAD_STEP`] apart at most.
+    pub points: Vec<Vec2>,
+    /// Index in `points` of each control point: the entry free end, its guide point, the interior points, the exit
+    /// guide point and the exit free end.
+    pub control_index: Vec<usize>,
+}
+
+/// Builds the free road from the entry free end to the exit free end through `interior`: a centripetal Catmull-Rom
+/// curve with guide points that fix the road heading at both joints. Checks guard 6 (joint kink).
+pub fn free_road(entry: &JunctionGeometry, exit: &JunctionGeometry, interior: &[Vec2]) -> Result<FreeRoad, JunctionError> {
+    let h = ROAD_GUIDE_DISTANCE;
+    let mut controls = vec![entry.free_end, entry.free_end + entry.free_heading * h];
+    controls.extend(interior.iter().copied());
+    controls.push(exit.free_end - exit.free_heading * h);
+    controls.push(exit.free_end);
+    let ghost_start = entry.free_end - entry.free_heading * h;
+    let ghost_end = exit.free_end + exit.free_heading * h;
+    let mut road = vec![controls[0]];
+    let mut control_index = vec![0];
+    for i in 0..controls.len() - 1 {
+        let p0 = if i == 0 { ghost_start } else { controls[i - 1] };
+        let p1 = controls[i];
+        let p2 = controls[i + 1];
+        let p3 = if i + 2 < controls.len() { controls[i + 2] } else { ghost_end };
+        let n = (((p2 - p1).length() / ROAD_STEP).ceil() as usize).max(1);
+        for k in 1..=n {
+            road.push(catmull_rom_centripetal_2d(p0, p1, p2, p3, k as f32 / n as f32));
+        }
+        control_index.push(road.len() - 1);
+    }
+
+    // Guard 6: heading jump at both joints, from the road tangent at the joint itself.
+    let nc = controls.len();
+    const EPS_T: f32 = 1e-3;
+    let road_out = catmull_rom_centripetal_2d(ghost_start, controls[0], controls[1], controls[2], EPS_T) - controls[0];
+    let entry_kink = joint_kink_deg(entry.free_heading, road_out);
+    if entry_kink > MAX_JOINT_KINK_DEG {
+        return Err(JunctionError::JointKink { junction: JunctionRole::Entry, angle_deg: entry_kink });
+    }
+    let road_in = controls[nc - 1]
+        - catmull_rom_centripetal_2d(controls[nc - 3], controls[nc - 2], controls[nc - 1], ghost_end, 1.0 - EPS_T);
+    let exit_kink = joint_kink_deg(exit.free_heading, road_in);
+    if exit_kink > MAX_JOINT_KINK_DEG {
+        return Err(JunctionError::JointKink { junction: JunctionRole::Exit, angle_deg: exit_kink });
+    }
+    Ok(FreeRoad { points: road, control_index })
+}
+
+/// Cumulative arc length at each point of a polyline.
+pub fn cumulative_lengths(points: &[Vec2]) -> Vec<f32> {
+    let mut out = Vec::with_capacity(points.len());
+    let mut acc = 0.0;
+    for (i, p) in points.iter().enumerate() {
+        if i > 0 {
+            acc += p.distance(points[i - 1]);
+        }
+        out.push(acc);
+    }
+    out
+}
+
+/// Index of the first polyline segment that crosses a non-adjacent segment.
+pub fn first_self_crossing(points: &[Vec2]) -> Option<usize> {
+    let segs: Vec<LineSegment> = points.windows(2).map(|w| LineSegment::new(w[0], w[1])).collect();
+    for i in 0..segs.len() {
+        for j in i + 2..segs.len() {
+            if segs[i].intersect_segment(&segs[j]).is_some() {
+                return Some(i);
+            }
+        }
+    }
+    None
 }
 
 /// Heading jump (degrees) between a junction's free-end heading and the road heading next to it.

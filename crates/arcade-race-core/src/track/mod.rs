@@ -1,4 +1,5 @@
 pub mod bake;
+pub mod branch_kit;
 pub mod checkpoint;
 pub mod curve;
 pub mod geometry;
@@ -143,6 +144,10 @@ pub struct Track {
     /// Source of truth for `pit_lane` when present (spec 101); the bake compiles it into `pit_lane`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub pit_lane_layout: Option<pit_kit::PitLaneLayout>,
+    /// Source of truth for a road branch (the Rallycross joker) when present (spec 102); the bake compiles it into
+    /// `network`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub branch_layout: Option<branch_kit::BranchLayout>,
     /// Precomputed runtime barrier offset in meters to avoid expensive wall geometry sweeps.
     #[serde(default, skip_serializing)]
     pub cached_barrier_offset: Option<f32>,
@@ -197,6 +202,7 @@ impl Default for Track {
             pit_lane: None,
             pit_lane_junctions: None,
             pit_lane_layout: None,
+            branch_layout: None,
             cached_barrier_offset: None,
             default_laps: 3,
             car_category: CarCategory::Gt,
@@ -905,6 +911,13 @@ impl Track {
     /// branch segments (not on the default layout) the check ignores elevation: on Spa RX the
     /// joker data sits ~4 m below the main road it overlaps, and a main wall blocked the joker.
     pub fn trim_walls_for_network(&mut self) {
+        // Spec 102: a compiled branch replaces the main wall by arc length, not by searching for roads.
+        if self.branch_layout.is_some() {
+            if self.network.is_some() {
+                branch_kit::trim_main_walls(self);
+            }
+            return;
+        }
         let Some(net) = &self.network else { return; };
         if net.segments.is_empty() { return; }
         let branches = branch_segments(net);
@@ -946,6 +959,12 @@ impl Track {
     /// at a different height, and a wall there would block the main road.
     pub fn generate_network_walls(&mut self) {
         self.geometry.network_walls.clear();
+        if let Some(layout) = &self.branch_layout {
+            if let Ok(compiled) = layout.compile(self) {
+                self.geometry.network_walls = branch_kit::build_walls(self, &compiled);
+            }
+            return;
+        }
         let Some(net) = &self.network else { return; };
         let barrier_type = self.dominant_barrier_type().unwrap_or(BarrierType::TireWall);
 
@@ -1015,7 +1034,7 @@ impl Track {
     /// Median gap between the main road edge and the nearest main wall, over the main spline
     /// samples inside the box `min`..`max`. Gaps of 10 m or more are not walls of that road and
     /// are skipped. `None` when no sample qualifies.
-    fn local_barrier_offset(&self, min: Vec2, max: Vec2) -> Option<f32> {
+    pub(crate) fn local_barrier_offset(&self, min: Vec2, max: Vec2) -> Option<f32> {
         let mut dists = Vec::new();
         for s in self.spline.samples.iter().filter(|s| s.point.cmpge(min).all() && s.point.cmple(max).all()) {
             let hw = s.width * 0.5;
@@ -1052,7 +1071,7 @@ fn branch_segments(net: &TrackNetwork) -> Vec<&RoadSegment> {
 /// True when `wall` stays more than `edge_margin` outside the drivable ribbon of every segment
 /// in `segments` (a negative margin lets it sit that far inside) and does not cross any segment
 /// centerline. Roads more than `max_elevation_gap` above or below the wall are ignored.
-fn wall_clear_of_roads<'a>(
+pub(crate) fn wall_clear_of_roads<'a>(
     segments: impl IntoIterator<Item = &'a RoadSegment>,
     wall: &WallBarrier,
     max_elevation_gap: f32,

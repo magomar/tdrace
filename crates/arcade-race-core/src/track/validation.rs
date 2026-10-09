@@ -1399,6 +1399,7 @@ mod tests {
             pit_lane: None,
             pit_lane_junctions: None,
             pit_lane_layout: None,
+            branch_layout: None,
             cached_barrier_offset: None,
             default_laps: 3,
             car_category: CarCategory::OffRoad,

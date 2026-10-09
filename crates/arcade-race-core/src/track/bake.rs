@@ -115,8 +115,15 @@ pub fn bake(track: &mut Track, opts: &BakeOptions) -> Result<BakeReport, String>
             lane.spline = TrackSpline::new(lane.spline.waypoints.clone(), false);
         }
     }
+    if let Some(layout) = track.branch_layout.clone() {
+        // Spec 102: the layout is the source of truth for the branch network, compiled before the wall steps.
+        let compiled = layout
+            .compile(track)
+            .map_err(|e| format!("'{}': branch layout: {:?}", track.name, e))?;
+        super::branch_kit::install(track, compiled);
+    }
     let geometry = &mut track.geometry;
-    let no_walls = geometry.inner_walls.is_empty()
+    let no_walls =geometry.inner_walls.is_empty()
         && geometry.outer_walls.is_empty()
         && geometry.left_boundary_polyline.is_empty()
         && geometry.right_boundary_polyline.is_empty();
