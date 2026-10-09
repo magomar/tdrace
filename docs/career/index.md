@@ -98,6 +98,7 @@ Multi-round tournaments and career cups compute driver standings after each roun
 - **Classic Arcade** (`PointSystem::ClassicArcade`): Nostalgic 6-place scoring with steep drop-offs from podium spots.
 - **NASCAR Cup** (`PointSystem::NascarCup { stage_win_bonus: bool }`): Authentic 40-driver field progression where every finishing spot yields points. Setting `stage_win_bonus: true` awards $+10$ points to the driver clocking the fastest lap of the round.
 - **Custom Matrix** (`PointSystem::Custom(Vec<u32>)`): Declarative list of point values defined per series in TOML.
+- **Tournament Weekend** (`system = "tournament"`, Spec 104): the 32-place matrix of the Autocross and Rallycross sprint weekend (25 points for 1st down to 1 point for 32nd). A round is a weekend of 4 qualifying heats (4 laps), 2 semifinals (5 laps), a Grand Final (6 laps) and a B-Final (5 laps), declared with `weekend_format = "tournament_sprint"`, `total_drivers`, `heat_laps`, `semi_laps` and `final_laps`. The 32 places are scored once, when both finals are done: Grand Final 1st-8th, B-Final 9th-16th, then the drivers the semifinals and heats dropped.
 
 ---
 

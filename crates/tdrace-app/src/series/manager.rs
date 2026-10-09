@@ -310,6 +310,7 @@ mod tests {
                 bot_count: Some(1),
                 ai_difficulty: None,
                 icon: None,
+                ..SeriesMeta::default()
             },
             scoring: ScoringConfig::default(),
             rounds: vec![RoundConfig {

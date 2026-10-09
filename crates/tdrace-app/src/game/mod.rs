@@ -356,6 +356,8 @@ pub enum GameState {
     Garage(GarageOrigin),
     CircuitViewer(CircuitViewerOrigin),
     ChampionshipStandings,
+    /// Tournament weekend bracket between stages, with the launch button (Spec 104).
+    TournamentBracket,
     StartingGrid,
     Countdown(f32),
     Racing,
@@ -4090,12 +4092,7 @@ impl RaceSession {
 
             if let Some(champ) = &self.championship_session {
                 let mut champ_opponents = Vec::new();
-                for (idx, entry) in champ
-                    .standings
-                    .iter()
-                    .filter(|s| s.driver_id != "player")
-                    .enumerate()
-                {
+                for (idx, entry) in champ.race_opponents().into_iter().enumerate() {
                     if let Some(d) = module_opponents.iter().find(|d| d.id == entry.driver_id) {
                         champ_opponents.push(d.clone());
                     } else if let Some(d) = DriverCharacter::find_global(&entry.driver_id) {
@@ -4566,7 +4563,7 @@ impl RaceSession {
                 let is_successive_championship_round = self
                     .championship_session
                     .as_ref()
-                    .map(|champ| !champ.is_new())
+                    .map(|champ| !champ.is_new() || champ.tournament_race().is_some())
                     .unwrap_or(false);
 
                 if is_successive_championship_round {
@@ -4588,16 +4585,8 @@ impl RaceSession {
                                 .map(|d| d.id)
                                 .unwrap_or("")
                         };
-                        let rank_a = champ
-                            .standings
-                            .iter()
-                            .position(|s| s.driver_id == id_a)
-                            .unwrap_or(usize::MAX);
-                        let rank_b = champ
-                            .standings
-                            .iter()
-                            .position(|s| s.driver_id == id_b)
-                            .unwrap_or(usize::MAX);
+                        let rank_a = champ.grid_rank(id_a);
+                        let rank_b = champ.grid_rank(id_b);
 
                         rank_a.cmp(&rank_b).then_with(|| a.cmp_grid_priority(b))
                     });
@@ -4805,7 +4794,13 @@ impl RaceSession {
         // If starting a brand new championship, synchronize the starting roster size to the circuit grid slots
         let is_new_championship = self.championship_session.as_ref().map(|c| c.is_new()).unwrap_or(false);
         if is_new_championship {
-            let circuit_slots = self.max_grid_participants();
+            // A tournament weekend enters its whole field (32 drivers); each race of it takes 8.
+            let circuit_slots = self
+                .championship_session
+                .as_ref()
+                .and_then(|c| c.tournament_config.filter(|_| c.is_tournament()))
+                .map(|config| config.total_drivers)
+                .unwrap_or_else(|| self.max_grid_participants());
             let effective_module = self.track.module_id.as_deref().unwrap_or(self.active_module_id);
             let mut fallback_pool = match effective_module {
                 "classic" => ClassicGameModule::new().drivers(),
@@ -4846,6 +4841,13 @@ impl RaceSession {
                         .collect();
                     self.active_career_progress.career_rivals = rivals;
                 }
+            }
+        }
+
+        // A tournament round is a weekend: draw it now, so the stage laps and the field of this race are known.
+        if let Some(champ) = &mut self.championship_session {
+            if let Err(e) = champ.ensure_tournament_weekend() {
+                eprintln!("tournament weekend not started, running a single race: {}", e);
             }
         }
 
@@ -5834,6 +5836,9 @@ impl RaceSession {
             }
             GameState::ChampionshipStandings => {
                 self.update_championship_standings();
+            }
+            GameState::TournamentBracket => {
+                self.update_tournament_bracket();
             }
             GameState::ClassicAcademy { selected_idx, showing_graduation } => {
                 self.audio.play_music(MusicTrack::NeonMenu);
@@ -7077,6 +7082,11 @@ impl RaceSession {
                         self.submit_pending_championship_round();
 
                         self.audio.play_sfx(SfxType::UiSelect);
+                        if self.championship_session.as_ref().is_some_and(|c| c.tournament_in_progress()) {
+                            // Mid-weekend: the bracket shows the next race of the player.
+                            self.state = GameState::TournamentBracket;
+                            return;
+                        }
                         if self.game_mode == GameMode::Career && (self.active_module_id == "gt" || self.active_module_id == "gt_challenge") {
                             let tier = self.active_career_progress.level.clamp(1, 5);
                             let calendar = if let Some(c) = &self.championship_session {
@@ -7159,6 +7169,7 @@ impl RaceSession {
         }
         let mut awarded_trophy: Option<ChampionshipAward> = None;
         let mut podium_bonus_to_award: Option<u64> = None;
+        let mut rejected_stage: Option<String> = None;
         if let Some(round_results) = self.pending_championship_results.take() {
             let car_model_id = self.selected_car_model_id
                 .map(|s| s.to_string())
@@ -7167,7 +7178,15 @@ impl RaceSession {
             let module_id = self.active_module_id.to_string();
 
             if let Some(champ) = &mut self.championship_session {
-                champ.submit_round_results(&self.track.name, round_results);
+                if champ.tournament_in_progress() {
+                    // A stage of the weekend: the round is scored when the finals are done.
+                    if let Err(e) = champ.submit_tournament_race(&self.track.name, round_results) {
+                        eprintln!("tournament race not scored: {}", e);
+                        rejected_stage = Some(e);
+                    }
+                } else {
+                    champ.submit_round_results(&self.track.name, round_results);
+                }
                 if champ.is_completed {
                     if let Some(pos) = champ.standings.iter().position(|s| s.driver_id == "player") {
                         let finish_pos = (pos + 1) as u32;
@@ -7211,6 +7230,9 @@ impl RaceSession {
                 }
                 self.profile_module_progress.insert(self.active_career_progress.module_id.clone(), self.active_career_progress.clone());
             }
+        }
+        if rejected_stage.is_some() {
+            self.spawn_hud_alert("WEEKEND RESULT REJECTED — RE-RUN THE RACE (R)", Palette::RED);
         }
         if let Some(podium_bonus) = podium_bonus_to_award {
             self.active_profile.add_credits(podium_bonus);
@@ -7294,6 +7316,33 @@ impl RaceSession {
             self.audio.play_sfx(SfxType::UiSelect);
             self.state = self.race_exit_target();
         }
+    }
+
+    /// Updates input on the tournament bracket between stages: launch the player's next race or leave.
+    pub fn update_tournament_bracket(&mut self) {
+        if is_key_pressed(KeyCode::Enter)
+            || is_key_pressed(KeyCode::Space)
+            || is_key_pressed(KeyCode::KpEnter)
+            || self.input.gamepad.snapshot.btn_confirm_pressed
+            || self.input.gamepad.snapshot.btn_a_pressed
+        {
+            self.audio.play_sfx(SfxType::UiSelect);
+            self.launch_tournament_race();
+            return;
+        }
+        if is_key_pressed(KeyCode::Escape) || self.input.gamepad.snapshot.btn_cancel_pressed || self.input.gamepad.snapshot.btn_b_pressed {
+            self.audio.play_sfx(SfxType::UiSelect);
+            self.state = self.race_exit_target();
+        }
+    }
+
+    /// Starts the race the bracket points at: the circuit of the round with the roster and laps of the stage.
+    pub fn launch_tournament_race(&mut self) {
+        if let Some(track_id) = self.championship_session.as_ref().and_then(|c| c.current_track_id().map(|s| s.to_string())) {
+            self.track_choice = self.track_manager.track_choice_for_slug(&track_id);
+            self.track = self.track_manager.load_track_by_slug(&track_id).unwrap_or_else(|_| crate::tracks::official::fallback_track());
+        }
+        self.init_race();
     }
 
     /// Handles input and actions for the Profile Manager screen.
@@ -13629,6 +13678,21 @@ impl RaceSession {
                     });
                 }
 
+                // A tournament stage scores nothing by itself: the weekend scores 32 places when it ends.
+                // A wrecked car has no elapsed time that may seed a later stage and is classified last.
+                let tournament_stage = champ.tournament_in_progress();
+                if tournament_stage {
+                    for row in self.world.stage_classification(&self.track) {
+                        if row.outcome != race_kit::StageOutcome::Dnf {
+                            continue;
+                        }
+                        if let Some(result) = self.results.iter().position(|r| r.car_idx == row.car).and_then(|i| round_results.get_mut(i)) {
+                            result.total_time = crate::series::DNF_TIME;
+                            result.best_lap = None;
+                        }
+                    }
+                }
+
                 // Award fastest lap bonus to the driver with the actual best lap
                 let fastest_lap_time = round_results
                     .iter()
@@ -13647,7 +13711,11 @@ impl RaceSession {
 
                 // Calculate points awarded for each driver and populate self.results
                 for (pos, res) in round_results.iter_mut().enumerate() {
-                    let pts = champ.point_system.points_for_position(res.finish_position, res.has_fastest_lap);
+                    let pts = if tournament_stage {
+                        0
+                    } else {
+                        champ.point_system.points_for_position(res.finish_position, res.has_fastest_lap)
+                    };
                     res.points_awarded = pts;
                     if let Some(ui_res) = self.results.get_mut(pos) {
                         ui_res.points_awarded = pts;
@@ -14079,6 +14147,13 @@ impl RaceSession {
             GameState::ChampionshipStandings => {
                 if let Some(champ) = &self.championship_session {
                     render_championship_standings_screen(&self.fonts, champ);
+                } else {
+                    self.state = GameState::Menu;
+                }
+            }
+            GameState::TournamentBracket => {
+                if let Some(champ) = &self.championship_session {
+                    crate::ui::tournament_bracket::render_tournament_bracket_screen(&self.fonts, champ);
                 } else {
                     self.state = GameState::Menu;
                 }
@@ -16125,6 +16200,7 @@ impl RaceSession {
                     self.world.pit_states.get(my_idx),
                     self.cockpit_telemetry_mode,
                     joker_badge(my_idx),
+                    self.championship_session.as_ref().and_then(crate::ui::tournament_bracket::stage_badge).as_deref(),
                 );
 
                 if let (Some(lesson_id), Some(challenge)) = (self.active_academy_lesson, self.academy_challenge.as_ref()) {
