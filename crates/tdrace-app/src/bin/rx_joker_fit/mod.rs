@@ -43,8 +43,9 @@ const MIN_FIT_GAP_M: f32 = NOSE_GAP + 0.4;
 /// Nominal road widths tried: the old joker's, then 2 m narrower so a `TurnOff` can start on a main road that is no
 /// wider than the joker.
 const ROAD_WIDTH_TRIMS_M: [f32; 2] = [0.0, 2.0];
-/// Fits whose junction alone deviates more than this are not tried (m).
-const JUNCTION_DEVIATION_CUTOFF_M: f32 = 4.0;
+/// A fit whose junction alone deviates more than the deviation limit plus this is not tried (m): the free road
+/// between the junctions can not make it good again.
+const JUNCTION_DEVIATION_SLACK_M: f32 = 2.0;
 
 /// One accepted fit.
 #[derive(Debug, Clone)]
@@ -181,7 +182,7 @@ fn junction_candidates(
         let same = |c: &Candidate| {
             c.comp.kind == comp.kind && c.comp.length == comp.length && (c.comp.divider_gap - comp.divider_gap).abs() < 0.01
         };
-        if deviation <= JUNCTION_DEVIATION_CUTOFF_M && !out.kept.iter().any(same) {
+        if deviation <= max_deviation() + JUNCTION_DEVIATION_SLACK_M && !out.kept.iter().any(same) {
             out.kept.push(Candidate { comp, deviation });
         }
     };
@@ -268,54 +269,9 @@ fn joker_cost(network: &TrackNetwork) -> Result<f32, String> {
 /// Compiles `layout` into `track`, maps the circuit's checkpoints onto the new segments, adds the joker checkpoint and
 /// bakes the walls, as `track_bake --rebuild` does.
 pub fn install_layout(track: &mut Track, layout: &BranchLayout) -> Result<(), String> {
-    track.network = None;
-    track.checkpoints.retain(|cp| !cp.is_joker);
     track.branch_layout = Some(layout.clone());
     let compiled = layout.compile(track).map_err(|e| format!("{:?}", e))?;
-    let joker_id = track.checkpoints.len();
-    let joker_checkpoint = compiled.joker_checkpoint(joker_id);
-    branch_kit::install(track, compiled);
-    let net = track.network.as_ref().expect("installed network");
-    let (seg0, seg1, seg3) = (
-        net.get_segment(SegmentId(0)).expect("segment 0").clone(),
-        net.get_segment(SegmentId(1)).expect("segment 1").clone(),
-        net.get_segment(SegmentId(3)).expect("segment 3").clone(),
-    );
-    for cp in &mut track.checkpoints {
-        if cp.id == 0 {
-            cp.segment_id = Some(SegmentId(0));
-            continue;
-        }
-        let center = (cp.gate.start + cp.gate.end) * 0.5;
-        let (p0, p1, p3) = (seg0.project_point(center), seg1.project_point(center), seg3.project_point(center));
-        let (d0, d1, d3) = (
-            (p0.closest_point - center).length(),
-            (p1.closest_point - center).length(),
-            (p3.closest_point - center).length(),
-        );
-        // A checkpoint on the merge point (the end of segment 1) belongs to segment 3, which both layouts share.
-        cp.segment_id = Some(if d1 < d0 && d1 < d3 && p1.progress_distance > 1.0 && p1.progress_distance < seg1.length - 1.0 {
-            SegmentId(1)
-        } else if d3 < d0 {
-            SegmentId(3)
-        } else {
-            SegmentId(0)
-        });
-    }
-    track.checkpoints.push(joker_checkpoint);
-    let main_ids: Vec<usize> = track.checkpoints.iter().filter(|cp| !cp.is_joker).map(|cp| cp.id).collect();
-    let mut joker_ids: Vec<usize> =
-        track.checkpoints.iter().filter(|cp| cp.segment_id == Some(SegmentId(0)) && !cp.is_joker).map(|cp| cp.id).collect();
-    joker_ids.push(joker_id);
-    joker_ids.extend(track.checkpoints.iter().filter(|cp| cp.segment_id == Some(SegmentId(3))).map(|cp| cp.id));
-    let net = track.network.as_mut().expect("installed network");
-    for layout in &mut net.layouts {
-        layout.checkpoint_ids = match layout.id.as_str() {
-            "main" => main_ids.clone(),
-            _ => joker_ids.clone(),
-        };
-    }
-    net.recompute_composite_splines();
+    branch_kit::install_new(track, compiled);
     bake(track, &BakeOptions { rebuild: true, ..BakeOptions::default() })
         .map(|_| ())
         .map_err(|e| format!("bake: {}", e))
@@ -379,7 +335,9 @@ pub fn convert(track: &mut Track, id: &str, name: &str, split_idx: usize, merge_
         let describe = |what: &str, c: &Candidates| match (c.best_seen, &c.first_reject) {
             (Some(dev), _) => format!(
                 "no {} junction within {:.1} m of the old joker (best fit {:.1} m)",
-                what, JUNCTION_DEVIATION_CUTOFF_M, dev
+                what,
+                max_deviation() + JUNCTION_DEVIATION_SLACK_M,
+                dev
             ),
             (None, Some(reject)) => format!("no {} junction passes the guards (first: {})", what, reject),
             (None, None) => format!("no {} junction fits", what),

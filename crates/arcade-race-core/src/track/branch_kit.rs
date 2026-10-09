@@ -526,6 +526,61 @@ pub fn install(track: &mut Track, compiled: CompiledBranch) {
     track.network = Some(network);
 }
 
+/// Installs a branch that the circuit does not have yet: drops the old network and joker checkpoints, writes the
+/// compiled network, tags every checkpoint with the segment it lies on, adds the joker checkpoint and fills the layout
+/// checkpoint lists in driving order.
+pub fn install_new(track: &mut Track, compiled: CompiledBranch) {
+    track.checkpoints.retain(|cp| !cp.is_joker);
+    track.network = None;
+    let joker_id = track.checkpoints.iter().map(|cp| cp.id + 1).max().unwrap_or(0);
+    let joker = compiled.joker_checkpoint(joker_id);
+    install(track, compiled);
+    let Some(net) = track.network.as_mut() else { return };
+    let (Some(main), Some(branch)) = (net.get_layout("main").cloned(), net.layouts.iter().find(|l| l.id != "main").cloned()) else {
+        return;
+    };
+
+    // A checkpoint belongs to the shared segment or main-only segment it lies nearest to. On the junction point a
+    // shared segment wins: a checkpoint at the end of the main-only segment belongs to the one after it.
+    let shared = |id: SegmentId| branch.segment_sequence.contains(&id);
+    for cp in &mut track.checkpoints {
+        if cp.is_finish_line || cp.id == 0 {
+            cp.segment_id = Some(main.start_finish_segment);
+            continue;
+        }
+        let centre = (cp.gate.start + cp.gate.end) * 0.5;
+        let nearest = main
+            .segment_sequence
+            .iter()
+            .filter_map(|id| net.get_segment(*id))
+            .filter_map(|seg| {
+                let proj = seg.project_point(centre);
+                let at_end = proj.progress_distance <= 1.0 || proj.progress_distance >= seg.length - 1.0;
+                (shared(seg.id) || !at_end).then_some((proj.distance_to_spline, seg.id))
+            })
+            .min_by(|a, b| a.0.total_cmp(&b.0));
+        cp.segment_id = nearest.map(|n| n.1).or(Some(main.start_finish_segment));
+    }
+    track.checkpoints.push(joker);
+
+    for layout in &mut net.layouts {
+        let mut ids = Vec::new();
+        for seg_id in &layout.segment_sequence {
+            let Some(seg) = net.segments.iter().find(|s| s.id == *seg_id) else { continue };
+            let mut on_segment: Vec<(f32, usize)> = track
+                .checkpoints
+                .iter()
+                .filter(|cp| cp.segment_id == Some(*seg_id) && (!cp.is_joker || layout.id != "main"))
+                .map(|cp| (seg.project_point((cp.gate.start + cp.gate.end) * 0.5).progress_distance, cp.id))
+                .collect();
+            on_segment.sort_by(|a, b| a.0.total_cmp(&b.0));
+            ids.extend(on_segment.into_iter().map(|(_, id)| id));
+        }
+        layout.checkpoint_ids = ids;
+    }
+    net.recompute_composite_splines();
+}
+
 // ---------------------------------------------------------------------------------------------------------------
 // Walls (Pillar IV)
 // ---------------------------------------------------------------------------------------------------------------
