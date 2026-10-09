@@ -3,7 +3,7 @@ type: Feature Spec
 template: feature
 title: "Autocross and Rallycross Launch Chutes and Templated Track Components"
 description: "Introduces authentic Autocross and Rallycross walled launch chutes and packed starting grids as modular templated track components via TrackNetwork, providing Run-Once Lap 1 launch progression, Track Studio CAD stamp authoring, and global retrofitting across all 17 Autocross and 23 Rallycross circuits."
-status: implemented
+status: in_progress
 receipt: "docs/receipts/spec-103-receipt.md"
 verified: { by: human:mario, at: 2026-10-08T21:13:11Z, hash: "b50753032b35" }
 created: 2026-10-08
