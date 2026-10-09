@@ -1,8 +1,9 @@
 //! Spec 103: stamps a walled launch chute onto a circuit.
 //!
 //! A launch chute is a spur that runs beside the last stretch of the lap, ends in a rigid rear barrier, holds the
-//! packed starting grid and merges into the circuit shortly before the start/finish line through a `Merge`
-//! junction. The cars drive it once, at the start (`TrackLayout::entry_segment`), and never on laps 2+.
+//! packed starting grid and merges into the circuit before the start/finish line through a `Merge` junction. The
+//! cars drive it once, at the start (`TrackLayout::entry_segment`), and never on laps 2+. Lap 1 is the chute plus one
+//! lap: the first crossing of the finish line, right after the merge, does not count, the second one does.
 //!
 //! [`Track::stamp_launch_chute`] is the single builder behind the Track Studio stamp tool and the rollout to the
 //! official Autocross and Rallycross circuits: it splits the loop at the merge waypoint, adds the chute segment and
@@ -20,18 +21,22 @@ use super::network::{
 };
 use super::presets::{generate_packed_launch_grid, PackedGridPattern};
 use super::spline::{SplineSample, TrackWaypoint};
-use super::validation::{validate_launch_chute, ValidationSeverity};
+use super::validation::{validate_track, ValidationSeverity};
 use super::Track;
 
 /// Pad width range the inspector offers (m).
 pub const PAD_WIDTH_RANGE: (f32, f32) = (14.0, 18.0);
 /// Pad length range (m): rear wall to the end of the straight part, before the merge ramp.
 pub const PAD_LENGTH_RANGE: (f32, f32) = (35.0, 50.0);
-/// How far before the start/finish line the chute may merge (m): the cars must not cross the line while merging,
-/// and the pad should stay near the finish straight.
-pub const MERGE_BEFORE_FINISH_RANGE: (f32, f32) = (10.0, 250.0);
+/// How far before the start/finish line the chute may merge (m): the cars must not cross the line while merging.
+/// Placement prefers the nearest waypoints that run straight, but the pad may lie farther back on a twisty finish.
+pub const MERGE_BEFORE_FINISH_RANGE: (f32, f32) = (10.0, 500.0);
 /// Length over which the chute converges onto the circuit, ending tangent to it at the merge waypoint (m).
 pub(super) const RAMP_LENGTH_M: f32 = 90.0;
+/// The widest gap between the circuit's road edge and its wall that the pad still clears (m).
+const MAX_WALL_GAP_M: f32 = 20.0;
+/// The gap between the pad's road edge and its own side walls (m), or the circuit's wall offset when that is smaller.
+const CHUTE_WALL_GAP_M: f32 = 4.0;
 /// Extra distance between the chute's road edge and the circuit's wall line, besides the two wall gaps (m).
 const TRENCH_M: f32 = 2.0;
 /// Distance between rows of the packed grid (m): longer than any car, so a row never overlaps the one before.
@@ -163,9 +168,11 @@ impl Track {
     pub fn stamp_launch_chute(&mut self, spec: &LaunchChuteSpec) -> Result<(), LaunchChuteError> {
         let mut stamped = self.clone();
         stamped.stamp(spec)?;
-        let errors: Vec<String> = validate_launch_chute(&stamped)
+        // The chute may not add a validation error the circuit did not have.
+        let known: Vec<String> = validate_track(self).into_iter().filter(|d| d.severity == ValidationSeverity::Error).map(|d| d.message).collect();
+        let errors: Vec<String> = validate_track(&stamped)
             .into_iter()
-            .filter(|d| d.severity == ValidationSeverity::Error)
+            .filter(|d| d.severity == ValidationSeverity::Error && !known.contains(&d.message))
             .map(|d| d.message)
             .collect();
         if !errors.is_empty() {
@@ -307,6 +314,8 @@ impl Track {
             ChuteSide::Left => 1.0,
             ChuteSide::Right => -1.0,
         };
+        let main_walls = || self.geometry.inner_walls.iter().chain(&self.geometry.outer_walls);
+        let chute_wall_gap = barrier_offset.min(CHUTE_WALL_GAP_M);
         let total = RAMP_LENGTH_M + spec.pad_length;
         let steps = (total / WAYPOINT_STEP_M).ceil() as usize;
         let mut waypoints = Vec::with_capacity(steps + 1);
@@ -315,10 +324,18 @@ impl Track {
             let loop_sample = self.spline.sample_at_distance(merge_dist - u);
             let blend = smoothstep(u / RAMP_LENGTH_M);
             let curb = if (sign > 0.0 && loop_sample.left_curb) || (sign < 0.0 && loop_sample.right_curb) { 1.35 } else { 0.0 };
-            let lateral = blend * (loop_sample.width * 0.5 + curb + 2.0 * barrier_offset + TRENCH_M + spec.pad_width * 0.5);
+            // The circuit's own wall can stand farther out than the track-wide offset: the pad clears it, not the offset.
+            let edge = loop_sample.point + loop_sample.normal * (sign * (loop_sample.width * 0.5 + curb));
+            let wall_gap = main_walls()
+                .map(|w| w.segment.distance_to_point(edge))
+                .fold(f32::MAX, f32::min)
+                .clamp(1.0, MAX_WALL_GAP_M);
+            let lateral = blend * (loop_sample.width * 0.5 + curb + wall_gap + chute_wall_gap + TRENCH_M + spec.pad_width * 0.5);
             let width = loop_sample.width + (spec.pad_width - loop_sample.width) * blend;
             let point = if j == steps { merge_waypoint.point } else { loop_sample.point + loop_sample.normal * (sign * lateral) };
             let mut waypoint = TrackWaypoint::new(point, width);
+            waypoint.left_wall_distance = Some(chute_wall_gap);
+            waypoint.right_wall_distance = Some(chute_wall_gap);
             waypoint.surface = Some(if blend >= 0.5 { spec.surface } else { loop_sample.surface });
             waypoint.elevation = loop_sample.elevation;
             waypoints.push(waypoint);
@@ -434,7 +451,7 @@ impl Track {
         if let Some(net) = self.network.as_mut() {
             net.recompute_composite_splines();
         }
-        self.reject_obstacles_on_chute(spec)
+        self.clear_chute_scenery(spec)
     }
 
     /// Gives the checkpoints their segment: those in the split segment before the merge keep it, the others get
@@ -455,15 +472,20 @@ impl Track {
         }
     }
 
-    /// A tree, rock or grandstand on the chute would stop the cars: the stamp is refused then.
-    fn reject_obstacles_on_chute(&self, spec: &LaunchChuteSpec) -> Result<(), LaunchChuteError> {
-        let Some(chute) = self.launch_chute().and_then(|c| self.network.as_ref()?.get_segment(c.segment_id)) else {
+    /// Trees and rocks on the chute and the wall corridor beside it are scenery and are taken away. Anything else
+    /// that stands on the pad (a grandstand, a building, an obstacle the creator placed) refuses the chute.
+    fn clear_chute_scenery(&mut self, spec: &LaunchChuteSpec) -> Result<(), LaunchChuteError> {
+        let Some(chute) = self.network.as_ref().and_then(|n| n.get_segment(n.launch_chute.as_ref()?.segment_id)) else {
             return Ok(());
         };
-        let reach = spec.pad_width * 0.5 + 1.0;
+        let corridor = spec.pad_width * 0.5 + self.effective_barrier_offset() + 2.5;
+        let near = |p: Vec2, reach: f32| chute.samples.iter().any(|s| s.point.distance(p) < reach);
+        self.geometry.trees.retain(|t| !near(t.position, corridor + 1.0));
+        self.geometry.rocks.retain(|r| !near(r.position, corridor + 2.0));
+        self.geometry.recompute_scenery_obstacles();
         for obstacle in self.geometry.all_obstacles_with_scenery() {
             let (center, radius) = obstacle_reach(obstacle);
-            if chute.samples.iter().any(|s| s.point.distance(center) < reach + radius) {
+            if near(center, spec.pad_width * 0.5 + 1.0 + radius) {
                 return err(format!("obstacle '{}' stands on the chute", obstacle.name));
             }
         }

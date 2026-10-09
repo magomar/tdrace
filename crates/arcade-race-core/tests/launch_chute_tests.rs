@@ -434,11 +434,9 @@ mod stamp {
         chute.terminal_barrier.segment.start += Vec2::new(0.0, 3.0);
         assert!(codes(&open).contains(&"ERR_CHUTE_OPEN_END"), "{:?}", codes(&open));
 
-        // A gap along the pad: drop the walls of one side.
+        // A gap along the pad: the chute has no side walls (the circuit's own walls cover only the side beside it).
         let mut gap = track.clone();
-        let chute = gap.network.as_mut().unwrap().launch_chute.as_mut().unwrap();
-        let rear = chute.terminal_barrier.segment.start;
-        chute.side_barriers.retain(|w| w.segment.start.distance(rear) > 30.0);
+        gap.network.as_mut().unwrap().launch_chute.as_mut().unwrap().side_barriers.clear();
         assert!(codes(&gap).contains(&"ERR_CHUTE_WALL_GAP"), "{:?}", codes(&gap));
     }
 

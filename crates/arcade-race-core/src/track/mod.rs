@@ -905,7 +905,10 @@ impl Track {
         // wall goes where it would stand in the corridor between the chute's edge and the chute's wall, so that the
         // two walls meet where the chute joins the road instead of leaving a wedge of main wall in the corridor.
         let chute = net.launch_chute.as_ref().and_then(|c| net.get_segment(c.segment_id));
-        let corridor = self.effective_barrier_offset() - 0.5;
+        let corridor = chute
+            .and_then(|c| c.waypoints.first()?.left_wall_distance)
+            .unwrap_or_else(|| self.effective_barrier_offset())
+            - 0.5;
         let keep = |w: &WallBarrier| {
             wall_clear_of_roads(&net.segments, w, 2.0, -0.2)
                 && wall_clear_of_roads(branches.iter().copied(), w, f32::INFINITY, -0.2)
@@ -1016,7 +1019,8 @@ impl Track {
                     // The rear corner of this side: the end of its walls nearest the first sample's wall point.
                     let rear = seg.samples[0];
                     let sign = if side_idx == 0 { 1.0 } else { -1.0 };
-                    let expected = rear.point + rear.normal * (sign * (rear.width * 0.5 + barrier_offset));
+                    let gap = if side_idx == 0 { rear.left_wall_distance } else { rear.right_wall_distance };
+                    let expected = rear.point + rear.normal * (sign * (rear.width * 0.5 + gap.unwrap_or(barrier_offset)));
                     rear_corners[side_idx] = walls[walls_before_side..]
                         .iter()
                         .flat_map(|w| [w.segment.start, w.segment.end])
@@ -1036,7 +1040,12 @@ impl Track {
         }
         if chute_id.is_some() {
             let main = self.geometry.inner_walls.iter().chain(&self.geometry.outer_walls);
-            let bridges = chute_funnel_bridges(&chute_walls, rear_wall.as_ref(), main, barrier_type);
+            let bridges: Vec<WallBarrier> = chute_funnel_bridges(&chute_walls, rear_wall.as_ref(), main.clone(), barrier_type)
+                .into_iter()
+                .filter(|b| !main.clone().chain(&walls).any(|w| w.segment.intersect_segment(&b.segment).is_some_and(|hit| {
+                    hit.distance(b.segment.start) > 0.05 && hit.distance(b.segment.end) > 0.05
+                })))
+                .collect();
             walls.extend(&bridges);
             chute_walls.extend(bridges);
         }

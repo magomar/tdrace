@@ -1425,7 +1425,8 @@ pub(super) fn validate_launch_chute(track: &Track) -> Vec<TrackValidationError> 
     }
 
     // Closed walls: the rear barrier spans the pad and meets a side wall at each end, and the pad has walls on both
-    // sides all along (the merge ramp is where the walls open onto the circuit).
+    // sides all along (the merge ramp is where the walls open onto the circuit). A wall of the circuit that stands where the chute's
+    // wall would counts as that wall.
     let corner_walls = |p: Vec2| {
         chute.side_barriers.iter().any(|w| w.segment.start.distance(p) < 0.5 || w.segment.end.distance(p) < 0.5)
     };
@@ -1438,19 +1439,21 @@ pub(super) fn validate_launch_chute(track: &Track) -> Vec<TrackValidationError> 
     } else if !corner_walls(rear.start) || !corner_walls(rear.end) {
         fail("ERR_CHUTE_OPEN_END", "Launch chute rear barrier does not meet the side walls.".to_string());
     }
-    let wall_gap = track.effective_barrier_offset();
+    // A ray from each road edge outwards meets a wall of the chute, or of the circuit where it stands in its place.
     let pad_end = (seg.length - RAMP_LENGTH_M).max(0.0);
     'walls: for sample in seg.samples.iter().filter(|s| s.distance <= pad_end).step_by(3) {
         for sign in [1.0, -1.0] {
-            let at = sample.point + sample.normal * (sign * (sample.width * 0.5 + wall_gap));
-            if !chute.side_barriers.iter().any(|w| w.segment.distance_to_point(at) < 0.5) {
+            let edge = sample.point + sample.normal * (sign * sample.width * 0.5);
+            let ray = LineSegment::new(edge, edge + sample.normal * (sign * 14.0));
+            let walls = chute.side_barriers.iter().chain(&track.geometry.inner_walls).chain(&track.geometry.outer_walls);
+            if !walls.into_iter().any(|w| w.segment.intersect_segment(&ray).is_some()) {
                 fail(
                     "ERR_CHUTE_WALL_GAP",
                     format!(
                         "Launch chute has a wall gap on the {} at ({:.1}, {:.1}).",
                         if sign > 0.0 { "left" } else { "right" },
-                        at.x,
-                        at.y
+                        edge.x,
+                        edge.y
                     ),
                 );
                 break 'walls;
