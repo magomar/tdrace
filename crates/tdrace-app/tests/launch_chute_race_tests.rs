@@ -10,15 +10,15 @@ use tdrace_app::module::rally::RallyGameModule;
 use tdrace_core::physics::car::Car;
 use tdrace_core::track::checkpoint::TrackProgressTracker;
 use tdrace_core::track::{ChuteSide, LaunchChuteSpec, Track};
-use tdrace_core::CarConfig;
+use tdrace_core::{CarCategory, CarConfig};
 
 const STYLES: [DrivingStyle; 4] =
     [DrivingStyle::Balanced, DrivingStyle::Aggressive, DrivingStyle::Smooth, DrivingStyle::Calculating];
 
 /// Longest time a bot may go without progress in the launch (a bot that long is stuck on a wall).
 const MAX_NO_PROGRESS_S: f32 = 10.0;
-/// Bots of a grid of 8 that must complete lap 1.
-const MIN_THROUGH_LAP_ONE: usize = 6;
+/// Bots of a full chute grid that may fail to complete lap 1.
+const MAX_SHORT_OF_LAP_ONE: usize = 2;
 /// How far into the loop segment that the chute merges into the launch lasts (m).
 const MERGE_ZONE_M: f32 = 60.0;
 /// Longest time a bot may be flagged wrong way on the chute: a spin after a start collision is not a diversion.
@@ -124,12 +124,16 @@ fn with_chute(module: &str, slug: &str) -> Track {
     track
 }
 
-/// The car of the circuit's own category: the module's default car (the Classic Rallycross car on a Classic circuit).
-fn own_car(module: &str) -> CarConfig {
+/// The car of the circuit's own category: the module's default car (on a Classic circuit, the circuit's own car, or the
+/// Classic Rallycross car).
+fn own_car(module: &str, track: &Track) -> CarConfig {
     match module {
         "autocross" => tdrace_app::catalog::find_model_by_id("autocross_ardennes_junior_t1").expect("AX default car").to_car_config(),
         "rally" => RallyGameModule::car_wrc_rally(),
-        _ => ClassicGameModule::car_classic_rally(),
+        _ => match track.car_model_id.as_deref() {
+            Some(id) => tdrace_app::catalog::find_model_by_id(id).unwrap_or_else(|| panic!("no car {id}")).to_car_config(),
+            None => ClassicGameModule::car_classic_rally(),
+        },
     }
 }
 
@@ -153,20 +157,22 @@ fn check(slug: &str, r: &ChuteRace) -> Result<(), String> {
     // Lap 1 ends at the finish line on the main ribbon. A bot can still stick later on a circuit's joker or its
     // hairpins (they do without a chute, on 11 of the 40 circuits), so most of the grid must get through lap 1.
     let through = r.laps_completed.iter().filter(|&&l| l >= 1).count();
-    if through < MIN_THROUGH_LAP_ONE {
+    if through + MAX_SHORT_OF_LAP_ONE < r.laps_completed.len() {
         return fail(format!("only {through} of {} bots completed lap 1: {:?}", r.laps_completed.len(), r.laps_completed));
     }
     Ok(())
 }
 
-/// Races 8 bots of each circuit's own car for 3 laps; returns what went wrong.
+/// Races a full chute grid of each circuit's own car for 3 laps (8 bots on Autocross, 10 on Rallycross); returns
+/// what went wrong.
 fn sweep(circuits: &[(&str, &str)]) -> Vec<String> {
     circuits
         .iter()
         .filter_map(|(module, slug)| {
             let track = with_chute(module, slug);
-            assert_eq!(track.grid_positions.len(), 8, "{slug}: the chute holds 8 cars");
-            check(slug, &race(&track, own_car(module), 8, 3, 400.0)).err()
+            let cars = if track.car_category == CarCategory::Rally { 10 } else { 8 };
+            assert_eq!(track.grid_positions.len(), cars, "{slug}: the chute holds {cars} cars");
+            check(slug, &race(&track, own_car(module, &track), cars, 3, 400.0)).err()
         })
         .collect()
 }
@@ -185,7 +191,7 @@ fn test_bots_race_three_laps_from_an_autocross_chute() {
 /// Scenario: Subsequent Laps Exclude the Launch Chute
 ///
 /// Given a Rallycross circuit with a launch chute and a joker lap
-/// When 8 bots race 3 laps
+/// When 10 bots race 3 laps
 /// Then none of them turns back into the chute after lap 1
 #[test]
 fn test_bots_race_three_laps_from_a_rallycross_chute() {
@@ -193,19 +199,22 @@ fn test_bots_race_three_laps_from_a_rallycross_chute() {
     assert!(failures.is_empty(), "{failures:#?}");
 }
 
-/// The same race on all 40 circuits. About two minutes in release, far longer in a debug build:
+/// The same race on all 43 circuits. About two minutes in release, far longer in a debug build:
 /// `cargo test --release -p tdrace-app --test launch_chute_race_tests -- --ignored`.
 #[test]
-#[ignore = "races 40 circuits; run in release"]
+#[ignore = "races 43 circuits; run in release"]
 fn test_bots_race_from_every_launch_chute() {
     let ids = |module: &str| -> Vec<(String, String)> {
         tdrace_core::catalog::module_circuits(module).map(|c| (c.module.to_string(), c.id.to_string())).collect()
     };
     let mut circuits = ids("autocross");
     circuits.extend(ids("rally"));
-    circuits.extend(["rx_canyon_flyer", "rx_hilltop_leap", "rx_quarry_sprint"].map(|id| ("classic".to_string(), id.to_string())));
+    circuits.extend(
+        ["ax_clay_bowl", "ax_hillside_hammer", "ax_meadow_sprint", "rx_canyon_flyer", "rx_hilltop_leap", "rx_quarry_sprint"]
+            .map(|id| ("classic".to_string(), id.to_string())),
+    );
     let circuits: Vec<(&str, &str)> = circuits.iter().map(|(m, i)| (m.as_str(), i.as_str())).collect();
-    assert_eq!(circuits.len(), 40);
+    assert_eq!(circuits.len(), 43);
     let failures = sweep(&circuits);
-    assert!(failures.is_empty(), "{} of 40 circuits: {failures:#?}", failures.len());
+    assert!(failures.is_empty(), "{} of 43 circuits: {failures:#?}", failures.len());
 }

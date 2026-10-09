@@ -741,8 +741,8 @@ pub fn generate_grid_positions_at_distance(
 pub enum PackedGridPattern {
     /// 5 cars on Row 1, 3 cars on Row 2 (Classic FIA Autocross 8-car sprint).
     AutocrossFiveThree,
-    /// 3 cars on Row 1, 2 cars on Row 2, 3 cars on Row 3 (FIA Rallycross 3-2-3 staggered).
-    RallycrossThreeTwoThree,
+    /// 3 cars on Row 1, 2 on Row 2, 3 on Row 3, 2 on Row 4 (FIA Rallycross 3-2-3-2 staggered, 10 cars).
+    RallycrossThreeTwoThreeTwo,
     /// 4 cars per row uniform grid, 3 rows (12 cars).
     UniformFourAcross,
 }
@@ -752,7 +752,7 @@ impl PackedGridPattern {
     pub const fn row_counts(self) -> &'static [usize] {
         match self {
             Self::AutocrossFiveThree => &[5, 3],
-            Self::RallycrossThreeTwoThree => &[3, 2, 3],
+            Self::RallycrossThreeTwoThreeTwo => &[3, 2, 3, 2],
             Self::UniformFourAcross => &[4, 4, 4],
         }
     }
@@ -778,7 +778,7 @@ impl PackedGridPattern {
             }
             *counts.last_mut()? += 1;
         }
-        [Self::AutocrossFiveThree, Self::RallycrossThreeTwoThree, Self::UniformFourAcross]
+        [Self::AutocrossFiveThree, Self::RallycrossThreeTwoThreeTwo, Self::UniformFourAcross]
             .into_iter()
             .find(|p| p.row_counts() == counts.as_slice())
     }

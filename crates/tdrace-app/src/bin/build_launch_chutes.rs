@@ -6,11 +6,12 @@
 //! cargo run --bin build_launch_chutes -- tracks/autocross/matschenberg_ax.json [more.json ...] [--verbose]
 //! cargo run --bin build_launch_chutes -- --all [--verbose]
 //! ```
-//! `--all` takes the 17 Autocross circuits (`tracks/autocross`), the 20 Rallycross circuits (`tracks/rally`) and the
-//! 3 Classic Rallycross circuits. Each file gets the chute of its category (Autocross: concrete pad, 5-3 grid;
-//! Rallycross: asphalt pad, 3-2-3 grid) at the best waypoint before its finish line, and is written back in place. A
-//! file that already has a chute is left alone; one that cannot take a chute is reported and left alone, and the
-//! exit code is 1. `--verbose` lists why each candidate waypoint was refused.
+//! `--all` takes the 17 Autocross circuits (`tracks/autocross`), the 20 Rallycross circuits (`tracks/rally`), the
+//! 3 Classic Autocross circuits and the 3 Classic Rallycross circuits. Each file gets the chute of its category
+//! (Autocross: concrete pad, 5-3 grid, 8 cars; Rallycross: asphalt pad, 3-2-3-2 grid, 10 cars) at the best waypoint
+//! before its finish line, and is written back in place. A file that already has a chute is left alone; one that
+//! cannot take a chute is reported and left alone, and the exit code is 1. `--verbose` lists why each candidate
+//! waypoint was refused.
 
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -19,6 +20,7 @@ use tdrace_core::track::validation::{validate_track, ValidationSeverity};
 use tdrace_core::track::{ChuteSide, LaunchChuteSpec, PackedGridPattern, Track};
 use tdrace_core::{CarCategory, SurfaceType};
 
+const CLASSIC_AX: [&str; 3] = ["ax_clay_bowl", "ax_hillside_hammer", "ax_meadow_sprint"];
 const CLASSIC_RX: [&str; 3] = ["rx_canyon_flyer", "rx_hilltop_leap", "rx_quarry_sprint"];
 
 /// The circuit files `--all` covers, below `root` (the `tracks` folder).
@@ -32,7 +34,7 @@ fn all_circuits(root: &Path) -> Vec<PathBuf> {
     };
     let mut files = json_in("autocross");
     files.extend(json_in("rally"));
-    files.extend(CLASSIC_RX.map(|id| root.join(format!("classic/{id}.json"))));
+    files.extend(CLASSIC_AX.into_iter().chain(CLASSIC_RX).map(|id| root.join(format!("classic/{id}.json"))));
     files
 }
 
@@ -40,7 +42,7 @@ fn all_circuits(root: &Path) -> Vec<PathBuf> {
 fn template(track: &Track) -> LaunchChuteSpec {
     let mut spec = LaunchChuteSpec::new(0, ChuteSide::Right);
     if track.car_category == CarCategory::Rally {
-        spec.pattern = PackedGridPattern::RallycrossThreeTwoThree;
+        spec.pattern = PackedGridPattern::RallycrossThreeTwoThreeTwo;
         spec.surface = SurfaceType::Asphalt;
     }
     spec

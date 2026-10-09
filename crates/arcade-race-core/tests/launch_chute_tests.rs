@@ -35,7 +35,7 @@ fn test_packed_grid_five_three_rows() {
 fn test_packed_grid_patterns_have_their_row_counts() {
     for (pattern, rows) in [
         (PackedGridPattern::AutocrossFiveThree, vec![5, 3]),
-        (PackedGridPattern::RallycrossThreeTwoThree, vec![3, 2, 3]),
+        (PackedGridPattern::RallycrossThreeTwoThreeTwo, vec![3, 2, 3, 2]),
         (PackedGridPattern::UniformFourAcross, vec![4, 4, 4]),
     ] {
         let slots = generate_packed_launch_grid(Vec2::ZERO, Vec2::new(0.0, 1.0), 16.0, pattern, 6.0);
@@ -61,7 +61,7 @@ fn test_packed_grid_stays_inside_the_pad() {
     for width in [14.0, 16.0, 18.0] {
         for pattern in [
             PackedGridPattern::AutocrossFiveThree,
-            PackedGridPattern::RallycrossThreeTwoThree,
+            PackedGridPattern::RallycrossThreeTwoThreeTwo,
             PackedGridPattern::UniformFourAcross,
         ] {
             for slot in generate_packed_launch_grid(Vec2::ZERO, Vec2::X, width, pattern, 6.0) {
@@ -73,7 +73,7 @@ fn test_packed_grid_stays_inside_the_pad() {
 
 #[test]
 fn test_packed_grid_staggers_the_two_car_row() {
-    let slots = generate_packed_launch_grid(Vec2::ZERO, Vec2::X, 16.0, PackedGridPattern::RallycrossThreeTwoThree, 6.0);
+    let slots = generate_packed_launch_grid(Vec2::ZERO, Vec2::X, 16.0, PackedGridPattern::RallycrossThreeTwoThreeTwo, 6.0);
     let front: Vec<f32> = slots[0..3].iter().map(|s| s.position.y).collect();
     let middle: Vec<f32> = slots[3..5].iter().map(|s| s.position.y).collect();
     // No car of the middle row stands directly behind a car of the front row.
@@ -387,12 +387,12 @@ mod stamp {
     fn test_patterns_and_surface_are_applied() {
         let mut track = rally_oval();
         let mut template = LaunchChuteSpec::new(0, ChuteSide::Left);
-        template.pattern = PackedGridPattern::RallycrossThreeTwoThree;
+        template.pattern = PackedGridPattern::RallycrossThreeTwoThreeTwo;
         template.surface = SurfaceType::Asphalt;
         template.pad_width = 18.0;
         track.place_launch_chute(&template).unwrap();
         let chute = track.launch_chute().unwrap();
-        assert_eq!(chute.grid_slots.len(), 8);
+        assert_eq!(chute.grid_slots.len(), 10);
         assert_eq!(chute.surface, SurfaceType::Asphalt);
         assert_eq!(chute.pad_width, 18.0);
         let seg = track.network.as_ref().unwrap().get_segment(chute.segment_id).unwrap();

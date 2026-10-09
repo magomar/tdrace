@@ -6,7 +6,8 @@ use tdrace_core::track::network::JunctionKind;
 use tdrace_core::track::{validate_track, PackedGridPattern, Track, ValidationSeverity};
 use tdrace_core::{CarCategory, SurfaceType};
 
-/// The 17 Autocross circuits, the 20 Rallycross circuits of the Rallycross module and the 3 Classic Rallycross ones.
+/// The 17 Autocross circuits, the 20 Rallycross circuits of the Rallycross module, and the 3 Classic Autocross and
+/// 3 Classic Rallycross ones.
 fn launch_circuits() -> Vec<(String, Track)> {
     let load = |module: &'static str, id: &str| {
         let c = catalog::find(id, Some(module)).unwrap_or_else(|| panic!("no circuit {module}/{id}"));
@@ -16,21 +17,26 @@ fn launch_circuits() -> Vec<(String, Track)> {
         .chain(catalog::module_circuits("rally"))
         .map(|c| load(c.module, c.id))
         .collect();
-    circuits.extend(["rx_canyon_flyer", "rx_hilltop_leap", "rx_quarry_sprint"].map(|id| load("classic", id)));
+    circuits.extend(
+        ["ax_clay_bowl", "ax_hillside_hammer", "ax_meadow_sprint", "rx_canyon_flyer", "rx_hilltop_leap", "rx_quarry_sprint"]
+            .map(|id| load("classic", id)),
+    );
     circuits
 }
 
 /// Scenario: Global AX and RX Circuit Validation
 ///
-/// Given the 17 official Autocross circuits and 23 official Rallycross circuits
+/// Given the 20 official Autocross circuits and 23 official Rallycross circuits
 /// When `validate_track()` is executed on every circuit definition
-/// Then all 40 circuits contain a valid `LaunchChuteConfig`
+/// Then all 43 circuits contain a valid `LaunchChuteConfig`
 /// And zero boundary wall gaps or invalid spawn poses are detected
+/// And an Autocross chute holds 8 cars, a Rallycross chute 10
 #[test]
-fn test_all_forty_circuits_have_a_valid_launch_chute() {
+fn test_all_43_circuits_have_a_valid_launch_chute() {
     let circuits = launch_circuits();
-    assert_eq!(circuits.len(), 40);
+    assert_eq!(circuits.len(), 43);
     assert_eq!(circuits.iter().filter(|(_, t)| t.car_category == CarCategory::Autocross && t.module_id.as_deref() == Some("autocross")).count(), 17);
+    assert_eq!(circuits.iter().filter(|(_, t)| t.car_category == CarCategory::Autocross).count(), 20);
     assert_eq!(circuits.iter().filter(|(_, t)| t.car_category == CarCategory::Rally).count(), 23);
 
     let mut problems = Vec::new();
@@ -47,20 +53,21 @@ fn test_all_forty_circuits_have_a_valid_launch_chute() {
         if !errors.is_empty() {
             problems.push(format!("{name}: {errors:?}"));
         }
-        if chute.grid_slots.len() != 8 || track.grid_positions != chute.grid_slots {
-            problems.push(format!("{name}: the grid is not the chute's 8 slots"));
+        let cars = if track.car_category == CarCategory::Rally { 10 } else { 8 };
+        if chute.grid_slots.len() != cars || track.grid_positions != chute.grid_slots {
+            problems.push(format!("{name}: the grid is not the chute's {cars} slots"));
         }
     }
     assert!(problems.is_empty(), "{problems:#?}");
 }
 
-/// The chute of each circuit has the category's template: Autocross a concrete 5-3 pad, Rallycross an asphalt 3-2-3 pad.
+/// The chute of each circuit has the category's template: Autocross a concrete 5-3 pad, Rallycross an asphalt 3-2-3-2 pad.
 #[test]
 fn test_each_category_has_its_pad_and_grid() {
     for (name, track) in launch_circuits() {
         let chute = track.launch_chute().unwrap_or_else(|| panic!("{name}: no chute"));
         let (surface, pattern) = if track.car_category == CarCategory::Rally {
-            (SurfaceType::Asphalt, PackedGridPattern::RallycrossThreeTwoThree)
+            (SurfaceType::Asphalt, PackedGridPattern::RallycrossThreeTwoThreeTwo)
         } else {
             (SurfaceType::Concrete, PackedGridPattern::AutocrossFiveThree)
         };
