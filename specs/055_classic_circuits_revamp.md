@@ -207,9 +207,9 @@ existing `EngineSoundType`s.
 
 | id | Name | Maker | Type | Drive | Power | Weight | Top speed | Engine sound | Circuit |
 |---|---|---|---|---|---|---|---|---|---|
-| `classic_ax_mudlark` | Mudlark Cross Car | Mirebrook Racing | single-seat cross car, motorcycle engine | RWD | 150 bhp | 420 kg | ~160 km/h | `CrossCarMotorcycle` | Meadow Sprint |
+| `classic_ax_mudlark` | Mudlark Cross Car | Mirebrook Racing | single-seat cross car, motorcycle engine | RWD | 150 bhp | 420 kg | ~160 km/h | `CrossCarMotorcycle` | Meadow Sprint, Hillside Hammer |
 | `classic_ax_brawler` | Brawler Touring AX | Stonecairn Works | touring silhouette car | AWD | 420 bhp | 1,150 kg | ~185 km/h | `Rally2Turbo` | Clay Bowl |
-| `classic_ax_talon` | Talon Super Buggy | Harrowfield Offroad | open-wheel super buggy | AWD | 560 bhp | 800 kg | ~200 km/h | `SandRailBoxer` | Hillside Hammer |
+| `classic_ax_talon` | Talon Super Buggy | Harrowfield Offroad | open-wheel super buggy | AWD | 560 bhp | 800 kg | ~200 km/h | `SandRailBoxer` | none (unassigned) |
 
 - Handling: the Mudlark is light and turns fast but has little power; the Brawler is heavy and
   stable and slides wide; the Talon is the fastest and needs the most throttle control. All three
