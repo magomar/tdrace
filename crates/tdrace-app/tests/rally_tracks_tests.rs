@@ -1290,3 +1290,50 @@ fn test_rx_race_ignores_the_joker_layout_pick() {
     let main = network.build_composite_spline_for_layout("main").unwrap();
     assert!((track.spline.total_length() - main.total_length()).abs() < 1.0, "the race spline is the main layout");
 }
+
+/// Spec 085: the gore between the joker split branches keeps the ingress road's surface on every RX circuit.
+#[test]
+fn test_rx_gore_keeps_the_ingress_surface() {
+    // Scenario: Native surface friction preserved at junction split
+    let mut dirt_probed = 0;
+    for (category, id) in RX_JOKER_TRACKS {
+        let track = tdrace_core::catalog::official_track(category, id);
+        let network = track.network.as_ref().unwrap_or_else(|| panic!("{}: missing track.network", id));
+        for junction in &network.junctions {
+            let tdrace_core::track::network::JunctionKind::Split { ingress_socket, egress_sockets, gore_config: Some(gore) } = &junction.kind else {
+                continue;
+            };
+            let gore_len = gore.gore_length.max(6.0);
+            let p0 = gore.apex_point + egress_sockets[0].tangent * gore_len;
+            let p1 = gore.apex_point + egress_sockets[1].tangent * gore_len;
+            // Probe the gore triangle on a barycentric grid. Points that a road or curb covers are answered
+            // by that road; only the others are answered by the gore itself.
+            for i in 0..=12 {
+                for j in 0..=(12 - i) {
+                    let (u, v) = (i as f32 / 12.0, j as f32 / 12.0);
+                    let point = gore.apex_point * (1.0 - u - v) + p0 * u + p1 * v;
+                    let covered = network.segments.iter().any(|seg| {
+                        seg.samples.len() >= 2 && {
+                            let proj = seg.project_point(point);
+                            proj.is_on_track || proj.is_on_curb
+                        }
+                    });
+                    if covered {
+                        continue;
+                    }
+                    if ingress_socket.surface == SurfaceType::Dirt {
+                        dirt_probed += 1;
+                    }
+                    assert_eq!(
+                        network.sample_surface(point),
+                        Some(ingress_socket.surface),
+                        "{}: the gore must keep the ingress surface at {:?}",
+                        id,
+                        point
+                    );
+                }
+            }
+        }
+    }
+    assert!(dirt_probed > 0, "no uncovered dirt gore point was probed, the test proves nothing");
+}

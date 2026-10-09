@@ -541,13 +541,8 @@ pub fn render_ground_track_culled(track: &Track, view_bounds: Option<(Vec2, Vec2
         }
     });
 
-    // 3b. Render network junctions (paved throat wedges, gore triangles, chevrons, nose attenuators)
+    // 3b. Render network junction hardware (split nose barriers)
     render_network_junctions_pass(track, false, view_bounds);
-
-    // 3c. Render pit lane junctions (throat wedge, gore triangle, chevrons, attenuators, merge patch)
-    if let Some(pit_lane) = &track.pit_lane {
-        render_pit_lane_junctions_pass(track, pit_lane, view_bounds);
-    }
 
     // 4. Render on-top surface zones (AboveTrack: water puddles, oil slicks, sand/grass/dirt overlays)
     render_surface_zones_layer(track, SurfaceLayer::AboveTrack);
@@ -2030,7 +2025,8 @@ fn render_surface_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option
     render_surface_pass_filtered(spline, elevated, view_bounds, None, None);
 }
 
-/// Renders network junction geometry: paved throat wedges, gore triangles, painted chevrons, and nose crash cushions.
+/// Renders network junction hardware: the nose barrier at a split apex. The road surface itself comes from the
+/// segment ribbons, so a junction draws no paved wedge, painted gore, chevrons or target cap (spec 085).
 pub fn render_network_junctions_pass(
     track: &Track,
     elevated: bool,
@@ -2044,114 +2040,21 @@ pub fn render_network_junctions_pass(
     }
 
     for junction in &net.junctions {
-        match &junction.kind {
-            JunctionKind::Split {
-                ingress_socket,
-                egress_sockets,
-                gore_config,
-            } => {
-                let is_junc_elev = ingress_socket.elevation >= 0.6;
-                if is_junc_elev != elevated {
-                    continue;
-                }
-
-                // 1. Paved Bifurcation Throat Wedge
-                if egress_sockets.len() >= 2 {
-                    let in_l = ingress_socket.left_edge();
-                    let in_r = ingress_socket.right_edge();
-                    let e0_l = egress_sockets[0].left_edge();
-                    let e0_r = egress_sockets[0].right_edge();
-                    let e1_l = egress_sockets[1].left_edge();
-                    let e1_r = egress_sockets[1].right_edge();
-
-                    draw_triangle(
-                        macroquad::prelude::Vec2::new(in_l.x, in_l.y),
-                        macroquad::prelude::Vec2::new(e0_l.x, e0_l.y),
-                        macroquad::prelude::Vec2::new(e1_l.x, e1_l.y),
-                        Palette::ASPHALT,
-                    );
-                    draw_triangle(
-                        macroquad::prelude::Vec2::new(in_r.x, in_r.y),
-                        macroquad::prelude::Vec2::new(e0_r.x, e0_r.y),
-                        macroquad::prelude::Vec2::new(e1_r.x, e1_r.y),
-                        Palette::ASPHALT,
-                    );
-                    draw_quad(in_l, in_r, e0_r, e0_l, Palette::ASPHALT);
-                    draw_quad(in_l, in_r, e1_r, e1_l, Palette::ASPHALT);
-                }
-
-                // 2. Gore Triangle & Markings
-                if let Some(gore) = gore_config {
-                    let p_apex = gore.apex_point;
-                    let v0 = egress_sockets.get(0).map_or(ingress_socket.tangent, |s| s.tangent);
-                    let v1 = egress_sockets.get(1).map_or(ingress_socket.tangent, |s| s.tangent);
-
-                    let gore_len = gore.gore_length.max(6.0);
-                    let p0 = p_apex + v0 * gore_len;
-                    let p1 = p_apex + v1 * gore_len;
-
-                    // A. Paved asphalt gore triangle
-                    draw_triangle(
-                        macroquad::prelude::Vec2::new(p_apex.x, p_apex.y),
-                        macroquad::prelude::Vec2::new(p0.x, p0.y),
-                        macroquad::prelude::Vec2::new(p1.x, p1.y),
-                        Palette::RUNOFF_ASPHALT,
-                    );
-
-                    // B. White gore perimeter lines
-                    draw_line(p_apex.x, p_apex.y, p0.x, p0.y, 0.35, Palette::WHITE_LINE);
-                    draw_line(p_apex.x, p_apex.y, p1.x, p1.y, 0.35, Palette::WHITE_LINE);
-                    draw_line(p0.x, p0.y, p1.x, p1.y, 0.35, Palette::WHITE_LINE);
-
-                    // C. Painted Chevrons (V-stripes) pointing toward incoming traffic
-                    if gore.has_chevrons {
-                        let num_chevrons = (gore_len / 2.8).floor() as usize;
-                        let bisect = (v0 + v1).normalize_or_zero();
-                        for step in 1..=num_chevrons {
-                            let d = step as f32 * 2.8;
-                            if d >= gore_len - 0.5 { break; }
-                            let a = p_apex + v0 * d;
-                            let b = p_apex + v1 * d;
-                            let apex_chevron = p_apex + bisect * (d - 1.2).max(0.2);
-                            draw_line(apex_chevron.x, apex_chevron.y, a.x, a.y, 0.32, Palette::WHITE_LINE);
-                            draw_line(apex_chevron.x, apex_chevron.y, b.x, b.y, 0.32, Palette::WHITE_LINE);
-                        }
-                    }
-
-                    // D. Attenuator Nose Barrier & Hazard Cap
-                    let w_len = (gore.nose_barrier.segment.end - gore.nose_barrier.segment.start).length();
-                    if w_len > 0.05 {
-                        barrier::render_wall_shadow(&gore.nose_barrier);
-                        barrier::render_wall_body(&gore.nose_barrier);
-                    }
-                    // High-visibility impact attenuator nose cap at apex
-                    draw_circle(p_apex.x, p_apex.y, 0.9, Palette::CURB_RED);
-                    draw_circle(p_apex.x, p_apex.y, 0.6, Palette::CURB_WHITE);
-                    draw_circle(p_apex.x, p_apex.y, 0.3, Palette::CURB_RED);
-                }
+        if let JunctionKind::Split {
+            ingress_socket,
+            gore_config: Some(gore),
+            ..
+        } = &junction.kind
+        {
+            let is_junc_elev = ingress_socket.elevation >= 0.6;
+            if is_junc_elev != elevated {
+                continue;
             }
-            JunctionKind::Merge {
-                ingress_sockets,
-                egress_socket,
-                merge_config: _,
-            } => {
-                let is_junc_elev = egress_socket.elevation >= 0.6;
-                if is_junc_elev != elevated {
-                    continue;
-                }
-
-                // Smooth asphalt merge taper patch
-                if !ingress_sockets.is_empty() {
-                    let eg_l = egress_socket.left_edge();
-                    let eg_r = egress_socket.right_edge();
-                    for in_sock in ingress_sockets {
-                        let in_l = in_sock.left_edge();
-                        let in_r = in_sock.right_edge();
-                        draw_quad(in_l, in_r, eg_r, eg_l, Palette::ASPHALT);
-                    }
-                }
+            let w_len = (gore.nose_barrier.segment.end - gore.nose_barrier.segment.start).length();
+            if w_len > 0.05 {
+                barrier::render_wall_shadow(&gore.nose_barrier);
+                barrier::render_wall_body(&gore.nose_barrier);
             }
-            JunctionKind::Terminal { .. } => {}
         }
     }
 }
@@ -2228,80 +2131,6 @@ fn render_starting_grid(track: &Track) {
             draw_line(p_fl.x, p_fl.y, p_fl.x - fwd.x * 0.8, p_fl.y - fwd.y * 0.8, line_thickness, Palette::GRID_LINE);
             draw_line(p_fr.x, p_fr.y, p_fr.x - fwd.x * 0.8, p_fr.y - fwd.y * 0.8, line_thickness, Palette::GRID_LINE);
             draw_line(p_rl.x, p_rl.y, p_rr.x, p_rr.y, line_thickness * 0.7, Color::new(0.9, 0.9, 0.9, 0.4));
-        }
-    }));
-}
-
-/// Renders pit lane junctions: paved entrance wedge, gore triangle, chevrons, impact attenuator, and exit merge taper.
-pub fn render_pit_lane_junctions_pass(
-    track: &Track,
-    _pit_lane: &PitLane,
-    view_bounds: Option<(Vec2, Vec2)>,
-) {
-    let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        let fallback_storage;
-        let junctions = match &track.pit_lane_junctions {
-            Some(j) => j,
-            None => {
-                fallback_storage = track.compute_pit_lane_junctions();
-                match &fallback_storage {
-                    Some(j) => j,
-                    None => return,
-                }
-            }
-        };
-
-        // Quick culling if the pit lane is entirely out of view
-        if let Some((min, max)) = view_bounds {
-            if junctions.bounds_max.x < min.x || junctions.bounds_min.x > max.x
-                || junctions.bounds_max.y < min.y || junctions.bounds_min.y > max.y
-            {
-                return;
-            }
-        }
-
-        let is_in_view = |pos: Vec2, radius: f32| -> bool {
-            if let Some((min, max)) = view_bounds {
-                !(pos.x + radius < min.x || pos.x - radius > max.x || pos.y + radius < min.y || pos.y - radius > max.y)
-            } else {
-                true
-            }
-        };
-
-        // 1. Render entrance throat wedge and gore markings
-        if junctions.has_gore && is_in_view(junctions.p_apex, 35.0) {
-            for q in &junctions.entrance_quads {
-                draw_quad(q[0], q[1], q[2], q[3], Palette::ASPHALT);
-            }
-
-            draw_triangle(
-                macroquad::prelude::Vec2::new(junctions.p_apex.x, junctions.p_apex.y),
-                macroquad::prelude::Vec2::new(junctions.track_edge_apex.x, junctions.track_edge_apex.y),
-                macroquad::prelude::Vec2::new(junctions.pit_inner_apex.x, junctions.pit_inner_apex.y),
-                Palette::RUNOFF_ASPHALT,
-            );
-
-            draw_line(junctions.p_apex.x, junctions.p_apex.y, junctions.te_start.x, junctions.te_start.y, 0.35, Palette::WHITE_LINE);
-            draw_line(junctions.p_apex.x, junctions.p_apex.y, junctions.pe_start.x, junctions.pe_start.y, 0.35, Palette::WHITE_LINE);
-
-            for c in &junctions.chevrons {
-                draw_line(c.apex.x, c.apex.y, c.pt_track.x, c.pt_track.y, 0.30, Palette::WHITE_LINE);
-                draw_line(c.apex.x, c.apex.y, c.pt_pit.x, c.pt_pit.y, 0.30, Palette::WHITE_LINE);
-            }
-
-            draw_circle(junctions.p_apex.x, junctions.p_apex.y, 1.1, Palette::CURB_RED);
-            draw_circle(junctions.p_apex.x, junctions.p_apex.y, 0.75, Palette::CURB_WHITE);
-            draw_circle(junctions.p_apex.x, junctions.p_apex.y, 0.4, Palette::CURB_RED);
-        }
-
-        // 2. Render exit merge taper
-        for eq in &junctions.exit_quads {
-            if is_in_view(eq.quad[2], 20.0) {
-                draw_quad(eq.quad[0], eq.quad[1], eq.quad[2], eq.quad[3], Palette::ASPHALT);
-                if eq.has_dashed_line {
-                    draw_line(eq.line_start.x, eq.line_start.y, eq.line_end.x, eq.line_end.y, 0.28, Palette::WHITE_LINE);
-                }
-            }
         }
     }));
 }

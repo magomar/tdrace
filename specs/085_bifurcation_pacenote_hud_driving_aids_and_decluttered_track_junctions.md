@@ -3,7 +3,8 @@ type: Feature Spec
 template: feature
 title: "Bifurcation Pacenote HUD Driving Aids and De-Cluttered Track Junctions"
 description: "Eliminates intrusive hardcoded asphalt throat wedges, painted highway chevrons, and toy-like bullseye attenuators across split junctions; restores native terrain surface grip; decouples bot navigation hints from in-race rendering; simplifies track editor junction previews; and introduces an authentic Bifurcation / Fork Pacenote driving aid for Joker Laps and Pit Lane entries."
-status: approved
+status: implemented
+receipt: "docs/receipts/spec-085-receipt.md"
 verified: { by: "human:mario", at: "2026-10-04T16:53:00Z", hash: "874432d37071" }
 created: 2026-10-04
 generated: { by: agent/antigravity, at: 2026-10-04T15:40:08Z }
@@ -148,31 +149,31 @@ pub fn render_bifurcation_pacenote(
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Clean in-race bifurcation rendering on dirt tracks**
-  - [ ] **Given** a dirt rallycross track with a Joker Lap split (e.g. `holjes_rx` or `rx_canyon_flyer`)
-  - [ ] **When** rendered in-game during a live race
-  - [ ] **Then** zero black asphalt throat quads ("bowtie wings") are rendered across the dirt surface
-  - [ ] **And** zero white highway chevrons or concentric red-and-white "bullseye" circles are drawn
+  - [x] **Given** a dirt rallycross track with a Joker Lap split (e.g. `holjes_rx` or `rx_canyon_flyer`)
+  - [x] **When** rendered in-game during a live race
+  - [x] **Then** zero black asphalt throat quads ("bowtie wings") are rendered across the dirt surface
+  - [x] **And** zero white highway chevrons or concentric red-and-white "bullseye" circles are drawn
 
 - **Scenario: Native surface friction preserved at junction split**
-  - [ ] **Given** a car driving across the bifurcation apex on a dirt circuit
-  - [ ] **When** sampling surface friction via `track.sample_surface(point)`
-  - [ ] **Then** the returned surface type is `SurfaceType::Dirt` rather than `SurfaceType::Asphalt`
+  - [x] **Given** a car driving across the bifurcation apex on a dirt circuit
+  - [x] **When** sampling surface friction via `track.sample_surface(point)`
+  - [x] **Then** the returned surface type is `SurfaceType::Dirt` rather than `SurfaceType::Asphalt`
 
 - **Scenario: Bifurcation Pacenote HUD indicator triggers on approach**
-  - [ ] **Given** a player vehicle approaching a Joker split or Pit Lane entry with $4.0\,\text{s}$ ETA
-  - [ ] **When** `curve_helper` is enabled in settings
-  - [ ] **Then** a circular Pacenote disc appears beside the car displaying the branching fork geometry
-  - [ ] **And** the recommended path is clearly distinguished from the alternate detour
+  - [x] **Given** a player vehicle approaching a Joker split or Pit Lane entry with $4.0\,\text{s}$ ETA
+  - [x] **When** `curve_helper` is enabled in settings
+  - [x] **Then** a circular Pacenote disc appears beside the car displaying the branching fork geometry
+  - [x] **And** the recommended path is clearly distinguished from the alternate detour
 
 - **Scenario: Bots navigate split junctions without visual geometry**
-  - [ ] **Given** bot vehicles navigating a circuit in headless mode with visual rendering disabled
-  - [ ] **When** completing laps on circuits with Joker splits and pit lanes
-  - [ ] **Then** bots maintain lateral clearance away from the apex barrier and execute scheduled Joker detours cleanly
+  - [x] **Given** bot vehicles navigating a circuit in headless mode with visual rendering disabled
+  - [x] **When** completing laps on circuits with Joker splits and pit lanes
+  - [x] **Then** bots maintain lateral clearance away from the apex barrier and execute scheduled Joker detours cleanly
 
 - **Scenario: Track editor provides minimal CAD wireframe handles**
-  - [ ] **Given** the Track Studio / Editor mode with an active split junction
-  - [ ] **When** inspecting the bifurcation node
-  - [ ] **Then** the editor renders clean vector wireframes (apex point handle, socket labels, divergence rays) without cluttered solid asphalt wedges
+  - [x] **Given** the Track Studio / Editor mode with an active split junction
+  - [x] **When** inspecting the bifurcation node
+  - [x] **Then** the editor renders clean vector wireframes (apex point handle, socket labels, divergence rays) without cluttered solid asphalt wedges
 
 ---
 

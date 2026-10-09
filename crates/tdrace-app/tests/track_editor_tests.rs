@@ -2822,3 +2822,31 @@ fn test_pit_lane_layout_round_trips_through_json() {
     let loaded = tdrace_core::track::Track::from_json(&json).unwrap();
     assert_eq!(loaded.pit_lane_layout, Some(layout));
 }
+
+#[test]
+fn test_editor_tags_the_joker_branch_of_a_split() {
+    // Scenario: Track editor provides minimal CAD wireframe handles
+    use tdrace_app::editor::branch_socket_label;
+    use tdrace_core::track::network::{JunctionId, JunctionKind};
+
+    for (category, id) in [("classic", "rx_canyon_flyer"), ("classic", "rx_quarry_sprint"), ("rally", "holjes_rx"), ("rally", "lydden_hill")] {
+        let track = tdrace_core::catalog::official_track(category, id);
+        let network = track.network.as_ref().unwrap();
+        let split = network.junctions.iter().find(|j| matches!(j.kind, JunctionKind::Split { .. })).unwrap();
+        let tags: Vec<&str> = (0..2).map(|i| branch_socket_label(&track, split.id, i)).collect();
+        assert_eq!(tags.iter().filter(|t| **t == "[Joker]").count(), 1, "{id}: one joker branch, got {tags:?}");
+        assert_eq!(tags.iter().filter(|t| **t == "[Main]").count(), 1, "{id}: one main branch, got {tags:?}");
+    }
+
+    // A split the editor just made has no joker layout: both branches read [Main].
+    let mut state = EditorState::new(tdrace_core::catalog::official_track("classic", "classic_grand_prix"));
+    let mut tools = ToolSettings::default();
+    tools.active_tool = EditorToolType::RoadSplit;
+    let wp = state.track.spline.waypoints[2].point;
+    tools.handle_secondary_down(&mut state, wp);
+    assert_eq!(branch_socket_label(&state.track, JunctionId(0), 0), "[Main]");
+    assert_eq!(branch_socket_label(&state.track, JunctionId(0), 1), "[Main]");
+    // And a circuit without a network.
+    let plain = tdrace_core::catalog::official_track("classic", "oval_speedway");
+    assert_eq!(branch_socket_label(&plain, JunctionId(0), 0), "[Main]");
+}

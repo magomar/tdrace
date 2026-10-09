@@ -1239,8 +1239,10 @@ impl TrackNetwork {
                         let gore_len = gore.gore_length.max(6.0);
                         let p0 = p_apex + v0 * gore_len;
                         let p1 = p_apex + v1 * gore_len;
+                        // The gore keeps the ingress road's own surface; an artificial asphalt island
+                        // would give a dirt car tarmac grip.
                         if point_in_triangle_2d(point, p_apex, p0, p1) {
-                            return Some(SurfaceType::Asphalt);
+                            return Some(ingress_socket.surface);
                         }
                     }
                 }
@@ -1376,6 +1378,26 @@ mod tests {
             "C1 tangent error at branch socket is too high: {} rad",
             angle_error
         );
+    }
+
+    #[test]
+    fn test_gore_triangle_keeps_the_ingress_surface() {
+        // Dirt trunk splitting into two dirt branches at x = 100, with a gore triangle at the apex.
+        let ingress = SplineSocket::new(Vec2::new(100.0, 0.0), Vec2::X, 10.0).with_surface(SurfaceType::Dirt);
+        let egress = vec![
+            SplineSocket::new(Vec2::new(100.0, 0.0), Vec2::new(1.0, 0.5), 8.0).with_surface(SurfaceType::Dirt),
+            SplineSocket::new(Vec2::new(100.0, 0.0), Vec2::new(1.0, -0.5), 8.0).with_surface(SurfaceType::Dirt),
+        ];
+        let gore = GoreConfig::new(Vec2::new(110.0, 0.0), 53.0, 20.0, BarrierType::TireWall);
+        let junction = RoadJunction::split(JunctionId(0), "Dirt Split", ingress, egress, Some(gore));
+        let mut net = TrackNetwork::new();
+        net.junctions.push(junction);
+
+        // Inside the gore triangle, clear of both branch roads (no segments exist in this network).
+        let inside = Vec2::new(116.0, 0.0);
+        assert_eq!(net.sample_surface(inside), Some(SurfaceType::Dirt));
+        // Outside every junction area there is nothing to report.
+        assert_eq!(net.sample_surface(Vec2::new(116.0, 40.0)), None);
     }
 
     #[test]

@@ -151,8 +151,7 @@ pub fn render_hud(
     );
 
     // 3b. Tactical Pit Recommendation Alert ("BOX THIS LAP") beside Mini-Map (Spec 062)
-    let max_wear = player_car.state.wheel_assemblies.iter().map(|w| w.wear).fold(0.0f32, f32::max);
-    if max_wear > 0.60 || player_car.state.health < 0.50 {
+    if pit_stop_recommended(player_car) {
         let alert_x = sw - map_w - scaler.safe_pad_x - scaler.s(134.0);
         let alert_y = scaler.safe_pad_y + scaler.s(8.0);
         render_box_this_lap_alert(fonts, &scaler, alert_x, alert_y, session_time);
@@ -797,6 +796,12 @@ fn render_stage_badge(fonts: &Fonts, scaler: &UiScaler, right_x: f32, y: f32, la
     draw_rectangle(x, y, pill_w, pill_h, Color::new(col.r * 0.25, col.g * 0.25, col.b * 0.25, 0.90));
     draw_rectangle_lines(x, y, pill_w, pill_h, scaler.s(1.8), col);
     fonts.draw_ui_bold(label, x + (pill_w - text_w) * 0.5, y + scaler.s(18.0), scaler.font_s(14.0), col);
+}
+
+/// True when the car's tires are worn or its health is low enough that a pit stop is advised (Spec 062).
+pub fn pit_stop_recommended(car: &Car) -> bool {
+    let max_wear = car.state.wheel_assemblies.iter().map(|w| w.wear).fold(0.0f32, f32::max);
+    max_wear > 0.60 || car.state.health < 0.50
 }
 
 /// Tactical pit recommendation alert ("BOX THIS LAP") flashing beside the mini-map (Spec 062).

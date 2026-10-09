@@ -1,7 +1,12 @@
 use tdrace_app::ui::curve_indicator::{
-    compute_curve_colors, compute_indicator_alpha, compute_pacenote_polyline, curve_indicator_lookahead,
-    CurveColorScheme,
+    bifurcation_disc_center, compute_bifurcation_alpha, compute_curve_colors, compute_fork_points,
+    compute_indicator_alpha, compute_pacenote_polyline, curve_indicator_lookahead, upcoming_bifurcation,
+    BifurcationApproachStatus, CurveColorScheme,
 };
+use tdrace_core::physics::car::Car;
+use tdrace_core::physics::config::CarConfig;
+use tdrace_core::track::checkpoint::{MultiRouteProgressTracker, TrackProgressTracker};
+use tdrace_core::track::network::{JunctionKind, SegmentId};
 use tdrace_core::track::curve::{evaluate_curve_approach, CurveDirection, TrackCurve};
 
 #[test]
@@ -250,4 +255,198 @@ fn test_old_config_with_curve_indicator_style_still_loads() {
     let old: tdrace_app::config::PlayerHelpersConfig =
         toml::from_str("curve_helper = true\ncurve_indicator_style = \"chevrons\"").unwrap();
     assert!(old.curve_helper);
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Spec 085: bifurcation pacenote
+// ---------------------------------------------------------------------------------------------------------------
+
+fn status_at(distance: f32) -> BifurcationApproachStatus {
+    BifurcationApproachStatus {
+        distance_to_split: distance,
+        divergence_angle: 30.0,
+        branch_left_is_tactical: true,
+        branch_right_is_tactical: false,
+        recommended_branch_left: false,
+        is_pit_entry: false,
+        is_joker_split: true,
+    }
+}
+
+#[test]
+fn test_bifurcation_badge_fades_in_between_4_5_and_4_0_seconds() {
+    // Scenario: Bifurcation Pacenote HUD indicator triggers on approach
+    let speed = 40.0; // lookahead 4.5 s * 40 m/s = 180 m
+    assert!(compute_bifurcation_alpha(&status_at(190.0), speed) < 1e-3, "ETA 4.75 s: hidden");
+    let mid = compute_bifurcation_alpha(&status_at(170.0), speed);
+    assert!((mid - 0.5).abs() < 0.01, "ETA 4.25 s: half visible, got {mid}");
+    assert!((compute_bifurcation_alpha(&status_at(160.0), speed) - 1.0).abs() < 1e-3, "ETA 4.0 s: full");
+    assert!((compute_bifurcation_alpha(&status_at(0.0), speed) - 1.0).abs() < 1e-3, "at the split: full");
+    // A badge that fades with the car crossing the split, like the curve pacenote past its apex.
+    assert!((compute_bifurcation_alpha(&status_at(-5.0), speed) - 0.5).abs() < 1e-3);
+    assert!(compute_bifurcation_alpha(&status_at(-10.0), speed) < 1e-3);
+}
+
+/// Tracker on `segment` of `track`, `progress` meters along it.
+fn tracker_on(segment: SegmentId, progress: f32) -> TrackProgressTracker {
+    let mut tracker = TrackProgressTracker::new(1, 1);
+    let mut multi = MultiRouteProgressTracker::new("main", segment, 1);
+    multi.segment_progress_distance = progress;
+    tracker.multi_route = Some(multi);
+    tracker
+}
+
+#[test]
+fn test_joker_split_is_found_ahead_on_the_ingress_segment() {
+    // Scenario: Bifurcation Pacenote HUD indicator triggers on approach
+    let track = tdrace_core::catalog::official_track("classic", "rx_canyon_flyer");
+    let network = track.network.as_ref().unwrap();
+    let ingress_seg = network.get_segment(SegmentId(0)).expect("start straight");
+    let speed = 30.0; // lookahead 135 m
+
+    // 100 m before the split: found, ahead by 100 m.
+    let near = upcoming_bifurcation(&track, &tracker_on(SegmentId(0), ingress_seg.length - 100.0), speed, true, false)
+        .expect("joker split within the lookahead");
+    assert!(near.is_joker_split && !near.is_pit_entry);
+    assert!((near.distance_to_split - 100.0).abs() < 1.0, "distance {}", near.distance_to_split);
+    assert!(near.divergence_angle > 1.0, "the branches must diverge, got {}", near.divergence_angle);
+    assert_ne!(near.branch_left_is_tactical, near.branch_right_is_tactical, "one tactical branch");
+
+    // 200 m before: beyond the 4.5 s window.
+    assert!(upcoming_bifurcation(&track, &tracker_on(SegmentId(0), ingress_seg.length - 200.0), speed, true, false).is_none());
+}
+
+#[test]
+fn test_joker_split_marks_the_joker_branch_as_tactical_and_recommends_it_only_when_owed() {
+    // Scenario: Bifurcation Pacenote HUD indicator triggers on approach
+    let track = tdrace_core::catalog::official_track("classic", "rx_canyon_flyer");
+    let network = track.network.as_ref().unwrap();
+    let tracker = tracker_on(SegmentId(0), network.get_segment(SegmentId(0)).unwrap().length - 80.0);
+
+    let owed = upcoming_bifurcation(&track, &tracker, 30.0, true, false).unwrap();
+    let paid = upcoming_bifurcation(&track, &tracker, 30.0, false, false).unwrap();
+    assert!(owed.recommends_tactical(), "a driver who owes the joker is sent to the joker road");
+    assert!(!paid.recommends_tactical(), "a driver who has taken the joker is kept on the main line");
+    assert_eq!(owed.branch_left_is_tactical, paid.branch_left_is_tactical, "geometry does not depend on the plan");
+
+    // The tactical side must be the side the joker road (segment 2) leaves to.
+    let JunctionKind::Split { ingress_socket, .. } = &network.junctions[0].kind else { panic!("junction 0 is the split") };
+    let joker_probe = network.get_segment(SegmentId(2)).unwrap().sample_at_distance(20.0).point;
+    let main_probe = network.get_segment(SegmentId(1)).unwrap().sample_at_distance(20.0).point;
+    let side = |p: glam::Vec2| ingress_socket.tangent.perp_dot(p - ingress_socket.point);
+    assert_eq!(owed.branch_left_is_tactical, side(joker_probe) > side(main_probe), "tactical branch side");
+}
+
+#[test]
+fn test_joker_badge_fades_out_just_past_the_split_and_ignores_the_loop_closure_link() {
+    // Scenario: Bifurcation Pacenote HUD indicator triggers on approach
+    let track = tdrace_core::catalog::official_track("classic", "rx_canyon_flyer");
+    // 4 m into the joker road: the split is 4 m behind.
+    let past = upcoming_bifurcation(&track, &tracker_on(SegmentId(2), 4.0), 30.0, true, false).expect("just past the split");
+    assert!((past.distance_to_split + 4.0).abs() < 1e-3);
+    assert!(compute_bifurcation_alpha(&past, 30.0) > 0.0);
+    // 40 m in: gone.
+    assert!(upcoming_bifurcation(&track, &tracker_on(SegmentId(2), 40.0), 30.0, true, false).is_none());
+    // Segment 4 is linked to the split junction as a loop closure, but its end is the start line, not the split.
+    let network = track.network.as_ref().unwrap();
+    let end_of_loop = network.get_segment(SegmentId(4)).unwrap().length - 50.0;
+    assert!(upcoming_bifurcation(&track, &tracker_on(SegmentId(4), end_of_loop), 30.0, true, false).is_none());
+}
+
+#[test]
+fn test_every_rx_circuit_gets_a_bifurcation_badge_before_its_joker_split() {
+    // Scenario: Bifurcation Pacenote HUD indicator triggers on approach
+    let circuits = [("classic", "rx_quarry_sprint"), ("classic", "rx_hilltop_leap"), ("classic", "rx_canyon_flyer"), ("rally", "holjes_rx"), ("rally", "lydden_hill"), ("rally", "spa_rx"), ("rally", "silverstone_rx"), ("rally", "dreux_rx")];
+    for (category, id) in circuits {
+        let track = tdrace_core::catalog::official_track(category, id);
+        let network = track.network.as_ref().unwrap();
+        let JunctionKind::Split { ingress_socket, .. } = &network.junctions[0].kind else { panic!("{id}: junction 0 is the split") };
+        let seg = network
+            .segments
+            .iter()
+            .find(|s| s.samples.last().is_some_and(|p| p.point.distance(ingress_socket.point) < 3.0) && s.exit_junction.is_some())
+            .unwrap_or_else(|| panic!("{id}: no segment ends at the split"));
+        let progress = (seg.length - 60.0).max(0.0);
+        let status = upcoming_bifurcation(&track, &tracker_on(seg.id, progress), 30.0, true, false)
+            .unwrap_or_else(|| panic!("{id}: no badge 60 m before the split"));
+        assert!(status.is_joker_split, "{id}");
+        assert_ne!(status.branch_left_is_tactical, status.branch_right_is_tactical, "{id}: one tactical branch");
+    }
+}
+
+fn pit_circuit() -> tdrace_core::track::Track {
+    let track = tdrace_core::catalog::official_track("gt", "catalunya");
+    assert!(track.pit_lane.is_some(), "catalunya has a pit lane");
+    track
+}
+
+/// Tracker on a plain circuit at `progress` meters.
+fn plain_tracker(progress: f32) -> TrackProgressTracker {
+    let mut tracker = TrackProgressTracker::new(1, 1);
+    tracker.progress_distance = progress;
+    tracker
+}
+
+#[test]
+fn test_pit_entry_badge_shows_before_the_pit_lane_on_the_pit_side() {
+    // Scenario: Bifurcation Pacenote HUD indicator triggers on approach
+    let track = pit_circuit();
+    let lane = track.pit_lane.as_ref().unwrap();
+    let junctions = track.pit_lane_junctions.clone().or_else(|| track.compute_pit_lane_junctions()).unwrap();
+    let apex = track.spline.project_point(junctions.p_apex);
+    let total = track.spline.total_length();
+    let before = |meters: f32| plain_tracker((apex.progress_distance - meters).rem_euclid(total));
+
+    let status = upcoming_bifurcation(&track, &before(80.0), 30.0, false, false).expect("pit entry within the lookahead");
+    assert!(status.is_pit_entry && !status.is_joker_split);
+    assert!((status.distance_to_split - 80.0).abs() < 1.0, "distance {}", status.distance_to_split);
+    assert!(upcoming_bifurcation(&track, &before(400.0), 30.0, false, false).is_none(), "beyond 4.5 s");
+
+    // The tactical branch is on the side the pit road lies.
+    let start = track.spline.project_point(junctions.te_start);
+    let free_end = (lane.entry_gate.start + lane.entry_gate.end) * 0.5;
+    let pit_is_left = start.tangent.perp_dot(free_end - start.closest_point) > 0.0;
+    assert_eq!(status.branch_left_is_tactical, pit_is_left);
+
+    // A pit stop advised: the pit road is recommended. Otherwise the main line is.
+    assert!(upcoming_bifurcation(&track, &before(80.0), 30.0, false, true).unwrap().recommends_tactical());
+    assert!(!status.recommends_tactical());
+
+    // Already in the pit lane: no badge.
+    let mut in_lane = before(80.0);
+    in_lane.in_pit_lane = true;
+    assert!(upcoming_bifurcation(&track, &in_lane, 30.0, false, true).is_none());
+}
+
+#[test]
+fn test_bifurcation_disc_sits_on_the_tactical_side_beside_the_car() {
+    let car = Car::new(CarConfig::sports_car()).with_pose(glam::Vec2::new(10.0, 5.0), 0.7);
+    for tactical_left in [true, false] {
+        let mut status = status_at(100.0);
+        status.branch_left_is_tactical = tactical_left;
+        status.branch_right_is_tactical = !tactical_left;
+        let center = bifurcation_disc_center(&car, &status, 1.0, 1.0);
+        let lateral = (center - car.state.position).dot(car.right_vector());
+        assert_eq!(lateral < 0.0, tactical_left, "disc on the tactical side");
+        // Beyond the car's half track width, so the disc never hides the car.
+        assert!(lateral.abs() > car.config.track_width * 0.5 + 0.5, "disc clear of the car body, lateral {lateral}");
+        // And level with the car, not ahead of it.
+        assert!((center - car.state.position).dot(car.forward_vector()).abs() < 1e-3);
+    }
+}
+
+#[test]
+fn test_fork_icon_branches_leave_to_the_matching_sides_with_a_readable_spread() {
+    let fwd = glam::Vec2::new(0.0, 1.0);
+    let left = glam::Vec2::new(-1.0, 0.0);
+    for divergence in [2.0f32, 30.0, 70.0, 140.0] {
+        let fork = compute_fork_points(fwd, left, glam::Vec2::ZERO, 10.0, divergence);
+        assert!((fork.left_tip - fork.junction).dot(left) > 0.0, "left tip on the left");
+        assert!((fork.right_tip - fork.junction).dot(left) < 0.0, "right tip on the right");
+        assert!((fork.junction - fork.stem_start).dot(fwd) > 0.0, "the stem comes from behind");
+        let a = (fork.left_tip - fork.junction).normalize();
+        let b = (fork.right_tip - fork.junction).normalize();
+        let spread = a.dot(b).clamp(-1.0, 1.0).acos().to_degrees();
+        assert!((27.9..=70.1).contains(&spread), "spread {spread} for divergence {divergence}");
+    }
 }

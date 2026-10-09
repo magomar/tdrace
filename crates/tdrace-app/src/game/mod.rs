@@ -218,7 +218,7 @@ use crate::profile::{
 use crate::render::car::render_car_with_visual_type_model_and_shadows;
 use crate::render::color::{CarColorScheme, Palette};
 use crate::editor::{
-    is_mouse_over_editor_ui, render_editor_grid, render_editor_gizmos, render_editor_ui,
+    is_mouse_over_editor_ui, render_editor_grid, render_editor_gizmos, render_editor_junction_labels, render_editor_ui,
     EditorAction, EditorCamera, EditorModal, EditorState, EditorToolType, SurfaceShapeType,
     ToolSettings,
 };
@@ -270,8 +270,8 @@ use crate::ui::track_manager_ui::{
     render_track_manager_screen, ModuleFilter, TrackManagerModal, TrackManagerTab, PROMOTION_MODULES,
 };
 use crate::ui::{
-    confirm_modal_layout, curve_indicator_lookahead,
-    render_curve_pacenote, ArcadeSettingsModal, CabinetContext, CabinetScreen, CabinetTheme,
+    confirm_modal_layout, curve_indicator_lookahead, pit_stop_recommended, render_bifurcation_pacenote,
+    render_curve_pacenote, upcoming_bifurcation, ArcadeSettingsModal, CabinetContext, CabinetScreen, CabinetTheme,
     CareerHubFocus, CircuitViewerOrigin, CircuitViewerState, HelpersSettingsState, ScreenAction,
     UiScaler, UniversalConfirmModal,
 };
@@ -15690,6 +15690,9 @@ impl RaceSession {
 
             self.editor_camera.reset_to_screen();
 
+            // Junction branch tags need screen-space text, so they come after the world gizmos.
+            render_editor_junction_labels(&self.fonts, state, &self.editor_camera);
+
             // 2. Screen Pass: Render Editor UI (toolbars, palettes, inspector, status bar, and modals) ON TOP of the track!
             let dispatched = render_editor_ui(
                 &self.fonts,
@@ -15979,6 +15982,26 @@ impl RaceSession {
                             focus_car,
                             &status,
                             &self.track.spline,
+                            self.visibility_options.curve_color_scheme,
+                            camera.current_zoom,
+                            self.session_time,
+                            self.visibility_options.curve_helper_scale,
+                            self.visibility_options.curve_helper_brightness,
+                        );
+                    }
+                    // Fork badge before a joker split or the pit lane entry (spec 085). Drawing only: the simulation
+                    // never reads it.
+                    let joker_wanted = self.world.jokers_taken(focus_car_idx) < self.world.rules.joker.mandatory;
+                    if let Some(status) = upcoming_bifurcation(
+                        &self.track,
+                        focus_tracker,
+                        focus_car.state.speed,
+                        joker_wanted,
+                        pit_stop_recommended(focus_car),
+                    ) {
+                        render_bifurcation_pacenote(
+                            focus_car,
+                            &status,
                             self.visibility_options.curve_color_scheme,
                             camera.current_zoom,
                             self.session_time,
