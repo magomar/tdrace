@@ -461,3 +461,14 @@ fn layout_free_tracks_keep_the_searched_junctions() {
     assert_eq!(loaded.pit_lane_junctions, loaded.compute_pit_lane_junctions());
     assert!(loaded.pit_lane_junctions.is_some());
 }
+
+/// Scenario: The pit lane is fully enclosed
+#[test]
+fn baked_layout_lane_is_fully_enclosed() {
+    use arcade_race_core::track::pit_kit::enclosure_holes;
+    let track = baked_track_with_layout();
+    let holes = enclosure_holes(&track);
+    assert!(holes.is_empty(), "{} open rays, first: {:?}", holes.len(), holes.iter().take(5).collect::<Vec<_>>());
+    let loaded = Track::from_json(&serde_json::to_string(&track).unwrap()).unwrap();
+    assert!(enclosure_holes(&loaded).is_empty(), "holes after load");
+}

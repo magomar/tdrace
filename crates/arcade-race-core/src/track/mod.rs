@@ -1276,6 +1276,26 @@ impl Track {
         let Some(ref lane) = self.pit_lane else { return; };
         if lane.spline.samples.len() < 2 { return; }
 
+        // Spec 101: the pit perimeter replaces the pit-side main wall between the pit lane anchors, so cut it there
+        // by arc length; a search-based trim drops whole merged wall pieces and leaves holes.
+        if let Some(span) = pit_kit::perimeter_span(self) {
+            let side_walls = if span.side == pit_kit::Side::Left { &self.geometry.inner_walls } else { &self.geometry.outer_walls };
+            let cut: Vec<WallBarrier> = side_walls
+                .iter()
+                .flat_map(|w| {
+                    pit_kit::wall_pieces_outside_span(self, &span, &w.segment)
+                        .into_iter()
+                        .map(move |segment| WallBarrier { segment, ..w.clone() })
+                })
+                .collect();
+            if span.side == pit_kit::Side::Left {
+                self.geometry.inner_walls = cut;
+            } else {
+                self.geometry.outer_walls = cut;
+            }
+        }
+        let Some(ref lane) = self.pit_lane else { return; };
+
         let should_keep_wall = |wall: &WallBarrier| -> bool {
             let p0 = wall.segment.start;
             let p1 = wall.segment.end;
@@ -1284,6 +1304,9 @@ impl Track {
             let p_q3 = (p0 + p1 * 3.0) * 0.25;
 
             for pt in [p0, p_q1, p_mid, p_q3, p1] {
+                if pit_kit::beyond_lane_end(lane, pt) {
+                    continue;
+                }
                 let proj = lane.spline.project_point(pt);
                 if (wall.elevation - proj.elevation).abs() < 2.0 {
                     let half_w = proj.track_width * 0.5;
@@ -1318,6 +1341,13 @@ impl Track {
     pub fn generate_pit_lane_walls(&mut self) {
         let Some(ref lane) = self.pit_lane else { return; };
         if lane.spline.samples.len() < 4 || self.spline.samples.len() < 4 { return; }
+        // Spec 101: a compiled layout fixes the dividing wall ends; every pit lane gets an unbroken outer perimeter
+        // in place of the outer wall pieces.
+        let compiled = self.pit_lane_layout.as_ref().and_then(|l| l.compile(self).ok());
+        let (perimeter, perimeter_type) = match pit_kit::perimeter_span(self) {
+            Some(span) => pit_kit::perimeter_chain(self, lane, &span),
+            None => (Vec::new(), BarrierType::Concrete),
+        };
 
         let pit_w = lane.road_width;
         let pit_half_w = pit_w * 0.5;
@@ -1377,8 +1407,10 @@ impl Track {
             }
         }
 
-        // Spec 101: a compiled layout fixes where the dividing wall starts and ends.
-        if let Some(compiled) = self.pit_lane_layout.as_ref().and_then(|l| l.compile(self).ok()) {
+        if !perimeter.is_empty() {
+            outer_wall_pts.clear();
+        }
+        if let Some(compiled) = &compiled {
             let s_of = |p: Vec2| lane.spline.project_point(p).progress_distance;
             let (s_start, s_end) = (s_of(compiled.divider_start), s_of(compiled.divider_end));
             dividing_wall_pts.retain(|&p| {
@@ -1501,6 +1533,21 @@ impl Track {
                     } else {
                         self.geometry.outer_walls.push(wall);
                     }
+                }
+            }
+        }
+        for pair in perimeter.windows(2) {
+            let mut wall = WallBarrier::new(pair[0], pair[1], perimeter_type);
+            wall.elevation = self.spline.project_point((pair[0] + pair[1]) * 0.5).elevation;
+            let exists = self.geometry.inner_walls.iter().chain(&self.geometry.outer_walls).any(|w| {
+                (w.segment.start.distance(pair[0]) < 0.05 && w.segment.end.distance(pair[1]) < 0.05)
+                    || (w.segment.start.distance(pair[1]) < 0.05 && w.segment.end.distance(pair[0]) < 0.05)
+            });
+            if !exists {
+                if pit_side > 0.0 {
+                    self.geometry.inner_walls.push(wall);
+                } else {
+                    self.geometry.outer_walls.push(wall);
                 }
             }
         }

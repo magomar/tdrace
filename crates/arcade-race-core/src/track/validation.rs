@@ -1336,6 +1336,9 @@ pub fn validate_track(track: &Track) -> Vec<TrackValidationError> {
             let p_mid = (p0 + p1) * 0.5;
             let mut wall_blocks = false;
             for pt in [p0, p1, p_mid] {
+                if crate::track::pit_kit::beyond_lane_end(lane, pt) {
+                    continue;
+                }
                 let proj = lane.spline.project_point(pt);
                 if (wall.elevation - proj.elevation).abs() < 1.5 && proj.lateral_offset.abs() < (half_w - 0.25) {
                     wall_blocks = true;

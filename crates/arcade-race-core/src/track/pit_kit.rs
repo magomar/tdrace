@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 
 use wheelbase::SurfaceType;
 
-use super::geometry::{LineSegment, PitBox, PitLane, PitLaneChevron, PitLaneExitQuad, PitLaneJunctionData};
+use super::geometry::{BarrierType, LineSegment, PitBox, PitLane, PitLaneChevron, PitLaneExitQuad, PitLaneJunctionData};
 use super::scenery::{Building, BuildingStyle};
 use super::spline::{catmull_rom_centripetal_2d, TrackSpline, TrackWaypoint};
 use super::Track;
@@ -110,7 +110,7 @@ pub struct JunctionGeometry {
     pub quads: Vec<[Vec2; 4]>,
     /// Gore chevrons between `s` and the apex (entry only).
     pub chevrons: Vec<PitLaneChevron>,
-    /// End of the dividing wall: the first (entry) or last (exit) station with a wall-wide gap.
+    /// End of the dividing wall, between the main edge and the branch inner edge at the free end.
     pub divider_end: Vec2,
 }
 
@@ -343,8 +343,10 @@ fn finish_junction(main: &TrackSpline, role: JunctionRole, sigma: f32, road_widt
     let apex = (apex_te + apex_be) * 0.5;
 
     let divider_k = (0..count).find(|&k| edge_gaps[order[k]] >= DIVIDER_WALL_MIN_GAP).unwrap_or(count - 1);
+    // The dividing wall ends at the free end, beside the gate: a bot that steers straight at the gate centre from the
+    // main road passed a wall end inside the junction and stuck on it (red_bull_ring).
     let divider_end = {
-        let i = order[divider_k];
+        let i = order[count - 1];
         let gap = edge_gaps[i].max(0.0);
         let n = (branch_edges[i] - track_edges[i]).normalize_or_zero();
         branch_edges[i] - n * (gap * 0.5).min(1.0)
@@ -674,6 +676,20 @@ impl PitLaneLayout {
     }
 }
 
+/// Writes a compiled layout into `track`: its pit lane, and its garages in place of every `PitGarage` building (the
+/// layout is the only source of pit garages). Walls are left to `trim_walls_for_pit_lane` and
+/// `generate_pit_lane_walls`.
+pub fn install(track: &mut Track, compiled: CompiledPitLane) {
+    track.pit_lane = Some(compiled.lane);
+    let buildings = &mut track.geometry.buildings;
+    buildings.retain(|b| b.style != BuildingStyle::PitGarage);
+    let first_id = buildings.iter().map(|b| b.id + 1).max().unwrap_or(0);
+    for (i, mut garage) in compiled.garages.into_iter().enumerate() {
+        garage.id = first_id + i;
+        buildings.push(garage);
+    }
+}
+
 /// Builds the runtime junction markings from the two components (no search).
 fn junction_data(lane: &PitLane, entry: &JunctionGeometry, exit: &JunctionGeometry) -> PitLaneJunctionData {
     let exit_quads: Vec<PitLaneExitQuad> = exit
@@ -742,4 +758,236 @@ fn first_self_crossing(points: &[Vec2]) -> Option<usize> {
         }
     }
     None
+}
+
+/// The main wall is cut this far before the entry and after the exit (m); the perimeter runs from the cut ends.
+const PERIMETER_OVERLAP: f32 = 10.0;
+/// Spacing of perimeter wall points (m).
+const PERIMETER_STEP: f32 = 1.5;
+/// Longest ray used to find the main wall beside the track (m).
+const MAIN_WALL_SEARCH: f32 = 30.0;
+
+/// Outer pit perimeter: one unbroken polyline from the main wall before the entry, round the outside of the pit
+/// lane, to the main wall after the exit. Where the pit road is near the track it follows the main wall line;
+/// elsewhere it runs `OUTER_WALL_OFFSET` outside the pit road edge. Garages stay outside it.
+/// Where the pit perimeter replaces the main wall: pit side and main-spline anchors of the pit lane ends.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct PerimeterSpan {
+    pub side: Side,
+    pub entry_s: f32,
+    pub exit_s: f32,
+}
+
+/// The perimeter span of `track`'s pit lane: from its layout, or for a free-form lane whose ends touch the main road,
+/// from the main-spline projection of its ends and the side its middle lies on. `None`: no perimeter.
+pub fn perimeter_span(track: &Track) -> Option<PerimeterSpan> {
+    let lane = track.pit_lane.as_ref()?;
+    if lane.spline.samples.len() < 2 || track.spline.samples.len() < 2 {
+        return None;
+    }
+    if let Some(layout) = track.pit_lane_layout.as_ref().filter(|l| l.compile(track).is_ok()) {
+        return Some(PerimeterSpan { side: layout.side, entry_s: layout.entry.s, exit_s: layout.exit.s });
+    }
+    let samples = &lane.spline.samples;
+    // A free-form lane whose end does not touch the main road cannot be enclosed without walling off the path to
+    // it; it keeps the legacy walls.
+    let touches_main = |p: Vec2| {
+        let proj = track.spline.project_point(p);
+        proj.distance_to_spline - lane.road_width * 0.5 <= proj.track_width * 0.5 + 0.5
+    };
+    if !touches_main(samples[0].point) || !touches_main(samples[samples.len() - 1].point) {
+        return None;
+    }
+    let mid = &samples[samples.len() / 2];
+    let proj = track.spline.project_point(mid.point);
+    let side = if (mid.point - proj.closest_point).dot(proj.normal) >= 0.0 { Side::Left } else { Side::Right };
+    Some(PerimeterSpan {
+        side,
+        entry_s: track.spline.project_point(samples[0].point).progress_distance,
+        exit_s: track.spline.project_point(samples[samples.len() - 1].point).progress_distance,
+    })
+}
+
+pub fn perimeter_chain(track: &Track, lane: &PitLane, span: &PerimeterSpan) -> (Vec<Vec2>, BarrierType) {
+    let main = &track.spline;
+    if main.samples.len() < 2 || lane.spline.samples.len() < 2 {
+        return (Vec::new(), BarrierType::Concrete);
+    }
+    let sigma = span.side.sign();
+    // Distance from the main edge to the main wall on the pit side, and its type, measured just outside the cut.
+    let wall_at = |s: f32| -> Option<(f32, BarrierType)> {
+        let sample = main.sample_at_distance(s);
+        let out = sample.normal * sigma;
+        let edge = sample.point + out * (sample.width * 0.5);
+        track
+            .geometry
+            .all_walls()
+            .filter_map(|w| w.segment.intersect_ray(edge, out, MAIN_WALL_SEARCH).map(|(d, _)| (d, w.barrier_type)))
+            .min_by(|a, b| a.0.total_cmp(&b.0))
+    };
+    let cut_in = span.entry_s - PERIMETER_OVERLAP;
+    let cut_out = span.exit_s + PERIMETER_OVERLAP;
+    let (wall_in, wall_out) = (wall_at(cut_in - 2.0), wall_at(cut_out + 2.0));
+    let fallback = track.effective_barrier_offset();
+    let gap_in = wall_in.map_or(fallback, |w| w.0);
+    let gap_out = wall_out.map_or(fallback, |w| w.0);
+    let barrier = wall_in.or(wall_out).map_or(BarrierType::Concrete, |w| w.1);
+    // Each end starts on the cut end of the main wall when there is one, so the two join.
+    let wall_end_near = |s: f32, gap: f32| {
+        let sample = main.sample_at_distance(s);
+        let target = sample.point + sample.normal * (sigma * (sample.width * 0.5 + gap));
+        track
+            .geometry
+            .all_walls()
+            .flat_map(|w| [w.segment.start, w.segment.end])
+            .filter(|p| p.distance(target) < 3.0)
+            .min_by(|a, b| a.distance(target).total_cmp(&b.distance(target)))
+            .unwrap_or(target)
+    };
+
+    let mut pts = vec![wall_end_near(cut_in, gap_in)];
+    let total = lane.spline.total_length;
+    let mut d = 0.0;
+    while d <= total {
+        let sample = lane.spline.sample_at_distance(d);
+        let outer = sample.point + sample.normal * (sigma * (lane.road_width * 0.5 + OUTER_WALL_OFFSET));
+        let proj = main.project_point(outer);
+        let lat = (outer - proj.closest_point).dot(proj.normal) * sigma;
+        let gap = if d < total * 0.5 { gap_in } else { gap_out };
+        let floor = proj.track_width * 0.5 + gap;
+        pts.push(if lat >= floor { outer } else { proj.closest_point + proj.normal * (sigma * floor) });
+        d += PERIMETER_STEP;
+    }
+    pts.push(wall_end_near(cut_out, gap_out));
+    pts.dedup_by(|a, b| a.distance(*b) < 0.1);
+    (pts, barrier)
+}
+
+/// True for points on the pit side of the main track, within `MAIN_WALL_SEARCH` of its edge, from
+/// `PERIMETER_OVERLAP` before the entry anchor to `PERIMETER_OVERLAP` after the exit anchor: the stretch where the
+/// perimeter replaces the main wall.
+pub fn in_main_wall_span(track: &Track, span: &PerimeterSpan, p: Vec2) -> bool {
+    let main = &track.spline;
+    let proj = main.project_point(p);
+    let lat = (p - proj.closest_point).dot(proj.normal) * span.side.sign();
+    if lat <= proj.track_width * 0.5 || lat > proj.track_width * 0.5 + MAIN_WALL_SEARCH {
+        return false;
+    }
+    let s = proj.progress_distance;
+    let (from, to) = (span.entry_s - PERIMETER_OVERLAP, span.exit_s + PERIMETER_OVERLAP);
+    if main.closed {
+        let total = main.total_length;
+        (s - from).rem_euclid(total) < (to - from).rem_euclid(total)
+    } else {
+        s > from && s < to
+    }
+}
+
+/// Pieces of `seg` that lie outside the perimeter span (0.5 m resolution).
+pub fn wall_pieces_outside_span(track: &Track, span: &PerimeterSpan, seg: &LineSegment) -> Vec<LineSegment> {
+    let len = seg.start.distance(seg.end);
+    let n = ((len / 0.5).ceil() as usize).max(1);
+    let at = |i: usize| seg.start.lerp(seg.end, i as f32 / n as f32);
+    let mut pieces = Vec::new();
+    let mut run_start: Option<usize> = None;
+    for i in 0..=n {
+        let keep = !in_main_wall_span(track, span, at(i));
+        match (keep, run_start) {
+            (true, None) => run_start = Some(i),
+            (false, Some(start)) => {
+                if i - 1 > start {
+                    pieces.push(LineSegment::new(at(start), at(i - 1)));
+                }
+                run_start = None;
+            }
+            _ => {}
+        }
+    }
+    if let Some(start) = run_start {
+        if n > start {
+            pieces.push(LineSegment::new(at(start), at(n)));
+        }
+    }
+    pieces
+}
+
+/// Holes in a pit lane's enclosure (spec 101). Rays at 60-120 degrees to the lane or track direction, every 2 m:
+/// - from the lane centre to either side: must hit a wall or reach the main road within 40 m (near the ends the
+///   main road can bend round to the pit side);
+/// - from the main edge on the pit side, 30 m before the entry to 30 m after the exit, outward: must hit a wall.
+///
+/// Returns one line per open ray.
+pub fn enclosure_holes(track: &Track) -> Vec<String> {
+    const STEP: f32 = 2.0;
+    const RANGE: f32 = 40.0;
+    const MARGIN: f32 = 30.0;
+    let Some(lane) = &track.pit_lane else { return Vec::new() };
+    let main = &track.spline;
+    if lane.spline.samples.len() < 2 || main.samples.len() < 2 {
+        return Vec::new();
+    }
+    let walls: Vec<&LineSegment> = track.geometry.all_walls().map(|w| &w.segment).collect();
+    let wall_hit = |o: Vec2, dir: Vec2| walls.iter().filter_map(|w| w.intersect_ray(o, dir, RANGE).map(|(t, _)| t)).fold(f32::INFINITY, f32::min);
+    let reaches_main = |o: Vec2, dir: Vec2, until: f32| {
+        let mut t = 0.5;
+        while t < until.min(RANGE) {
+            let proj = main.project_point(o + dir * t);
+            if proj.distance_to_spline <= proj.track_width * 0.5 {
+                return true;
+            }
+            t += 0.5;
+        }
+        false
+    };
+    let mid = &lane.spline.samples[lane.spline.samples.len() / 2];
+    let mid_proj = main.project_point(mid.point);
+    let sigma = if (mid.point - mid_proj.closest_point).dot(mid_proj.normal) >= 0.0 { 1.0 } else { -1.0 };
+    let angles = || (6..=12).map(|k| (10.0 * k as f32).to_radians());
+    let mut holes = Vec::new();
+
+    let mut d = 0.0;
+    while d <= lane.spline.total_length {
+        let sample = lane.spline.sample_at_distance(d);
+        for a in angles() {
+            let outer = sample.tangent * a.cos() + sample.normal * (sigma * a.sin());
+            let hit = wall_hit(sample.point, outer);
+            if hit > RANGE && !reaches_main(sample.point, outer, hit) {
+                holes.push(format!("lane s {d:.0} m: outer ray at {:.0} deg is open", a.to_degrees()));
+            }
+            let inner = sample.tangent * a.cos() - sample.normal * (sigma * a.sin());
+            let hit = wall_hit(sample.point, inner);
+            if hit > RANGE && !reaches_main(sample.point, inner, hit) {
+                holes.push(format!("lane s {d:.0} m: inner ray at {:.0} deg is open", a.to_degrees()));
+            }
+        }
+        d += STEP;
+    }
+
+    let entry = main.project_point(lane.spline.samples[0].point).progress_distance;
+    let exit = main.project_point(lane.spline.samples[lane.spline.samples.len() - 1].point).progress_distance;
+    let (entry, exit) = perimeter_span(track).map_or((entry, exit), |sp| (sp.entry_s, sp.exit_s));
+    let total = main.total_length;
+    let length = if main.closed { (exit - entry).rem_euclid(total) } else { exit - entry };
+    let mut k = -MARGIN;
+    while k <= length + MARGIN {
+        let sample = main.sample_at_distance(entry + k);
+        let edge = sample.point + sample.normal * (sigma * sample.width * 0.5);
+        for a in angles() {
+            let dir = sample.tangent * a.cos() + sample.normal * (sigma * a.sin());
+            if wall_hit(edge, dir) > RANGE {
+                holes.push(format!("main s {:.0} m: outward ray at {:.0} deg is open", (entry + k).rem_euclid(total.max(1.0)), a.to_degrees()));
+            }
+        }
+        k += STEP;
+    }
+    holes
+}
+
+/// True when `p` lies more than 0.5 m past either end of the lane, along the end tangent. Projection onto an open
+/// spline clamps to its end there, so its lateral offset says nothing about the lane: a main wall 10 m before a lane
+/// that starts beside it looked like a wall inside the lane.
+pub fn beyond_lane_end(lane: &PitLane, p: Vec2) -> bool {
+    let samples = &lane.spline.samples;
+    let (Some(first), Some(last)) = (samples.first(), samples.last()) else { return false };
+    (p - first.point).dot(first.tangent) < -0.5 || (p - last.point).dot(last.tangent) > 0.5
 }
