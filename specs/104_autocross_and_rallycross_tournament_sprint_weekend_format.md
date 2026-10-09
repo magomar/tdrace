@@ -137,34 +137,34 @@ final_laps = 6
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: 32-Driver Tournament Field Initialization**
-  - [ ] **Given** an Autocross or Rallycross championship configured with `weekend_format = "tournament_sprint"`
-  - [ ] **When** Round 1 begins
-  - [ ] **Then** a 32-driver roster (Player + 31 AI drivers) should be assembled
-  - [ ] **And** drivers should be partitioned into 4 Qualifying Heats of 8 cars each
+  - [x] **Given** an Autocross or Rallycross championship configured with `weekend_format = "tournament_sprint"`
+  - [x] **When** Round 1 begins
+  - [x] **Then** a 32-driver roster (Player + 31 AI drivers) should be assembled
+  - [x] **And** drivers should be partitioned into 4 Qualifying Heats of 8 cars each
 
 - **Scenario: Qualifying Heat Execution and Semifinal Seeding**
-  - [ ] **Given** Stage 1 (Qualifying Heats) commences
-  - [ ] **When** all 4 heats conclude 4-lap sprint races
-  - [ ] **Then** the top 4 drivers from each of the 4 heats (16 drivers total) should advance to the Semifinals
-  - [ ] **And** drivers should receive seeds for Semifinal 1 and Semifinal 2 based on elapsed heat finish times
+  - [x] **Given** Stage 1 (Qualifying Heats) commences
+  - [x] **When** all 4 heats conclude 4-lap sprint races
+  - [x] **Then** the top 4 drivers from each of the 4 heats (16 drivers total) should advance to the Semifinals
+  - [x] **And** drivers should receive seeds for Semifinal 1 and Semifinal 2 based on elapsed heat finish times
 
 - **Scenario: Semifinal to Grand Final Progression (Top 4 Advance)**
-  - [ ] **Given** the 16 advancing drivers split into Semifinal 1 (8 cars) and Semifinal 2 (8 cars)
-  - [ ] **When** Stage 2 concludes 5-lap sprint races
-  - [ ] **Then** the top 4 drivers from Semifinal 1 and the top 4 drivers from Semifinal 2 (8 drivers total) should advance to the **Grand Final**
-  - [ ] **And** drivers finishing 5th through 8th in either semifinal should advance to the **Consolation B-Final**
+  - [x] **Given** the 16 advancing drivers split into Semifinal 1 (8 cars) and Semifinal 2 (8 cars)
+  - [x] **When** Stage 2 concludes 5-lap sprint races
+  - [x] **Then** the top 4 drivers from Semifinal 1 and the top 4 drivers from Semifinal 2 (8 drivers total) should advance to the **Grand Final**
+  - [x] **And** drivers finishing 5th through 8th in either semifinal should advance to the **Consolation B-Final**
 
 - **Scenario: Continuous Player Racing (Option A Guarantee)**
-  - [ ] **Given** the player finishes in position 5, 6, 7, or 8 in their Stage 1 Heat or Stage 2 Semifinal
-  - [ ] **When** subsequent stages load
-  - [ ] **Then** the player should be assigned to an active Consolation race (Consolation Semi or B-Final)
-  - [ ] **And** the player should race all 3 stages of the weekend without encountering an elimination screen or spectate-only lock
+  - [x] **Given** the player finishes in position 5, 6, 7, or 8 in their Stage 1 Heat or Stage 2 Semifinal
+  - [x] **When** subsequent stages load
+  - [x] **Then** the player should be assigned to an active Consolation race (Consolation Semi or B-Final)
+  - [x] **And** the player should race all 3 stages of the weekend without encountering an elimination screen or spectate-only lock
 
 - **Scenario: Championship Points Allocation Across 32 Drivers**
-  - [ ] **Given** Stage 3 concludes with the completion of the Grand Final and B-Final
-  - [ ] **When** round results are tabulated
-  - [ ] **Then** all 32 drivers should receive designated championship points according to their final finishing rank (1st through 32nd)
-  - [ ] **And** the player profile and standings table should update atomically
+  - [x] **Given** Stage 3 concludes with the completion of the Grand Final and B-Final
+  - [x] **When** round results are tabulated
+  - [x] **Then** all 32 drivers should receive designated championship points according to their final finishing rank (1st through 32nd)
+  - [x] **And** the player profile and standings table should update atomically
 
 ---
 
