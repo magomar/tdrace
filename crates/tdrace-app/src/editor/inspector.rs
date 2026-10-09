@@ -6,6 +6,8 @@ use std::collections::HashSet;
 use cabinet::ui::FieldDropdown;
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::geometry::{BarrierType, JumpRamp, ObstacleShape, SurfaceLayer, SurfaceShape};
+use tdrace_core::track::launch_chute::PAD_WIDTH_RANGE;
+use tdrace_core::track::PackedGridPattern;
 use tdrace_core::CarCategory;
 
 use super::state::{EditorState, Selection};
@@ -222,6 +224,12 @@ pub const WALL_TYPES: [BarrierType; 3] = [BarrierType::Concrete, BarrierType::St
 pub const WALL_TYPE_LABELS: [&str; 3] = ["Concrete", "Steel", "Tyres"];
 pub const LAYER_LABELS: [&str; 2] = ["Back", "Front"];
 pub const BRANCH_LABELS: [&str; 2] = ["2 branches", "3 branches"];
+/// Launch chute pad grids and surfaces, in the order of the inspector's segmented controls (spec 103).
+pub const CHUTE_PATTERNS: [PackedGridPattern; 3] =
+    [PackedGridPattern::AutocrossFiveThree, PackedGridPattern::RallycrossThreeTwoThree, PackedGridPattern::UniformFourAcross];
+pub const CHUTE_PATTERN_LABELS: [&str; 3] = ["AX 5-3", "RX 3-2-3", "4 x 3"];
+pub const CHUTE_SURFACES: [SurfaceType; 2] = [SurfaceType::Concrete, SurfaceType::Asphalt];
+pub const CHUTE_SURFACE_LABELS: [&str; 2] = ["Concrete", "Asphalt"];
 pub const CATEGORY_LABELS: [&str; 6] = ["GT", "Stock Car", "Rallycross", "Kart", "Off-Road", "Autocross"];
 
 /// Banking preset chips, in degrees.
@@ -297,6 +305,9 @@ pub enum Prop {
     OffTrack,
     Category,
     GridSlots,
+    ChutePadWidth,
+    ChutePattern,
+    ChuteSurface,
 }
 
 impl Prop {
@@ -314,6 +325,8 @@ pub enum Action {
     FitHeight,
     AutoCheckpoints,
     RebuildGeometry,
+    InsertLaunchChute,
+    RemoveLaunchChute,
     Duplicate,
     Delete,
     /// Show this kind's controls for a mixed-kind selection (HC-3 option B).
@@ -836,6 +849,7 @@ fn build_track(state: &EditorState, tools: &ToolSettings) -> InspectorModel {
                 Row::Segmented { prop: Prop::ToolBranches, label: "Branches", labels: &BRANCH_LABELS, value: Common::Same(tools.split_branch_count.clamp(2, 3) - 2) },
             ]));
         }
+        EditorToolType::LaunchChute => sections.push(chute_section(state, tools, "tool.chute", "LAUNCH CHUTE")),
         EditorToolType::JumpRamp => {
             let preview = JumpRamp::new(
                 0,
@@ -870,18 +884,58 @@ fn build_track(state: &EditorState, tools: &ToolSettings) -> InspectorModel {
     let grid = state.grid_count();
     let off_track = off_track_surfaces().iter().position(|&s| s == state.track.default_surface);
     let grid_chips = GRID_PRESETS.iter().map(|&n| Chip { label: n.to_string(), edit: Edit::Set(Prop::GridSlots, n as f32), active: grid == n }).collect();
-    sections.push(Section::new("circuit", "CIRCUIT", vec![
+    // A launch chute holds the grid: its slots are the chute's, not a count to set.
+    let grid_rows = if state.track.launch_chute().is_some() {
+        vec![Row::Info(format!("Grid: {grid} slots on the launch chute"))]
+    } else {
+        vec![stepper(Prop::GridSlots, "Grid", Common::Same(grid as f32), grid as f32, GRID_SLOTS_RANGE, 1.0, " slots"), Row::Chips { label: "Presets", chips: grid_chips }]
+    };
+    if state.track.launch_chute().is_some() && tools.active_tool != EditorToolType::LaunchChute {
+        sections.push(chute_section(state, tools, "circuit.chute", "LAUNCH CHUTE"));
+    }
+    let mut circuit_rows = vec![
         Row::Dropdown { prop: Prop::OffTrack, label: "Off-track", options: Options::OffTrack, value: off_track.map_or(Common::Mixed, Common::Same) },
         Row::Dropdown { prop: Prop::Category, label: "Category", options: Options::Category, value: CarCategory::ALL.iter().position(|&c| c == state.track.car_category).map_or(Common::Mixed, Common::Same) },
-        stepper(Prop::GridSlots, "Grid", Common::Same(grid as f32), grid as f32, GRID_SLOTS_RANGE, 1.0, " slots"),
-        Row::Chips { label: "Presets", chips: grid_chips },
-        Row::Buttons(vec![
+    ];
+    circuit_rows.extend(grid_rows);
+    circuit_rows.push(Row::Buttons(vec![
             Button { label: "Auto checkpoints".to_string(), edit: Edit::Do(Action::AutoCheckpoints), highlight: false },
             Button { label: "Rebuild".to_string(), edit: Edit::Do(Action::RebuildGeometry), highlight: false },
-        ]),
-    ]));
+        ]));
+    sections.push(Section::new("circuit", "CIRCUIT", circuit_rows));
 
     InspectorModel { title: "Circuit".to_string(), count: 0, subtitle: Some(tools.active_tool.title()), sections, footer: None }
+}
+
+/// The launch chute controls (spec 103): pad width, grid pattern and surface of the circuit's chute, or of the next
+/// one the stamp tool places. A chute that is on the circuit shows its own values; any edit builds it again.
+fn chute_section(state: &EditorState, tools: &ToolSettings, id: &'static str, title: &'static str) -> Section {
+    let placed = state.track.launch_chute_spec();
+    let (width, pattern, surface) = placed.map_or((tools.chute_pad_width, tools.chute_pattern, tools.chute_surface), |s| (s.pad_width, s.pattern, s.surface));
+    let mut rows = Vec::new();
+    match (&placed, &tools.chute_status) {
+        (_, Some(status)) => rows.push(Row::Info(status.clone())),
+        (None, None) => rows.push(Row::Info("Click a waypoint before the finish line.".to_string())),
+        (Some(_), None) => {}
+    }
+    rows.push(stepper(Prop::ChutePadWidth, "Pad width", Common::Same(width), width, PAD_WIDTH_RANGE, 0.5, "m"));
+    rows.push(Row::Segmented {
+        prop: Prop::ChutePattern,
+        label: "Grid",
+        labels: &CHUTE_PATTERN_LABELS,
+        value: CHUTE_PATTERNS.iter().position(|&p| p == pattern).map_or(Common::Mixed, Common::Same),
+    });
+    rows.push(Row::Segmented {
+        prop: Prop::ChuteSurface,
+        label: "Surface",
+        labels: &CHUTE_SURFACE_LABELS,
+        value: CHUTE_SURFACES.iter().position(|&s| s == surface).map_or(Common::Mixed, Common::Same),
+    });
+    rows.push(Row::Buttons(match placed {
+        Some(_) => vec![Button { label: "Remove chute".to_string(), edit: Edit::Do(Action::RemoveLaunchChute), highlight: false }],
+        None => vec![Button { label: "+ Insert launch chute".to_string(), edit: Edit::Do(Action::InsertLaunchChute), highlight: true }],
+    }));
+    Section::new(id, title, rows)
 }
 
 /// Delay before a hovered inspector control shows its tooltip, in seconds.
@@ -1108,6 +1162,28 @@ fn apply_track_edit(state: &mut EditorState, tools: &mut ToolSettings, edit: Edi
             if n != state.grid_count() {
                 state.set_grid_count(n);
             }
+        }
+        Edit::Set(Prop::ChutePadWidth, _) | Edit::Step(Prop::ChutePadWidth, _) | Edit::Pick(Prop::ChutePattern | Prop::ChuteSurface, _) => {
+            // Start from the chute that is on the circuit, so editing one control keeps the others.
+            if let Some(placed) = state.track.launch_chute_spec() {
+                tools.chute_pad_width = placed.pad_width;
+                tools.chute_pattern = placed.pattern;
+                tools.chute_surface = placed.surface;
+            }
+            match edit {
+                Edit::Set(_, v) => tools.chute_pad_width = clamp_to(v, PAD_WIDTH_RANGE),
+                Edit::Step(_, d) => tools.chute_pad_width = clamp_to(tools.chute_pad_width + d, PAD_WIDTH_RANGE),
+                Edit::Pick(Prop::ChutePattern, k) => tools.chute_pattern = CHUTE_PATTERNS.get(k).copied().unwrap_or(tools.chute_pattern),
+                Edit::Pick(_, k) => tools.chute_surface = CHUTE_SURFACES.get(k).copied().unwrap_or(tools.chute_surface),
+                _ => {}
+            }
+            tools.restamp_launch_chute(state);
+        }
+        Edit::Do(Action::InsertLaunchChute) => {
+            tools.auto_insert_launch_chute(state);
+        }
+        Edit::Do(Action::RemoveLaunchChute) => {
+            tools.remove_launch_chute(state);
         }
         Edit::Do(Action::AutoCheckpoints) => {
             state.record_undo();

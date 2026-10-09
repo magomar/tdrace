@@ -761,6 +761,27 @@ impl PackedGridPattern {
     pub fn slot_count(self) -> usize {
         self.row_counts().iter().sum()
     }
+
+    /// The pattern a grid made by [`generate_packed_launch_grid`] has, read from its rows (slots listed front row
+    /// first): a slot less than 2 m ahead of or behind the first slot of the row, along that slot's heading, is in
+    /// the row. Rows on a bend face different ways, so each row is measured on its own heading.
+    pub fn from_slots(slots: &[SpawnPose]) -> Option<Self> {
+        let mut counts: Vec<usize> = Vec::new();
+        let mut row_first: Option<&SpawnPose> = None;
+        for slot in slots {
+            let in_row = row_first.is_some_and(|first| {
+                (slot.position - first.position).dot(Vec2::new(first.angle.cos(), first.angle.sin())).abs() <= 2.0
+            });
+            if !in_row {
+                row_first = Some(slot);
+                counts.push(0);
+            }
+            *counts.last_mut()? += 1;
+        }
+        [Self::AutocrossFiveThree, Self::RallycrossThreeTwoThree, Self::UniformFourAcross]
+            .into_iter()
+            .find(|p| p.row_counts() == counts.as_slice())
+    }
 }
 
 /// Gap kept between the outermost car centres and the pad edge by [`generate_packed_launch_grid`] (m).

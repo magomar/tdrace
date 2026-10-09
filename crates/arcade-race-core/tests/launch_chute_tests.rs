@@ -50,6 +50,7 @@ fn test_packed_grid_patterns_have_their_row_counts() {
             *counts.last_mut().unwrap() += 1;
         }
         assert_eq!(counts, rows, "{pattern:?}");
+        assert_eq!(PackedGridPattern::from_slots(&slots), Some(pattern), "the pattern is read back from the slots");
         // Facing +Y.
         assert!(slots.iter().all(|s| (s.angle - std::f32::consts::FRAC_PI_2).abs() < 1e-5));
     }

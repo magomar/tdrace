@@ -15,7 +15,8 @@ use wheelbase::SurfaceType;
 
 use super::geometry::{BarrierType, Obstacle, ObstacleShape, SpawnPose, WallBarrier};
 use super::network::{
-    JunctionId, LaunchChuteConfig, MergeConfig, RoadJunction, RoadSegment, SegmentId, SocketId, SplineSocket,
+    JunctionId, JunctionKind, LaunchChuteConfig, MergeConfig, RoadJunction, RoadSegment, SegmentId, SocketId,
+    SplineSocket,
 };
 use super::presets::{generate_packed_launch_grid, PackedGridPattern};
 use super::spline::{SplineSample, TrackWaypoint};
@@ -129,6 +130,31 @@ impl Track {
         self.network.as_ref()?.launch_chute.as_ref()
     }
 
+    /// The spec this circuit's chute was stamped with, read back from its geometry: the merge waypoint, the side,
+    /// the pad width and surface, and the grid pattern. The pad length is not stored, so it is the default one.
+    /// `None` without a chute, or when the geometry no longer matches a stamp (the merge is not on a waypoint).
+    pub fn launch_chute_spec(&self) -> Option<LaunchChuteSpec> {
+        let net = self.network.as_ref()?;
+        let chute = net.launch_chute.as_ref()?;
+        let segment = net.get_segment(chute.segment_id)?;
+        let merge_at = match &net.get_junction(chute.merge_junction_id)?.kind {
+            JunctionKind::Merge { egress_socket, .. } => egress_socket.point,
+            _ => return None,
+        };
+        let merge_waypoint = self.spline.waypoints.iter().position(|w| w.point.distance(merge_at) < 0.5)?;
+        let rear = segment.samples.first()?.point;
+        let beside = self.spline.project_point(rear);
+        let side = if (rear - beside.closest_point).dot(beside.normal) > 0.0 { ChuteSide::Left } else { ChuteSide::Right };
+        Some(LaunchChuteSpec {
+            merge_waypoint,
+            side,
+            pad_width: chute.pad_width,
+            pattern: PackedGridPattern::from_slots(&chute.grid_slots)?,
+            surface: chute.surface,
+            ..LaunchChuteSpec::new(merge_waypoint, side)
+        })
+    }
+
     /// Stamps a launch chute on the circuit, or leaves the circuit unchanged and says why not.
     ///
     /// The chute merges at `spec.merge_waypoint`, which must lie [`MERGE_BEFORE_FINISH_RANGE`] metres before the
@@ -147,6 +173,13 @@ impl Track {
         }
         *self = stamped;
         Ok(())
+    }
+
+    /// Whether a chute could merge at waypoint `index`: it lies [`MERGE_BEFORE_FINISH_RANGE`] metres before the
+    /// start/finish line.
+    pub fn can_merge_launch_chute_at(&self, index: usize) -> bool {
+        merge_distance_to_finish(self, index)
+            .is_ok_and(|(_, to_finish)| (MERGE_BEFORE_FINISH_RANGE.0..=MERGE_BEFORE_FINISH_RANGE.1).contains(&to_finish))
     }
 
     /// Stamps a chute at the best waypoint for `template` (its `merge_waypoint` and `side` are ignored): the
