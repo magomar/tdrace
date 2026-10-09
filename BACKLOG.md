@@ -169,6 +169,24 @@ The `cabinet` crate (`crates/cabinet`) is now an opinionated, batteries-included
   3. *Full experience (months)*: elevation and banking in circuits and physics, shadows, possible engine change.
 - **Open questions**: Separate 3D client sharing the core crates, or an optional camera mode inside `tdrace-app`? Does banking require 3D physics, or can it be modelled as a lateral grip/load term in the existing 2.5D model?
 
+### 2.13 Jumps Anchored to the Track Spline (Parked Idea)
+- **Status**: Parked on 2026-10-09. Jumps stay as free `JumpRamp` boxes in `geometry.jump_ramps` for now.
+- **Today**: Each `JumpRamp` (`crates/arcade-race-core/src/track/geometry.rs`) is a free oriented box with its own position, direction, height and pitch angle. It does not read the spline. The car follows a separate `ramp_elevation` on the ramp, not the spline `elevation`. 49 official circuits use jumps (up to 10 on one circuit).
+- **Idea**: Make a jump part of the spline, the same way pit lanes (spec 101) and junctions (spec 102) became parametric blocks anchored to the spline. Two forms:
+  - *A. Jump as a spline feature*: the spline elevation profile rises, and a mark on the spline sets the takeoff lip. Physics reads takeoff and landing from the spline.
+  - *B. Jump kit block*: a block anchored by arc length, with lateral offset, length, height and angle. Direction and road width come from the spline. Bake compiles it into the existing `JumpRamp`, so the runtime does not change.
+- **Pros**:
+  - A jump cannot sit off the road or at a wrong angle to the road.
+  - A jump moves with the road when the spline is edited.
+  - A guard can reject a bad jump before bake, as the pit and junction kits do.
+  - Form A gives one height model for road and jump.
+- **Cons**:
+  - Arena circuits have no spline: `monster_colosseum`, `stunt_city_megastructure` and `mud_slough_arena` have 0 waypoints. They still need free jumps, so the free `JumpRamp` cannot be removed. That gives two ways to make a jump.
+  - Form A changes takeoff, landing and elevation physics. That is high risk across 49 circuits.
+  - Form B keeps jumps as a separate list in the data, so the gain is mostly in the editor and in bake guards.
+  - All official circuits with jumps on a spline need a migration and a re-bake.
+- **Revisit when**: jumps on spline circuits are often misplaced, or the editor needs jumps to follow spline edits. Form B is the lower-risk start.
+
 ---
 
 
