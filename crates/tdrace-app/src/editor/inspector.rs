@@ -6,7 +6,7 @@ use std::collections::HashSet;
 use cabinet::ui::FieldDropdown;
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::geometry::{BarrierType, JumpRamp, ObstacleShape, SurfaceLayer, SurfaceShape};
-use tdrace_core::track::pit_kit::{JunctionComponent, JunctionShape};
+use tdrace_core::track::junction_kit::{JunctionComponent, JunctionShape};
 use tdrace_core::track::launch_chute::PAD_WIDTH_RANGE;
 use tdrace_core::track::PackedGridPattern;
 use tdrace_core::CarCategory;

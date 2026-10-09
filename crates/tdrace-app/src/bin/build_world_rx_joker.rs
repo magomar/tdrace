@@ -7,17 +7,19 @@
 //! cargo run --bin build_world_rx_joker -- [tracks/rally] [assets/osm/rx_jokers.json]
 //! ```
 //! Where OSM maps the joker, the branch follows it (`JokerSource::Osm`); elsewhere it is synthetic.
+//!
+//! Spec 102: each circuit's old joker is fitted with a branch layout of two junction components (`rx_joker_fit`),
+//! which compiles into the network. A circuit that cannot be fitted keeps the legacy network already in its file,
+//! untouched. The run writes `docs/circuits/branch_junction_migration.md`.
+
+#[path = "rx_joker_fit/mod.rs"]
+mod rx_joker_fit;
 
 use std::collections::HashMap;
 use std::path::Path;
 use glam::Vec2;
 use serde::Deserialize;
-use tdrace_core::track::checkpoint::Checkpoint;
-use tdrace_core::track::geometry::{BarrierType, LineSegment};
-use tdrace_core::track::network::{
-    GoreConfig, JunctionId, MergeConfig, RoadJunction, RoadSegment, SegmentId, SocketId,
-    SplineSocket, TrackLayout, TrackNetwork,
-};
+use tdrace_core::track::network::{RoadSegment, SegmentId};
 use tdrace_core::track::spline::TrackWaypoint;
 use tdrace_core::track::Track;
 use tdrace_core::SurfaceType;
@@ -241,20 +243,13 @@ fn min_turn_radius(seg: &RoadSegment, main: &RoadSegment) -> f32 {
         .fold(f32::INFINITY, f32::min)
 }
 
-/// The main line cut at the joker's split and merge, and the joker between them.
+/// The old joker between the main waypoints where it splits and merges, as the old network builder cut it.
 struct JokerCut {
-    /// Start line to split (segment 0); its last waypoint is the split.
-    start: Vec<TrackWaypoint>,
-    /// Split to merge along the main line (segment 1).
-    main: Vec<TrackWaypoint>,
-    /// Split to merge along the joker (segment 2).
+    /// Main waypoint indices of the split and the merge.
+    split_idx: usize,
+    merge_idx: usize,
+    /// Split to merge along the joker; its first and last waypoints are the split and merge waypoints.
     joker: Vec<TrackWaypoint>,
-    /// Merge back to the start line (segment 3); its first waypoint is the merge.
-    finish: Vec<TrackWaypoint>,
-    t_split: Vec2,
-    t_merge: Vec2,
-    /// Joker road surface where it leaves and where it rejoins the main line.
-    joker_surfaces: (SurfaceType, SurfaceType),
 }
 
 fn synthetic_cut(
@@ -272,7 +267,6 @@ fn synthetic_cut(
 
     assert!(s_idx < m_idx && m_idx < wps.len());
 
-    let seg0_wps = wps[0..=s_idx].to_vec();
     let seg1_wps = wps[s_idx..=m_idx].to_vec();
 
     let seg1_prelim = RoadSegment::new(SegmentId(1), "Main Racing Line", seg1_wps.clone());
@@ -363,31 +357,7 @@ fn synthetic_cut(
         if other_radius > preferred_radius { other } else { preferred }
     };
 
-    let (t_split, t_merge) = (waypoint_tangent(wps, s_idx), waypoint_tangent(wps, m_idx));
-
-    let mut seg3_wps = wps[m_idx..].to_vec();
-    seg3_wps.push(wps[0].clone());
-
-    JokerCut {
-        start: seg0_wps,
-        main: seg1_wps,
-        joker: best_seg2_wps,
-        finish: seg3_wps,
-        t_split,
-        t_merge,
-        joker_surfaces: (surface, surface),
-    }
-}
-
-/// Direction of the main line at waypoint `i`.
-fn waypoint_tangent(wps: &[TrackWaypoint], i: usize) -> Vec2 {
-    if i > 0 && i + 1 < wps.len() {
-        (wps[i + 1].point - wps[i - 1].point).normalize_or_zero()
-    } else if i + 1 < wps.len() {
-        (wps[i + 1].point - wps[i].point).normalize_or_zero()
-    } else {
-        (wps[i].point - wps[i - 1].point).normalize_or_zero()
-    }
+    JokerCut { split_idx: s_idx, merge_idx: m_idx, joker: best_seg2_wps }
 }
 
 /// Fillet sharp vertices along mapped joker route to guarantee corner radii >= target_radius
@@ -565,20 +535,10 @@ fn osm_cut(cfg: &TrackJokerConfig, track: &Track, joker: &OsmJoker) -> JokerCut 
             .with_elevation(m_wp.elevation),
     );
 
-    let mut finish = wps[m_idx..].to_vec();
-    finish.push(wps[0].clone());
-    JokerCut {
-        start: wps[..=s_idx].to_vec(),
-        main: wps[s_idx..=m_idx].to_vec(),
-        joker: joker_wps,
-        finish,
-        t_split: waypoint_tangent(wps, s_idx),
-        t_merge: waypoint_tangent(wps, m_idx),
-        joker_surfaces: (points[0].2, points[points.len() - 1].2),
-    }
+    JokerCut { split_idx: s_idx, merge_idx: m_idx, joker: joker_wps }
 }
 
-fn build_track_joker(cfg: &TrackJokerConfig, tracks_base_dir: &Path, osm_jokers: &HashMap<String, OsmJoker>) {
+fn build_track_joker(cfg: &TrackJokerConfig, tracks_base_dir: &Path, osm_jokers: &HashMap<String, OsmJoker>) -> rx_joker_fit::Row {
     let path = tracks_base_dir.join(format!("{}.json", cfg.slug));
     println!("Processing {} ({:?})...", cfg.slug, path);
 
@@ -595,191 +555,16 @@ fn build_track_joker(cfg: &TrackJokerConfig, tracks_base_dir: &Path, osm_jokers:
             synthetic_cut(cfg, &track, split_idx, merge_idx, side, surface, bank_angle, target_delta)
         }
     };
-    let JokerCut { start: seg0_wps, main: seg1_wps, joker: seg2_wps, finish: seg3_wps, t_split, t_merge, joker_surfaces } = cut;
-    let split_wp = seg0_wps[seg0_wps.len() - 1].clone();
-    let merge_wp = seg3_wps[0].clone();
 
-    let split_sock_in = SplineSocket::new(split_wp.point, t_split, split_wp.width)
-        .with_surface(split_wp.surface.unwrap_or(SurfaceType::Asphalt))
-        .with_elevation(split_wp.elevation);
-
-    let split_sock_e0 = SplineSocket::new(split_wp.point, t_split, split_wp.width)
-        .with_surface(split_wp.surface.unwrap_or(SurfaceType::Asphalt))
-        .with_elevation(split_wp.elevation);
-
-    let split_sock_e1 = SplineSocket::new(split_wp.point, t_split, split_wp.width)
-        .with_surface(joker_surfaces.0)
-        .with_elevation(split_wp.elevation);
-
-    let split_junction = RoadJunction::split(
-        JunctionId(0),
-        format!("{} Joker Split", cfg.slug),
-        split_sock_in.clone(),
-        vec![split_sock_e0.clone(), split_sock_e1.clone()],
-        Some(GoreConfig::new(
-            split_wp.point,
-            12.0,
-            split_wp.width,
-            BarrierType::TireWall,
-        )),
-    );
-
-    let merge_sock_i0 = SplineSocket::new(merge_wp.point, t_merge, merge_wp.width)
-        .with_surface(merge_wp.surface.unwrap_or(SurfaceType::Asphalt))
-        .with_elevation(merge_wp.elevation);
-
-    let merge_sock_i1 = SplineSocket::new(merge_wp.point, t_merge, merge_wp.width)
-        .with_surface(joker_surfaces.1)
-        .with_elevation(merge_wp.elevation);
-
-    let merge_sock_eg = SplineSocket::new(merge_wp.point, t_merge, merge_wp.width)
-        .with_surface(merge_wp.surface.unwrap_or(SurfaceType::Asphalt))
-        .with_elevation(merge_wp.elevation);
-
-    let merge_junction = RoadJunction::merge(
-        JunctionId(1),
-        format!("{} Joker Merge", cfg.slug),
-        vec![merge_sock_i0.clone(), merge_sock_i1.clone()],
-        merge_sock_eg.clone(),
-        Some(MergeConfig {
-            convergence_point: merge_wp.point,
-            merge_angle: 14.0,
-            merge_length: 15.0,
-        }),
-    );
-
-    let mut seg0 = RoadSegment::new(SegmentId(0), "Start / Finish Straight", seg0_wps)
-        .with_junctions(Some(SocketId::new(JunctionId(1), 0)), Some(SocketId::new(JunctionId(0), 0)));
-    let mut seg1 = RoadSegment::new(SegmentId(1), "Main Racing Line", seg1_wps)
-        .with_junctions(Some(SocketId::new(JunctionId(0), 0)), Some(SocketId::new(JunctionId(1), 0)));
-    let mut seg2 = RoadSegment::new(SegmentId(2), cfg.name, seg2_wps)
-        .with_junctions(Some(SocketId::new(JunctionId(0), 1)), Some(SocketId::new(JunctionId(1), 1)));
-    let mut seg3 = RoadSegment::new(SegmentId(3), "Return Straight", seg3_wps)
-        .with_junctions(Some(SocketId::new(JunctionId(1), 0)), Some(SocketId::new(JunctionId(0), 0)));
-
-    seg0.recompute_samples(None, Some(&split_sock_in));
-    seg1.recompute_samples(Some(&split_sock_e0), Some(&merge_sock_i0));
-    seg2.recompute_samples(Some(&split_sock_e1), Some(&merge_sock_i1));
-    seg3.recompute_samples(Some(&merge_sock_eg), None);
-
-    let delta = seg2.length - seg1.length;
-    println!(
-        "  {} -> main: {:.1}m, joker: {:.1}m, delta: {:.1}m",
-        cfg.slug, seg1.length, seg2.length, delta
-    );
-    // A mapped joker keeps its real length; only the synthetic one is built to a length.
-    if let JokerSource::Synthetic { target_delta, .. } = cfg.source {
-        assert!(
-            (delta - target_delta).abs() <= 3.0,
-            "{}: delta {:.1}m, target {:.1}m",
-            cfg.slug,
-            delta,
-            target_delta
-        );
+    // Spec 102: build the branch from junction components when the old joker can be fitted. A circuit that cannot be
+    // fitted keeps the legacy network already in its file, untouched.
+    track.branch_layout = None;
+    let outcome = rx_joker_fit::convert(&mut track, cfg.slug, cfg.name, cut.split_idx, cut.merge_idx, &cut.joker);
+    if let rx_joker_fit::Outcome::Converted(fit) = &outcome {
+        println!("  {} -> converted: deviation {:.2} m, joker costs {:.2} s", cfg.slug, fit.deviation, fit.cost_s);
+        track.save_to_file(&path).unwrap_or_else(|e| panic!("failed to save {}: {:?}", cfg.slug, e));
     }
-
-    // Map existing checkpoints to segments
-    for cp in &mut track.checkpoints {
-        if cp.id == 0 {
-            cp.segment_id = Some(SegmentId(0));
-            continue;
-        }
-        let center = (cp.gate.start + cp.gate.end) * 0.5;
-        let p_seg0 = seg0.project_point(center);
-        let p_seg1 = seg1.project_point(center);
-        let p_seg3 = seg3.project_point(center);
-
-        let d0 = (p_seg0.closest_point - center).length();
-        let d1 = (p_seg1.closest_point - center).length();
-        let d3 = (p_seg3.closest_point - center).length();
-
-        // A checkpoint on the merge point (the end of seg1) belongs to seg3, which both layouts share. Comparing
-        // it with seg1 too tagged it seg0 and put it before the joker gate in the joker layout.
-        if d1 < d0 && d1 < d3 && p_seg1.progress_distance > 1.0 && p_seg1.progress_distance < seg1.length - 1.0 {
-            cp.segment_id = Some(SegmentId(1));
-        } else if d3 < d0 {
-            cp.segment_id = Some(SegmentId(3));
-        } else {
-            cp.segment_id = Some(SegmentId(0));
-        }
-    }
-
-    // Add Joker checkpoint on seg2
-    let joker_cp_id = track.checkpoints.len();
-    let mid_sample = seg2.sample_at_distance(seg2.length * 0.5);
-    let half_w = mid_sample.width * 0.5;
-    let joker_gate = LineSegment::new(
-        mid_sample.point - mid_sample.normal * half_w,
-        mid_sample.point + mid_sample.normal * half_w,
-    );
-    let joker_cp = Checkpoint::new(
-        joker_cp_id,
-        joker_gate,
-        mid_sample.tangent,
-        1,
-        false,
-    )
-    .with_segment(SegmentId(2))
-    .with_joker(true)
-    .with_elevation(mid_sample.elevation);
-    track.checkpoints.push(joker_cp);
-
-    let main_cp_ids: Vec<usize> = track
-        .checkpoints
-        .iter()
-        .filter(|cp| !cp.is_joker)
-        .map(|cp| cp.id)
-        .collect();
-
-    let mut joker_cp_ids: Vec<usize> = Vec::new();
-    for cp in &track.checkpoints {
-        if cp.segment_id == Some(SegmentId(0)) {
-            joker_cp_ids.push(cp.id);
-        }
-    }
-    joker_cp_ids.push(joker_cp_id);
-    for cp in &track.checkpoints {
-        if cp.segment_id == Some(SegmentId(3)) {
-            joker_cp_ids.push(cp.id);
-        }
-    }
-
-    let mut layout_main = TrackLayout::new(
-        "main",
-        "Standard Circuit",
-        vec![SegmentId(0), SegmentId(1), SegmentId(3)],
-        SegmentId(0),
-    )
-    .with_checkpoints(main_cp_ids);
-    layout_main.total_lap_length = seg0.length + seg1.length + seg3.length;
-
-    let mut layout_joker = TrackLayout::new(
-        "joker",
-        "Joker Lap Detour",
-        vec![SegmentId(0), SegmentId(2), SegmentId(3)],
-        SegmentId(0),
-    )
-    .with_checkpoints(joker_cp_ids);
-    layout_joker.total_lap_length = seg0.length + seg2.length + seg3.length;
-
-    let network = TrackNetwork {
-        junctions: vec![split_junction, merge_junction],
-        segments: vec![seg0, seg1, seg2, seg3],
-        layouts: vec![layout_main, layout_joker],
-        default_layout_id: "main".to_string(),
-        ..Default::default()
-    };
-
-    network
-        .validate()
-        .unwrap_or_else(|e| panic!("{} TrackNetwork validation failed: {:?}", cfg.slug, e));
-
-    track.network = Some(network);
-    track.trim_walls_for_network();
-    track
-        .save_to_file(&path)
-        .unwrap_or_else(|e| panic!("failed to save {}: {:?}", cfg.slug, e));
-    println!("  Successfully baked {} with TrackNetwork.", cfg.slug);
+    rx_joker_fit::Row { circuit: cfg.slug.to_string(), outcome }
 }
 
 fn main() {
@@ -801,9 +586,8 @@ fn main() {
         tracks_dir
     );
 
-    for cfg in WORLD_RX_CONFIGS {
-        build_track_joker(cfg, &tracks_dir, &osm_jokers);
-    }
+    let rows: Vec<rx_joker_fit::Row> = WORLD_RX_CONFIGS.iter().map(|cfg| build_track_joker(cfg, &tracks_dir, &osm_jokers)).collect();
+    rx_joker_fit::write_report(Path::new("docs/circuits/branch_junction_migration.md"), &rows);
 
     println!("All 20 World Rallycross tracks successfully baked with authentic TrackNetworks!");
 }

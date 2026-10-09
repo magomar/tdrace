@@ -1,7 +1,9 @@
 pub mod bake;
+pub mod branch_kit;
 pub mod checkpoint;
 pub mod curve;
 pub mod geometry;
+pub mod junction_kit;
 pub mod launch_chute;
 pub mod network;
 pub mod pit_kit;
@@ -144,6 +146,10 @@ pub struct Track {
     /// Source of truth for `pit_lane` when present (spec 101); the bake compiles it into `pit_lane`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub pit_lane_layout: Option<pit_kit::PitLaneLayout>,
+    /// Source of truth for a road branch (the Rallycross joker) when present (spec 102); the bake compiles it into
+    /// `network`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub branch_layout: Option<branch_kit::BranchLayout>,
     /// Precomputed runtime barrier offset in meters to avoid expensive wall geometry sweeps.
     #[serde(default, skip_serializing)]
     pub cached_barrier_offset: Option<f32>,
@@ -198,6 +204,7 @@ impl Default for Track {
             pit_lane: None,
             pit_lane_junctions: None,
             pit_lane_layout: None,
+            branch_layout: None,
             cached_barrier_offset: None,
             default_laps: 3,
             car_category: CarCategory::Gt,
@@ -905,10 +912,24 @@ impl Track {
     /// or cross within the drivable road ribbon of any segment in `self.network`. Against the
     /// branch segments (not on the default layout) the check ignores elevation: on Spa RX the
     /// joker data sits ~4 m below the main road it overlaps, and a main wall blocked the joker.
+    ///
+    /// Spec 102: a compiled branch (`branch_layout`) replaces the main wall beside it by arc length
+    /// (`branch_kit::trim_main_walls`), so no wall is searched against the branch. The main road still clears the
+    /// walls of other parts of the lap that lie on it.
     pub fn trim_walls_for_network(&mut self) {
+        let compiled = self.branch_layout.is_some();
+        if compiled && self.network.is_some() {
+            branch_kit::trim_main_walls(self);
+        }
         let Some(net) = &self.network else { return; };
         if net.segments.is_empty() { return; }
-        let branches = branch_segments(net);
+        let branches = if compiled { Vec::new() } else { branch_segments(net) };
+        let main_roads: Vec<&RoadSegment> = if compiled {
+            let default = net.active_or_default_layout(None).map(|l| l.segment_sequence.as_slice()).unwrap_or(&[]);
+            net.segments.iter().filter(|s| default.contains(&s.id)).collect()
+        } else {
+            net.segments.iter().collect()
+        };
 
         // A launch chute funnels into the circuit between its own outer wall and the main wall on its side: the main
         // wall goes where it would stand in the corridor between the chute's edge and the chute's wall, so that the
@@ -919,7 +940,7 @@ impl Track {
             .unwrap_or_else(|| self.effective_barrier_offset())
             - 0.5;
         let keep = |w: &WallBarrier| {
-            wall_clear_of_roads(&net.segments, w, 2.0, -0.2)
+            wall_clear_of_roads(main_roads.iter().copied(), w, 2.0, -0.2)
                 && wall_clear_of_roads(branches.iter().copied(), w, f32::INFINITY, -0.2)
                 && chute.map_or(true, |c| wall_clear_of_ribbon(c, w, corridor))
         };
@@ -957,7 +978,21 @@ impl Track {
     /// at a different height, and a wall there would block the main road.
     pub fn generate_network_walls(&mut self) {
         self.geometry.network_walls.clear();
-        let Some(net) = &self.network else { return; };
+        // Spec 102: a compiled branch builds its own walls from its junction components. Only a launch chute (spec 103)
+        // is still searched below.
+        let compiled = self.branch_layout.is_some();
+        let mut walls = Vec::new();
+        if let Some(compiled_branch) = self.branch_layout.as_ref().and_then(|l| l.compile(self).ok()) {
+            walls = branch_kit::build_walls(self, &compiled_branch);
+        }
+        let Some(net) = &self.network else {
+            self.geometry.network_walls = walls;
+            return;
+        };
+        if compiled && net.launch_chute.is_none() {
+            self.geometry.network_walls = walls;
+            return;
+        }
         let barrier_type = self.dominant_barrier_type().unwrap_or(BarrierType::TireWall);
 
         // The main spline is smoothed across the segment seams, so check its ribbon (with curbs)
@@ -979,13 +1014,13 @@ impl Track {
             off_road && !doubles_main_wall && !main_walls().any(|m| m.segment.intersect_segment(&w.segment).is_some())
         };
 
-        let mut walls = Vec::new();
         // The launch chute's side walls and rear wall are kept in its config (spec 103).
         let chute_id = net.launch_chute.as_ref().map(|c| c.segment_id);
         let mut chute_walls = Vec::new();
         let mut rear_corners = [None, None];
         for seg in branch_segments(net) {
             if seg.samples.len() < 2 { continue; }
+            if compiled && Some(seg.id) != chute_id { continue; }
             let first_wall = walls.len();
             // The track-wide offset comes from the first main samples, which can sit on a wide
             // run-off (Riga RX: 14.9 m). Measure the main walls around this branch instead.
@@ -1070,7 +1105,7 @@ impl Track {
     /// Median gap between the main road edge and the nearest main wall, over the main spline
     /// samples inside the box `min`..`max`. Gaps of 10 m or more are not walls of that road and
     /// are skipped. `None` when no sample qualifies.
-    fn local_barrier_offset(&self, min: Vec2, max: Vec2) -> Option<f32> {
+    pub(crate) fn local_barrier_offset(&self, min: Vec2, max: Vec2) -> Option<f32> {
         let mut dists = Vec::new();
         for s in self.spline.samples.iter().filter(|s| s.point.cmpge(min).all() && s.point.cmple(max).all()) {
             let hw = s.width * 0.5;
@@ -1099,7 +1134,7 @@ impl Track {
 const WALL_TRIM_STEP_M: f32 = 1.0;
 
 /// Network segments that are not on the default layout (the Rallycross joker branch).
-fn branch_segments(net: &TrackNetwork) -> Vec<&RoadSegment> {
+pub(crate) fn branch_segments(net: &TrackNetwork) -> Vec<&RoadSegment> {
     let Some(main) = net.active_or_default_layout(None) else { return Vec::new(); };
     net.segments.iter().filter(|s| !main.segment_sequence.contains(&s.id)).collect()
 }
@@ -1146,7 +1181,7 @@ fn wall_clear_of_ribbon(segment: &RoadSegment, wall: &WallBarrier, margin: f32) 
 /// True when `wall` stays more than `edge_margin` outside the drivable ribbon of every segment
 /// in `segments` (a negative margin lets it sit that far inside) and does not cross any segment
 /// centerline. Roads more than `max_elevation_gap` above or below the wall are ignored.
-fn wall_clear_of_roads<'a>(
+pub(crate) fn wall_clear_of_roads<'a>(
     segments: impl IntoIterator<Item = &'a RoadSegment>,
     wall: &WallBarrier,
     max_elevation_gap: f32,
@@ -1374,7 +1409,7 @@ impl Track {
         // Spec 101: the pit perimeter replaces the pit-side main wall between the pit lane anchors, so cut it there
         // by arc length; a search-based trim drops whole merged wall pieces and leaves holes.
         if let Some(span) = pit_kit::perimeter_span(self) {
-            let side_walls = if span.side == pit_kit::Side::Left { &self.geometry.inner_walls } else { &self.geometry.outer_walls };
+            let side_walls = if span.side == junction_kit::Side::Left { &self.geometry.inner_walls } else { &self.geometry.outer_walls };
             let cut: Vec<WallBarrier> = side_walls
                 .iter()
                 .flat_map(|w| {
@@ -1383,7 +1418,7 @@ impl Track {
                         .map(move |segment| WallBarrier { segment, ..w.clone() })
                 })
                 .collect();
-            if span.side == pit_kit::Side::Left {
+            if span.side == junction_kit::Side::Left {
                 self.geometry.inner_walls = cut;
             } else {
                 self.geometry.outer_walls = cut;

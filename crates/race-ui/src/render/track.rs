@@ -489,6 +489,19 @@ pub fn render_backdrop_ground_pass(track: &Track, view_bounds: Option<(Vec2, Vec
     draw_textured_quad(p0, uv0, p1, uv1, p2, uv2, p3, uv3, tex.as_ref(), WHITE);
 }
 
+/// Draws the run-off, curbs and surface of every network branch segment (the Rallycross joker).
+fn render_branch_ribbons(track: &Track, cache: &TrackRenderCache, elevated: bool, view_bounds: Option<(Vec2, Vec2)>) {
+    if track.network.is_none() {
+        return;
+    }
+    for branch in &cache.branch_segments {
+        let b_bnd = (&branch.boundaries.0[..], &branch.boundaries.1[..], &branch.boundaries.2[..], &branch.boundaries.3[..]);
+        render_runoff_pass_filtered(&branch.spline, elevated, view_bounds, Some(b_bnd));
+        render_curbs_pass_filtered(&branch.spline, elevated, view_bounds, Some(&branch.suppressions), Some(b_bnd));
+        render_surface_pass_filtered(&branch.spline, elevated, view_bounds, Some(&branch.suppressions), Some(b_bnd));
+    }
+}
+
 /// Renders ground track ribbon and surface features with camera viewport culling.
 pub fn render_ground_track_culled(track: &Track, view_bounds: Option<(Vec2, Vec2)>) {
     ensure_surface_registry();
@@ -514,17 +527,17 @@ pub fn render_ground_track_culled(track: &Track, view_bounds: Option<(Vec2, Vec2
         let main_bnd = (&cache.main_boundaries.0[..], &cache.main_boundaries.1[..], &cache.main_boundaries.2[..], &cache.main_boundaries.3[..]);
         let main_supp = if track.network.is_some() { Some(&cache.main_suppressions[..]) } else { None };
 
+        // Spec 102: a compiled branch is drawn before the main road, which then lies on top where the two ribbons
+        // overlap in a junction throat.
+        let compiled = track.branch_layout.is_some();
+        if compiled {
+            render_branch_ribbons(track, cache, false, view_bounds);
+        }
         render_runoff_pass_filtered(&track.spline, false, view_bounds, Some(main_bnd));
         render_curbs_pass_filtered(&track.spline, false, view_bounds, main_supp, Some(main_bnd));
         render_surface_pass_filtered(&track.spline, false, view_bounds, main_supp, Some(main_bnd));
-
-        if track.network.is_some() {
-            for branch in &cache.branch_segments {
-                let b_bnd = (&branch.boundaries.0[..], &branch.boundaries.1[..], &branch.boundaries.2[..], &branch.boundaries.3[..]);
-                render_runoff_pass_filtered(&branch.spline, false, view_bounds, Some(b_bnd));
-                render_curbs_pass_filtered(&branch.spline, false, view_bounds, Some(&branch.suppressions), Some(b_bnd));
-                render_surface_pass_filtered(&branch.spline, false, view_bounds, Some(&branch.suppressions), Some(b_bnd));
-            }
+        if !compiled {
+            render_branch_ribbons(track, cache, false, view_bounds);
         }
     });
 
@@ -580,17 +593,15 @@ pub fn render_elevated_track_culled(track: &Track, view_bounds: Option<(Vec2, Ve
             let main_bnd = (&cache.main_boundaries.0[..], &cache.main_boundaries.1[..], &cache.main_boundaries.2[..], &cache.main_boundaries.3[..]);
             let main_supp = if track.network.is_some() { Some(&cache.main_suppressions[..]) } else { None };
 
+            let compiled = track.branch_layout.is_some();
+            if compiled {
+                render_branch_ribbons(track, cache, true, view_bounds);
+            }
             render_runoff_pass_filtered(&track.spline, true, view_bounds, Some(main_bnd));
             render_curbs_pass_filtered(&track.spline, true, view_bounds, main_supp, Some(main_bnd));
             render_surface_pass_filtered(&track.spline, true, view_bounds, main_supp, Some(main_bnd));
-
-            if track.network.is_some() {
-                for branch in &cache.branch_segments {
-                    let b_bnd = (&branch.boundaries.0[..], &branch.boundaries.1[..], &branch.boundaries.2[..], &branch.boundaries.3[..]);
-                    render_runoff_pass_filtered(&branch.spline, true, view_bounds, Some(b_bnd));
-                    render_curbs_pass_filtered(&branch.spline, true, view_bounds, Some(&branch.suppressions), Some(b_bnd));
-                    render_surface_pass_filtered(&branch.spline, true, view_bounds, Some(&branch.suppressions), Some(b_bnd));
-                }
+            if !compiled {
+                render_branch_ribbons(track, cache, true, view_bounds);
             }
         });
 
@@ -2026,6 +2037,11 @@ pub fn render_network_junctions_pass(
     _view_bounds: Option<(Vec2, Vec2)>,
 ) {
     let Some(ref net) = track.network else { return; };
+    // Spec 102: the junctions of a compiled branch have a real throat, gore and collidable nose. They are drawn as
+    // normal road ribbons and walls, with no paved wedge, painted gore or chevrons.
+    if track.branch_layout.is_some() {
+        return;
+    }
 
     for junction in &net.junctions {
         match &junction.kind {
