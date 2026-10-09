@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use wheelbase::SurfaceType;
 use crate::track::geometry::{
-    point_in_quad_2d, point_in_triangle_2d, BarrierType, LineSegment, WallBarrier,
+    point_in_quad_2d, point_in_triangle_2d, BarrierType, LineSegment, SpawnPose, WallBarrier,
 };
 use crate::track::spline::{
     catmull_rom_1d, catmull_rom_2d, SplineProjection, SplineSample, TrackSpline, TrackWaypoint,
@@ -851,7 +851,11 @@ pub struct TrackLayout {
     pub id: String,
     /// Human-readable title displayed in menus.
     pub display_name: String,
-    /// Ordered sequence of segment IDs traversed in this layout.
+    /// Optional run-once lead-in segment traversed exclusively at the start of the race (a launch chute).
+    /// It is not part of `segment_sequence`: it leads into the loop through a merge junction, and laps 2+ never use it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub entry_segment: Option<SegmentId>,
+    /// Cyclic loop segments traversed during full racing laps.
     pub segment_sequence: Vec<SegmentId>,
     /// Whether this route forms a closed loop back to the starting segment.
     #[serde(default = "default_true")]
@@ -880,12 +884,18 @@ impl TrackLayout {
         Self {
             id: id.into(),
             display_name: display_name.into(),
+            entry_segment: None,
             segment_sequence,
             is_closed: true,
             total_lap_length: 0.0,
             start_finish_segment,
             checkpoint_ids: Vec::new(),
         }
+    }
+
+    pub const fn with_entry_segment(mut self, entry_segment: Option<SegmentId>) -> Self {
+        self.entry_segment = entry_segment;
+        self
     }
 
     pub const fn with_closed(mut self, is_closed: bool) -> Self {
@@ -916,6 +926,27 @@ impl TrackLayout {
     }
 }
 
+/// A walled launch chute (spec 103): an open-ended spur that ends in a rigid rear barrier, holds the packed
+/// starting grid, and merges into the circuit through a `Merge` junction. It is the lead-in of the layouts'
+/// `entry_segment`: cars drive it once at the race start and never on laps 2+.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct LaunchChuteConfig {
+    /// Identifier of the spur road segment forming the launch pad.
+    pub segment_id: SegmentId,
+    /// Upstream terminal boundary with protective end wall.
+    pub terminal_barrier: WallBarrier,
+    /// Side barrier walls flanking the launch chute.
+    pub side_barriers: Vec<WallBarrier>,
+    /// Junction ID where the launch chute converges into the primary circuit.
+    pub merge_junction_id: JunctionId,
+    /// Packed starting grid spawn configurations.
+    pub grid_slots: Vec<SpawnPose>,
+    /// Launch pad surface (typically Concrete or Asphalt for launch traction).
+    pub surface: SurfaceType,
+    /// Width of the launch pad (meters), accommodating multi-car rows (typically 14.0-18.0 m).
+    pub pad_width: f32,
+}
+
 /// Complete track network representing multi-branch circuits and layouts.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct TrackNetwork {
@@ -923,6 +954,9 @@ pub struct TrackNetwork {
     pub segments: Vec<RoadSegment>,
     pub layouts: Vec<TrackLayout>,
     pub default_layout_id: String,
+    /// Launch chute that leads the layouts' `entry_segment` into the loop, if the circuit has one (spec 103).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub launch_chute: Option<LaunchChuteConfig>,
     #[serde(default, skip_serializing)]
     pub cached_composite_splines: Vec<(String, TrackSpline)>,
 }
@@ -935,6 +969,7 @@ impl TrackNetwork {
             segments: Vec::new(),
             layouts: Vec::new(),
             default_layout_id: "main".to_string(),
+            launch_chute: None,
             cached_composite_splines: Vec::new(),
         }
     }
@@ -956,6 +991,7 @@ impl TrackNetwork {
         let layout = TrackLayout {
             id: "main".to_string(),
             display_name: "Default Course".to_string(),
+            entry_segment: None,
             segment_sequence: vec![seg_id],
             is_closed: spline.closed,
             total_lap_length: spline.total_length,
@@ -968,6 +1004,7 @@ impl TrackNetwork {
             segments: vec![segment],
             layouts: vec![layout],
             default_layout_id: "main".to_string(),
+            launch_chute: None,
             cached_composite_splines: Vec::new(),
         };
         net.recompute_composite_splines();
@@ -1059,6 +1096,35 @@ impl TrackNetwork {
         Some(TrackSpline::new(combined_waypoints, layout.is_closed))
     }
 
+    /// The loop segment that follows a layout's `entry_segment`: the one in `segment_sequence` whose entry
+    /// sits on the junction the entry segment ends in. `None` when the layout has no entry segment.
+    pub fn entry_continuation_segment(&self, layout: &TrackLayout) -> Option<SegmentId> {
+        let junction = self.get_segment(layout.entry_segment?)?.exit_junction?.junction_id;
+        layout.segment_sequence.iter().copied().find(|&sid| {
+            self.get_segment(sid).and_then(|s| s.entry_junction).is_some_and(|e| e.junction_id == junction)
+        })
+    }
+
+    /// Synthesizes the open route of the first lap for a layout with an `entry_segment`: the entry segment, then
+    /// the loop from the segment it merges into round to the merge point. Cars that start in the launch chute
+    /// follow this route until they have merged, then the closed composite spline of the layout.
+    pub fn build_entry_spline_for_layout(&self, layout_id: &str) -> Option<TrackSpline> {
+        let layout = self.get_layout(layout_id)?;
+        let entry_id = layout.entry_segment?;
+        let start = layout.segment_sequence.iter().position(|&sid| Some(sid) == self.entry_continuation_segment(layout))?;
+        let route = std::iter::once(entry_id)
+            .chain(layout.segment_sequence[start..].iter().copied())
+            .chain(layout.segment_sequence[..start].iter().copied());
+
+        let mut waypoints: Vec<TrackWaypoint> = Vec::new();
+        for seg_id in route {
+            let seg = self.get_segment(seg_id)?;
+            let skip = usize::from(waypoints.last().zip(seg.waypoints.first()).is_some_and(|(a, b)| (a.point - b.point).length() < 0.1));
+            waypoints.extend(seg.waypoints[skip.min(seg.waypoints.len())..].iter().cloned());
+        }
+        (waypoints.len() >= 3).then(|| TrackSpline::new(waypoints, false))
+    }
+
     /// Validates graph consistency, socket alignments, and layout sequences.
     pub fn validate(&self) -> Result<(), Vec<String>> {
         let mut errors = Vec::new();
@@ -1095,6 +1161,25 @@ impl TrackNetwork {
                         layout.id, seg_id
                     ));
                 }
+            }
+
+            if let Some(entry) = layout.entry_segment {
+                if self.get_segment(entry).is_none() {
+                    errors.push(format!("Layout '{}' has non-existent entry SegmentId {:?}", layout.id, entry));
+                } else if layout.segment_sequence.contains(&entry) {
+                    errors.push(format!("Layout '{}' lists its entry segment {:?} in the cyclic sequence", layout.id, entry));
+                } else if self.entry_continuation_segment(layout).is_none() {
+                    errors.push(format!("Layout '{}': entry segment {:?} does not lead into the loop", layout.id, entry));
+                }
+            }
+        }
+
+        if let Some(chute) = &self.launch_chute {
+            if self.get_segment(chute.segment_id).is_none() {
+                errors.push(format!("Launch chute references non-existent SegmentId {:?}", chute.segment_id));
+            }
+            if self.get_junction(chute.merge_junction_id).is_none() {
+                errors.push(format!("Launch chute references non-existent JunctionId {:?}", chute.merge_junction_id));
             }
         }
 

@@ -165,6 +165,7 @@ pub fn is_mouse_over_editor_ui(
             | EditorToolType::WhoopSection
             | EditorToolType::StuntRamp
             | EditorToolType::RoadSplit
+            | EditorToolType::LaunchChute
     );
     let tool_bottom = if has_sub {
         let sub_h = scaler.s(180.0);
@@ -367,7 +368,7 @@ pub fn render_editor_ui(
     scaler.draw_glass_card(scaler.s(12.0), tool_y, tool_w, tool_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.2);
 
     fonts.draw_ui_bold(
-        "TOOLS [1-0,-]",
+        "TOOLS [1-0,-,L]",
         scaler.s(22.0),
         tool_y + scaler.s(16.0),
         scaler.font_s(13.0),
@@ -386,6 +387,7 @@ pub fn render_editor_ui(
         (EditorToolType::ArenaFloor, "[9] Arena Floor"),
         (EditorToolType::WhoopSection, "[0] Whoops Moguls"),
         (EditorToolType::StuntRamp, "[-] Stunt Mega Ramp"),
+        (EditorToolType::LaunchChute, "[L] Launch Chute"),
     ];
 
     let mut item_y = tool_y + scaler.s(26.0);
@@ -440,6 +442,25 @@ pub fn render_editor_ui(
             fonts.draw_ui_regular("Right-Click: Split", scaler.s(22.0), curr_sub_y + scaler.s(12.0), scaler.font_s(10.0), Palette::UI_TEXT_MUTED);
             curr_sub_y += scaler.s(14.0);
             fonts.draw_ui_regular("Click Socket: Extend", scaler.s(22.0), curr_sub_y + scaler.s(12.0), scaler.font_s(10.0), Palette::UI_TEXT_MUTED);
+        }
+    }
+
+    // 2b'. Launch Chute Active Sub-Palette (spec 103): the insert button and what the last insertion did
+    if tools.active_tool == EditorToolType::LaunchChute {
+        let sub_h = scaler.s(150.0);
+        let sub_y = tool_y + tool_h + scaler.s(8.0);
+        scaler.draw_glass_card(scaler.s(12.0), sub_y, tool_w, sub_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.2);
+        fonts.draw_ui_bold("LAUNCH CHUTE", scaler.s(22.0), sub_y + scaler.s(16.0), scaler.font_s(11.5), Palette::NEON_CYAN);
+
+        let mut curr_sub_y = sub_y + scaler.s(26.0);
+        if draw_ui_btn(fonts, &scaler, scaler.s(18.0), curr_sub_y, tool_w - scaler.s(12.0), scaler.s(26.0), "[ + INSERT LAUNCH CHUTE ]", Palette::UI_CARD_BG, Palette::NEON_GREEN, mouse_pos, bg_mouse_clicked) {
+            tools.auto_insert_launch_chute(state);
+        }
+        curr_sub_y += scaler.s(32.0);
+        let hint = tools.chute_status.clone().unwrap_or_else(|| "Or click a waypoint before the start/finish line.".to_string());
+        for line in wrap_words(&hint, 24).into_iter().take(4) {
+            fonts.draw_ui_regular(&line, scaler.s(22.0), curr_sub_y + scaler.s(12.0), scaler.font_s(10.0), Palette::UI_TEXT_MUTED);
+            curr_sub_y += scaler.s(14.0);
         }
     }
 
@@ -3245,4 +3266,19 @@ fn render_inspector_model(
     for edit in edits {
         apply_edit(state, tools, edit);
     }
+}
+
+/// Breaks `text` into lines of at most `width` characters at word boundaries.
+fn wrap_words(text: &str, width: usize) -> Vec<String> {
+    let mut lines: Vec<String> = Vec::new();
+    for word in text.split_whitespace() {
+        match lines.last_mut() {
+            Some(line) if line.len() + 1 + word.len() <= width => {
+                line.push(' ');
+                line.push_str(word);
+            }
+            _ => lines.push(word.to_string()),
+        }
+    }
+    lines
 }

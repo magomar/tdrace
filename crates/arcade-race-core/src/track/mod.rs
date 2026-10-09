@@ -4,6 +4,7 @@ pub mod checkpoint;
 pub mod curve;
 pub mod geometry;
 pub mod junction_kit;
+pub mod launch_chute;
 pub mod network;
 pub mod pit_kit;
 pub mod presets;
@@ -17,9 +18,10 @@ pub use curve::{
     CurveApproachStatus, CurveDirection, TrackCurve,
 };
 pub use network::{
-    compute_split_width_envelope, GoreConfig, JunctionId, JunctionKind, MergeConfig,
+    compute_split_width_envelope, GoreConfig, JunctionId, JunctionKind, LaunchChuteConfig, MergeConfig,
     RoadJunction, RoadSegment, SegmentId, SocketId, SplineSocket, TrackLayout, TrackNetwork,
 };
+pub use launch_chute::{ChuteSide, LaunchChuteError, LaunchChuteSpec};
 pub use geometry::{
     point_in_polygon, point_in_quad_2d, point_in_triangle_2d, BarrierType, JumpRamp,
     JumpRampCarExt, LineSegment, Obstacle, ObstacleShape, PitBox, PitLane, PitLaneChevron,
@@ -30,7 +32,7 @@ pub use scenery::{
     Building, BuildingStyle, Grandstand, GrandstandStyle, Rock, RockType, Tree, TreeType,
 };
 pub use presets::{
-    classic_template, create_prototypical_track, generate_arena_grid, generate_checkpoints, generate_grid_positions, generate_grid_positions_at_distance, generate_horizontal_eight_waypoints, generate_oval_waypoints, generate_walls_from_spline, generate_walls_from_spline_raw, gt_template, kart_template, merge_collinear_walls, rally_template, RaceDirection, TrackShape,
+    classic_template, create_prototypical_track, generate_arena_grid, generate_checkpoints, generate_grid_positions, generate_grid_positions_at_distance, generate_horizontal_eight_waypoints, generate_oval_waypoints, generate_walls_from_spline, generate_packed_launch_grid, generate_walls_from_spline_raw, gt_template, kart_template, merge_collinear_walls, rally_template, PackedGridPattern, RaceDirection, TrackShape,
 };
 pub use spline::{SplineProjection, SplineSample, TrackSpline, TrackWaypoint};
 pub use validation::{validate_track, TrackValidationError, ValidationSeverity};
@@ -929,9 +931,18 @@ impl Track {
             net.segments.iter().collect()
         };
 
+        // A launch chute funnels into the circuit between its own outer wall and the main wall on its side: the main
+        // wall goes where it would stand in the corridor between the chute's edge and the chute's wall, so that the
+        // two walls meet where the chute joins the road instead of leaving a wedge of main wall in the corridor.
+        let chute = net.launch_chute.as_ref().and_then(|c| net.get_segment(c.segment_id));
+        let corridor = chute
+            .and_then(|c| c.waypoints.first()?.left_wall_distance)
+            .unwrap_or_else(|| self.effective_barrier_offset())
+            - 0.5;
         let keep = |w: &WallBarrier| {
             wall_clear_of_roads(main_roads.iter().copied(), w, 2.0, -0.2)
                 && wall_clear_of_roads(branches.iter().copied(), w, f32::INFINITY, -0.2)
+                && chute.map_or(true, |c| wall_clear_of_ribbon(c, w, corridor))
         };
         // A wall that runs onto a road loses only the part on it. A merged straight wall used to go whole: on
         // rx_canyon_flyer that left an 11 m gap beside the joker split, and a bot slid out through it behind the
@@ -996,8 +1007,13 @@ impl Track {
         };
 
         let mut walls = Vec::new();
+        // The launch chute's side walls and rear wall are kept in its config (spec 103).
+        let chute_id = net.launch_chute.as_ref().map(|c| c.segment_id);
+        let mut chute_walls = Vec::new();
+        let mut rear_corners = [None, None];
         for seg in branch_segments(net) {
             if seg.samples.len() < 2 { continue; }
+            let first_wall = walls.len();
             // The track-wide offset comes from the first main samples, which can sit on a wide
             // run-off (Riga RX: 14.9 m). Measure the main walls around this branch instead.
             let (min, max) = seg.samples.iter().fold((Vec2::splat(f32::MAX), Vec2::splat(f32::MIN)), |(lo, hi), s| {
@@ -1016,7 +1032,8 @@ impl Track {
             // 0.5 m inside the main wall line, so a joker wall that runs just outside it is kept, and at most
             // 3.5 m: riga_rx's main walls stand ~10 m off on its run-off, and its side-by-side joker lost its walls.
             let main_gap = (barrier_offset - 0.5).clamp(0.3, 3.5);
-            for side in [left, right] {
+            for (side_idx, side) in [left, right].into_iter().enumerate() {
+                let walls_before_side = walls.len();
                 let kept: Vec<WallBarrier> = side
                     .into_iter()
                     .filter(|w| wall_clear_of_roads(&net.segments, w, f32::INFINITY, 0.3) && clear_of_main(w, main_gap))
@@ -1034,7 +1051,45 @@ impl Track {
                         walls.push(w);
                     }
                 }
+                if Some(seg.id) == chute_id {
+                    // The rear corner of this side: the end of its walls nearest the first sample's wall point.
+                    let rear = seg.samples[0];
+                    let sign = if side_idx == 0 { 1.0 } else { -1.0 };
+                    let gap = if side_idx == 0 { rear.left_wall_distance } else { rear.right_wall_distance };
+                    let expected = rear.point + rear.normal * (sign * (rear.width * 0.5 + gap.unwrap_or(barrier_offset)));
+                    rear_corners[side_idx] = walls[walls_before_side..]
+                        .iter()
+                        .flat_map(|w| [w.segment.start, w.segment.end])
+                        .min_by(|a, b| a.distance_squared(expected).total_cmp(&b.distance_squared(expected)))
+                        .filter(|p| p.distance(expected) < 1.0);
+                }
             }
+            if Some(seg.id) == chute_id {
+                chute_walls = walls[first_wall..].to_vec();
+            }
+        }
+        let mut rear_wall = None;
+        if let [Some(left), Some(right)] = rear_corners {
+            let wall = WallBarrier::new(left, right, barrier_type);
+            walls.push(wall);
+            rear_wall = Some(wall);
+        }
+        if chute_id.is_some() {
+            let main = self.geometry.inner_walls.iter().chain(&self.geometry.outer_walls);
+            let bridges: Vec<WallBarrier> = chute_funnel_bridges(&chute_walls, rear_wall.as_ref(), main.clone(), barrier_type)
+                .into_iter()
+                .filter(|b| !main.clone().chain(&walls).any(|w| w.segment.intersect_segment(&b.segment).is_some_and(|hit| {
+                    hit.distance(b.segment.start) > 0.05 && hit.distance(b.segment.end) > 0.05
+                })))
+                .collect();
+            walls.extend(&bridges);
+            chute_walls.extend(bridges);
+        }
+        if let Some(chute) = self.network.as_mut().and_then(|n| n.launch_chute.as_mut()) {
+            if let Some(wall) = rear_wall {
+                chute.terminal_barrier = wall;
+            }
+            chute.side_barriers = chute_walls;
         }
         self.geometry.network_walls = walls;
     }
@@ -1074,6 +1129,45 @@ const WALL_TRIM_STEP_M: f32 = 1.0;
 pub(crate) fn branch_segments(net: &TrackNetwork) -> Vec<&RoadSegment> {
     let Some(main) = net.active_or_default_layout(None) else { return Vec::new(); };
     net.segments.iter().filter(|s| !main.segment_sequence.contains(&s.id)).collect()
+}
+
+/// Wall pieces that close the funnel of a launch chute: each loose end of a chute wall (not the rear corners) is
+/// joined to the nearest loose end of a main wall within 10 m, where the chute's outer wall meets the main wall
+/// that was cut back at the merge. Without them a car can leave the funnel through the gap.
+fn chute_funnel_bridges<'a>(
+    chute: &[WallBarrier],
+    rear: Option<&WallBarrier>,
+    main: impl Iterator<Item = &'a WallBarrier> + Clone,
+    barrier_type: BarrierType,
+) -> Vec<WallBarrier> {
+    const JOINED_M: f32 = 0.05;
+    const REACH_M: f32 = 10.0;
+    let ends = |walls: &[&WallBarrier]| -> Vec<Vec2> { walls.iter().flat_map(|w| [w.segment.start, w.segment.end]).collect() };
+    let loose = |own: &[Vec2], all: &[Vec2]| -> Vec<Vec2> {
+        own.iter().copied().filter(|p| all.iter().filter(|q| q.distance(*p) < JOINED_M).count() == 1).collect()
+    };
+    let chute_refs: Vec<&WallBarrier> = chute.iter().chain(rear).collect();
+    let chute_ends = ends(&chute_refs);
+    let main_refs: Vec<&WallBarrier> = main.collect();
+    let main_ends = ends(&main_refs);
+    let main_loose = loose(&main_ends, &main_ends);
+    loose(&chute_ends, &chute_ends)
+        .into_iter()
+        .filter_map(|p| {
+            let q = main_loose.iter().copied().min_by(|a, b| a.distance(p).total_cmp(&b.distance(p)))?;
+            (p.distance(q) > JOINED_M && p.distance(q) < REACH_M).then(|| WallBarrier::new(p, q, barrier_type))
+        })
+        .collect()
+}
+
+/// True when no point of `wall` (ends and middle) lies within `margin` of the drivable ribbon of `segment`,
+/// measured as the distance to its centreline less half its width, so that it also holds beyond the segment ends.
+fn wall_clear_of_ribbon(segment: &RoadSegment, wall: &WallBarrier, margin: f32) -> bool {
+    let (p0, p1) = (wall.segment.start, wall.segment.end);
+    [p0, p1, (p0 + p1) * 0.5].into_iter().all(|pt| {
+        let proj = segment.project_point(pt);
+        proj.distance_to_spline >= proj.track_width * 0.5 + margin
+    })
 }
 
 /// True when `wall` stays more than `edge_margin` outside the drivable ribbon of every segment
@@ -1762,6 +1856,11 @@ impl Track {
     /// - Aligns slots behind finish line checkpoint or at arena centroid.
     /// Returns `true` if grid positions were successfully generated.
     pub fn auto_generate_grid(&mut self, num_slots: usize, spacing: f32, stagger: f32) -> bool {
+        // A launch chute holds the starting grid (spec 103): its packed slots stay as they are.
+        if let Some(chute) = self.launch_chute() {
+            self.grid_positions = chute.grid_slots.clone();
+            return true;
+        }
         let Some(finish_cp) = self.checkpoints.iter().find(|cp| cp.is_finish_line) else {
             return false;
         };

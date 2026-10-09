@@ -736,6 +736,88 @@ pub fn generate_grid_positions_at_distance(
     slots
 }
 
+/// Arrangement of cars on the packed grid of a launch chute (spec 103).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PackedGridPattern {
+    /// 5 cars on Row 1, 3 cars on Row 2 (Classic FIA Autocross 8-car sprint).
+    AutocrossFiveThree,
+    /// 3 cars on Row 1, 2 cars on Row 2, 3 cars on Row 3 (FIA Rallycross 3-2-3 staggered).
+    RallycrossThreeTwoThree,
+    /// 4 cars per row uniform grid, 3 rows (12 cars).
+    UniformFourAcross,
+}
+
+impl PackedGridPattern {
+    /// Cars on each row, front row first.
+    pub const fn row_counts(self) -> &'static [usize] {
+        match self {
+            Self::AutocrossFiveThree => &[5, 3],
+            Self::RallycrossThreeTwoThree => &[3, 2, 3],
+            Self::UniformFourAcross => &[4, 4, 4],
+        }
+    }
+
+    /// Number of cars the pattern holds.
+    pub fn slot_count(self) -> usize {
+        self.row_counts().iter().sum()
+    }
+
+    /// The pattern a grid made by [`generate_packed_launch_grid`] has, read from its rows (slots listed front row
+    /// first): a slot less than 2 m ahead of or behind the first slot of the row, along that slot's heading, is in
+    /// the row. Rows on a bend face different ways, so each row is measured on its own heading.
+    pub fn from_slots(slots: &[SpawnPose]) -> Option<Self> {
+        let mut counts: Vec<usize> = Vec::new();
+        let mut row_first: Option<&SpawnPose> = None;
+        for slot in slots {
+            let in_row = row_first.is_some_and(|first| {
+                (slot.position - first.position).dot(Vec2::new(first.angle.cos(), first.angle.sin())).abs() <= 2.0
+            });
+            if !in_row {
+                row_first = Some(slot);
+                counts.push(0);
+            }
+            *counts.last_mut()? += 1;
+        }
+        [Self::AutocrossFiveThree, Self::RallycrossThreeTwoThree, Self::UniformFourAcross]
+            .into_iter()
+            .find(|p| p.row_counts() == counts.as_slice())
+    }
+}
+
+/// Gap kept between the outermost car centres and the pad edge by [`generate_packed_launch_grid`] (m).
+const PACKED_GRID_EDGE_MARGIN: f32 = 1.5;
+
+/// Generates the starting grid of a launch chute.
+///
+/// `pad_center` is the middle of the front row and `pad_tangent` the direction the cars face. Row `k` stands
+/// `k * row_spacing` behind the front row. Every lane has the same width, the pad width less the edge margin
+/// over the largest row, and each row is centred on the pad, so a row with fewer cars than the widest one stays
+/// on the same lanes or, when the counts differ by an odd number, falls between them. Slots are numbered front
+/// row first, from the left of the pad (looking along the tangent) to the right.
+pub fn generate_packed_launch_grid(
+    pad_center: Vec2,
+    pad_tangent: Vec2,
+    pad_width: f32,
+    pattern: PackedGridPattern,
+    row_spacing: f32,
+) -> Vec<SpawnPose> {
+    let forward = pad_tangent.normalize_or_zero();
+    let left = Vec2::new(-forward.y, forward.x);
+    let angle = forward.y.atan2(forward.x);
+    let widest = pattern.row_counts().iter().copied().max().unwrap_or(1) as f32;
+    let lane = (pad_width - 2.0 * PACKED_GRID_EDGE_MARGIN) / widest;
+
+    let mut slots = Vec::with_capacity(pattern.slot_count());
+    for (row, &cars) in pattern.row_counts().iter().enumerate() {
+        for i in 0..cars {
+            let lateral = ((cars - 1) as f32 * 0.5 - i as f32) * lane;
+            let pos = pad_center - forward * (row as f32 * row_spacing) + left * lateral;
+            slots.push(SpawnPose::new(pos, angle, slots.len()));
+        }
+    }
+    slots
+}
+
 /// Generates an oval polygon hull centered at `center` with radii `rx` and `ry`.
 pub fn generate_oval_hull(center: Vec2, rx: f32, ry: f32, num_pts: usize) -> Vec<Vec2> {
     let mut pts = Vec::with_capacity(num_pts);

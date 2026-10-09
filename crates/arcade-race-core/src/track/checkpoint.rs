@@ -456,6 +456,9 @@ pub struct MultiRouteProgressTracker {
     pub active_layout_id: String,
     /// Current road segment ID the car is traversing.
     pub current_segment_id: SegmentId,
+    /// Segment the car starts the race on (the launch chute when the layout has one): `reset_state` returns to it.
+    #[serde(default)]
+    pub start_segment_id: Option<SegmentId>,
     /// Index of next expected checkpoint in the active layout's sequence.
     pub next_checkpoint_index: usize,
     /// Number of joker laps completed by this driver.
@@ -526,6 +529,7 @@ impl MultiRouteProgressTracker {
         Self {
             active_layout_id: active_layout_id.into(),
             current_segment_id: start_segment_id,
+            start_segment_id: Some(start_segment_id),
             next_checkpoint_index: 0,
             joker_laps_completed: 0,
             is_in_branch: false,
@@ -563,8 +567,9 @@ impl MultiRouteProgressTracker {
     ) -> Self {
         let layout = network.active_or_default_layout(initial_layout_id);
         let layout_id = layout.map_or("main", |l| l.id.as_str());
+        // A layout with a launch chute starts the race in it (spec 103).
         let start_seg = layout
-            .and_then(|l| l.segment_sequence.first().copied())
+            .and_then(|l| l.entry_segment.or_else(|| l.segment_sequence.first().copied()))
             .unwrap_or_else(|| network.segments.first().map_or(SegmentId(0), |s| s.id));
         Self::new(layout_id, start_seg, num_sectors)
     }
@@ -597,6 +602,9 @@ impl MultiRouteProgressTracker {
         self.is_joker_lap = false;
         self.is_in_branch = false;
         self.last_position = None;
+        if let Some(start) = self.start_segment_id {
+            self.current_segment_id = start;
+        }
     }
 
     /// Syncs the tracker's progress distance and last position to a spawn point on the track network.
@@ -844,6 +852,20 @@ impl MultiRouteProgressTracker {
                 let total = if total_len > 1.0 { total_len } else { layout.total_lap_length.max(1.0) };
                 self.layout_distance = (dist_before + self.segment_progress_distance).clamp(0.0, total);
                 self.layout_progress = (self.layout_distance / total).clamp(0.0, 0.999999);
+            } else if let Some(entry) = network.get_segment(self.current_segment_id).filter(|s| layout.entry_segment == Some(s.id)) {
+                // On the launch chute: the loop distance of the merge, less the chute still to drive, so that cars
+                // on the chute rank behind the cars that merged and by their place on the pad among themselves.
+                let loop_length = |sids: &[SegmentId]| -> f32 {
+                    sids.iter().filter_map(|&sid| network.get_segment(sid)).map(|s| s.length).sum()
+                };
+                let merge_at = network
+                    .entry_continuation_segment(layout)
+                    .and_then(|c| layout.segment_sequence.iter().position(|&sid| sid == c))
+                    .map_or(0.0, |i| loop_length(&layout.segment_sequence[..i]));
+                let total_len = loop_length(&layout.segment_sequence);
+                let total = if total_len > 1.0 { total_len } else { layout.total_lap_length.max(1.0) };
+                self.layout_distance = (merge_at - (entry.length - self.segment_progress_distance)).clamp(0.0, total);
+                self.layout_progress = (self.layout_distance / total).clamp(0.0, 0.999999);
             } else {
                 self.layout_distance = self.segment_progress_distance;
                 self.layout_progress = proj.normalized_progress;
@@ -853,17 +875,26 @@ impl MultiRouteProgressTracker {
             self.layout_progress = proj.normalized_progress;
         }
 
-        // 6. Branch status
+        // 6. Branch status (the launch chute is the start of the race, not a detour)
         if let Some(default_layout) = network.get_layout(&network.default_layout_id) {
-            self.is_in_branch = !default_layout.segment_sequence.contains(&self.current_segment_id);
+            self.is_in_branch = !default_layout.segment_sequence.contains(&self.current_segment_id)
+                && default_layout.entry_segment != Some(self.current_segment_id);
         } else {
             self.is_in_branch = false;
         }
 
-        // 7. Wrong-way detection via current segment tangent
+        // 7. Wrong-way detection via current segment tangent. The launch chute is one-way: a car on it that faces
+        //    against it, as one that turns back into it from the circuit would, is going the wrong way.
         let car_fwd = car.forward_vector();
         let alignment = car_fwd.dot(proj.tangent);
-        let facing_wrong_way = alignment < -0.25;
+        let against_chute = network
+            .get_layout(&self.active_layout_id)
+            .and_then(|l| l.entry_segment)
+            .and_then(|id| network.get_segment(id))
+            .filter(|chute| chute.id != self.current_segment_id && chute.samples.len() >= 2)
+            .map(|chute| chute.project_point(car_pos))
+            .is_some_and(|on_chute| on_chute.is_on_track && car_fwd.dot(on_chute.tangent) < -0.25);
+        let facing_wrong_way = alignment < -0.25 || against_chute;
         if facing_wrong_way {
             self.is_wrong_way = true;
             self.wrong_way_timer += dt;

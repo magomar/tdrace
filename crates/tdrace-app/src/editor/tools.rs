@@ -8,7 +8,7 @@ use tdrace_core::track::network::{GoreConfig, JunctionId, JunctionKind, MergeCon
 use tdrace_core::track::junction_kit::{JunctionComponent, JunctionShape, Side};
 use tdrace_core::track::pit_kit::{self, PitBoxRow, PitLaneLayout};
 use tdrace_core::track::spline::{TrackSpline, TrackWaypoint};
-use tdrace_core::track::{CarCategory, Track, TrackKind};
+use tdrace_core::track::{CarCategory, ChuteSide, LaunchChuteSpec, PackedGridPattern, Track, TrackKind};
 
 use super::camera::EditorCamera;
 use super::inspector::{
@@ -17,6 +17,23 @@ use super::inspector::{
 };
 use super::state::{EditorState, Selection};
 use crate::render::color::Palette;
+
+/// How near a click must be to a waypoint to pick it for a launch chute (m).
+const LAUNCH_CHUTE_PICK_M: f32 = 8.0;
+
+/// The waypoint of the circuit nearest `point`, within `radius`.
+fn nearest_waypoint(state: &EditorState, point: Vec2, radius: f32) -> Option<usize> {
+    state
+        .track
+        .spline
+        .waypoints
+        .iter()
+        .enumerate()
+        .map(|(i, w)| (i, w.point.distance(point)))
+        .filter(|(_, d)| *d <= radius)
+        .min_by(|a, b| a.1.total_cmp(&b.1))
+        .map(|(i, _)| i)
+}
 
 /// Available editor tools in the palette.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -32,10 +49,11 @@ pub enum EditorToolType {
     ArenaFloor,
     WhoopSection,
     StuntRamp,
+    LaunchChute,
 }
 
 impl EditorToolType {
-    pub const ALL: [Self; 11] = [
+    pub const ALL: [Self; 12] = [
         Self::Select,
         Self::RoadSpline,
         Self::RoadSplit,
@@ -47,6 +65,7 @@ impl EditorToolType {
         Self::ArenaFloor,
         Self::WhoopSection,
         Self::StuntRamp,
+        Self::LaunchChute,
     ];
 
     pub fn title(&self) -> &'static str {
@@ -62,6 +81,7 @@ impl EditorToolType {
             Self::ArenaFloor => "Arena Floor [9]",
             Self::WhoopSection => "Whoop Section [0]",
             Self::StuntRamp => "Stunt Mega Ramp [-]",
+            Self::LaunchChute => "Launch Chute [L]",
         }
     }
 
@@ -78,6 +98,7 @@ impl EditorToolType {
             Self::ArenaFloor => "9",
             Self::WhoopSection => "0",
             Self::StuntRamp => "-",
+            Self::LaunchChute => "L",
         }
     }
 }
@@ -145,6 +166,14 @@ pub struct ToolSettings {
     pub active_branch_socket: Option<SocketId>,
     pub split_divergence_angle: f32,
     pub split_branch_count: usize,
+
+    // Launch chute stamp settings (spec 103)
+    pub chute_pad_width: f32,
+    pub chute_pad_length: f32,
+    pub chute_pattern: PackedGridPattern,
+    pub chute_surface: SurfaceType,
+    /// What the last chute insertion did (the reason when it was refused), shown in the inspector.
+    pub chute_status: Option<String>,
 
     /// Set when this frame's Escape already cancelled an unfinished polygon, so the
     /// editor UI does not also treat it as "exit the editor".
@@ -217,6 +246,11 @@ impl Default for ToolSettings {
             active_branch_socket: None,
             split_divergence_angle: 30.0,
             split_branch_count: 2,
+            chute_pad_width: 16.0,
+            chute_pad_length: 40.0,
+            chute_pattern: PackedGridPattern::AutocrossFiveThree,
+            chute_surface: SurfaceType::Concrete,
+            chute_status: None,
             escape_consumed: false,
         }
     }
@@ -434,7 +468,7 @@ impl ToolSettings {
                     pit_box,
                 )
             }
-            EditorToolType::RoadSpline | EditorToolType::RoadSplit => {
+            EditorToolType::RoadSpline | EditorToolType::RoadSplit | EditorToolType::LaunchChute => {
                 let waypoints = (0..state.track.spline.waypoints.len()).collect();
                 Selection::from_multi(waypoints, vec![], vec![], vec![], vec![], vec![], false)
             }
@@ -1395,6 +1429,14 @@ impl ToolSettings {
             return;
         }
 
+        // In LaunchChute mode a click on a waypoint stamps the chute there
+        if self.active_tool == EditorToolType::LaunchChute && nearest_waypoint(state, mouse_world, LAUNCH_CHUTE_PICK_M).is_some() {
+            self.insert_launch_chute_at(state, mouse_world);
+            self.is_box_selecting = false;
+            self.is_dragging = false;
+            return;
+        }
+
         // In RoadSplit mode, check if clicking near any branch socket to activate it for extension
         if self.active_tool == EditorToolType::RoadSplit {
             let network = state.track.ensure_network();
@@ -1652,6 +1694,9 @@ impl ToolSettings {
             EditorToolType::RoadSplit => {
                 self.handle_road_split_placement(state, snapped_mouse);
             }
+            EditorToolType::LaunchChute => {
+                self.insert_launch_chute_at(state, mouse_world);
+            }
             EditorToolType::SurfaceZone => {
                 match self.active_surface_shape {
                     SurfaceShapeType::Square | SurfaceShapeType::Circle | SurfaceShapeType::Triangle => {
@@ -1748,6 +1793,90 @@ impl ToolSettings {
                 self.drag_current_world = snapped_mouse;
             }
         }
+    }
+
+    /// The chute the stamp tool builds: its settings, merging at `merge_waypoint` on `side`.
+    fn chute_spec(&self, merge_waypoint: usize, side: ChuteSide) -> LaunchChuteSpec {
+        LaunchChuteSpec {
+            pad_width: self.chute_pad_width,
+            pad_length: self.chute_pad_length,
+            pattern: self.chute_pattern,
+            surface: self.chute_surface,
+            ..LaunchChuteSpec::new(merge_waypoint, side)
+        }
+    }
+
+    /// Applies a chute edit to a copy of the circuit and, when it stood, makes it the circuit (one undo step).
+    /// The status line says what happened. An existing chute is replaced.
+    fn edit_launch_chute(&mut self, state: &mut EditorState, edit: impl FnOnce(&mut tdrace_core::track::Track) -> Result<String, String>) -> bool {
+        let mut candidate = state.track.clone();
+        if candidate.launch_chute().is_some() {
+            candidate.remove_launch_chute();
+        }
+        match edit(&mut candidate) {
+            Ok(done) => {
+                state.record_undo();
+                state.track = candidate;
+                state.deselect();
+                state.revalidate();
+                self.chute_status = Some(done);
+                true
+            }
+            Err(why) => {
+                self.chute_status = Some(why);
+                false
+            }
+        }
+    }
+
+    /// Stamps a launch chute that merges at the circuit waypoint nearest `mouse_world` (within
+    /// `LAUNCH_CHUTE_PICK_M`), on the side where it fits. Returns whether it was placed.
+    pub fn insert_launch_chute_at(&mut self, state: &mut EditorState, mouse_world: Vec2) -> bool {
+        let Some(waypoint) = nearest_waypoint(state, mouse_world, LAUNCH_CHUTE_PICK_M) else {
+            self.chute_status = Some("Click a waypoint of the circuit.".to_string());
+            return false;
+        };
+        let specs = [ChuteSide::Right, ChuteSide::Left].map(|side| self.chute_spec(waypoint, side));
+        self.edit_launch_chute(state, |track| {
+            let mut last = None;
+            for spec in specs {
+                match track.stamp_launch_chute(&spec) {
+                    Ok(()) => return Ok(format!("Launch chute placed at waypoint {}.", waypoint + 1)),
+                    Err(e) => last = Some(e.0),
+                }
+            }
+            Err(last.unwrap_or_default())
+        })
+    }
+
+    /// Stamps a launch chute at the waypoint that suits it best (the `[ + INSERT LAUNCH CHUTE ]` button).
+    pub fn auto_insert_launch_chute(&mut self, state: &mut EditorState) -> bool {
+        let template = self.chute_spec(0, ChuteSide::Right);
+        self.edit_launch_chute(state, |track| {
+            track.place_launch_chute(&template).map(|spec| format!("Launch chute placed at waypoint {}.", spec.merge_waypoint + 1)).map_err(|e| e.0)
+        })
+    }
+
+    /// Builds the circuit's chute again from the tool settings, where it merges now.
+    pub fn restamp_launch_chute(&mut self, state: &mut EditorState) -> bool {
+        let Some(placed) = state.track.launch_chute_spec() else { return false };
+        let spec = LaunchChuteSpec { pad_length: self.chute_pad_length, ..self.chute_spec(placed.merge_waypoint, placed.side) };
+        self.edit_launch_chute(state, |track| {
+            track.stamp_launch_chute(&spec).map(|()| "Launch chute updated.".to_string()).map_err(|e| e.0)
+        })
+    }
+
+    /// Removes the circuit's launch chute and puts the standard grid back.
+    pub fn remove_launch_chute(&mut self, state: &mut EditorState) -> bool {
+        if state.track.launch_chute().is_none() {
+            return false;
+        }
+        state.record_undo();
+        state.track.remove_launch_chute();
+        state.deselect();
+        state.revalidate();
+        self.chute_status = Some("Launch chute removed.".to_string());
+        true
     }
 
     /// Handles RoadSplit tool placement action:
@@ -3494,6 +3623,15 @@ pub fn render_editor_gizmos(state: &EditorState, tools: &ToolSettings, _camera: 
                 let p2 = hull[(i + 1) % hull.len()];
                 draw_line(p1.x, p1.y, p2.x, p2.y, 0.5, Palette::NEON_CYAN);
                 draw_circle(p1.x, p1.y, 0.8, Palette::NEON_GOLD);
+            }
+        }
+    }
+
+    // 12. Render the waypoints a launch chute can merge at
+    if tools.active_tool == EditorToolType::LaunchChute {
+        for (i, wp) in state.track.spline.waypoints.iter().enumerate() {
+            if state.track.can_merge_launch_chute_at(i) {
+                draw_circle_lines(wp.point.x, wp.point.y, 3.0, 0.5, Palette::NEON_GOLD);
             }
         }
     }

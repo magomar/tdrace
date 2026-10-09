@@ -2736,6 +2736,7 @@ mod tests {
             TrackLayout {
                 id: "main".into(),
                 display_name: "Main".into(),
+                entry_segment: None,
                 segment_sequence: vec![SegmentId(0), SegmentId(1)],
                 is_closed: true,
                 total_lap_length: 200.0,
@@ -2745,6 +2746,7 @@ mod tests {
             TrackLayout {
                 id: "joker".into(),
                 display_name: "Joker".into(),
+                entry_segment: None,
                 segment_sequence: vec![SegmentId(0), SegmentId(2)],
                 is_closed: true,
                 total_lap_length: 220.0,
