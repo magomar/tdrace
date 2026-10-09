@@ -498,6 +498,8 @@ const CAR_WALL_PUSH: f32 = 3.0;
 const OFF_ROUTE_MARGIN_M: f32 = 2.0;
 /// How far past the edge of a branch road a bot's car still counts as on that branch (m).
 const BRANCH_REACH_M: f32 = 8.0;
+/// How far past the end of the launch chute a bot's car is before it follows the loop instead (spec 103) (m).
+const LAUNCH_CHUTE_MERGED_MARGIN_M: f32 = 20.0;
 /// A slow bot pointing farther than this from its target turns round with a three-point turn (rad).
 const TURN_START_RAD: f32 = 1.75;
 /// The turn ends, driving forward, once the nose points this close to the target (rad).
@@ -650,6 +652,13 @@ pub struct BotAiDriver {
     pub cached_layout_id: Option<String>,
     /// Precomputed composite spline for active layout to prevent per-frame allocations.
     pub cached_layout_spline: Option<TrackSpline>,
+    /// First-lap route of a layout with a launch chute (spec 103), with the layout it was built for and the
+    /// length of the chute. The bot follows it until it has merged onto the loop.
+    pub cached_entry_route: Option<(String, TrackSpline, f32)>,
+    /// Whether the bot has left the launch chute (true from the start on a circuit without one).
+    pub left_launch_chute: bool,
+    /// The route changed under the bot: project onto it without the continuity window on the next tick.
+    pub reproject: bool,
     /// Current lap tracked by this bot.
     pub current_lap: u32,
     /// Number of joker laps completed by this bot.
@@ -699,6 +708,9 @@ impl BotAiDriver {
             active_layout_id: None,
             cached_layout_id: None,
             cached_layout_spline: None,
+            cached_entry_route: None,
+            left_launch_chute: false,
+            reproject: false,
             current_lap: 1,
             joker_laps_taken: 0,
             was_in_joker: false,
@@ -892,7 +904,24 @@ impl BotAiDriver {
             }
         }
 
-        let spline = self.cached_layout_spline.as_ref().unwrap_or(&track.spline);
+        // Lap 1 from a launch chute (spec 103): follow the chute and the loop to the merge point until the bot
+        // has merged onto the loop, then the closed route of the layout.
+        if !self.left_launch_chute {
+            let layout_id = self.active_layout_id.clone();
+            let built_for = self.cached_entry_route.as_ref().map(|(id, _, _)| id.clone());
+            if layout_id.is_some() && built_for != layout_id {
+                self.cached_entry_route = layout_id.as_deref().zip(track.network.as_ref()).and_then(|(id, net)| {
+                    let chute = net.get_segment(net.get_layout(id)?.entry_segment?)?;
+                    Some((id.to_string(), net.build_entry_spline_for_layout(id)?, chute.length))
+                });
+                self.left_launch_chute = self.cached_entry_route.is_none();
+            }
+        }
+        let entry_route = self.cached_entry_route.as_ref().filter(|_| !self.left_launch_chute);
+        let spline = match entry_route {
+            Some((_, entry, _)) => entry,
+            None => self.cached_layout_spline.as_ref().unwrap_or(&track.spline),
+        };
         if spline.samples.is_empty() {
             return CarControls::default();
         }
@@ -903,12 +932,20 @@ impl BotAiDriver {
         let car_right = car.right_vector();
 
         // 1. Project onto spline to find current track distance with continuity constraint
-        let proj = if self.last_pos.is_some() {
+        let proj = if self.last_pos.is_some() && !self.reproject {
             spline.project_point_continuity(car_pos, self.current_target_dist, 50.0)
         } else {
             spline.project_point(car_pos)
         };
+        self.reproject = false;
         let curr_dist = proj.progress_distance;
+        if let Some((_, _, chute_len)) = entry_route {
+            // Merged: the car is on the loop, past the chute.
+            if curr_dist > chute_len + LAUNCH_CHUTE_MERGED_MARGIN_M {
+                self.left_launch_chute = true;
+                self.reproject = true;
+            }
+        }
 
         // A car that is stuck off its route on another branch follows that branch until the next route choice (spec
         // 088). Steering back to the route it left put a holjes_rx bot that ran wide at the split against the

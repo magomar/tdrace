@@ -30,7 +30,7 @@ pub const PAD_LENGTH_RANGE: (f32, f32) = (35.0, 50.0);
 /// and the pad should stay near the finish straight.
 pub const MERGE_BEFORE_FINISH_RANGE: (f32, f32) = (10.0, 250.0);
 /// Length over which the chute converges onto the circuit, ending tangent to it at the merge waypoint (m).
-pub(super) const RAMP_LENGTH_M: f32 = 55.0;
+pub(super) const RAMP_LENGTH_M: f32 = 90.0;
 /// Extra distance between the chute's road edge and the circuit's wall line, besides the two wall gaps (m).
 const TRENCH_M: f32 = 2.0;
 /// Distance between rows of the packed grid (m): longer than any car, so a row never overlaps the one before.
@@ -150,15 +150,26 @@ impl Track {
     }
 
     /// Stamps a chute at the best waypoint for `template` (its `merge_waypoint` and `side` are ignored): the
-    /// candidates before the finish line are tried nearest to 70 m first, on both sides. Returns the spec used.
+    /// waypoints before the finish line, best first, on both sides. A waypoint is better the straighter the circuit
+    /// is along the pad, the ramp and just past the merge (a launch lane is straight), and the nearer it is to
+    /// 70 m before the line. Returns the spec used.
     pub fn place_launch_chute(&mut self, template: &LaunchChuteSpec) -> Result<LaunchChuteSpec, LaunchChuteError> {
+        let reach = RAMP_LENGTH_M + template.pad_length;
         let mut candidates: Vec<(usize, f32)> = (0..self.spline.waypoints.len())
             .filter_map(|k| {
-                let (_, to_finish) = merge_distance_to_finish(self, k).ok()?;
-                (MERGE_BEFORE_FINISH_RANGE.0..=MERGE_BEFORE_FINISH_RANGE.1).contains(&to_finish).then_some((k, to_finish))
+                let (merge_dist, to_finish) = merge_distance_to_finish(self, k).ok()?;
+                if !(MERGE_BEFORE_FINISH_RANGE.0..=MERGE_BEFORE_FINISH_RANGE.1).contains(&to_finish) {
+                    return None;
+                }
+                let at_merge = self.spline.sample_at_distance(merge_dist).tangent;
+                let bend = (-(reach as i32)..=40)
+                    .step_by(5)
+                    .map(|d| self.spline.sample_at_distance(merge_dist + d as f32).tangent.dot(at_merge).clamp(-1.0, 1.0).acos().to_degrees())
+                    .fold(0.0, f32::max);
+                Some((k, bend + 0.1 * (to_finish - 70.0).abs()))
             })
             .collect();
-        candidates.sort_by(|a, b| (a.1 - 70.0).abs().total_cmp(&(b.1 - 70.0).abs()));
+        candidates.sort_by(|a, b| a.1.total_cmp(&b.1));
 
         let mut last_error = LaunchChuteError("no waypoint lies before the start/finish line".to_string());
         for (k, _) in candidates {

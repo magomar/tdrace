@@ -151,6 +151,123 @@ fn test_launch_chute_config_round_trips_through_json() {
     assert!(!json.contains("entry_segment") && !json.contains("launch_chute"));
 }
 
+mod lap_one {
+    use arcade_race_core::track::checkpoint::TrackProgressTracker;
+    use arcade_race_core::track::spline::TrackSpline;
+    use arcade_race_core::track::{rally_template, ChuteSide, LaunchChuteSpec, RaceDirection, Track, TrackShape};
+    use wheelbase::{Car, CarConfig};
+
+    fn stamped_oval() -> Track {
+        let mut track = rally_template(TrackShape::Oval, RaceDirection::Right);
+        track.place_launch_chute(&LaunchChuteSpec::new(0, ChuteSide::Left)).unwrap();
+        track
+    }
+
+    /// Moves a car along `spline` from distance `from` to `to` in 1 m steps, facing along it, updating `tracker`.
+    fn drive(track: &Track, tracker: &mut TrackProgressTracker, spline: &TrackSpline, from: f32, to: f32, log: &mut Vec<(f32, u32)>) {
+        let net = track.network.as_ref().unwrap();
+        let mut car = Car::new(CarConfig::sports_car());
+        let mut d = from;
+        while d <= to {
+            let s = spline.sample_at_distance(d);
+            car.state.position = s.point;
+            car.state.angle = s.tangent.y.atan2(s.tangent.x);
+            car.state.speed = 20.0;
+            tracker.update_network(&car, net, &track.checkpoints, 1.0 / 60.0);
+            log.push((tracker.progress_distance, tracker.current_lap));
+            d += 1.0;
+        }
+    }
+
+    #[test]
+    fn test_race_starts_in_the_chute_and_lap_one_ends_at_the_finish_line() {
+        let track = stamped_oval();
+        let net = track.network.as_ref().unwrap();
+        let chute = track.launch_chute().unwrap();
+        let layout = net.get_layout("main").unwrap();
+        let (main_id, after_id) = (layout.segment_sequence[0], layout.segment_sequence[1]);
+
+        let entry = net.build_entry_spline_for_layout("main").unwrap();
+        let loop_route = net.composite_spline_for_layout("main").unwrap();
+        let chute_len = net.get_segment(chute.segment_id).unwrap().length;
+        let after_len = net.get_segment(after_id).unwrap().length;
+        let main_len = net.get_segment(main_id).unwrap().length;
+
+        let mut tracker = TrackProgressTracker::new(track.checkpoints.len(), 3);
+        let mut log = Vec::new();
+
+        // On the pad: the tracker is on the chute and lap 1.
+        drive(&track, &mut tracker, &entry, 0.0, 5.0, &mut log);
+        let multi = tracker.multi_route.as_ref().unwrap();
+        assert_eq!(multi.current_segment_id, chute.segment_id);
+        assert_eq!(tracker.current_lap, 1);
+        assert!(!multi.is_in_branch, "the chute is not a detour");
+
+        // Through the merge: the car is on the loop segment after the merge, still lap 1.
+        drive(&track, &mut tracker, &entry, 5.0, chute_len + 15.0, &mut log);
+        assert_eq!(tracker.multi_route.as_ref().unwrap().current_segment_id, after_id);
+        assert_eq!(tracker.current_lap, 1);
+
+        // The first crossing of the finish line, right after the merge, does not end lap 1.
+        drive(&track, &mut tracker, &entry, chute_len + 15.0, chute_len + after_len + 20.0, &mut log);
+        assert_eq!(tracker.multi_route.as_ref().unwrap().current_segment_id, main_id);
+        assert_eq!(tracker.current_lap, 1, "lap 1 is the chute plus one lap");
+
+        // Rest of the lap back to the merge point, then on to the line: crossing it ends lap 1.
+        drive(&track, &mut tracker, &entry, chute_len + after_len + 20.0, entry.total_length(), &mut log);
+        assert_eq!(tracker.current_lap, 1);
+        let merge_at = loop_route.total_length() - after_len;
+        assert!((merge_at - main_len).abs() < 2.0);
+        drive(&track, &mut tracker, loop_route, merge_at, loop_route.total_length() + 12.0, &mut log);
+        assert_eq!(tracker.current_lap, 2, "crossing the finish line after a full lap completes lap 1");
+
+        // Lap 2 stays on the loop: the chute is never entered again.
+        drive(&track, &mut tracker, loop_route, 12.0, loop_route.total_length() - 1.0, &mut log);
+        let multi = tracker.multi_route.as_ref().unwrap();
+        assert_ne!(multi.current_segment_id, chute.segment_id);
+        assert_eq!(tracker.current_lap, 2);
+    }
+
+    #[test]
+    fn test_cars_rank_by_place_on_the_chute_then_after_the_merge() {
+        let track = stamped_oval();
+        let net = track.network.as_ref().unwrap();
+        let entry = net.build_entry_spline_for_layout("main").unwrap();
+        let mut tracker = TrackProgressTracker::new(track.checkpoints.len(), 3);
+        let mut log = Vec::new();
+        let chute_len = net.get_segment(track.launch_chute().unwrap().segment_id).unwrap().length;
+        drive(&track, &mut tracker, &entry, 0.0, chute_len + 40.0, &mut log);
+        // Progress never goes backwards on the way from the chute onto the loop (a car that merged must not drop
+        // behind the cars still on the pad).
+        for pair in log.windows(2) {
+            assert!(pair[1].0 >= pair[0].0 - 0.5, "progress dropped: {:?} -> {:?}", pair[0], pair[1]);
+        }
+    }
+
+    #[test]
+    fn test_turning_back_into_the_chute_is_wrong_way() {
+        let track = stamped_oval();
+        let net = track.network.as_ref().unwrap();
+        let chute = net.get_segment(track.launch_chute().unwrap().segment_id).unwrap();
+        let entry = net.build_entry_spline_for_layout("main").unwrap();
+
+        let mut tracker = TrackProgressTracker::new(track.checkpoints.len(), 3);
+        let mut log = Vec::new();
+        // The car has driven the chute and is on the loop.
+        drive(&track, &mut tracker, &entry, 0.0, chute.length + 30.0, &mut log);
+        assert!(!tracker.is_wrong_way);
+
+        // Now the car sits in the middle of the chute facing upstream.
+        let mid = chute.samples[chute.samples.len() / 3];
+        let mut car = Car::new(CarConfig::sports_car());
+        car.state.position = mid.point;
+        car.state.angle = (-mid.tangent).y.atan2((-mid.tangent).x);
+        car.state.speed = 5.0;
+        tracker.update_network(&car, net, &track.checkpoints, 1.0 / 60.0);
+        assert!(tracker.is_wrong_way);
+    }
+}
+
 mod stamp {
     use arcade_race_core::track::network::JunctionKind;
     use arcade_race_core::track::validation::{validate_track, ValidationSeverity};
