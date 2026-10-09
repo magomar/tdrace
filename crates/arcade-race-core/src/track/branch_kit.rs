@@ -14,6 +14,7 @@ use wheelbase::SurfaceType;
 use super::checkpoint::Checkpoint;
 use super::geometry::{BarrierType, LineSegment, WallBarrier};
 use super::presets::merge_collinear_walls;
+use super::launch_chute::LaunchChuteSpec;
 use super::junction_kit::{
     build_junction, cumulative_lengths, free_road, EnvelopePoint, FreeRoad, JunctionComponent, JunctionError,
     wedge_at, JunctionGeometry, JunctionRole, JunctionShape, Side, NOSE_CLEARANCE, NOSE_GAP, NOSE_LENGTH,
@@ -512,7 +513,8 @@ pub fn nose_barrier(junction: &JunctionGeometry, barrier: BarrierType) -> (WallB
 // ---------------------------------------------------------------------------------------------------------------
 
 /// Writes a compiled branch into `track.network`. The checkpoint lists of layouts the track already has (matched by
-/// id) are kept: they belong to the circuit, not to the branch.
+/// id) are kept: they belong to the circuit, not to the branch. A launch chute (spec 103) lives on the network and is
+/// not carried over: the caller stamps it again once the walls are built (`bake` does).
 pub fn install(track: &mut Track, compiled: CompiledBranch) {
     let mut network = compiled.network;
     if let Some(old) = &track.network {
@@ -526,18 +528,29 @@ pub fn install(track: &mut Track, compiled: CompiledBranch) {
     track.network = Some(network);
 }
 
+/// Stamps a launch chute (spec 103) again on a circuit whose branch network was just written. The stamp needs the
+/// circuit's walls, so it comes after the wall steps of the bake.
+pub fn restamp_chute(track: &mut Track, chute: Option<LaunchChuteSpec>) -> Result<(), String> {
+    match chute {
+        Some(spec) => track.stamp_launch_chute(&spec).map_err(|e| format!("launch chute: {e}")),
+        None => Ok(()),
+    }
+}
+
 /// Installs a branch that the circuit does not have yet: drops the old network and joker checkpoints, writes the
-/// compiled network, tags every checkpoint with the segment it lies on, adds the joker checkpoint and fills the layout
-/// checkpoint lists in driving order.
-pub fn install_new(track: &mut Track, compiled: CompiledBranch) {
+/// compiled network, tags every checkpoint with the segment it lies on, adds the joker checkpoint, fills the layout
+/// checkpoint lists in driving order, and stamps the launch chute (spec 103) again if the old network had one. That
+/// needs built walls, so a circuit with a chute is baked here (the caller bakes again, which changes nothing).
+pub fn install_new(track: &mut Track, compiled: CompiledBranch) -> Result<(), String> {
+    let chute = track.launch_chute_spec();
     track.checkpoints.retain(|cp| !cp.is_joker);
     track.network = None;
     let joker_id = track.checkpoints.iter().map(|cp| cp.id + 1).max().unwrap_or(0);
     let joker = compiled.joker_checkpoint(joker_id);
     install(track, compiled);
-    let Some(net) = track.network.as_mut() else { return };
+    let Some(net) = track.network.as_mut() else { return Ok(()) };
     let (Some(main), Some(branch)) = (net.get_layout("main").cloned(), net.layouts.iter().find(|l| l.id != "main").cloned()) else {
-        return;
+        return Ok(());
     };
 
     // A checkpoint belongs to the shared segment or main-only segment it lies nearest to. On the junction point a
@@ -579,6 +592,11 @@ pub fn install_new(track: &mut Track, compiled: CompiledBranch) {
         layout.checkpoint_ids = ids;
     }
     net.recompute_composite_splines();
+    if chute.is_some() {
+        super::bake::bake(track, &super::bake::BakeOptions { rebuild: true, ..Default::default() })?;
+        restamp_chute(track, chute)?;
+    }
+    Ok(())
 }
 
 // ---------------------------------------------------------------------------------------------------------------

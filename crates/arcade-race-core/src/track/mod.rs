@@ -978,13 +978,21 @@ impl Track {
     /// at a different height, and a wall there would block the main road.
     pub fn generate_network_walls(&mut self) {
         self.geometry.network_walls.clear();
-        if let Some(layout) = &self.branch_layout {
-            if let Ok(compiled) = layout.compile(self) {
-                self.geometry.network_walls = branch_kit::build_walls(self, &compiled);
-            }
+        // Spec 102: a compiled branch builds its own walls from its junction components. Only a launch chute (spec 103)
+        // is still searched below.
+        let compiled = self.branch_layout.is_some();
+        let mut walls = Vec::new();
+        if let Some(compiled_branch) = self.branch_layout.as_ref().and_then(|l| l.compile(self).ok()) {
+            walls = branch_kit::build_walls(self, &compiled_branch);
+        }
+        let Some(net) = &self.network else {
+            self.geometry.network_walls = walls;
+            return;
+        };
+        if compiled && net.launch_chute.is_none() {
+            self.geometry.network_walls = walls;
             return;
         }
-        let Some(net) = &self.network else { return; };
         let barrier_type = self.dominant_barrier_type().unwrap_or(BarrierType::TireWall);
 
         // The main spline is smoothed across the segment seams, so check its ribbon (with curbs)
@@ -1006,13 +1014,13 @@ impl Track {
             off_road && !doubles_main_wall && !main_walls().any(|m| m.segment.intersect_segment(&w.segment).is_some())
         };
 
-        let mut walls = Vec::new();
         // The launch chute's side walls and rear wall are kept in its config (spec 103).
         let chute_id = net.launch_chute.as_ref().map(|c| c.segment_id);
         let mut chute_walls = Vec::new();
         let mut rear_corners = [None, None];
         for seg in branch_segments(net) {
             if seg.samples.len() < 2 { continue; }
+            if compiled && Some(seg.id) != chute_id { continue; }
             let first_wall = walls.len();
             // The track-wide offset comes from the first main samples, which can sit on a wide
             // run-off (Riga RX: 14.9 m). Measure the main walls around this branch instead.

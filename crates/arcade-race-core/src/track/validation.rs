@@ -1529,10 +1529,12 @@ pub(super) fn validate_launch_chute(track: &Track) -> Vec<TrackValidationError> 
 fn junction_wall_diagnostics(track: &Track, diagnostics: &mut Vec<TrackValidationError>) {
     use crate::track::branch_kit::{in_window, junction_checks, END_JOINED};
 
-    // Existing wall rules, for the junction walls against every network segment.
+    // Existing wall rules, for the junction walls against every network segment. A launch chute (spec 103) is left
+    // out: its rear barrier ends on its own centreline by design.
     if let Some(net) = &track.network {
+        let chute = net.launch_chute.as_ref().map(|c| c.segment_id);
         for (w_idx, wall) in track.geometry.network_walls.iter().enumerate() {
-            'wall: for seg in net.segments.iter().filter(|s| s.samples.len() >= 2) {
+            'wall: for seg in net.segments.iter().filter(|s| s.samples.len() >= 2 && Some(s.id) != chute) {
                 for pair in seg.samples.windows(2) {
                     let elev = (pair[0].elevation + pair[1].elevation) * 0.5;
                     if (wall.elevation - elev).abs() < 3.0

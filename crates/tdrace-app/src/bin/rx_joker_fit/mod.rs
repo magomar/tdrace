@@ -271,7 +271,7 @@ fn joker_cost(network: &TrackNetwork) -> Result<f32, String> {
 pub fn install_layout(track: &mut Track, layout: &BranchLayout) -> Result<(), String> {
     track.branch_layout = Some(layout.clone());
     let compiled = layout.compile(track).map_err(|e| format!("{:?}", e))?;
-    branch_kit::install_new(track, compiled);
+    branch_kit::install_new(track, compiled)?;
     bake(track, &BakeOptions { rebuild: true, ..BakeOptions::default() })
         .map(|_| ())
         .map_err(|e| format!("bake: {}", e))

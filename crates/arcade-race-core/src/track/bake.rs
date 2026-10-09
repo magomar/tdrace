@@ -115,11 +115,14 @@ pub fn bake(track: &mut Track, opts: &BakeOptions) -> Result<BakeReport, String>
             lane.spline = TrackSpline::new(lane.spline.waypoints.clone(), false);
         }
     }
+    // A launch chute (spec 103) is part of the network that the compile replaces: stamped again at the end.
+    let mut chute = None;
     if let Some(layout) = track.branch_layout.clone() {
         // Spec 102: the layout is the source of truth for the branch network, compiled before the wall steps.
         let compiled = layout
             .compile(track)
             .map_err(|e| format!("'{}': branch layout: {:?}", track.name, e))?;
+        chute = track.launch_chute_spec();
         super::branch_kit::install(track, compiled);
     }
     let geometry = &mut track.geometry;
@@ -177,6 +180,7 @@ pub fn bake(track: &mut Track, opts: &BakeOptions) -> Result<BakeReport, String>
         net.recompute_composite_splines();
     }
     track.geometry.recompute_scenery_obstacles();
+    super::branch_kit::restamp_chute(track, chute).map_err(|e| format!("'{}': branch layout: {}", track.name, e))?;
     Ok(report)
 }
 

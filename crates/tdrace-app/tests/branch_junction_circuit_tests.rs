@@ -14,9 +14,9 @@ use tdrace_core::track::bake::{bake, BakeOptions};
 use tdrace_core::track::branch_kit::{self, nose_barrier, BranchLayout};
 use tdrace_core::track::geometry::BarrierType;
 use tdrace_core::track::junction_kit::{JunctionComponent, JunctionShape, Side};
-use tdrace_core::track::network::SegmentId;
+use tdrace_core::track::network::JunctionKind;
 use tdrace_core::track::spline::TrackWaypoint;
-use tdrace_core::track::{validate_track, Track, TrackProgressTracker, ValidationSeverity};
+use tdrace_core::track::{validate_track, MultiRouteProgressTracker, Track, TrackProgressTracker, ValidationSeverity};
 use tdrace_core::SurfaceType;
 
 const DT: f32 = 1.0 / 60.0;
@@ -38,9 +38,20 @@ const CIRCUITS: [(&str, &str, Side, f32, f32); 9] = [
 /// used, and a free road that runs beside the main line, 17 m out.
 fn circuit_with_branch(module: &str, id: &str, side: Side, length: f32, gap: f32) -> Track {
     let mut track = tdrace_core::catalog::official_track(module, id);
-    let legacy = track.network.take().expect("an RX circuit has a joker network");
-    let split_idx = legacy.get_segment(SegmentId(0)).unwrap().waypoints.len() - 1;
-    let merge_idx = track.spline.waypoints.len() + 1 - legacy.get_segment(SegmentId(3)).unwrap().waypoints.len();
+    // The waypoints the old joker split and merged at: the main waypoints nearest its junction sockets. The legacy
+    // network stays on the track until `install_new`, which stamps a launch chute (spec 103) again on the new one.
+    let legacy = track.network.clone().expect("an RX circuit has a joker network");
+    let nearest = |p: glam::Vec2| {
+        (0..track.spline.waypoints.len())
+            .min_by(|&a, &b| track.spline.waypoints[a].point.distance(p).total_cmp(&track.spline.waypoints[b].point.distance(p)))
+            .unwrap()
+    };
+    let socket = |j: u32| match &legacy.get_junction(tdrace_core::track::network::JunctionId(j)).unwrap().kind {
+        JunctionKind::Split { ingress_socket, .. } => ingress_socket.point,
+        JunctionKind::Merge { egress_socket, .. } => egress_socket.point,
+        JunctionKind::Terminal { socket } => socket.point,
+    };
+    let (split_idx, merge_idx) = (nearest(socket(0)), nearest(socket(1)));
     let main = track.spline.clone();
     let station = |i: usize| main.project_point(main.waypoints[i].point).progress_distance;
     let (s_split, s_merge) = (station(split_idx), station(merge_idx));
@@ -67,7 +78,7 @@ fn circuit_with_branch(module: &str, id: &str, side: Side, length: f32, gap: f32
     };
     track.branch_layout = Some(layout.clone());
     let compiled = layout.compile(&track).unwrap_or_else(|e| panic!("{id}: {e:?}"));
-    branch_kit::install_new(&mut track, compiled);
+    branch_kit::install_new(&mut track, compiled).unwrap_or_else(|e| panic!("{id}: {e}"));
     bake(&mut track, &BakeOptions { rebuild: true, ..BakeOptions::default() }).unwrap_or_else(|e| panic!("{id}: {e}"));
     track
 }
@@ -75,7 +86,12 @@ fn circuit_with_branch(module: &str, id: &str, side: Side, length: f32, gap: f32
 #[test]
 fn test_branch_circuits_validate_without_error_or_junction_warning() {
     for (module, id, side, length, gap) in CIRCUITS {
+        let official = tdrace_core::catalog::official_track(module, id);
         let track = circuit_with_branch(module, id, side, length, gap);
+        // The launch chute (spec 103) is stamped again on the new network, with the same grid.
+        assert!(official.launch_chute().is_some(), "{id}: an official RX circuit has a launch chute");
+        assert_eq!(track.launch_chute().map(|c| c.grid_slots.len()), official.launch_chute().map(|c| c.grid_slots.len()), "{id}: chute grid");
+        assert_eq!(track.grid_positions.len(), official.grid_positions.len(), "{id}: starting grid");
         let bad: Vec<_> = validate_track(&track)
             .into_iter()
             .filter(|d| d.severity == ValidationSeverity::Error || d.code.contains("JUNCTION"))
@@ -127,10 +143,10 @@ fn test_car_driving_the_branch_route_gets_its_lap_and_its_joker() {
             ..RaceRules::default()
         });
         let start = joker.sample_at_distance(1.0);
-        world.spawn(
-            Car::new(CarConfig::rally_car()).with_pose(start.point, start.tangent.y.atan2(start.tangent.x)),
-            TrackProgressTracker::new(track.checkpoints.len(), 3),
-        );
+        // The car starts on the loop, not on a launch chute: so does its tracker (a lap of the loop, as on laps 2+).
+        let mut tracker = TrackProgressTracker::new(track.checkpoints.len(), 3);
+        tracker.multi_route = Some(MultiRouteProgressTracker::new("main", network.get_layout("main").unwrap().segment_sequence[0], 3));
+        world.spawn(Car::new(CarConfig::rally_car()).with_pose(start.point, start.tangent.y.atan2(start.tangent.x)), tracker);
         let mut wall_hit = None;
         let mut wrong_way = None;
         'laps: for (spline, from) in route {
@@ -253,6 +269,11 @@ fn test_bots_take_the_joker_once_and_do_not_stall() {
             }
             world.step(&track, &controls, DT);
             for i in 0..bots.len() {
+                // From lap 2 on: lap 1 is the launch from the chute (spec 103), whose stalls are that spec's concern.
+                if world.trackers[i].current_lap < 2 {
+                    mark[i] = world.trackers[i].progress_distance;
+                    continue;
+                }
                 let gained = (world.trackers[i].progress_distance - mark[i]).rem_euclid(len);
                 if (5.0..0.5 * len).contains(&gained) || world.is_finished(i) {
                     mark[i] = world.trackers[i].progress_distance;
