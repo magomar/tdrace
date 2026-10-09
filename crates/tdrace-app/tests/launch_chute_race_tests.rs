@@ -19,6 +19,8 @@ const STYLES: [DrivingStyle; 4] =
 const MAX_NO_PROGRESS_S: f32 = 10.0;
 /// Bots of a grid of 8 that must complete lap 1.
 const MIN_THROUGH_LAP_ONE: usize = 6;
+/// How far into the loop segment that the chute merges into the launch lasts (m).
+const MERGE_ZONE_M: f32 = 60.0;
 /// Longest time a bot may be flagged wrong way on the chute: a spin after a start collision is not a diversion.
 const MAX_WRONG_WAY_S: f32 = 3.0;
 
@@ -32,8 +34,8 @@ struct ChuteRace {
     chute_after_lap_one: bool,
     /// Longest time in a row a bot was flagged wrong way while on the chute segment.
     longest_wrong_way_on_chute_s: f32,
-    /// Per bot: the longest time without progress during the launch, from the start to the first crossing of the
-    /// finish line. A bot that sticks later on the circuit is not this spec's concern.
+    /// Per bot: the longest time without progress during the launch: on the chute, or in the merge zone. A bot that
+    /// sticks later on the circuit (riga_rx, hell_rx, spa_rx do without a chute too) is not this spec's concern.
     longest_launch_stall_s: Vec<f32>,
     /// Per bot: it never left the chute segment.
     stayed_in_chute: Vec<bool>,
@@ -44,6 +46,7 @@ fn race(track: &Track, car: CarConfig, n: usize, laps: u32, max_time_s: f32) -> 
     let net = track.network.as_ref().expect("a circuit with a launch chute has a network");
     let chute_seg = track.launch_chute().expect("track has a launch chute").segment_id;
     let pad = net.get_segment(chute_seg).unwrap();
+    let merge_seg = net.get_layout(&net.default_layout_id).and_then(|l| net.entry_continuation_segment(l));
 
     let mut world: RaceWorld<Car> = RaceWorld::new(RaceRules { format: RaceFormat::Laps(laps), ..RaceRules::default() });
     let mut drivers = Vec::new();
@@ -101,8 +104,9 @@ fn race(track: &Track, car: CarConfig, n: usize, laps: u32, max_time_s: f32) -> 
                 no_progress[i] = 0.0;
             } else {
                 no_progress[i] += HARNESS_DT;
-                // The launch: from the start line to the first crossing of the finish line (nothing passed yet).
-                if t.current_lap == 1 && t.checkpoints_passed_this_lap == 0 {
+                // The launch: the chute, and the first stretch of the loop segment it merges into.
+                let on_merge = t.multi_route.as_ref().is_some_and(|m| Some(m.current_segment_id) == merge_seg && m.segment_progress_distance < MERGE_ZONE_M);
+                if t.current_lap == 1 && (on_chute || on_merge) {
                     out.longest_launch_stall_s[i] = out.longest_launch_stall_s[i].max(no_progress[i]);
                 }
             }
