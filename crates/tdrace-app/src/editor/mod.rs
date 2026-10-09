@@ -6,7 +6,7 @@ pub mod ui;
 
 pub use camera::EditorCamera;
 pub use state::{EditorState, GridSnapSetting, HistoryStack, Selection};
-pub use tools::{render_editor_gizmos, EditorToolType, ObstacleShapeType, SurfaceShapeType, ToolSettings};
+pub use tools::{branch_socket_label, render_editor_gizmos, render_editor_junction_labels, EditorToolType, ObstacleShapeType, SurfaceShapeType, ToolSettings};
 pub use ui::{is_mouse_over_editor_ui, render_editor_ui, EditorAction, EditorModal};
 
 use glam::Vec2;

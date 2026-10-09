@@ -1,6 +1,7 @@
 use glam::Vec2;
 use macroquad::color::Color;
 use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_rectangle_lines};
+use macroquad::window::{screen_height, screen_width};
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::checkpoint::Checkpoint;
 use tdrace_core::track::geometry::{BarrierType, JumpRamp, LineSegment, Obstacle, PitBox, PitLane, SurfaceLayer, SurfaceShape, SurfaceZone, WallBarrier};
@@ -16,6 +17,8 @@ use super::inspector::{
 };
 use super::state::{EditorState, Selection};
 use crate::render::color::Palette;
+use crate::ui::font::Fonts;
+use crate::ui::scaler::UiScaler;
 
 /// How near a click must be to a waypoint to pick it for a launch chute (m).
 const LAUNCH_CHUTE_PICK_M: f32 = 8.0;
@@ -3097,6 +3100,62 @@ fn draw_polygon_lines(vertices: &[Vec2], thickness: f32, col: Color) {
 }
 
 /// Renders gizmos, selection indicators, handles, and drag previews in world space.
+/// Radius (m) of the apex pivot dot at a split junction in the editor.
+const EDITOR_APEX_DOT_RADIUS_M: f32 = 0.4;
+
+/// Editor tag of the branch that leaves split `junction_id` through socket `socket_index`: `[Joker]` for a road
+/// that only the joker layout drives, `[Main]` for every other branch.
+pub fn branch_socket_label(track: &Track, junction_id: JunctionId, socket_index: usize) -> &'static str {
+    let Some(network) = track.network.as_ref() else { return "[Main]" };
+    let Some(segment) = network.segments.iter().find(|s| s.entry_junction == Some(SocketId::new(junction_id, socket_index))) else {
+        return "[Main]";
+    };
+    let in_layout = |id: &str| network.get_layout(id).is_some_and(|l| l.segment_sequence.contains(&segment.id));
+    if in_layout("joker") && !network.get_layout(&network.default_layout_id).is_some_and(|l| l.segment_sequence.contains(&segment.id)) {
+        "[Joker]"
+    } else {
+        "[Main]"
+    }
+}
+
+/// Draws the `[Main]` / `[Joker]` tags of split sockets and the `[Pit]` tag of the pit lane entry. Screen-space pass:
+/// call it after the world gizmos and before the editor UI.
+pub fn render_editor_junction_labels(fonts: &Fonts, state: &EditorState, camera: &EditorCamera) {
+    let (sw, sh) = (screen_width(), screen_height());
+    let scaler = UiScaler::new(sw, sh);
+    let draw_tag = |tag: &str, world: Vec2, col: Color| {
+        let at = camera.world_to_screen(world, sw, sh);
+        fonts.draw_ui_bold(tag, at.x, at.y, scaler.font_s(11.0), col);
+    };
+
+    let network = state.track.active_network();
+    for junction in &network.junctions {
+        if let JunctionKind::Split { egress_sockets, .. } = &junction.kind {
+            // Branches that leave in parallel share one socket spot, so each tag goes to the side its road bends to.
+            let bend: Vec<f32> = egress_sockets
+                .iter()
+                .enumerate()
+                .map(|(i, socket)| {
+                    let seg = network.segments.iter().find(|s| s.entry_junction == Some(SocketId::new(junction.id, i)));
+                    seg.filter(|s| s.samples.len() >= 2)
+                        .map_or(-(i as f32), |s| socket.tangent.perp_dot(s.sample_at_distance(20.0_f32.min(s.length)).point - socket.point))
+                })
+                .collect();
+            let mean = bend.iter().sum::<f32>() / bend.len().max(1) as f32;
+            for (i, socket) in egress_sockets.iter().enumerate() {
+                let tag = branch_socket_label(&state.track, junction.id, i);
+                let col = if tag == "[Joker]" { Palette::NEON_GOLD } else { Palette::NEON_CYAN };
+                let side = if bend[i] >= mean { 1.0 } else { -1.0 };
+                draw_tag(tag, socket.point + socket.normal * (3.4 * side), col);
+            }
+        }
+    }
+    if let (Some(lane), Some(junctions)) = (&state.track.pit_lane, &state.track.pit_lane_junctions) {
+        let gate_mid = (lane.entry_gate.start + lane.entry_gate.end) * 0.5;
+        draw_tag("[Pit]", gate_mid + (gate_mid - junctions.p_apex).normalize_or_zero() * 2.5, Palette::NEON_CYAN);
+    }
+}
+
 pub fn render_editor_gizmos(state: &EditorState, tools: &ToolSettings, _camera: &EditorCamera) {
     // 1. Render Waypoint nodes & handles
     let n_wp = state.track.spline.waypoints.len();
@@ -3185,38 +3244,33 @@ pub fn render_editor_gizmos(state: &EditorState, tools: &ToolSettings, _camera: 
 
                     // Direction arrow
                     let arrow_end = socket.point + socket.tangent * 4.0;
-                    draw_line(socket.point.x, socket.point.y, arrow_end.x, arrow_end.y, 0.5, sock_col);
+                    draw_line(socket.point.x, socket.point.y, arrow_end.x, arrow_end.y, 0.3, sock_col);
 
                     // Barb lines
                     let barb_l = arrow_end - socket.tangent * 1.2 + socket.normal * 0.8;
                     let barb_r = arrow_end - socket.tangent * 1.2 - socket.normal * 0.8;
-                    draw_line(arrow_end.x, arrow_end.y, barb_l.x, barb_l.y, 0.45, sock_col);
-                    draw_line(arrow_end.x, arrow_end.y, barb_r.x, barb_r.y, 0.45, sock_col);
+                    draw_line(arrow_end.x, arrow_end.y, barb_l.x, barb_l.y, 0.3, sock_col);
+                    draw_line(arrow_end.x, arrow_end.y, barb_r.x, barb_r.y, 0.3, sock_col);
                 }
 
-                // Render Gore Wedge & Nose Barrier
+                // Apex pivot, divergence rays and nose barrier as thin wireframe (no painted wedge or chevrons)
                 if let Some(gore) = gore_config {
-                    draw_circle(gore.apex_point.x, gore.apex_point.y, 1.2, Palette::CURB_RED);
+                    let any_active = (0..egress_sockets.len()).any(|i| tools.active_branch_socket == Some(SocketId::new(junction.id, i)));
+                    let apex_col = if any_active { Palette::NEON_GOLD } else { Palette::NEON_CYAN };
+                    let ray_len = gore.gore_length.max(6.0);
+                    for socket in egress_sockets {
+                        let tip = gore.apex_point + socket.tangent * ray_len;
+                        draw_line(gore.apex_point.x, gore.apex_point.y, tip.x, tip.y, 0.2, Color::new(apex_col.r, apex_col.g, apex_col.b, 0.7));
+                    }
                     draw_line(
                         gore.nose_barrier.segment.start.x,
                         gore.nose_barrier.segment.start.y,
                         gore.nose_barrier.segment.end.x,
                         gore.nose_barrier.segment.end.y,
-                        0.7,
-                        Palette::CURB_RED,
+                        0.25,
+                        apex_col,
                     );
-                    if gore.has_chevrons {
-                        let fwd = ingress_socket.tangent;
-                        let norm = ingress_socket.normal;
-                        for step in 1..=3 {
-                            let ch_pt = gore.apex_point - fwd * (step as f32 * 3.0);
-                            let ch_w = step as f32 * 1.5;
-                            let l = ch_pt + norm * ch_w - fwd * 1.0;
-                            let r = ch_pt - norm * ch_w - fwd * 1.0;
-                            draw_line(ch_pt.x, ch_pt.y, l.x, l.y, 0.35, Palette::WHITE_LINE);
-                            draw_line(ch_pt.x, ch_pt.y, r.x, r.y, 0.35, Palette::WHITE_LINE);
-                        }
-                    }
+                    draw_circle(gore.apex_point.x, gore.apex_point.y, EDITOR_APEX_DOT_RADIUS_M, apex_col);
                 }
             }
             JunctionKind::Merge { ingress_sockets, egress_socket, merge_config } => {

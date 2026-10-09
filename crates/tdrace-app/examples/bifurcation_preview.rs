@@ -86,4 +86,17 @@ async fn main() {
         place_player(&mut session, sample.point, sample.tangent, 28.0);
         shoot(&mut session, &dir, name, zoom).await;
     }
+
+    // Track Studio: the same split as thin wireframe handles with tags.
+    let mut session = RaceSession::new();
+    let track = tdrace_core::catalog::official_track("rally", "holjes_rx");
+    let split = track.network.as_ref().unwrap().get_segment(SegmentId(0)).unwrap().samples.last().unwrap().point;
+    session.enter_track_editor(track);
+    for (name, zoom) in [("editor-split", 6.0), ("editor-split-close", 14.0)] {
+        session.editor_camera.center = split;
+        session.editor_camera.target_center = split;
+        session.editor_camera.zoom = zoom;
+        session.editor_camera.target_zoom = zoom;
+        shoot(&mut session, &dir, name, None).await;
+    }
 }

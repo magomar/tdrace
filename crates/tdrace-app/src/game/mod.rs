@@ -218,7 +218,7 @@ use crate::profile::{
 use crate::render::car::render_car_with_visual_type_model_and_shadows;
 use crate::render::color::{CarColorScheme, Palette};
 use crate::editor::{
-    is_mouse_over_editor_ui, render_editor_grid, render_editor_gizmos, render_editor_ui,
+    is_mouse_over_editor_ui, render_editor_grid, render_editor_gizmos, render_editor_junction_labels, render_editor_ui,
     EditorAction, EditorCamera, EditorModal, EditorState, EditorToolType, SurfaceShapeType,
     ToolSettings,
 };
@@ -15689,6 +15689,9 @@ impl RaceSession {
             render_editor_gizmos(state, &self.editor_tools, &self.editor_camera);
 
             self.editor_camera.reset_to_screen();
+
+            // Junction branch tags need screen-space text, so they come after the world gizmos.
+            render_editor_junction_labels(&self.fonts, state, &self.editor_camera);
 
             // 2. Screen Pass: Render Editor UI (toolbars, palettes, inspector, status bar, and modals) ON TOP of the track!
             let dispatched = render_editor_ui(
