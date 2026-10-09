@@ -3,6 +3,7 @@ pub mod checkpoint;
 pub mod curve;
 pub mod geometry;
 pub mod network;
+pub mod pit_kit;
 pub mod presets;
 pub mod scenery;
 pub mod spline;
@@ -138,6 +139,9 @@ pub struct Track {
     /// Precomputed runtime junction geometry and spatial AABB bounding box for pit lane.
     #[serde(default, skip_serializing)]
     pub pit_lane_junctions: Option<PitLaneJunctionData>,
+    /// Source of truth for `pit_lane` when present (spec 101); the bake compiles it into `pit_lane`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pit_lane_layout: Option<pit_kit::PitLaneLayout>,
     /// Precomputed runtime barrier offset in meters to avoid expensive wall geometry sweeps.
     #[serde(default, skip_serializing)]
     pub cached_barrier_offset: Option<f32>,
@@ -191,6 +195,7 @@ impl Default for Track {
             pit_box_area: None,
             pit_lane: None,
             pit_lane_junctions: None,
+            pit_lane_layout: None,
             cached_barrier_offset: None,
             default_laps: 3,
             car_category: CarCategory::Gt,
@@ -649,6 +654,10 @@ impl Track {
     /// Computes pit lane entrance throat, gore triangle, exit merge quads, and spatial AABB.
     pub fn compute_pit_lane_junctions(&self) -> Option<PitLaneJunctionData> {
         let lane = self.pit_lane.as_ref()?;
+        // Spec 101: a compiled layout gives its junction markings directly; no search.
+        if let Some(compiled) = self.pit_lane_layout.as_ref().and_then(|l| l.compile(self).ok()) {
+            return Some(compiled.junctions);
+        }
         let n_pit = lane.spline.samples.len();
         if n_pit < 4 || self.spline.samples.len() < 4 {
             let mut min = Vec2::splat(f32::INFINITY);
@@ -1267,6 +1276,26 @@ impl Track {
         let Some(ref lane) = self.pit_lane else { return; };
         if lane.spline.samples.len() < 2 { return; }
 
+        // Spec 101: the pit perimeter replaces the pit-side main wall between the pit lane anchors, so cut it there
+        // by arc length; a search-based trim drops whole merged wall pieces and leaves holes.
+        if let Some(span) = pit_kit::perimeter_span(self) {
+            let side_walls = if span.side == pit_kit::Side::Left { &self.geometry.inner_walls } else { &self.geometry.outer_walls };
+            let cut: Vec<WallBarrier> = side_walls
+                .iter()
+                .flat_map(|w| {
+                    pit_kit::wall_pieces_outside_span(self, &span, &w.segment)
+                        .into_iter()
+                        .map(move |segment| WallBarrier { segment, ..w.clone() })
+                })
+                .collect();
+            if span.side == pit_kit::Side::Left {
+                self.geometry.inner_walls = cut;
+            } else {
+                self.geometry.outer_walls = cut;
+            }
+        }
+        let Some(ref lane) = self.pit_lane else { return; };
+
         let should_keep_wall = |wall: &WallBarrier| -> bool {
             let p0 = wall.segment.start;
             let p1 = wall.segment.end;
@@ -1275,6 +1304,9 @@ impl Track {
             let p_q3 = (p0 + p1 * 3.0) * 0.25;
 
             for pt in [p0, p_q1, p_mid, p_q3, p1] {
+                if pit_kit::beyond_lane_end(lane, pt) {
+                    continue;
+                }
                 let proj = lane.spline.project_point(pt);
                 if (wall.elevation - proj.elevation).abs() < 2.0 {
                     let half_w = proj.track_width * 0.5;
@@ -1309,6 +1341,13 @@ impl Track {
     pub fn generate_pit_lane_walls(&mut self) {
         let Some(ref lane) = self.pit_lane else { return; };
         if lane.spline.samples.len() < 4 || self.spline.samples.len() < 4 { return; }
+        // Spec 101: a compiled layout fixes the dividing wall ends; every pit lane gets an unbroken outer perimeter
+        // in place of the outer wall pieces.
+        let compiled = self.pit_lane_layout.as_ref().and_then(|l| l.compile(self).ok());
+        let (perimeter, perimeter_type) = match pit_kit::perimeter_span(self) {
+            Some(span) => pit_kit::perimeter_chain(self, lane, &span),
+            None => (Vec::new(), BarrierType::Concrete),
+        };
 
         let pit_w = lane.road_width;
         let pit_half_w = pit_w * 0.5;
@@ -1366,6 +1405,20 @@ impl Track {
                     }
                 }
             }
+        }
+
+        if !perimeter.is_empty() {
+            outer_wall_pts.clear();
+        }
+        if let Some(compiled) = &compiled {
+            let s_of = |p: Vec2| lane.spline.project_point(p).progress_distance;
+            let (s_start, s_end) = (s_of(compiled.divider_start), s_of(compiled.divider_end));
+            dividing_wall_pts.retain(|&p| {
+                let s = s_of(p);
+                s > s_start + 0.5 && s < s_end - 0.5
+            });
+            dividing_wall_pts.insert(0, compiled.divider_start);
+            dividing_wall_pts.push(compiled.divider_end);
         }
 
         if dividing_wall_pts.len() >= 2 {
@@ -1480,6 +1533,21 @@ impl Track {
                     } else {
                         self.geometry.outer_walls.push(wall);
                     }
+                }
+            }
+        }
+        for pair in perimeter.windows(2) {
+            let mut wall = WallBarrier::new(pair[0], pair[1], perimeter_type);
+            wall.elevation = self.spline.project_point((pair[0] + pair[1]) * 0.5).elevation;
+            let exists = self.geometry.inner_walls.iter().chain(&self.geometry.outer_walls).any(|w| {
+                (w.segment.start.distance(pair[0]) < 0.05 && w.segment.end.distance(pair[1]) < 0.05)
+                    || (w.segment.start.distance(pair[1]) < 0.05 && w.segment.end.distance(pair[0]) < 0.05)
+            });
+            if !exists {
+                if pit_side > 0.0 {
+                    self.geometry.inner_walls.push(wall);
+                } else {
+                    self.geometry.outer_walls.push(wall);
                 }
             }
         }

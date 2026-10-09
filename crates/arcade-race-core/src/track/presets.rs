@@ -1111,6 +1111,7 @@ pub fn create_prototypical_track(
         pit_box_area: None,
         pit_lane: None,
         pit_lane_junctions: None,
+        pit_lane_layout: None,
         cached_barrier_offset: None,
         default_laps,
         car_category,

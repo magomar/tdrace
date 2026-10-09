@@ -5,8 +5,9 @@ use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::checkpoint::Checkpoint;
 use tdrace_core::track::geometry::{BarrierType, JumpRamp, LineSegment, Obstacle, PitBox, PitLane, SurfaceLayer, SurfaceShape, SurfaceZone, WallBarrier};
 use tdrace_core::track::network::{GoreConfig, JunctionId, JunctionKind, MergeConfig, RoadJunction, RoadSegment, SegmentId, SocketId, SplineSocket, TrackLayout};
+use tdrace_core::track::pit_kit::{self, JunctionComponent, JunctionShape, PitBoxRow, PitLaneLayout, Side};
 use tdrace_core::track::spline::{TrackSpline, TrackWaypoint};
-use tdrace_core::track::{CarCategory, TrackKind};
+use tdrace_core::track::{CarCategory, Track, TrackKind};
 
 use super::camera::EditorCamera;
 use super::inspector::{
@@ -91,6 +92,14 @@ pub struct ToolSettings {
     pub active_polygon_vertices: Vec<Vec2>,
     pub active_pit_waypoints: Vec<Vec2>,
     pub active_pit_boxes: Vec<PitBox>,
+    /// Pit Lane tool mode: layout (spec 101, default) or free-form.
+    pub pit_layout_mode: bool,
+    /// Layout mode: main-spline arc length and side of the first click (the entry), until the second click.
+    pub pit_layout_entry: Option<(f32, Side)>,
+    /// Layout mode: guard error of the current layout. The preview is hidden while it is set.
+    pub pit_layout_error: Option<String>,
+    /// Layout mode: index of the road waypoint being dragged.
+    pub drag_pit_road_point: Option<usize>,
     pub new_waypoint_width: f32,
     pub new_waypoint_left_curb: bool,
     pub new_waypoint_right_curb: bool,
@@ -167,6 +176,10 @@ impl Default for ToolSettings {
             active_polygon_vertices: Vec::new(),
             active_pit_waypoints: Vec::new(),
             active_pit_boxes: Vec::new(),
+            pit_layout_mode: true,
+            pit_layout_entry: None,
+            pit_layout_error: None,
+            drag_pit_road_point: None,
             new_waypoint_width: 14.0,
             new_waypoint_left_curb: false,
             new_waypoint_right_curb: false,
@@ -267,8 +280,57 @@ impl ToolSettings {
         true
     }
 
+    /// Layout mode (spec 101): the first click on the main track places the entry junction, the second the exit
+    /// junction. The editor then builds a default layout on the clicked side and compiles it.
+    pub fn add_pit_layout_click(&mut self, state: &mut EditorState, mouse_world: Vec2) {
+        let proj = state.track.spline.project_point(mouse_world);
+        if state.track.spline.samples.len() < 2 || proj.distance_to_spline > proj.track_width * 0.5 + 2.0 {
+            return;
+        }
+        let s = proj.progress_distance;
+        let Some((entry_s, side)) = self.pit_layout_entry.take() else {
+            // `lateral_offset` is positive to the right of the driving direction.
+            let side = if proj.lateral_offset > 0.0 { Side::Right } else { Side::Left };
+            self.pit_layout_entry = Some((s, side));
+            return;
+        };
+        let layout = default_pit_layout(&state.track, entry_s, s, side);
+        state.record_undo();
+        self.install_pit_layout(state, layout);
+    }
+
+    /// Compiles `layout` into the track. On a guard error the layout is kept, the preview (pit lane) is removed and
+    /// the error is shown.
+    pub fn install_pit_layout(&mut self, state: &mut EditorState, layout: PitLaneLayout) {
+        match layout.compile(&state.track) {
+            Ok(compiled) => {
+                pit_kit::install(&mut state.track, compiled);
+                self.pit_layout_error = None;
+            }
+            Err(e) => {
+                state.track.pit_lane = None;
+                self.pit_layout_error = Some(format!("{e:?}"));
+            }
+        }
+        state.track.pit_lane_layout = Some(layout);
+        state.selection = Selection::PitBox;
+        state.rebuild_geometry();
+    }
+
+    /// Edits the current layout and recompiles it, as one undo step.
+    pub fn update_pit_layout(&mut self, state: &mut EditorState, edit: impl FnOnce(&mut PitLaneLayout)) {
+        let Some(mut layout) = state.track.pit_lane_layout.clone() else { return };
+        edit(&mut layout);
+        state.record_undo();
+        self.install_pit_layout(state, layout);
+    }
+
     /// Handles left-click waypoint node placement for pit lane spline authoring (Spec 062).
     pub fn add_pit_lane_node(&mut self, state: &mut EditorState, mouse_world: Vec2) {
+        if self.pit_layout_mode {
+            self.add_pit_layout_click(state, mouse_world);
+            return;
+        }
         let snapped_mouse = state.grid_snap.snap_point(mouse_world);
 
         // If at least 2 waypoints already exist, check if clicking near main track ribbon to merge
@@ -2151,7 +2213,13 @@ impl ToolSettings {
                 }
             }
             EditorToolType::PitLane => {
-                if is_multi_key {
+                let road_point = state.track.pit_lane_layout.as_ref().filter(|_| self.pit_layout_mode).and_then(|l| {
+                    l.road_waypoints.iter().position(|p| p.distance(mouse_world) <= PIT_ROAD_GRAB_RADIUS)
+                });
+                if let Some(i) = road_point {
+                    state.record_undo();
+                    self.drag_pit_road_point = Some(i);
+                } else if is_multi_key {
                     self.place_pit_box_stall(state, mouse_world);
                 } else {
                     self.add_pit_lane_node(state, mouse_world);
@@ -2165,6 +2233,16 @@ impl ToolSettings {
 
     /// Handles generic mouse drag event.
     pub fn handle_mouse_drag(&mut self, state: &mut EditorState, mouse_world: Vec2) {
+        if let Some(i) = self.drag_pit_road_point {
+            // Only road waypoints move; the guide points at the junction joints follow the junctions (locked).
+            if let Some(mut layout) = state.track.pit_lane_layout.clone() {
+                if let Some(p) = layout.road_waypoints.get_mut(i) {
+                    *p = state.grid_snap.snap_point(mouse_world);
+                }
+                self.install_pit_layout(state, layout);
+            }
+            return;
+        }
         if self.is_dragging {
             self.handle_primary_drag(state, mouse_world);
         } else if self.is_placing {
@@ -2174,6 +2252,7 @@ impl ToolSettings {
 
     /// Handles generic mouse up event.
     pub fn handle_mouse_up(&mut self, state: &mut EditorState, mouse_world: Vec2) {
+        self.drag_pit_road_point = None;
         if self.is_dragging {
             self.handle_primary_up(state, mouse_world);
         }
@@ -3399,6 +3478,12 @@ pub fn render_editor_gizmos(state: &EditorState, tools: &ToolSettings, _camera: 
             draw_circle_lines(b.position.x, b.position.y, b.stop_radius, 0.4, Palette::NEON_CYAN);
         }
     }
+    // Spec 101 layout: draggable road waypoints.
+    if let Some(layout) = &state.track.pit_lane_layout {
+        for p in &layout.road_waypoints {
+            draw_circle(p.x, p.y, 1.0, Palette::NEON_GOLD);
+        }
+    }
 
     // 10. Render Arena Perimeter Hull if track is an Arena
     if let Some(hull) = state.track.arena_hull() {
@@ -4038,3 +4123,36 @@ mod tests {
     }
 }
 
+
+/// Distance within which a click grabs a pit road waypoint (m).
+const PIT_ROAD_GRAB_RADIUS: f32 = 3.0;
+
+/// Default layout between two clicked main-spline positions (spec 101 Pillar VII): Taper junctions, a road parallel
+/// to the main track at the divider gap, and six stalls with garages.
+pub fn default_pit_layout(track: &Track, entry_s: f32, exit_s: f32, side: Side) -> PitLaneLayout {
+    const ROAD_WIDTH: f32 = 6.0;
+    const GAP: f32 = 2.0;
+    const JUNCTION_LENGTH: f32 = 40.0;
+    const ROAD_POINT_SPACING: f32 = 25.0;
+    let main = &track.spline;
+    let total = main.total_length;
+    let span = if main.closed { (exit_s - entry_s).rem_euclid(total) } else { exit_s - entry_s };
+    let mut road_waypoints = Vec::new();
+    let mut d = JUNCTION_LENGTH + ROAD_POINT_SPACING;
+    while d < span - JUNCTION_LENGTH - ROAD_POINT_SPACING * 0.5 {
+        let sample = main.sample_at_distance(entry_s + d);
+        let offset = sample.width * 0.5 + GAP + ROAD_WIDTH * 0.5;
+        road_waypoints.push(sample.point + sample.normal * (side.sign() * offset));
+        d += ROAD_POINT_SPACING;
+    }
+    let junction = |s: f32| JunctionComponent { s, kind: JunctionShape::Taper, length: JUNCTION_LENGTH, divider_gap: GAP };
+    PitLaneLayout {
+        side,
+        entry: junction(entry_s),
+        exit: junction(exit_s),
+        road_waypoints,
+        road_width: ROAD_WIDTH,
+        speed_limit: PitLane::DEFAULT_ROAD_SPEED_LIMIT,
+        box_row: PitBoxRow { start_s: JUNCTION_LENGTH + 25.0, count: 6, spacing: 12.0, garages: true },
+    }
+}

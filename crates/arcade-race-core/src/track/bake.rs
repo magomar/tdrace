@@ -4,6 +4,8 @@
 //! data (spline samples, walls, boundary polylines, checkpoints, starting grid, default runoff). By default only
 //! empty parts are filled, so hand edits in an already baked file are kept; `rebuild` regenerates them all.
 
+use glam::Vec2;
+
 use super::geometry::BarrierType;
 use super::presets::{
     adaptive_checkpoint_count, generate_checkpoints, generate_walls_from_spline,
@@ -102,7 +104,13 @@ pub fn bake(track: &mut Track, opts: &BakeOptions) -> Result<BakeReport, String>
         .or_else(|| track.checkpoints.iter().map(|c| c.sector + 1).max())
         .unwrap_or(3);
     let grid_layout = current_grid_layout(track);
-    if let Some(lane) = &mut track.pit_lane {
+    if let Some(layout) = track.pit_lane_layout.clone() {
+        // Spec 101: the layout is the source of truth for the pit lane and the only source of pit garages.
+        let compiled = layout
+            .compile(track)
+            .map_err(|e| format!("'{}': pit lane layout: {:?}", track.name, e))?;
+        super::pit_kit::install(track, compiled);
+    } else if let Some(lane) = &mut track.pit_lane {
         if opts.rebuild || lane.spline.samples.is_empty() {
             lane.spline = TrackSpline::new(lane.spline.waypoints.clone(), false);
         }
@@ -170,6 +178,9 @@ pub fn bake(track: &mut Track, opts: &BakeOptions) -> Result<BakeReport, String>
 /// The wall generator puts each wall vertex (a segment start) at `width / 2 + offset` from its sample, along the
 /// normal, so where no waypoint sets its own wall distance that gap is exactly the default offset. The most common
 /// gap wins; waypoint distances, curves, bridges and removed crossing points only add scattered values.
+/// Reach of pit walls beyond the pit road edge: the 1.5 m outer perimeter offset plus 0.5 m.
+const PIT_WALL_REACH: f32 = 2.0;
+
 fn current_wall_offset(track: &Track) -> Option<f32> {
     let samples = &track.spline.samples;
     if samples.is_empty() {
@@ -177,8 +188,14 @@ fn current_wall_offset(track: &Track) -> Option<f32> {
     }
     let mut counts: Vec<(i32, usize)> = Vec::new();
     let geometry = &track.geometry;
+    // Spec 101: walls along the pit lane (divider, perimeter) are not main walls.
+    let pit_wall = |v: Vec2| {
+        track.pit_lane.as_ref().is_some_and(|lane| {
+            lane.spline.project_point(v).distance_to_spline <= lane.road_width * 0.5 + PIT_WALL_REACH
+        })
+    };
     for walls in [&geometry.inner_walls, &geometry.outer_walls] {
-        for v in walls.iter().map(|w| &w.segment.start) {
+        for v in walls.iter().map(|w| &w.segment.start).filter(|v| !pit_wall(**v)) {
             let s = samples
                 .iter()
                 .min_by(|a, b| a.point.distance_squared(*v).total_cmp(&b.point.distance_squared(*v)))?;
