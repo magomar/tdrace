@@ -3,9 +3,9 @@ type: Architecture Spec
 template: architecture
 title: "Predefined Junction Components for Road Splits and Joker Loops"
 description: "Builds the joker branch of the 23 rallycross circuits from the predefined junction components of spec 101 (Taper or TurnOff, anchored to a main waypoint), joined by a free branch road; each junction gives its own throat, gore, collidable nose and closed walls, so no wall is searched and clipped at a split or merge; adds junction wall-gap validation and a fitting tool and migration report for the two joker builders. Converting the 23 official jokers is spec 105."
-status: draft
+status: in_progress
 receipt: "docs/receipts/spec-102-receipt.md"
-verified: { by: human:mario, at: 2026-10-08T21:04:21Z, hash: "2cb2f31ae016" }
+verified: { by: human:mario, at: 2026-10-09T16:41:16Z, hash: "1396133b115d" }
 created: 2026-10-08
 generated: { by: agent/claude-opus-5-5, at: 2026-10-08T20:49:53Z }
 depends_on:
