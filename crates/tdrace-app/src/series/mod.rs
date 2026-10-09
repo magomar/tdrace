@@ -111,6 +111,9 @@ pub struct SeriesStandingEntry {
     pub ai_style: Option<String>,
     #[serde(default)]
     pub ai_tier: Option<u8>,
+    /// Catalog id of the car the series gives the driver, shown on the bracket cards.
+    #[serde(default)]
+    pub car_model_id: Option<String>,
 }
 
 pub type TournamentStandingEntry = SeriesStandingEntry;
@@ -129,6 +132,7 @@ impl SeriesStandingEntry {
             ai_character: None,
             ai_style: None,
             ai_tier: None,
+            car_model_id: None,
         }
     }
 
@@ -357,6 +361,29 @@ impl SeriesSession {
     /// The race the player drives next in the running weekend.
     pub fn tournament_race(&self) -> Option<&TournamentRace> {
         self.tournament.as_ref().filter(|t| !t.is_complete).and_then(|t| t.player_race())
+    }
+
+    /// The AI drivers of the race the player drives next, in grid order. Outside a tournament weekend,
+    /// every other driver in standings order.
+    pub fn race_opponents(&self) -> Vec<&SeriesStandingEntry> {
+        match self.tournament_race() {
+            Some(race) => race
+                .driver_ids
+                .iter()
+                .filter(|id| *id != "player")
+                .filter_map(|id| self.standings.iter().find(|s| s.driver_id == *id))
+                .collect(),
+            None => self.standings.iter().filter(|s| s.driver_id != "player").collect(),
+        }
+    }
+
+    /// Where `driver_id` starts: the place in the weekend race, otherwise the place in the standings.
+    pub fn grid_rank(&self, driver_id: &str) -> usize {
+        let rank = match self.tournament_race() {
+            Some(race) => race.driver_ids.iter().position(|id| id == driver_id),
+            None => self.standings.iter().position(|s| s.driver_id == driver_id),
+        };
+        rank.unwrap_or(usize::MAX)
     }
 
     /// True while a weekend has races left to drive.

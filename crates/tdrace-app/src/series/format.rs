@@ -381,6 +381,7 @@ impl SeriesDefinition {
             standing.ai_character = d.ai_character.clone();
             standing.ai_style = d.ai_style.clone();
             standing.ai_tier = d.ai_tier;
+            standing.car_model_id = d.car_model_id.clone();
         }
 
         match self.series.tournament_config() {
@@ -440,7 +441,7 @@ impl SeriesDefinition {
                 name: s.driver_name.clone(),
                 team: s.team_name.clone(),
                 is_player: idx == 0 || s.driver_id == "player",
-                car_model_id: None,
+                car_model_id: s.car_model_id.clone(),
                 country: None,
                 ai_character: s.ai_character.clone(),
                 ai_style: s.ai_style.clone(),

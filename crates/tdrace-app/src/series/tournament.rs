@@ -275,7 +275,7 @@ impl TournamentWeekendState {
     }
 
     /// Results of the main-bracket races of `round`.
-    fn round_results(&self, round: usize) -> &[Vec<RoundDriverResult>] {
+    pub fn round_results(&self, round: usize) -> &[Vec<RoundDriverResult>] {
         match self.config.stage_for_round(round) {
             TournamentStage::QualifyingHeat => &self.heat_results,
             TournamentStage::Quarterfinal => &self.quarter_results,
