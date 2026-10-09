@@ -2523,6 +2523,8 @@ fn test_editor_pit_lane_tool_spline_and_box_placement() {
     let mut state = EditorState::new(track);
     let mut tools = ToolSettings::default();
     tools.active_tool = EditorToolType::PitLane;
+    // Free-form mode; Layout mode is the default since spec 101.
+    tools.pit_layout_mode = false;
 
     // 1. Place divergence waypoint
     tools.handle_mouse_down_with_mods(&mut state, Vec2::new(10.0, 10.0), false);
