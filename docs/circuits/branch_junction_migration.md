@@ -10,25 +10,25 @@ validation reports no error. Otherwise the circuit keeps its legacy network and 
 | catalunya_rx | kept legacy | - | - | - | - | - | no split junction within 4.0 m of the old joker (best fit 11.3 m) |
 | croft_rx | kept legacy | - | - | - | - | - | no split junction passes the guards (first: JunctionTooSteep { junction: Entry, angle_deg: 67.1879 }) |
 | dreux_rx | kept legacy | - | - | - | - | - | no fit passed the guards; first: DividerTooNarrow { s: 229.3107 } |
-| erx_motor_park | kept legacy | - | - | - | - | - | no split junction within 4.0 m of the old joker (best fit 13.0 m) |
+| erx_motor_park | kept legacy | - | - | - | - | - | no split junction passes the guards (first: JunctionTooSteep { junction: Entry, angle_deg: 67.1879 }) |
 | essay_rx | kept legacy | - | - | - | - | - | no split junction within 4.0 m of the old joker (best fit 4.4 m) |
 | estering_rx | kept legacy | - | - | - | - | - | no fit passed the guards; first: RoadTooTight { s: 19.569572, radius: 6.8813796 } |
-| hell_rx | kept legacy | - | - | - | - | - | no merge junction within 4.0 m of the old joker (best fit 7.5 m) |
+| hell_rx | kept legacy | - | - | - | - | - | no merge junction within 4.0 m of the old joker (best fit 15.5 m) |
 | holjes_rx | kept legacy | - | - | - | - | - | no merge junction within 4.0 m of the old joker (best fit 6.5 m) |
-| killarney_rx | kept legacy | - | - | - | - | - | no fit passed the guards; first: DividerTooNarrow { s: 149.08315 } |
+| killarney_rx | kept legacy | - | - | - | - | - | no fit passed the guards; first: DividerTooNarrow { s: 148.0714 } |
 | kouvola_rx | kept legacy | - | - | - | - | - | best deviation 2.65 m > 2.0 m |
 | lavare_rx | kept legacy | - | - | - | - | - | no split junction passes the guards (first: JunctionTooSteep { junction: Entry, angle_deg: 67.1879 }) |
 | lessay_rx | kept legacy | - | - | - | - | - | no split junction passes the guards (first: JunctionTooSteep { junction: Entry, angle_deg: 65.82308 }) |
 | loheac_rx | kept legacy | - | - | - | - | - | no split junction passes the guards (first: JunctionTooSteep { junction: Entry, angle_deg: 65.82308 }) |
-| lydden_hill | kept legacy | - | - | - | - | - | no split junction within 4.0 m of the old joker (best fit 7.3 m) |
+| lydden_hill | kept legacy | - | - | - | - | - | no split junction passes the guards (first: JunctionTooSteep { junction: Entry, angle_deg: 66.860535 }) |
 | mettet_rx | kept legacy | - | - | - | - | - | no merge junction passes the guards (first: JunctionTooSteep { junction: Exit, angle_deg: 65.82308 }) |
-| montalegre_rx | kept legacy | - | - | - | - | - | no split junction within 4.0 m of the old joker (best fit 5.7 m) |
+| montalegre_rx | kept legacy | - | - | - | - | - | no split junction within 4.0 m of the old joker (best fit 6.4 m) |
 | nyirad_rx | kept legacy | - | - | - | - | - | no split junction within 4.0 m of the old joker (best fit 5.4 m) |
 | riga_rx | kept legacy | - | - | - | - | - | no split junction within 4.0 m of the old joker (best fit 6.8 m) |
 | rx_canyon_flyer | kept legacy | - | - | - | - | - | no merge junction passes the guards (first: JunctionTooSteep { junction: Exit, angle_deg: 70.54808 }) |
 | rx_hilltop_leap | kept legacy | - | - | - | - | - | no split junction passes the guards (first: JunctionTooSteep { junction: Entry, angle_deg: 73.87443 }) |
 | rx_quarry_sprint | kept legacy | - | - | - | - | - | no split junction within 4.0 m of the old joker (best fit 8.3 m) |
 | silverstone_rx | kept legacy | - | - | - | - | - | no split junction passes the guards (first: JunctionTooSteep { junction: Entry, angle_deg: 65.82308 }) |
-| spa_rx | kept legacy | - | - | - | - | - | no split junction within 4.0 m of the old joker (best fit 9.8 m) |
+| spa_rx | kept legacy | - | - | - | - | - | no split junction within 4.0 m of the old joker (best fit 14.8 m) |
 
 0 of 23 circuits converted.
