@@ -1,6 +1,6 @@
 //! Spec 101: parametric pit lane kit (junction components, guards).
 
-use arcade_race_core::track::pit_kit::{
+use arcade_race_core::track::junction_kit::{
     build_junction, JunctionComponent, JunctionError, JunctionRole, JunctionShape, Side,
 };
 use arcade_race_core::track::spline::TrackSpline;

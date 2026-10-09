@@ -2,6 +2,7 @@ pub mod bake;
 pub mod checkpoint;
 pub mod curve;
 pub mod geometry;
+pub mod junction_kit;
 pub mod network;
 pub mod pit_kit;
 pub mod presets;
@@ -1279,7 +1280,7 @@ impl Track {
         // Spec 101: the pit perimeter replaces the pit-side main wall between the pit lane anchors, so cut it there
         // by arc length; a search-based trim drops whole merged wall pieces and leaves holes.
         if let Some(span) = pit_kit::perimeter_span(self) {
-            let side_walls = if span.side == pit_kit::Side::Left { &self.geometry.inner_walls } else { &self.geometry.outer_walls };
+            let side_walls = if span.side == junction_kit::Side::Left { &self.geometry.inner_walls } else { &self.geometry.outer_walls };
             let cut: Vec<WallBarrier> = side_walls
                 .iter()
                 .flat_map(|w| {
@@ -1288,7 +1289,7 @@ impl Track {
                         .map(move |segment| WallBarrier { segment, ..w.clone() })
                 })
                 .collect();
-            if span.side == pit_kit::Side::Left {
+            if span.side == junction_kit::Side::Left {
                 self.geometry.inner_walls = cut;
             } else {
                 self.geometry.outer_walls = cut;

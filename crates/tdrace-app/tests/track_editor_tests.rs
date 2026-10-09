@@ -2723,7 +2723,7 @@ fn test_road_split_wall_trimming_and_zero_collision() {
 
 /// Start and end arc length of the longest stretch with radius >= 300 m (in 5 m steps).
 fn longest_straight(track: &tdrace_core::track::Track) -> (f32, f32) {
-    use tdrace_core::track::pit_kit::signed_curvature;
+    use tdrace_core::track::junction_kit::signed_curvature;
     let main = &track.spline;
     let (mut best, mut run_start) = ((0.0, 0.0), None);
     let mut s = 0.0;
@@ -2753,7 +2753,7 @@ fn point_beside(track: &tdrace_core::track::Track, s: f32, lateral_right: f32) -
 #[test]
 fn test_pit_lane_layout_mode_builds_a_pit_lane() {
     use tdrace_app::editor::inspector::{apply_edit, build_inspector, Edit, Prop, Row};
-    use tdrace_core::track::pit_kit::Side;
+    use tdrace_core::track::junction_kit::Side;
 
     let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     assert!(track.pit_lane.is_none() && track.pit_lane_layout.is_none());

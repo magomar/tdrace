@@ -5,7 +5,8 @@ use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::checkpoint::Checkpoint;
 use tdrace_core::track::geometry::{BarrierType, JumpRamp, LineSegment, Obstacle, PitBox, PitLane, SurfaceLayer, SurfaceShape, SurfaceZone, WallBarrier};
 use tdrace_core::track::network::{GoreConfig, JunctionId, JunctionKind, MergeConfig, RoadJunction, RoadSegment, SegmentId, SocketId, SplineSocket, TrackLayout};
-use tdrace_core::track::pit_kit::{self, JunctionComponent, JunctionShape, PitBoxRow, PitLaneLayout, Side};
+use tdrace_core::track::junction_kit::{JunctionComponent, JunctionShape, Side};
+use tdrace_core::track::pit_kit::{self, PitBoxRow, PitLaneLayout};
 use tdrace_core::track::spline::{TrackSpline, TrackWaypoint};
 use tdrace_core::track::{CarCategory, Track, TrackKind};
 
