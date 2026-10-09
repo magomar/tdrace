@@ -27,8 +27,8 @@ fn test_all_96_tracks_grid_positions_count_and_validation() {
 
         for track_def in module.tracks() {
             let gen_track = tdrace_core::catalog::official_track(mod_id, track_def.id);
-            // A circuit with a launch chute (spec 103) starts its cars on the chute's packed grid: 8 slots.
-            let target_slots = if gen_track.launch_chute().is_some() { 8 } else { target_slots };
+            // A circuit with a launch chute (spec 103) starts its cars on the chute's packed grid: its slots.
+            let target_slots = gen_track.launch_chute().map_or(target_slots, |c| c.grid_slots.len());
             assert_eq!(
                 gen_track.grid_positions.len(),
                 target_slots,

@@ -141,14 +141,14 @@ fn test_starting_grid_scaling_across_discipline_capacities() {
         assert_eq!(session.grid_participants.len(), 10);
     }
 
-    // Rally: the launch chute holds 8 grid positions -> 7 bots
+    // Rally: the launch chute holds 10 grid positions -> 9 bots
     if let Ok(track) = session.track_manager.load_track_by_slug("holjes_rx") {
         session.track = track;
-        assert_eq!(session.max_grid_participants(), 8);
-        assert_eq!(session.max_bots(), 7);
+        assert_eq!(session.max_grid_participants(), 10);
+        assert_eq!(session.max_bots(), 9);
         session.num_bots = session.max_bots();
         session.rebuild_roster_participants();
-        assert_eq!(session.grid_participants.len(), 8);
+        assert_eq!(session.grid_participants.len(), 10);
     }
 
     // Kart: 14 grid positions -> 13 bots
