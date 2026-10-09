@@ -124,6 +124,7 @@ Table of contents providing progressive disclosure of project constitution and t
 | [101](101_parametric_pit_lane_kit_blocks_on_spline_circuits.md) | Parametric Pit Lane Kit Blocks on Spline Circuits | Architecture Spec | `implemented` | [062](062_circuit_pit_lanes_and_interactive_pit_stop_procedures.md), [077](077_procedural_gt_circuit_pit_lanes_from_openstreetmap_survey_data.md) | Builds pit lanes from predefined parametric junction components (entry and exit, in Taper or TurnOff variants) anchored to the main spline by arc length, joined by a free-form pit road spline, with a box row component that places stalls and garages; compiled at bake time into the existing PitLane and PitLaneJunctionData structs, with guards that fail before bake, and a migration of the 18 GT pit lanes. |
 | [103](103_autocross_and_rallycross_launch_chutes_and_templated_track_components.md) | Autocross and Rallycross Launch Chutes and Templated Track Components | Feature Spec | `implemented` | [006](006_road_split_and_branching_tracks.md), [042](042_jsononly_official_circuit_catalog_and_embedded_track_data.md), [050](050_fia_autocross_championship_and_vehicle_roster.md), [051](051_rallycross_6tier_career_progression_and_expanded_circuit_roster.md), [081](081_rallycross_joker_lap_segments_for_classic_and_openstreetmap_circuits.md), [086](086_compact_track_studio_inspector_with_unified_single_and_multiselection_editing.md) | Introduces authentic Autocross and Rallycross walled launch chutes and packed starting grids as modular templated track components via TrackNetwork, providing Run-Once Lap 1 launch progression, Track Studio CAD stamp authoring, and global retrofitting across all 17 Autocross and 23 Rallycross circuits. |
 | [104](104_autocross_and_rallycross_tournament_sprint_weekend_format.md) | Autocross and Rallycross Tournament Sprint Weekend Format | Feature Spec | `implemented` | [017](017_declarative_championship_format_and_editor.md), [050](050_fia_autocross_championship_and_vehicle_roster.md), [051](051_rallycross_6tier_career_progression_and_expanded_circuit_roster.md), [103](103_autocross_and_rallycross_launch_chutes_and_templated_track_components.md) | Implements the authentic 3-stage tournament weekend format (4 Qualifying Heats -> 2 Semifinals -> Grand Final & Consolation B-Final) across a 32-driver field for Autocross and Rallycross championships, providing dynamic grid seeding, Option A continuous player racing, bracket visualization, and 64-driver 4-stage scalability. |
+| [106](106_classic_autocross_launch_chutes_and_tencar_rallycross_chutes.md) | Classic Autocross launch chutes and ten-car Rallycross chutes | Feature Spec | `draft` | [103](103_autocross_and_rallycross_launch_chutes_and_templated_track_components.md) | Gives the 3 Classic Autocross circuits the Autocross launch chute (8 cars), makes every Rallycross chute hold 10 cars with a 3-2-3-2 grid, and moves the Classic grandstands that stood inside the wall line, on Meadow Sprint partly on the road. |
 
 ### 🗺️ Specification Dependency Graph
 
@@ -183,6 +184,7 @@ flowchart LR
     101["101: Parametric Pit Lane Kit Blocks on Spline Circuits"]
     103["103: Autocross and Rallycross Launch Chutes and Templated Track Components"]
     104["104: Autocross and Rallycross Tournament Sprint Weekend Format"]
+    106["106: Classic Autocross launch chutes and ten-car Rallycross chutes"]
     055 --> 047
     062 --> 063
     055 --> 064
@@ -255,4 +257,5 @@ flowchart LR
     050 --> 104
     051 --> 104
     103 --> 104
+    103 --> 106
 ```
