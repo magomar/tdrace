@@ -3,7 +3,8 @@ type: Feature Spec
 template: feature
 title: "Classic Autocross launch chutes and ten-car Rallycross chutes"
 description: "Gives the 3 Classic Autocross circuits the Autocross launch chute (8 cars), makes every Rallycross chute hold 10 cars with a 3-2-3-2 grid, and moves the Classic grandstands that stood inside the wall line, on Meadow Sprint partly on the road."
-status: draft
+status: approved
+verified: { by: human:mario, at: 2026-10-09T18:37:24Z, hash: "054888626a76" }
 created: 2026-10-09
 generated: { by: agent/claude-opus-5.5, at: 2026-10-09T18:34:29Z }
 depends_on:
