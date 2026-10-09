@@ -5,6 +5,7 @@ use arcade_race_core::track::pit_kit::{
 };
 use arcade_race_core::track::spline::TrackSpline;
 use glam::Vec2;
+use wheelbase::SurfaceType;
 
 const TRACK_WIDTH: f32 = 12.0;
 const ROAD_WIDTH: f32 = 5.0;
@@ -221,6 +222,34 @@ fn junction_markings_come_from_the_components() {
     assert_eq!(c.junctions.exit_quads.iter().map(|q| q.quad).collect::<Vec<_>>(), exit.quads);
     assert_eq!(c.divider_start, entry.divider_end);
     assert_eq!(c.divider_end, exit.divider_end);
+}
+
+#[test]
+fn pit_junction_wedges_are_not_paved_grip_islands() {
+    // Spec 085: the wedge between the main edge and the pit road edge keeps the natural surface.
+    let mut track = track_on(stadium());
+    track.default_surface = SurfaceType::Dirt;
+    let c = straight_layout().compile(&track).unwrap();
+    let wedges: Vec<Vec2> = c
+        .junctions
+        .entrance_quads
+        .iter()
+        .chain(c.junctions.exit_quads.iter().map(|q| &q.quad))
+        .map(|q| (q[0] + q[1] + q[2] + q[3]) * 0.25)
+        .collect();
+    track.pit_lane = Some(c.lane);
+    // Count the wedge points that neither road covers, so the check cannot pass on empty input.
+    let mut open_points = 0;
+    for p in wedges {
+        let on_main = track.spline.project_point(p).is_on_track;
+        let on_lane = track.pit_lane.as_ref().unwrap().spline.project_point(p).is_on_track;
+        if on_main || on_lane {
+            continue;
+        }
+        open_points += 1;
+        assert_ne!(track.sample_pit_lane_surface(p), Some(SurfaceType::Asphalt), "wedge point {p:?} is paved");
+    }
+    assert!(open_points > 0, "no wedge point lies outside both roads, the test proves nothing");
 }
 
 #[test]

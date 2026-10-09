@@ -571,7 +571,7 @@ impl Track {
         self.default_surface
     }
 
-    /// Samples surface type for pit lane road ribbon, pit boxes, and paved junction areas.
+    /// Samples surface type for the pit lane road ribbon and pit boxes.
     pub fn sample_pit_lane_surface(&self, point: Vec2) -> Option<SurfaceType> {
         let Some(ref lane) = self.pit_lane else {
             if let Some(ref shape) = self.pit_box_area {
@@ -614,27 +614,10 @@ impl Track {
             }
         }
 
-        // 2. Pit service box stalls
+        // 2. Pit service box stalls. The entrance and exit wedges between the pit road and the main track are
+        // not paved: they keep the natural surface, so a junction never adds a tarmac grip island (spec 085).
         for pit_box in &lane.pit_boxes {
             if pit_box.contains_point(point) {
-                return Some(SurfaceType::Asphalt);
-            }
-        }
-
-        // 3. Paved entrance throat and exit merge junction areas
-        for q in &junctions_ref.entrance_quads {
-            if point_in_quad_2d(point, q[0], q[1], q[2], q[3]) {
-                return Some(SurfaceType::Asphalt);
-            }
-        }
-        if junctions_ref.has_gore
-            && (point_in_triangle_2d(point, junctions_ref.p_apex, junctions_ref.track_edge_apex, junctions_ref.pit_inner_apex)
-                || point_in_quad_2d(point, junctions_ref.te_start, junctions_ref.track_edge_apex, junctions_ref.pit_inner_apex, junctions_ref.pe_start))
-        {
-            return Some(SurfaceType::Asphalt);
-        }
-        for eq in &junctions_ref.exit_quads {
-            if point_in_quad_2d(point, eq.quad[0], eq.quad[1], eq.quad[2], eq.quad[3]) {
                 return Some(SurfaceType::Asphalt);
             }
         }
