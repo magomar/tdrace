@@ -3,7 +3,7 @@ type: Feature Spec
 template: feature
 title: "Bifurcation Pacenote HUD Driving Aids and De-Cluttered Track Junctions"
 description: "Eliminates intrusive hardcoded asphalt throat wedges, painted highway chevrons, and toy-like bullseye attenuators across split junctions; restores native terrain surface grip; decouples bot navigation hints from in-race rendering; simplifies track editor junction previews; and introduces an authentic Bifurcation / Fork Pacenote driving aid for Joker Laps and Pit Lane entries."
-status: approved
+status: in_progress
 verified: { by: "human:mario", at: "2026-10-04T16:53:00Z", hash: "874432d37071" }
 created: 2026-10-04
 generated: { by: agent/antigravity, at: 2026-10-04T15:40:08Z }
