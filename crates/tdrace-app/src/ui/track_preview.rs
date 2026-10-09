@@ -386,21 +386,25 @@ pub fn render_track_detailed_preview(
     // Bottom Surface Composition Legend (platform MetricBar, one segment per surface)
     let breakdown = track.surface_breakdown();
 
-    let bar_x = x + scaler.s(12.0);
-    let bar_w = (w - scaler.s(24.0)).max(20.0);
-    let bar_h = scaler.s(16.0);
-    let bar_gap = scaler.s(2.0);
+    let row_h = scaler.s(16.0);
+    let row_gap = scaler.s(2.0);
     let legend_base_y = y + h - scaler.s(24.0);
+    let font_size = scaler.font_s(11.0);
+    let right_x = x + w - scaler.s(12.0);
+    let pct_col_w = fonts.measure_ui_bold("100%", font_size).width;
+    let label_right_x = right_x - pct_col_w - scaler.s(8.0);
 
     for (i, (surf, pct)) in breakdown.iter().enumerate() {
-        let bar = cabinet::ui::MetricBar::stat(
-            surf.name(),
-            *pct / 100.0,
-            format!("{:.0}%", pct.round()),
-            surface_preview_color(*surf),
-        );
-        let bar_y = legend_base_y - (i as f32 + 1.0) * (bar_h + bar_gap);
-        bar.draw(scaler, fonts, cabinet::ui::LayoutRect::new(bar_x, bar_y, bar_w, bar_h));
+        let color = surface_preview_color(*surf);
+        let row_y = legend_base_y - (i as f32 + 1.0) * (row_h + row_gap);
+        let baseline_y = row_y + row_h * 0.75;
+
+        let pct_text = format!("{:.0}%", pct.round());
+        let pct_w = fonts.measure_ui_bold(&pct_text, font_size).width;
+        fonts.draw_ui_bold(&pct_text, right_x - pct_w, baseline_y, font_size, color);
+
+        let label_w = fonts.measure_ui_bold(surf.name(), font_size).width;
+        fonts.draw_ui_bold(surf.name(), label_right_x - label_w, baseline_y, font_size, color);
     }
 
     // Geometry summary, right-aligned on the bottom legend line (the top-right corner is left
