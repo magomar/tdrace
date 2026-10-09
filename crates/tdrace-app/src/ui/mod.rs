@@ -47,7 +47,7 @@ pub use career_hub::{
 
 pub use curve_indicator::{
     compute_curve_colors, compute_indicator_alpha, curve_indicator_lookahead,
-    render_curve_pacenote, CurveColorScheme,
+    render_bifurcation_pacenote, render_curve_pacenote, upcoming_bifurcation, CurveColorScheme,
 };
 pub use driver_card::render_driver_cards_screen;
 pub use font::Fonts;
@@ -57,7 +57,7 @@ pub use garage::{
     render_garage_screen, GALLERY_MODULES, GarageViewMode,
 };
 pub use hall_of_fame::{render_hall_of_fame_screen, render_name_input_modal, PlayerCongrats};
-pub use hud::{format_lap_time, render_hud, PersonalBestNotification};
+pub use hud::{format_lap_time, pit_stop_recommended, render_hud, PersonalBestNotification};
 pub use race_stats::render_race_stats_screen;
 pub use menu::{
     category_pill_rect, modality_card_rect, module_select_badge_rect, module_select_card_rect, pause_menu_layout,
