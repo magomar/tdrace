@@ -1256,7 +1256,9 @@ fn test_championship_lap_calibration_across_all_modules() {
             assert_eq!(round.laps, Some(5), "Rallycross {} round {} laps", slug, round.order);
         }
         session.launch_or_resume_championship(def);
-        assert_eq!(session.total_laps, 5, "Rallycross preset {} must run 5 laps", slug);
+        // Spec 104: a tournament sprint round opens with a heat, which runs heat_laps.
+        let expected_laps = def.series.tournament_config().map(|c| c.heat_laps).unwrap_or(5);
+        assert_eq!(session.total_laps, expected_laps, "Rallycross preset {} must run {} laps", slug, expected_laps);
     }
 
     // 4. NASCAR Championships: Preserved (4 laps)
@@ -1355,7 +1357,9 @@ fn test_championship_lap_calibration_across_all_modules() {
             assert_eq!(round.laps, Some(*expected_laps), "Autocross {} round {} laps", slug, round.order);
         }
         session.launch_or_resume_championship(def);
-        assert_eq!(session.total_laps, *expected_laps, "Autocross preset {} must run {} laps", slug, expected_laps);
+        // Spec 104: a tournament sprint round opens with a heat, which runs heat_laps.
+        let first_stage_laps = def.series.tournament_config().map(|c| c.heat_laps).unwrap_or(*expected_laps);
+        assert_eq!(session.total_laps, first_stage_laps, "Autocross preset {} must run {} laps", slug, first_stage_laps);
     }
 }
 

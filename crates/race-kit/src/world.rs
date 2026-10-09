@@ -123,6 +123,31 @@ pub struct ParticipantResult {
     pub jokers: u32,
 }
 
+/// How a vehicle left a sprint stage (see [`RaceWorld::stage_classification`]).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum StageOutcome {
+    /// The vehicle crossed the line: its time is real.
+    Finished,
+    /// The vehicle was wrecked. It is classified after every other vehicle.
+    Dnf,
+    /// The vehicle was still racing when the stage was read: its time is a projection.
+    Unfinished,
+}
+
+/// One row of [`RaceWorld::stage_classification`].
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct StageFinish {
+    /// Vehicle index in [`RaceWorld::vehicles`].
+    pub car: usize,
+    /// Position in the stage, starting at 1. Wrecked vehicles come last.
+    pub position: usize,
+    pub outcome: StageOutcome,
+    /// Race time in seconds including the joker penalty. `None` unless the vehicle finished, so a
+    /// wreck time or a projection never seeds a later stage.
+    pub time: Option<f32>,
+    pub best_lap: Option<f32>,
+}
+
 /// A race: vehicles, their trackers, their finish states and the race clock.
 ///
 /// The world does not own the track. The caller passes the same `&Track` to each step.
@@ -567,5 +592,27 @@ impl<V: Vehicle> RaceWorld<V> {
             row.position = rank + 1;
         }
         rows
+    }
+
+    /// True when every vehicle has finished or been wrecked: a sprint stage (a heat, a semifinal or a
+    /// final) has nothing left to decide. An empty world is not complete.
+    pub fn is_stage_complete(&self) -> bool {
+        !self.finish.is_empty() && self.finish.iter().all(|f| !matches!(f, FinishState::Racing))
+    }
+
+    /// The classification of a sprint stage, in order: finished vehicles by time plus joker penalty, then
+    /// vehicles still racing, then wrecked vehicles last (Spec 104). Only a finished vehicle has a time.
+    pub fn stage_classification(&self, track: &Track) -> Vec<StageFinish> {
+        self.results(track)
+            .into_iter()
+            .map(|row| {
+                let (outcome, time) = match row.state {
+                    FinishState::Finished { .. } => (StageOutcome::Finished, Some(row.time + row.penalty)),
+                    FinishState::Dnf { .. } => (StageOutcome::Dnf, None),
+                    FinishState::Racing => (StageOutcome::Unfinished, None),
+                };
+                StageFinish { car: row.car, position: row.position, outcome, time, best_lap: row.best_lap }
+            })
+            .collect()
     }
 }

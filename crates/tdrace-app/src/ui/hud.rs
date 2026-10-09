@@ -66,6 +66,7 @@ pub fn render_hud(
     player_pit_state: Option<&race_kit::PitServiceState>,
     telemetry_mode: CockpitTelemetryMode,
     joker_badge: Option<JokerBadge>,
+    stage_badge: Option<&str>,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -131,6 +132,10 @@ pub fn render_hud(
     // 3. Mini-Map Radar (Top Right)
     let map_w = scaler.s(175.0);
     let map_h = scaler.s(145.0);
+    // 3a. Tournament stage badge (HEAT 2/4, SEMIFINAL 1/2, GRAND FINAL) left of the mini-map (Spec 104)
+    if let Some(label) = stage_badge {
+        render_stage_badge(fonts, &scaler, sw - map_w - scaler.safe_pad_x - scaler.s(8.0), scaler.safe_pad_y, label);
+    }
     let player_idx = all_cars.iter().position(|c| std::ptr::eq(c, player_car)).unwrap_or(0);
     render_minimap_with_player(
         fonts,
@@ -780,6 +785,18 @@ fn render_split_player_panel(
 
     // Warnings (Wrong Way, Off Track)
     render_warning_alerts(fonts, scaler, pw, ph, progress);
+}
+
+/// Tournament stage pill, right-aligned at `right_x` (Spec 104).
+fn render_stage_badge(fonts: &Fonts, scaler: &UiScaler, right_x: f32, y: f32, label: &str) {
+    let col = Palette::NEON_GOLD;
+    let pill_h = scaler.s(26.0);
+    let text_w = label.len() as f32 * scaler.s(9.5);
+    let pill_w = text_w + scaler.s(20.0);
+    let x = right_x - pill_w;
+    draw_rectangle(x, y, pill_w, pill_h, Color::new(col.r * 0.25, col.g * 0.25, col.b * 0.25, 0.90));
+    draw_rectangle_lines(x, y, pill_w, pill_h, scaler.s(1.8), col);
+    fonts.draw_ui_bold(label, x + (pill_w - text_w) * 0.5, y + scaler.s(18.0), scaler.font_s(14.0), col);
 }
 
 /// Tactical pit recommendation alert ("BOX THIS LAP") flashing beside the mini-map (Spec 062).

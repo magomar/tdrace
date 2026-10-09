@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::{SeriesSession, PointSystem};
+use super::{PointSystem, SeriesSession, TournamentConfig, WeekendFormat, TOURNAMENT_POINTS_32};
 
 fn default_module() -> String {
     "gt".to_string()
@@ -41,6 +41,18 @@ pub struct SeriesMeta {
     pub ai_difficulty: Option<String>,
     #[serde(default)]
     pub icon: Option<String>,
+    /// `tournament_sprint` runs each round as a heats-to-final weekend (Spec 104).
+    #[serde(default, skip_serializing_if = "WeekendFormat::is_single_race")]
+    pub weekend_format: WeekendFormat,
+    /// Drivers in a tournament weekend: 16, 32 (default) or 64.
+    #[serde(default)]
+    pub total_drivers: Option<usize>,
+    #[serde(default)]
+    pub heat_laps: Option<u32>,
+    #[serde(default)]
+    pub semi_laps: Option<u32>,
+    #[serde(default)]
+    pub final_laps: Option<u32>,
 }
 
 pub type ChampionshipMeta = SeriesMeta;
@@ -57,7 +69,29 @@ impl Default for SeriesMeta {
             bot_count: None,
             ai_difficulty: None,
             icon: None,
+            weekend_format: WeekendFormat::default(),
+            total_drivers: None,
+            heat_laps: None,
+            semi_laps: None,
+            final_laps: None,
         }
+    }
+}
+
+impl SeriesMeta {
+    /// The weekend of a `tournament_sprint` series; unset sizes take the defaults of 32 drivers and
+    /// 4, 5 and 6 laps. `None` for a series that runs a single race per round.
+    pub fn tournament_config(&self) -> Option<TournamentConfig> {
+        if self.weekend_format != WeekendFormat::TournamentSprint {
+            return None;
+        }
+        let d = TournamentConfig::default();
+        Some(TournamentConfig {
+            total_drivers: self.total_drivers.unwrap_or(d.total_drivers),
+            heat_laps: self.heat_laps.unwrap_or(d.heat_laps),
+            semi_laps: self.semi_laps.unwrap_or(d.semi_laps),
+            final_laps: self.final_laps.unwrap_or(d.final_laps),
+        })
     }
 }
 
@@ -99,6 +133,7 @@ impl ScoringConfig {
             "stock_car" | "stockcar" | "nascar" | "nascar_cup" => PointSystem::NascarCup {
                 stage_win_bonus: self.stage_win_bonus,
             },
+            "tournament" | "tournament_32" => PointSystem::Custom(TOURNAMENT_POINTS_32.to_vec()),
             "custom" if !self.custom_points.is_empty() => {
                 PointSystem::Custom(self.custom_points.clone())
             }
@@ -135,6 +170,13 @@ impl ScoringConfig {
                 system: "stock_car".to_string(),
                 fastest_lap_bonus: false,
                 stage_win_bonus: *stage_win_bonus,
+                clean_race_bonus: false,
+                custom_points: Vec::new(),
+            },
+            PointSystem::Custom(pts) if pts.as_slice() == TOURNAMENT_POINTS_32 => Self {
+                system: "tournament".to_string(),
+                fastest_lap_bonus: false,
+                stage_win_bonus: false,
                 clean_race_bonus: false,
                 custom_points: Vec::new(),
             },
@@ -258,6 +300,12 @@ impl SeriesDefinition {
             errors.push("Default laps per round must be greater than 0".to_string());
         }
 
+        if let Some(config) = self.series.tournament_config() {
+            if let Err(e) = config.validate() {
+                errors.push(e);
+            }
+        }
+
         // 2. Rounds checks
         if self.rounds.is_empty() {
             errors.push("Series must contain at least 1 round".to_string());
@@ -333,9 +381,13 @@ impl SeriesDefinition {
             standing.ai_character = d.ai_character.clone();
             standing.ai_style = d.ai_style.clone();
             standing.ai_tier = d.ai_tier;
+            standing.car_model_id = d.car_model_id.clone();
         }
 
-        session
+        match self.series.tournament_config() {
+            Some(config) if config.validate().is_ok() => session.with_tournament(config),
+            _ => session,
+        }
     }
 
     /// Recovers a declarative series definition from an active runtime `SeriesSession`.
@@ -358,6 +410,11 @@ impl SeriesDefinition {
             bot_count: Some(session.standings.len().saturating_sub(1)),
             ai_difficulty: None,
             icon: None,
+            weekend_format: session.weekend_format,
+            total_drivers: session.tournament_config.map(|c| c.total_drivers),
+            heat_laps: session.tournament_config.map(|c| c.heat_laps),
+            semi_laps: session.tournament_config.map(|c| c.semi_laps),
+            final_laps: session.tournament_config.map(|c| c.final_laps),
         };
 
         let scoring = ScoringConfig::from_point_system(&session.point_system);
@@ -384,7 +441,7 @@ impl SeriesDefinition {
                 name: s.driver_name.clone(),
                 team: s.team_name.clone(),
                 is_player: idx == 0 || s.driver_id == "player",
-                car_model_id: None,
+                car_model_id: s.car_model_id.clone(),
                 country: None,
                 ai_character: s.ai_character.clone(),
                 ai_style: s.ai_style.clone(),
@@ -531,6 +588,7 @@ car_model_id = "gt_vandorn_stratus_t1"
                 bot_count: Some(1),
                 ai_difficulty: None,
                 icon: None,
+                ..SeriesMeta::default()
             },
             scoring: ScoringConfig {
                 system: "stock_car".to_string(),

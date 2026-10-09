@@ -15,6 +15,7 @@ pub use events::{DnfCause, RaceEvent};
 pub use vehicle::{CanopyBrush, DriveControls, Vehicle};
 pub use world::{
     CollisionParams, FinishState, JokerRule, ParticipantResult, PitServiceState, RaceFormat, RaceRules, RaceWorld,
+    StageFinish, StageOutcome,
 };
 
 /// Compiles the README code as a doc test.

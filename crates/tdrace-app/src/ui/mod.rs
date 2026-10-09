@@ -19,6 +19,7 @@ pub mod career_select;
 pub mod circuit_viewer;
 pub mod lan_ui;
 pub mod academy_ui;
+pub mod tournament_bracket;
 
 pub use academy_ui::{
     academy_card_rect, graduation_showroom_button_rect, render_academy_curriculum_screen,
