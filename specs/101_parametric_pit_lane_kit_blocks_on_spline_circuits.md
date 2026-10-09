@@ -4,7 +4,7 @@ template: architecture
 title: "Parametric Pit Lane Kit Blocks on Spline Circuits"
 description: "Builds pit lanes from predefined parametric junction components (entry and exit, in Taper or TurnOff variants) anchored to the main spline by arc length, joined by a free-form pit road spline, with a box row component that places stalls and garages; compiled at bake time into the existing PitLane and PitLaneJunctionData structs, with guards that fail before bake, and a migration of the 18 GT pit lanes."
 status: in_progress
-verified: { by: human:mario, at: 2026-10-08T21:07:19Z, hash: "120015308028" }
+verified: { by: human:mario, at: 2026-10-09T13:35:05Z, hash: "0bd2c461212e" }
 created: 2026-10-07
 generated: { by: agent/claude-opus-5-5, at: 2026-10-07T20:36:28Z }
 depends_on:
@@ -306,87 +306,87 @@ Not applicable. No network, accounts or secrets. Circuit JSON is first-party dat
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: A valid layout compiles to a PitLane that passes existing validation**
-  - [ ] **Given** a closed main spline with a 400 m straight and a layout with Taper junctions, an empty `road_waypoints`, `road_width` 5.0 and a box row of 6
-  - [ ] **When** `PitLaneLayout::compile` runs
-  - [ ] **Then** it returns a pit lane with 6 stalls, entry and exit gates, and road width 5.0
-  - [ ] **And** the track validation reports no pit lane errors
+  - [x] **Given** a closed main spline with a 400 m straight and a layout with Taper junctions, an empty `road_waypoints`, `road_width` 5.0 and a box row of 6
+  - [x] **When** `PitLaneLayout::compile` runs
+  - [x] **Then** it returns a pit lane with 6 stalls, entry and exit gates, and road width 5.0
+  - [x] **And** the track validation reports no pit lane errors
 
 - **Scenario: Junction geometry comes from the component, not a search**
-  - [ ] **Given** a compiled layout
-  - [ ] **When** the baked `pit_lane_junctions` is read
-  - [ ] **Then** it equals the data that the junction components returned
-  - [ ] **And** the entry gore apex lies within 0.5 m of the point where the pit road edge leaves the track edge
+  - [x] **Given** a compiled layout
+  - [x] **When** the baked `pit_lane_junctions` is read
+  - [x] **Then** it equals the data that the junction components returned
+  - [x] **And** the entry gore apex lies within 0.5 m of the point where the pit road edge leaves the track edge
 
 - **Scenario: Taper divergence angle respects the analytic bound**
-  - [ ] **Given** a Taper junction with offset `D` and length `L`
-  - [ ] **When** the compiled junction is sampled every 0.5 m
-  - [ ] **Then** the largest measured divergence angle is within 0.5° of `atan(1.5 · D / L)`
+  - [x] **Given** a Taper junction with offset `D` and length `L`
+  - [x] **When** the compiled junction is sampled every 0.5 m
+  - [x] **Then** the largest measured divergence angle is within 0.5° of `atan(1.5 · D / L)`
 
 - **Scenario: A TurnOff junction leaves at its set angle**
-  - [ ] **Given** an entry junction `TurnOff { angle_deg: 30 }`
-  - [ ] **When** the layout compiles
-  - [ ] **Then** the heading at the junction free end differs from the main tangent at `s` by 30° ± 0.5°, toward `side`
+  - [x] **Given** an entry junction `TurnOff { angle_deg: 30 }`
+  - [x] **When** the layout compiles
+  - [x] **Then** the heading at the junction free end differs from the main tangent at `s` by 30° ± 0.5°, toward `side`
 
 - **Scenario: The pit road can bend away from the track**
-  - [ ] **Given** a layout whose `road_waypoints` bend the road 40 m away from the main track and back
-  - [ ] **When** the layout compiles
-  - [ ] **Then** the compiled lane passes through every road waypoint
-  - [ ] **And** the heading jump at both junction joints is <= 2°
+  - [x] **Given** a layout whose `road_waypoints` bend the road 40 m away from the main track and back
+  - [x] **When** the layout compiles
+  - [x] **Then** the compiled lane passes through every road waypoint
+  - [x] **And** the heading jump at both junction joints is <= 2°
 
 - **Scenario: Guards reject bad layouts before bake**
-  - [ ] **Given** one layout per rule: a Taper too steep, an offset wider than a corner radius, a TurnOff arc too tight, a road bend too tight, a road point placed on the main track, a stall placed inside a junction
-  - [ ] **When** `compile` runs on each
-  - [ ] **Then** it returns `JunctionTooSteep`, `OffsetExceedsCurvature`, `ArcTooTight`, `RoadTooTight`, `RoadOverlapsTrack` and `BoxRowOffRoad` in that order, and no lane
+  - [x] **Given** one layout per rule: a Taper too steep, an offset wider than a corner radius, a TurnOff arc too tight, a road bend too tight, a road point placed on the main track, a stall placed inside a junction
+  - [x] **When** `compile` runs on each
+  - [x] **Then** it returns `JunctionTooSteep`, `OffsetExceedsCurvature`, `ArcTooTight`, `RoadTooTight`, `RoadOverlapsTrack` and `BoxRowOffRoad` in that order, and no lane
 
 - **Scenario: A pit lane can wrap across the start/finish line**
-  - [ ] **Given** a layout whose exit `s` is smaller than its entry `s`
-  - [ ] **When** `compile` runs
-  - [ ] **Then** the compiled lane is one continuous spline from entry to exit through the S/F line
+  - [x] **Given** a layout whose exit `s` is smaller than its entry `s`
+  - [x] **When** `compile` runs
+  - [x] **Then** the compiled lane is one continuous spline from entry to exit through the S/F line
 
 - **Scenario: Junctions follow a rescaled main spline**
-  - [ ] **Given** a compiled layout on a circuit
-  - [ ] **When** the main spline is scaled by 1.5, the junction `s` values are scaled by 1.5, and the road waypoints are scaled by 1.5 about the same origin
-  - [ ] **Then** both junction free ends keep their `divider_gap` to the track edge within 0.1 m
+  - [x] **Given** a compiled layout on a circuit
+  - [x] **When** the main spline is scaled by 1.5, the junction `s` values are scaled by 1.5, and the road waypoints are scaled by 1.5 about the same origin
+  - [x] **Then** both junction free ends keep their `divider_gap` to the track edge within 0.1 m
 
 - **Scenario: The box row places stalls and garages**
-  - [ ] **Given** a box row with `count` 6, `spacing` 12 and `garages` true
-  - [ ] **When** the layout compiles
-  - [ ] **Then** there are 6 stalls 12 m apart along the lane
-  - [ ] **And** there are 6 `PitGarage` buildings behind them, on the side away from the main track, that touch neither the road nor any wall
+  - [x] **Given** a box row with `count` 6, `spacing` 12 and `garages` true
+  - [x] **When** the layout compiles
+  - [x] **Then** there are 6 stalls 12 m apart along the lane
+  - [x] **And** there are 6 `PitGarage` buildings behind them, on the side away from the main track, that touch neither the road nor any wall
 
 - **Scenario: Bake is deterministic and does not duplicate garages**
-  - [ ] **Given** all converted circuits
-  - [ ] **When** `track_bake --rebuild` runs two times
-  - [ ] **Then** the second run makes no change in the `tracks` submodule
-  - [ ] **And** each converted circuit has exactly one `PitGarage` building per stall
+  - [x] **Given** all converted circuits
+  - [x] **When** `track_bake --rebuild` runs two times
+  - [x] **Then** the second run makes no change in the `tracks` submodule
+  - [x] **And** each converted circuit has exactly one `PitGarage` building per stall
 
 - **Scenario: Migration converts or reports each GT circuit**
-  - [ ] **Given** the 18 GT circuits with a free-form `pit_lane`
-  - [ ] **When** `scripts/fit_pit_layout.py` runs
-  - [ ] **Then** each circuit is converted with max centreline deviation <= 3.0 m, or keeps its free-form lane with a stated reason
-  - [ ] **And** `docs/circuits/pit_layout_migration.md` lists every circuit with its result, junction kinds and deviation
+  - [x] **Given** the 18 GT circuits with a free-form `pit_lane`
+  - [x] **When** `scripts/fit_pit_layout.py` runs
+  - [x] **Then** each circuit is converted with max centreline deviation <= 3.0 m, or keeps its free-form lane with a stated reason
+  - [x] **And** `docs/circuits/pit_layout_migration.md` lists every circuit with its result, junction kinds and deviation
 
 - **Scenario: The pit lane is fully enclosed**
-  - [ ] **Given** a GT circuit whose pit lane touches the main road at both ends
-  - [ ] **When** rays are cast every 2 m from the pit lane to both sides, and from the main edge beside the pit lane outward, at 60 to 120 degrees
-  - [ ] **Then** every ray hits a wall or reaches the main road within 40 m
+  - [x] **Given** a GT circuit whose pit lane touches the main road at both ends
+  - [x] **When** rays are cast every 2 m from the pit lane to both sides, and from the main edge beside the pit lane outward, at 60 to 120 degrees
+  - [x] **Then** every ray hits a wall or reaches the main road within 40 m
 
 - **Scenario: Legacy free-form pit lanes still work**
-  - [ ] **Given** a circuit JSON with `pit_lane` and no `pit_lane_layout`
-  - [ ] **When** it loads and bakes
-  - [ ] **Then** its `pit_lane` is unchanged and the pit lane integration tests pass on it
+  - [x] **Given** a circuit JSON with `pit_lane` and no `pit_lane_layout`
+  - [x] **When** it loads and bakes
+  - [x] **Then** its `pit_lane` is unchanged and the pit lane integration tests pass on it
 
 - **Scenario: Pit stops work on a converted circuit**
-  - [ ] **Given** a converted GT circuit (for example `monza`) in a race with pit stops enabled
-  - [ ] **When** a GT bot with tire wear above 0.70 reaches the pit entry
-  - [ ] **Then** the bot enters the lane, the limiter engages, it stops in a stall, `pit_stops` increments, and it rejoins the race without stalling
+  - [x] **Given** a converted GT circuit (for example `monza`) in a race with pit stops enabled
+  - [x] **When** a GT bot with tire wear above 0.70 reaches the pit entry
+  - [x] **Then** the bot enters the lane, the limiter engages, it stops in a stall, `pit_stops` increments, and it rejoins the race without stalling
 
 - **Scenario: Track Studio Layout mode builds a pit lane**
-  - [ ] **Given** Track Studio open on a circuit without a pit lane, with the Pit Lane tool in Layout mode
-  - [ ] **When** the author clicks an entry point and then an exit point on the main track
-  - [ ] **Then** a pit lane preview with default junctions, a parallel road and a box row appears on the clicked side
-  - [ ] **And** dragging a road point bends the road while the joint guide points stay locked
-  - [ ] **And** a parameter that fails a guard shows a red error with the rule name and hides the preview
+  - [x] **Given** Track Studio open on a circuit without a pit lane, with the Pit Lane tool in Layout mode
+  - [x] **When** the author clicks an entry point and then an exit point on the main track
+  - [x] **Then** a pit lane preview with default junctions, a parallel road and a box row appears on the clicked side
+  - [x] **And** dragging a road point bends the road while the joint guide points stay locked
+  - [x] **And** a parameter that fails a guard shows a red error with the rule name and hides the preview
 
 ---
 
