@@ -768,7 +768,7 @@ fn test_all_20_world_rx_circuits_have_valid_joker_track_networks() {
         assert!(joker_spline.is_some(), "{}: failed to build composite spline for joker layout", id);
 
         // Verify split and merge junctions exist
-        assert_eq!(network.junctions.len(), 2, "{}: expected 2 junctions (split and merge)", id);
+        assert_eq!(network.junctions.len(), 3, "{}: expected 3 junctions (joker split and merge, launch chute merge)", id);
 
         // Verify split junction has gore config and C1 tangent continuity (< 1e-4 rad)
         let split_j = &network.junctions[0];
@@ -1036,7 +1036,7 @@ fn test_rx_car_driving_the_joker_route_gets_its_lap_and_its_joker() {
     // End to end through race_kit::RaceWorld::step: lap 1 on the joker route, lap 2 on the main route.
     use race_kit::{DriveControls, RaceEvent, RaceFormat, RaceRules, RaceWorld};
     use tdrace_core::physics::{Car, CarConfig};
-    use tdrace_core::track::TrackProgressTracker;
+    use tdrace_core::track::{MultiRouteProgressTracker, TrackProgressTracker};
 
     const DT: f32 = 1.0 / 60.0;
     const SPEED: f32 = 15.0;
@@ -1050,10 +1050,10 @@ fn test_rx_car_driving_the_joker_route_gets_its_lap_and_its_joker() {
 
         let mut world: RaceWorld<Car> = RaceWorld::new(RaceRules { format: RaceFormat::Laps(2), ..RaceRules::default() });
         let start = joker.sample_at_distance(1.0);
-        world.spawn(
-            Car::new(CarConfig::rally_car()).with_pose(start.point, start.tangent.y.atan2(start.tangent.x)),
-            TrackProgressTracker::new(track.checkpoints.len(), 3),
-        );
+        // The car starts on the loop, not on the launch chute: so does its tracker (a lap of the loop, as on laps 2+).
+        let mut tracker = TrackProgressTracker::new(track.checkpoints.len(), 3);
+        tracker.multi_route = Some(MultiRouteProgressTracker::new("main", network.get_layout("main").unwrap().segment_sequence[0], 3));
+        world.spawn(Car::new(CarConfig::rally_car()).with_pose(start.point, start.tangent.y.atan2(start.tangent.x)), tracker);
 
         let mut surface_mismatches = 0;
         let mut wrong_way = None;
@@ -1127,7 +1127,9 @@ fn test_rx_joker_branch_has_walls_that_stay_off_every_road() {
         let main = network.get_layout("main").expect("main layout");
         let joker_seg = joker.segment_sequence.iter().find(|s| !main.segment_sequence.contains(s)).expect("joker-only segment");
         let seg = network.get_segment(*joker_seg).unwrap();
-        let walls = &track.geometry.network_walls;
+        // The launch chute (spec 103) has walls of its own, and a rear wall across the end of its road.
+        let chute_walls: Vec<_> = track.launch_chute().map_or_else(Vec::new, |c| c.side_barriers.iter().chain(Some(&c.terminal_barrier)).copied().collect());
+        let walls: Vec<_> = track.geometry.network_walls.iter().filter(|w| !chute_walls.contains(w)).collect();
         let roads = network.segments.iter().map(|s| s.to_spline()).chain(std::iter::once(track.spline.clone())).collect::<Vec<_>>();
 
         // On each side, wherever no other road (with its 3.5 m barrier gap) lies beside the joker, a wall

@@ -454,7 +454,10 @@ fn circuit(entry: &'static catalog::EmbeddedCircuit, track: &Track, repo_root: &
         has_jumps: !track.geometry.jump_ramps.is_empty(),
         has_joker: track.checkpoints.iter().any(|c| c.is_joker),
         has_pit_lane: track.pit_lane.is_some(),
-        has_junctions: track.network.as_ref().is_some_and(|n| !n.junctions.is_empty()),
+        // The merge of a launch chute (spec 103) is on every Autocross and Rallycross circuit; it is not a road split.
+        has_junctions: track.network.as_ref().is_some_and(|n| {
+            n.junctions.iter().any(|j| n.launch_chute.as_ref().map(|c| c.merge_junction_id) != Some(j.id))
+        }),
         image: texture(repo_root, format!("circuits/{}/{}.svg", entry.module, entry.id)),
     }
 }

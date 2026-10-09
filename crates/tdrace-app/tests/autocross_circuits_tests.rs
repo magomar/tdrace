@@ -42,7 +42,7 @@ fn test_seventeen_autocross_circuits_embedded_in_catalog() {
         assert_eq!(track.car_category, tdrace_core::CarCategory::Autocross);
         assert_eq!(track.module_id.as_deref(), Some("autocross"));
         assert_eq!(track.scale, "1:1");
-        assert_eq!(track.grid_positions.len(), 12, "Autocross grids must seat 12 vehicles");
+        assert_eq!(track.grid_positions.len(), 8, "Autocross launch chutes seat 8 vehicles (spec 103)");
         assert!(track.checkpoints.len() >= 4, "Must have valid checkpoints");
 
         // Verify dominant surface is Dirt

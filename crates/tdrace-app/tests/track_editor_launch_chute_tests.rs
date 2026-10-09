@@ -8,22 +8,27 @@ use tdrace_app::editor::{EditorState, EditorToolType, ToolSettings};
 use tdrace_app::tracks::UserTrackStore;
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::validation::{validate_track, ValidationSeverity};
-use tdrace_core::track::{PackedGridPattern, Track, TrackCategory};
+use tdrace_core::track::{ChuteSide, LaunchChuteSpec, PackedGridPattern, Track, TrackCategory};
 
+/// The Track Studio on an official circuit as it was before its launch chute: the catalog circuits already have one.
 fn editor(module: &str, slug: &str) -> EditorState {
-    EditorState::new(tdrace_core::catalog::official_track(module, slug))
+    let mut track = tdrace_core::catalog::official_track(module, slug);
+    track.remove_launch_chute();
+    EditorState::new(track)
 }
 
 fn error_codes(track: &Track) -> Vec<&'static str> {
     validate_track(track).into_iter().filter(|d| d.severity == ValidationSeverity::Error).map(|d| d.code).collect()
 }
 
-/// A waypoint a chute can merge at, and where it is.
+/// A waypoint a chute fits at (found the way the insert button finds it), and where it is.
 fn merge_candidate(state: &EditorState) -> (usize, glam::Vec2) {
-    let k = (0..state.track.spline.waypoints.len())
-        .find(|&k| state.track.can_merge_launch_chute_at(k))
-        .expect("an Autocross circuit has a waypoint before its finish line");
-    (k, state.track.spline.waypoints[k].point)
+    let spec = state
+        .track
+        .clone()
+        .place_launch_chute(&LaunchChuteSpec::new(0, ChuteSide::Right))
+        .expect("a circuit has a waypoint before its finish line that a chute fits at");
+    (spec.merge_waypoint, state.track.spline.waypoints[spec.merge_waypoint].point)
 }
 
 /// Scenario: Track Studio Launch Chute Insertion

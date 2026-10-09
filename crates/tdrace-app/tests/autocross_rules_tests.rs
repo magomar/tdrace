@@ -63,7 +63,7 @@ fn test_autocross_tracks_count_and_zero_joker_ruleset() {
         // Geometry & validation checks
         assert!(track.spline.total_length() > 300.0, "Track {} too short", def.id);
         assert!(track.checkpoints.len() >= 4, "Track {} has too few checkpoints", def.id);
-        assert!(track.grid_positions.len() >= 12, "Track {} must support at least 12 grid slots", def.id);
+        assert!(track.grid_positions.len() >= 8, "Track {} must support at least 8 grid slots", def.id);
 
         let issues = validate_track(&track);
         let error_issues: Vec<_> = issues
