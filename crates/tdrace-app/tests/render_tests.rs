@@ -2717,3 +2717,219 @@ fn test_spec_095_closed_wheel_chassis_sprites_remain_intact_without_cutouts() {
 
 
 
+
+// ---------------------------------------------------------------------------
+// Spec 096: chassis-conforming dynamic vehicle ground shadows
+// ---------------------------------------------------------------------------
+
+/// True when `p` lies strictly inside the convex polygon `poly`.
+fn spec_096_point_in_convex(poly: &[Vec2], p: Vec2) -> bool {
+    let mut sign = 0.0f32;
+    for i in 0..poly.len() {
+        let a = poly[i];
+        let b = poly[(i + 1) % poly.len()];
+        let cross = (b - a).perp_dot(p - a);
+        if cross.abs() < 1e-6 {
+            return false;
+        }
+        if sign == 0.0 {
+            sign = cross.signum();
+        } else if cross.signum() != sign {
+            return false;
+        }
+    }
+    true
+}
+
+fn spec_096_polygon_area(poly: &[Vec2]) -> f32 {
+    let mut a = 0.0;
+    for i in 0..poly.len() {
+        a += poly[i].perp_dot(poly[(i + 1) % poly.len()]);
+    }
+    (a * 0.5).abs()
+}
+
+/// Scenario: Vehicle shadows disabled by default / toggling vehicle shadows.
+/// The `vehicle_shadows` flag alone decides whether any shadow pass runs.
+#[test]
+fn test_spec_096_shadow_path_selection() {
+    use tdrace_app::render::car::{select_shadow_path, ShadowPath};
+
+    assert_eq!(select_shadow_path(false, true), ShadowPath::Off, "disabled: sprite cars cast no shadow");
+    assert_eq!(select_shadow_path(false, false), ShadowPath::Off, "disabled: archetype cars cast no shadow");
+    assert_eq!(select_shadow_path(true, true), ShadowPath::Sprite);
+    assert_eq!(select_shadow_path(true, false), ShadowPath::Archetype);
+}
+
+/// Scenario: Jump elevation lift scales and softens chassis-conforming shadow.
+#[test]
+fn test_spec_096_shadow_lift_elevation_ballistics() {
+    use tdrace_app::render::car::shadow_lift;
+
+    let ground = shadow_lift(0.0);
+    assert_eq!(ground.scale, 1.0);
+    assert_eq!(ground.alpha, 1.0);
+    assert!((ground.offset - Vec2::new(0.06, 0.08)).length() < 1e-6);
+
+    // Up to 2.5 m: scale grows to 1.20x, alpha fades, offset separates along (+X, +Y).
+    let mut prev = ground;
+    for i in 1..=25 {
+        let s = shadow_lift(i as f32 * 0.1);
+        assert!(s.scale >= prev.scale && s.scale <= 1.20 + 1e-5, "scale must grow up to 1.20x: {}", s.scale);
+        assert!(s.alpha < prev.alpha && s.alpha >= 0.25, "alpha must fade smoothly above the floor: {}", s.alpha);
+        assert!(s.offset.x > prev.offset.x && s.offset.y > prev.offset.y, "offset must separate along +X/+Y");
+        prev = s;
+    }
+    let at_2_5 = shadow_lift(2.5);
+    assert!((at_2_5.scale - 1.20).abs() < 1e-5, "scale at 2.5 m must be 1.20x: {}", at_2_5.scale);
+
+    // Very high: the alpha floor is 0.25 and the scale caps at 1.40x.
+    let high = shadow_lift(20.0);
+    assert_eq!(high.alpha, 0.25);
+    assert!((high.scale - 1.40).abs() < 1e-5);
+}
+
+/// Scenario: Sprite-based car shadow mirrors top-down chassis silhouette.
+#[test]
+fn test_spec_096_sprite_shadow_is_black_alpha_silhouette() {
+    use macroquad::texture::Image;
+    use std::path::Path;
+    use tdrace_app::render::car::{sprite_shadow_layers, topdown_sprite_dest, SHADOW_CORE_ALPHA, SHADOW_PENUMBRA_ALPHA, SPRITE_SHADOW_PENUMBRA_SCALE};
+
+    // Layers: pure black tints keep only the sprite alpha; penumbra 1.04x faint, core exact size.
+    let lift_alpha = 0.6;
+    let [(p_scale, p_tint), (c_scale, c_tint)] = sprite_shadow_layers(lift_alpha);
+    for tint in [p_tint, c_tint] {
+        assert_eq!((tint.r, tint.g, tint.b), (0.0, 0.0, 0.0), "shadow tint must be pure black");
+    }
+    assert_eq!(p_scale, SPRITE_SHADOW_PENUMBRA_SCALE);
+    assert!((p_tint.a - SHADOW_PENUMBRA_ALPHA * lift_alpha).abs() < 1e-6);
+    assert_eq!(c_scale, 1.0);
+    assert!((c_tint.a - SHADOW_CORE_ALPHA * lift_alpha).abs() < 1e-6);
+
+    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    for rel in [
+        "../../assets/textures/vehicles/topdown/gt/gt_vandorn_arrowhead_t2.png",
+        "../../assets/textures/vehicles/topdown/rally/rally_gallia_200_t1.png",
+    ] {
+        let bytes = std::fs::read(manifest_dir.join(rel)).expect("read top-down sprite");
+        let img = Image::from_file_with_format(&bytes, None).expect("parse top-down sprite");
+        let (w, h) = (img.width as usize, img.height as usize);
+
+        // The core shadow layer is drawn at exactly the body sprite's size and rotation.
+        let body = topdown_sprite_dest(w as f32, h as f32, 2.2, 0.3);
+        let shadow = topdown_sprite_dest(w as f32, h as f32, 2.2 * c_scale, 0.3);
+        assert_eq!(body, shadow);
+
+        // The alpha mask is a car outline, not a box: its bounding box is far from full.
+        let alpha = |x: usize, y: usize| img.bytes[(y * w + x) * 4 + 3];
+        let (mut x0, mut y0, mut x1, mut y1, mut opaque) = (w, h, 0, 0, 0usize);
+        for y in 0..h {
+            for x in 0..w {
+                if alpha(x, y) > 128 {
+                    opaque += 1;
+                    x0 = x0.min(x);
+                    y0 = y0.min(y);
+                    x1 = x1.max(x);
+                    y1 = y1.max(y);
+                }
+            }
+        }
+        let bbox = ((x1 - x0 + 1) * (y1 - y0 + 1)) as f32;
+        let fill = opaque as f32 / bbox;
+        assert!(fill > 0.40 && fill < 0.95, "{rel}: silhouette fill of its bounding box = {fill:.2}");
+        for (cx, cy) in [(x0, y0), (x1, y0), (x0, y1), (x1, y1)] {
+            assert!(alpha(cx, cy) <= 128, "{rel}: bounding-box corner ({cx},{cy}) must be transparent");
+        }
+    }
+}
+
+/// Scenario: Procedural archetype shadow conforms to archetype geometry.
+#[test]
+fn test_spec_096_archetype_shadow_conforms_and_leaves_wheels_open() {
+    use tdrace_app::module::VehicleVisualType;
+    use tdrace_app::render::car::archetype_shadow_polygons;
+
+    let mut checked = [0usize; 2];
+    for model in tdrace_app::catalog::get_all_models() {
+        let slot = match model.visual_type {
+            VehicleVisualType::OpenWheel { .. } => 0,
+            VehicleVisualType::GoKart { .. } => 1,
+            _ => continue,
+        };
+        let cfg = model.to_car_config();
+        let half_len = cfg.chassis.half_length(cfg.wheelbase);
+        let half_w = cfg.chassis.half_width();
+        let geom = cfg.chassis.geometric_center_offset_from_cg(cfg.cg_to_front, cfg.cg_to_rear);
+        let polys = archetype_shadow_polygons(model.visual_type, half_len, half_w);
+
+        // Wheel hubs in the shadow's local frame (x forward, y right, from the body centre).
+        let ht = cfg.track_width * 0.5;
+        let (xf, xr) = (cfg.cg_to_front - geom, -cfg.cg_to_rear - geom);
+        let hubs = [Vec2::new(xf, -ht), Vec2::new(xf, ht), Vec2::new(xr, -ht), Vec2::new(xr, ht)];
+        for poly in &polys {
+            assert!(poly.len() >= 3);
+            for hub in hubs {
+                assert!(!spec_096_point_in_convex(poly, hub), "{}: shadow piece {:?} covers wheel hub {:?} (half_len {half_len}, half_w {half_w})", model.id, poly, hub);
+            }
+        }
+
+        // Multi-polygon silhouette, clearly smaller than its bounding rectangle.
+        assert!(polys.len() >= 4, "{}: expected a multi-polygon silhouette", model.id);
+        let area: f32 = polys.iter().map(|p| spec_096_polygon_area(p)).sum();
+        let (mut lo, mut hi) = (Vec2::splat(f32::MAX), Vec2::splat(f32::MIN));
+        for p in polys.iter().flatten() {
+            lo = lo.min(*p);
+            hi = hi.max(*p);
+        }
+        let bbox = (hi.x - lo.x) * (hi.y - lo.y);
+        assert!(area < bbox * 0.75, "{}: shadow area {area:.2} vs bounding box {bbox:.2}", model.id);
+
+        if slot == 0 {
+            // Front wing span and the slim monocoque: the centreline is covered just behind the nose,
+            // while a point beside the nose (inboard of the front wheels) is open.
+            let beside_nose = Vec2::new(xf, ht * 0.6);
+            assert!(polys.iter().any(|p| spec_096_point_in_convex(p, Vec2::new(half_len * 0.5, 0.0))));
+            assert!(!polys.iter().any(|p| spec_096_point_in_convex(p, beside_nose)), "{}: open-wheel gap beside the nose must stay open", model.id);
+        } else {
+            // Kart: nose fairing and both side pods are part of the shadow.
+            assert!(polys.iter().any(|p| spec_096_point_in_convex(p, Vec2::new(half_len * 0.65, 0.0))));
+            assert!(polys.iter().any(|p| spec_096_point_in_convex(p, Vec2::new(0.0, -half_w * 0.70))));
+            assert!(polys.iter().any(|p| spec_096_point_in_convex(p, Vec2::new(0.0, half_w * 0.70))));
+        }
+        checked[slot] += 1;
+    }
+    assert!(checked[0] > 0 && checked[1] > 0, "catalog must contain open-wheel and kart models: {checked:?}");
+}
+
+/// Every archetype silhouette polygon is convex (the renderer fills them as triangle fans).
+#[test]
+fn test_spec_096_all_archetype_shadow_polygons_are_convex() {
+    use tdrace_app::module::VehicleVisualType;
+    use tdrace_app::render::car::archetype_shadow_polygons;
+
+    let types = [
+        VehicleVisualType::OpenWheel { front_wing_span: 1.6, rear_wing_height: 0.7, halo: true },
+        VehicleVisualType::GoKart { exposed_driver: true, side_bumpers: true },
+        VehicleVisualType::TouringGT { widebody: true, gt_wing: true, diffuser: true },
+        VehicleVisualType::RallyHatch { roof_scoop: true, mudflaps: true, large_wing: true },
+        VehicleVisualType::StockCar { tall_wing: true, roof_fins: true, window_net: true },
+        VehicleVisualType::SandRail { lightbar: true, whip_antenna: true, paddle_tires: true },
+    ];
+    for vt in types {
+        for poly in archetype_shadow_polygons(vt, 2.2, 0.95) {
+            let n = poly.len();
+            let mut sign = 0.0f32;
+            for i in 0..n {
+                let e1 = poly[(i + 1) % n] - poly[i];
+                let e2 = poly[(i + 2) % n] - poly[(i + 1) % n];
+                let cross = e1.perp_dot(e2);
+                assert!(cross.abs() > 1e-6, "{vt:?}: degenerate vertex");
+                if sign == 0.0 {
+                    sign = cross.signum();
+                }
+                assert_eq!(cross.signum(), sign, "{vt:?}: non-convex shadow polygon {poly:?}");
+            }
+        }
+    }
+}
