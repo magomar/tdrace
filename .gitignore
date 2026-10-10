@@ -53,3 +53,7 @@ scratch/
 # HITL Intermediate Verification Images
 artifacts/hitl/
 
+
+# Spec 083 bot calibration: campaign ledgers and job logs on blaze
+/results/
+/.driver_jobs/
