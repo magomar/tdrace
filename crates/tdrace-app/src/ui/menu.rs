@@ -1638,7 +1638,7 @@ pub fn render_track_select_menu(
                 };
                 let border_col = if is_active_track {
                     Palette::NEON_GOLD
-                } else if is_locked {
+                } else if is_locked || is_career_mode {
                     Palette::RED
                 } else if is_sel {
                     if is_tracks_focused {
@@ -1707,7 +1707,7 @@ pub fn render_track_select_menu(
                     } else {
                         "🔒 CAREER LOCKED • OTHER CIRCUIT".to_string()
                     };
-                    (lbl, Palette::UI_TEXT_MUTED)
+                    (lbl, Palette::RED)
                 } else if is_locked {
                     let lbl = if let Some(ref tr) = loaded_track {
                         format!(
