@@ -1,32 +1,8 @@
 //! Spec 055 (Classic Circuits Revamp): bots race every new Classic circuit.
 //! See `specs/055_classic_circuits_revamp.md`, scenario "Every new circuit is valid and raceable".
 
-use tdrace_app::ai::bot_harness::{run_harness_race, sample_bot, HarnessEntry};
+use tdrace_app::ai::bot_harness::{run_harness_race, sample_bot, HarnessEntry, CLASSIC_CIRCUIT_CARS as CIRCUITS};
 use tdrace_app::ai::{DriverTier, DrivingStyle};
-use tdrace_app::module::classic::ClassicGameModule;
-use tdrace_core::CarConfig;
-
-/// (circuit id, Classic car of its group). Each circuit group adds its circuits here.
-const CIRCUITS: [(&str, fn() -> CarConfig); 18] = [
-    ("kart_pine_grove", ClassicGameModule::car_classic_kart),
-    ("kart_riverbend_circuit", ClassicGameModule::car_classic_kart),
-    ("kart_summit_international", ClassicGameModule::car_classic_kart),
-    ("rx_quarry_sprint", ClassicGameModule::car_classic_rally),
-    ("rx_hilltop_leap", ClassicGameModule::car_classic_rally),
-    ("rx_canyon_flyer", ClassicGameModule::car_classic_rally),
-    ("ax_meadow_sprint", ClassicGameModule::car_classic_ax_mudlark),
-    ("ax_clay_bowl", ClassicGameModule::car_classic_ax_brawler),
-    ("ax_hillside_hammer", ClassicGameModule::car_classic_ax_mudlark),
-    ("gt_velocity_park", ClassicGameModule::car_classic_gt),
-    ("gt_ridge_ring", ClassicGameModule::car_classic_gt),
-    ("gt_coastal_grand_prix", ClassicGameModule::car_classic_gt),
-    ("stock_thunder_bowl", ClassicGameModule::car_classic_nascar),
-    ("stock_tri_oval_speedway", ClassicGameModule::car_classic_nascar),
-    ("stock_roval", ClassicGameModule::car_classic_nascar),
-    ("at_dune_sea", ClassicGameModule::car_classic_offroad),
-    ("at_mudbath_valley", ClassicGameModule::car_classic_offroad),
-    ("at_frostbite_pass", ClassicGameModule::car_classic_offroad),
-];
 
 
 

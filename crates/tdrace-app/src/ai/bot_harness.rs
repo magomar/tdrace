@@ -6,15 +6,20 @@
 //! `bot_behaviour_benchmark` use it to measure lines, braking points, lap times and mistakes.
 
 use cabinet::input::filter::{DigitalInputConfig, DigitalInputFilter, SteeringProfile};
-use race_kit::{RaceFormat, RaceRules, RaceWorld};
+use race_kit::{RaceEvent, RaceFormat, RaceRules, RaceWorld};
 use tdrace_core::physics::car::{Car, CarControls};
 use tdrace_core::physics::config::{CarConfig, PlayerHandling};
 use tdrace_core::track::checkpoint::TrackProgressTracker;
 use tdrace_core::track::Track;
 
 use super::humanize::{BotDrivingStats, Corner, HumanTraits};
-use super::{BotAiDriver, BotProfile, DriverQuality, DriverTier, DrivingStyle};
+use super::{BotAiDriver, BotProfile, DriverQuality, DriverTier, DrivingStyle, StyleTuning};
 use crate::catalog::CLASSIC_ARCADE_CARS;
+use crate::module::autocross::AutocrossGameModule;
+use crate::module::classic::ClassicGameModule;
+use crate::module::kart::KartGameModule;
+use crate::module::rally::RallyGameModule;
+use crate::module::GameModule;
 
 /// Physics step of the game (`RaceSession::FIXED_DT`).
 pub const HARNESS_DT: f32 = 1.0 / 120.0;
@@ -59,6 +64,10 @@ pub struct HarnessCarResult {
     /// Order-sensitive hash of every control output (determinism checks).
     pub controls_hash: u64,
     pub finished: bool,
+    /// Separate wall contacts: runs of consecutive ticks with a `RaceEvent::WallImpact`.
+    pub wall_contacts: u32,
+    /// Physics ticks the race ran (the same for every car).
+    pub race_ticks: u32,
     /// The bot's human-layer counters at the end of the race.
     pub stats: BotDrivingStats,
 }
@@ -111,12 +120,15 @@ pub fn run_harness_race(track: &Track, entries: Vec<HarnessEntry>, laps: u32, ma
     let mut progress_mark = vec![0.0f32; n];
     let mut no_progress = vec![0.0f32; n];
     let station_len = len / LINE_STATIONS as f32;
+    let mut on_wall = vec![false; n];
+    let mut ticks = 0u32;
 
     let steps = (max_time_s / HARNESS_DT) as usize;
     for _ in 0..steps {
         if results.iter().all(|r| r.finished) {
             break;
         }
+        ticks += 1;
         let mut controls = Vec::with_capacity(n);
         for i in 0..n {
             let others: Vec<&Car> = world.vehicles.iter().enumerate().filter(|(j, _)| *j != i).map(|(_, c)| c).collect();
@@ -131,6 +143,18 @@ pub fn run_harness_race(track: &Track, entries: Vec<HarnessEntry>, laps: u32, ma
 
         let prev: Vec<(f32, u32)> = world.trackers.iter().map(|t| (t.progress_distance, t.current_lap)).collect();
         world.step(track, &controls, HARNESS_DT);
+        let mut touching = vec![false; n];
+        for ev in world.events() {
+            if let RaceEvent::WallImpact { car, .. } = ev {
+                touching[*car] = true;
+            }
+        }
+        for i in 0..n {
+            if touching[i] && !on_wall[i] && !results[i].finished {
+                results[i].wall_contacts += 1;
+            }
+            on_wall[i] = touching[i];
+        }
         let (cars, trackers) = (&world.vehicles, &world.trackers);
 
         for i in 0..n {
@@ -194,6 +218,7 @@ pub fn run_harness_race(track: &Track, entries: Vec<HarnessEntry>, laps: u32, ma
     }
     for (r, d) in results.iter_mut().zip(&drivers) {
         r.stats = d.human.stats.clone();
+        r.race_ticks = ticks;
     }
     results
 }
@@ -325,4 +350,331 @@ pub fn brake_onset_spread_m(r: &HarnessCarResult, corners: &[Corner], len: f32) 
 /// Lap-to-lap spread of the flying laps: standard deviation over mean.
 pub fn lap_spread(laps: &[f32]) -> f32 {
     if laps.len() < 2 { 0.0 } else { std_dev(laps) / (laps.iter().sum::<f32>() / laps.len() as f32) }
+}
+
+/// Builds the car of a circuit group.
+pub type CarFn = fn() -> CarConfig;
+
+/// (circuit id, Classic car of its group). Each Classic circuit group adds its circuits here.
+pub const CLASSIC_CIRCUIT_CARS: [(&str, CarFn); 18] = [
+    ("kart_pine_grove", ClassicGameModule::car_classic_kart),
+    ("kart_riverbend_circuit", ClassicGameModule::car_classic_kart),
+    ("kart_summit_international", ClassicGameModule::car_classic_kart),
+    ("rx_quarry_sprint", ClassicGameModule::car_classic_rally),
+    ("rx_hilltop_leap", ClassicGameModule::car_classic_rally),
+    ("rx_canyon_flyer", ClassicGameModule::car_classic_rally),
+    ("ax_meadow_sprint", ClassicGameModule::car_classic_ax_mudlark),
+    ("ax_clay_bowl", ClassicGameModule::car_classic_ax_brawler),
+    ("ax_hillside_hammer", ClassicGameModule::car_classic_ax_mudlark),
+    ("gt_velocity_park", ClassicGameModule::car_classic_gt),
+    ("gt_ridge_ring", ClassicGameModule::car_classic_gt),
+    ("gt_coastal_grand_prix", ClassicGameModule::car_classic_gt),
+    ("stock_thunder_bowl", ClassicGameModule::car_classic_nascar),
+    ("stock_tri_oval_speedway", ClassicGameModule::car_classic_nascar),
+    ("stock_roval", ClassicGameModule::car_classic_nascar),
+    ("at_dune_sea", ClassicGameModule::car_classic_offroad),
+    ("at_mudbath_valley", ClassicGameModule::car_classic_offroad),
+    ("at_frostbite_pass", ClassicGameModule::car_classic_offroad),
+];
+
+/// One circuit of a Steam launch module with its own-category car (spec 083:
+/// `specs/083_evorl_bot_driving_style_and_performance_optimization.md`).
+#[derive(Debug, Clone, Copy)]
+pub struct LaunchCircuit {
+    pub module: &'static str,
+    pub id: &'static str,
+    pub car: CarConfig,
+}
+
+/// Every official circuit of the launch modules (Classic, Karting, Autocross, Rallycross).
+/// Classic circuits use the car of their group (`CLASSIC_CIRCUIT_CARS`); the other modules use
+/// their default vehicle.
+pub fn launch_circuit_cars() -> Vec<LaunchCircuit> {
+    fn default_car(module: &dyn GameModule) -> CarConfig {
+        let id = module.default_vehicle_id();
+        module.vehicles().into_iter().find(|v| v.id == id).expect("module default vehicle must exist").config
+    }
+    let mut out: Vec<LaunchCircuit> = tdrace_core::catalog::module_circuits("classic")
+        .map(|c| {
+            let car = CLASSIC_CIRCUIT_CARS.iter().find(|(id, _)| *id == c.id).unwrap_or_else(|| panic!("classic circuit '{}' has no car", c.id)).1;
+            LaunchCircuit { module: "classic", id: c.id, car: car() }
+        })
+        .collect();
+    let modules: [(&'static str, &dyn GameModule); 3] = [("kart", &KartGameModule), ("autocross", &AutocrossGameModule), ("rally", &RallyGameModule)];
+    for (module, game_module) in modules {
+        let car = default_car(game_module);
+        out.extend(tdrace_core::catalog::module_circuits(module).map(|c| LaunchCircuit { module, id: c.id, car }));
+    }
+    out
+}
+
+/// Candidate bot settings from offline calibration (spec 083). `None` keeps the current constant.
+#[derive(Debug, Clone, Copy, Default, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct BotGenome {
+    /// Stage A: the Balanced style tuning. Other styles keep their offsets from Balanced.
+    pub lookahead_time: Option<f32>,
+    pub steering_kp: Option<f32>,
+    pub steering_kd: Option<f32>,
+    pub brake_margin: Option<f32>,
+    pub speed_mult: Option<f32>,
+    /// Stage B: the quality of the bot's own tier.
+    pub pace_limit: Option<f32>,
+    pub brake_padding: Option<f32>,
+    pub consistency: Option<f32>,
+    pub composure: Option<f32>,
+}
+
+/// Search box of each `BotGenome` value (spec 083, "What gets tuned"). Values are clamped into it.
+pub const GENOME_BOUNDS: [(&str, f32, f32); 9] = [
+    ("lookahead_time", 0.25, 0.55),
+    ("steering_kp", 1.50, 3.50),
+    ("steering_kd", 0.03, 0.12),
+    ("brake_margin", 0.85, 1.30),
+    ("speed_mult", 0.94, 1.06),
+    ("pace_limit", 0.70, 1.10),
+    ("brake_padding", -0.08, 0.30),
+    ("consistency", 0.40, 1.00),
+    ("composure", 0.30, 1.00),
+];
+
+impl BotGenome {
+    fn values(&self) -> [Option<f32>; 9] {
+        [
+            self.lookahead_time,
+            self.steering_kp,
+            self.steering_kd,
+            self.brake_margin,
+            self.speed_mult,
+            self.pace_limit,
+            self.brake_padding,
+            self.consistency,
+            self.composure,
+        ]
+    }
+
+    /// The bot profile of `style` at `tier` with this genome applied. Fails on a non-finite value.
+    pub fn profile(&self, style: DrivingStyle, tier: DriverTier) -> Result<BotProfile, String> {
+        let mut v = self.values();
+        for (x, (name, lo, hi)) in v.iter_mut().zip(GENOME_BOUNDS) {
+            if let Some(x) = x {
+                if !x.is_finite() {
+                    return Err(format!("genome value '{name}' is not finite"));
+                }
+                *x = x.clamp(lo, hi);
+            }
+        }
+        let [lookahead, kp, kd, brake, speed_mult, pace_limit, brake_padding, consistency, composure] = v;
+        // A Stage A value moves every style by its change from the Balanced constant.
+        let base = StyleTuning::for_style(DrivingStyle::Balanced);
+        let mut tuning = StyleTuning::for_style(style);
+        let shift = |t: &mut f32, genome: Option<f32>, balanced: f32| {
+            if let Some(g) = genome {
+                *t += g - balanced;
+            }
+        };
+        shift(&mut tuning.lookahead_time, lookahead, base.lookahead_time);
+        shift(&mut tuning.steering_kp, kp, base.steering_kp);
+        shift(&mut tuning.steering_kd, kd, base.steering_kd);
+        shift(&mut tuning.brake_margin, brake, base.brake_margin);
+        shift(&mut tuning.speed_mult, speed_mult, base.speed_mult);
+        let mut quality = DriverQuality::for_tier(tier);
+        quality.pace_limit = pace_limit.unwrap_or(quality.pace_limit);
+        quality.brake_padding = brake_padding.unwrap_or(quality.brake_padding);
+        quality.consistency = consistency.unwrap_or(quality.consistency);
+        quality.composure = composure.unwrap_or(quality.composure);
+        Ok(BotProfile::from_tuning_and_quality(style, &tuning, &quality))
+    }
+}
+
+/// One driver in an `EvalRequest`.
+#[derive(Debug, Clone, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct EvalDriver {
+    /// `DrivingStyle` name, lower case (e.g. "balanced").
+    pub style: String,
+    /// `DriverTier` number, 1 (Rookie) to 5 (Legend).
+    pub tier: u8,
+    #[serde(default)]
+    pub genome: BotGenome,
+}
+
+fn default_max_time_s() -> f32 {
+    600.0
+}
+
+/// One race for `bot_eval_worker` (spec 083).
+#[derive(Debug, Clone, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct EvalRequest {
+    /// "module/id", e.g. "kart/lonato".
+    pub circuit: String,
+    /// Car id (a module vehicle or a Classic arcade car). Default: the circuit's launch car.
+    #[serde(default)]
+    pub car: Option<String>,
+    pub laps: u32,
+    pub seed: u64,
+    pub subject: EvalDriver,
+    #[serde(default)]
+    pub opponents: Vec<EvalDriver>,
+    /// Grid slot of the subject; opponents fill the other slots in order.
+    #[serde(default)]
+    pub subject_slot: usize,
+    #[serde(default = "default_max_time_s")]
+    pub max_time_s: f32,
+}
+
+/// One opponent's outcome in an `EvalResult`.
+#[derive(Debug, Clone, Default, serde::Serialize)]
+pub struct EvalOpponent {
+    pub rank: usize,
+    pub finished: bool,
+    pub mean_flying_lap: Option<f32>,
+}
+
+/// Outcome of an `EvalRequest`. Every field but `error` and `wall_time_ms` is deterministic.
+#[derive(Debug, Clone, Default, serde::Serialize)]
+pub struct EvalResult {
+    /// Set when the request could not run; the other fields are then empty.
+    pub error: Option<String>,
+    /// 1 = winner. Cars that tie share a rank.
+    pub subject_rank: usize,
+    pub finished: bool,
+    pub dnf: bool,
+    pub lap_times: Vec<f32>,
+    pub mean_flying_lap: Option<f32>,
+    pub best_lap: Option<f32>,
+    pub spins: u32,
+    pub offs: u32,
+    pub mistakes: u32,
+    pub wall_contacts: u32,
+    pub longest_no_progress_s: f32,
+    pub controls_hash: u64,
+    /// Physics ticks the race ran.
+    pub steps: u32,
+    /// Ticks times cars.
+    pub car_steps: u64,
+    pub wall_time_ms: f64,
+    pub opponents: Vec<EvalOpponent>,
+}
+
+impl EvalResult {
+    pub fn error(message: String) -> Self {
+        Self { error: Some(message), ..Default::default() }
+    }
+}
+
+/// A car by id: a launch module vehicle or a Classic arcade car.
+pub fn launch_car_by_id(id: &str) -> Option<CarConfig> {
+    let modules: [&dyn GameModule; 4] = [&ClassicGameModule, &KartGameModule, &AutocrossGameModule, &RallyGameModule];
+    modules
+        .iter()
+        .flat_map(|m| m.vehicles())
+        .find(|v| v.id == id)
+        .map(|v| v.config)
+        .or_else(|| CLASSIC_ARCADE_CARS.iter().find(|c| c.id == id).map(|c| c.to_car_config()))
+}
+
+fn parse_driver(d: &EvalDriver) -> Result<(DrivingStyle, DriverTier), String> {
+    let style = DrivingStyle::ALL
+        .into_iter()
+        .find(|s| format!("{s:?}").eq_ignore_ascii_case(&d.style))
+        .ok_or_else(|| format!("unknown style '{}'", d.style))?;
+    let tier = match d.tier {
+        1 => DriverTier::Rookie,
+        2 => DriverTier::Amateur,
+        3 => DriverTier::Contender,
+        4 => DriverTier::Pro,
+        5 => DriverTier::Legend,
+        t => return Err(format!("unknown tier {t}")),
+    };
+    Ok((style, tier))
+}
+
+/// Seed of driver `index` (0 = subject) in a request. It does not depend on the grid slot, so a
+/// seat swap keeps every driver's random stream (common random numbers).
+pub fn eval_driver_seed(seed: u64, index: usize) -> u64 {
+    seed ^ (index as u64 + 1).wrapping_mul(0x9E3779B97F4A7C15)
+}
+
+/// Runs one `EvalRequest` through `run_harness_race`. Never panics on bad input.
+pub fn eval_race(req: &EvalRequest) -> EvalResult {
+    let started = std::time::Instant::now();
+    let outcome = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| try_eval_race(req)));
+    let mut result = match outcome {
+        Ok(Ok(r)) => r,
+        Ok(Err(e)) => EvalResult::error(e),
+        Err(_) => EvalResult::error("race panicked".into()),
+    };
+    result.wall_time_ms = started.elapsed().as_secs_f64() * 1000.0;
+    result
+}
+
+fn try_eval_race(req: &EvalRequest) -> Result<EvalResult, String> {
+    let (module, id) = req.circuit.split_once('/').ok_or_else(|| format!("circuit '{}' is not 'module/id'", req.circuit))?;
+    let circuit = tdrace_core::catalog::find(id, Some(module))
+        .filter(|c| c.module == module)
+        .ok_or_else(|| format!("unknown circuit '{}'", req.circuit))?;
+    let car = match &req.car {
+        Some(car_id) => launch_car_by_id(car_id).ok_or_else(|| format!("unknown car '{car_id}'"))?,
+        None => launch_circuit_cars()
+            .into_iter()
+            .find(|c| c.module == module && c.id == circuit.id)
+            .ok_or_else(|| format!("circuit '{}' has no launch car; pass 'car'", req.circuit))?
+            .car,
+    };
+    if req.laps == 0 || !(req.max_time_s.is_finite() && req.max_time_s > 0.0) {
+        return Err("laps and max_time_s must be positive".into());
+    }
+    if req.subject_slot > req.opponents.len() {
+        return Err(format!("subject_slot {} is past the grid of {}", req.subject_slot, req.opponents.len() + 1));
+    }
+    let track = circuit.load().map_err(|e| format!("circuit '{}': {e}", req.circuit))?;
+    let n = req.opponents.len() + 1;
+    if n > track.grid_positions.len() {
+        return Err(format!("{n} cars but the circuit has {} grid positions", track.grid_positions.len()));
+    }
+
+    // Driver 0 is the subject; grid order puts it at `subject_slot`.
+    let mut drivers = Vec::with_capacity(n);
+    for (index, d) in std::iter::once(&req.subject).chain(&req.opponents).enumerate() {
+        let (style, tier) = parse_driver(d)?;
+        let profile = d.genome.profile(style, tier)?;
+        drivers.push(BotAiDriver::with_seed(profile, eval_driver_seed(req.seed, index)));
+    }
+    let subject = drivers.remove(0);
+    drivers.insert(req.subject_slot, subject);
+    let entries = drivers.into_iter().map(|d| HarnessEntry::bot(d, car)).collect();
+    let results = run_harness_race(&track, entries, req.laps, req.max_time_s);
+
+    let finish_key = |r: &HarnessCarResult| (!r.finished, std::cmp::Reverse(r.lap_times.len()), r.lap_times.iter().sum::<f32>());
+    let rank = |i: usize| 1 + results.iter().filter(|r| finish_key(r) < finish_key(&results[i])).count();
+    let s = &results[req.subject_slot];
+    let out = EvalResult {
+        error: None,
+        subject_rank: rank(req.subject_slot),
+        finished: s.finished,
+        dnf: !s.finished,
+        lap_times: s.lap_times.clone(),
+        mean_flying_lap: s.mean_flying_lap(),
+        best_lap: s.lap_times.get(1..).and_then(|f| f.iter().copied().reduce(f32::min)),
+        spins: s.stats.spins,
+        offs: s.stats.offs,
+        mistakes: s.stats.total_mistakes(),
+        wall_contacts: s.wall_contacts,
+        longest_no_progress_s: s.longest_no_progress_s,
+        controls_hash: s.controls_hash,
+        steps: s.race_ticks,
+        car_steps: s.race_ticks as u64 * n as u64,
+        wall_time_ms: 0.0,
+        opponents: (0..n)
+            .filter(|&i| i != req.subject_slot)
+            .map(|i| EvalOpponent { rank: rank(i), finished: results[i].finished, mean_flying_lap: results[i].mean_flying_lap() })
+            .collect(),
+    };
+    let floats = out.lap_times.iter().copied().chain([out.longest_no_progress_s]).chain(out.mean_flying_lap).chain(out.best_lap);
+    if floats.into_iter().any(|x| !x.is_finite()) {
+        return Err("race produced a non-finite value".into());
+    }
+    Ok(out)
 }
