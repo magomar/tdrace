@@ -3,7 +3,8 @@ type: Architecture Spec
 template: architecture
 title: "EvoRL Bot Performance Calibration on the Launch Circuits"
 description: "Offline EvoRL calibration pipeline, run on the blaze compute box, that tunes the existing bot controller gains and the five driver-tier quality settings so bots drive cleanly and keep a monotonic tier pace ladder on every Steam-launch circuit (Classic, Karting, Autocross, Rallycross)."
-status: draft
+status: approved
+verified: { by: human:mario, at: 2026-10-10T22:49:59Z, hash: "7d33f1c261f1" }
 created: 2026-10-03
 generated: { by: agent/claude, at: 2026-10-11T00:00:00Z }
 depends_on:
