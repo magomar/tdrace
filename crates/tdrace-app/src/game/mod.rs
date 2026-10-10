@@ -14024,17 +14024,17 @@ impl RaceSession {
                     self.menu_track_filter_counts()
                 };
                 let display_module = self.menu_category_filter.module_id().unwrap_or(self.active_module_id);
-                let (mod_title, mod_sub, mod_accent) = match self.menu_category_filter {
-                    MenuCategoryFilter::Custom => ("CUSTOM CIRCUITS CATALOG", "Community & User Authored Circuits", Palette::NEON_MAGENTA),
+                let (mod_title, mod_sub) = match self.menu_category_filter {
+                    MenuCategoryFilter::Custom => ("CUSTOM CIRCUITS CATALOG", "Community & User Authored Circuits"),
                     _ => match display_module {
-                        "gt" | "gt_challenge" => ("GRAND TOURING CHALLENGE", "Continental GT3 & Biturbo World Tour", Palette::RED),
-                        "rally" => ("RALLYCROSS WORLD CUP", "World & Continental Rallycross Mixed Surface Stages", Palette::NEON_GOLD),
-                        "kart" => ("KARTING WORLD CUP", "125cc Direct Steering Shifter Karts", Palette::NEON_GREEN),
-                        "nascar" => ("STOCK CAR RACING", "850 BHP Pushrod V8 High-Banked Superspeedways", Palette::YELLOW),
-                        "extreme_offroad" => ("EXTREME OFF-ROAD & STUNT ARENAS", "Sonora Deserts, Ice Lakes, Supercross Triples & Stunt Arenas", Color::new(1.0, 0.40, 0.05, 1.0)),
-                        "autocross" => ("CONTINENTAL AUTOCROSS", "Natural Unpaved Dirt & Buggy Racing", Color::new(1.0, 0.45, 0.05, 1.0)),
-                        "vault" => ("THE VAULT (ARCHIVE DEPOT)", "Decommissioned chassis, legacy test circuits & staging material", Color::new(1.0, 0.65, 0.0, 1.0)),
-                        _ => ("CLASSIC ARCADE MOTORSPORT", "All-in-one arcade racing, time trials & circuit studio", Palette::NEON_GOLD),
+                        "gt" | "gt_challenge" => ("GRAND TOURING CHALLENGE", "Continental GT3 & Biturbo World Tour"),
+                        "rally" => ("RALLYCROSS WORLD CUP", "World & Continental Rallycross Mixed Surface Stages"),
+                        "kart" => ("KARTING WORLD CUP", "125cc Direct Steering Shifter Karts"),
+                        "nascar" => ("STOCK CAR RACING", "850 BHP Pushrod V8 High-Banked Superspeedways"),
+                        "extreme_offroad" => ("EXTREME OFF-ROAD & STUNT ARENAS", "Sonora Deserts, Ice Lakes, Supercross Triples & Stunt Arenas"),
+                        "autocross" => ("CONTINENTAL AUTOCROSS", "Natural Unpaved Dirt & Buggy Racing"),
+                        "vault" => ("THE VAULT (ARCHIVE DEPOT)", "Decommissioned chassis, legacy test circuits & staging material"),
+                        _ => ("CLASSIC ARCADE MOTORSPORT", "All-in-one arcade racing, time trials & circuit studio"),
                     },
                 };
                 let cp_ref = if self.has_track_career_locks() {
@@ -14057,7 +14057,6 @@ impl RaceSession {
                     self.active_module_id,
                     mod_title,
                     mod_sub,
-                    mod_accent,
                     self.menu_category_filter,
                     &available_tracks,
                     self.menu_track_idx,
