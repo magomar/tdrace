@@ -3,7 +3,8 @@ type: Feature Spec
 template: feature
 title: "Chassis-Conforming Dynamic Vehicle Ground Shadows"
 description: "Replaces generic rounded rectangular drop shadows with dynamic ground shadows taking the exact contour of the vehicle chassis, utilizing sprite alpha mask projections for texture-based vehicles and multi-polygon body silhouettes for procedural archetypes."
-status: draft
+status: in_progress
+verified: { by: "human:mario", at: "2026-10-10T22:52:15Z", hash: "7f81e01701e0" }
 created: 2026-10-06
 generated: { by: agent/antigravity, at: 2026-10-06T17:14:19Z }
 depends_on:
@@ -189,6 +190,7 @@ Ground shadows react dynamically to suspension compression and airborne ballisti
 | [`crates/cabinet/src/state/settings.rs`](../crates/cabinet/src/state/settings.rs) | Configures `ArcadeSettingsModal` `VEHICLE SHADOWS` dropdown widget with default index 1 (`Disabled`). |
 | [`config.toml`](../config.toml) | Declares default game display configuration with `vehicle_shadows = false`. |
 | [`crates/tdrace-app/tests/render_tests.rs`](../crates/tdrace-app/tests/render_tests.rs) | Validates silhouette shadow geometry, Ackermann wheel synchronization, and elevation scaling. |
+| [`crates/tdrace-app/examples/vehicle_shadow_preview.rs`](../crates/tdrace-app/examples/vehicle_shadow_preview.rs) | Native visual smoke test: saves screenshots of sprite and archetype shadows on the ground and at 2.5 m lift. |
 | [`crates/tdrace-app/tests/config_tests.rs`](../crates/tdrace-app/tests/config_tests.rs) | Verifies TOML roundtrip and default deserialization of `vehicle_shadows`. |
 | [`crates/cabinet/tests/cabinet_integration_tests.rs`](../crates/cabinet/tests/cabinet_integration_tests.rs) | Verifies UI dropdown state, defaults restoration, and toggle interaction in the Display tab. |
 | [`specs/constitution/ROADMAP.md`](constitution/ROADMAP.md) | Links Spec 096 under Phase 6: Next-Gen Vehicle Dynamics & Pre-Baked Visual Kinematics. |
