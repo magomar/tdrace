@@ -23,6 +23,8 @@ use crate::module::GameModule;
 
 /// Physics step of the game (`RaceSession::FIXED_DT`).
 pub const HARNESS_DT: f32 = 1.0 / 120.0;
+/// Time without wall impacts that separates two wall contacts (s).
+pub const WALL_CONTACT_GAP_S: f32 = 0.25;
 /// Number of fixed track stations where the lateral position is sampled each lap.
 pub const LINE_STATIONS: usize = 200;
 
@@ -64,7 +66,8 @@ pub struct HarnessCarResult {
     /// Order-sensitive hash of every control output (determinism checks).
     pub controls_hash: u64,
     pub finished: bool,
-    /// Separate wall contacts: runs of consecutive ticks with a `RaceEvent::WallImpact`.
+    /// Separate wall contacts: a `RaceEvent::WallImpact` after at least `WALL_CONTACT_GAP_S` without
+    /// one. A scrape along a wall is one contact.
     pub wall_contacts: u32,
     /// Physics ticks the race ran (the same for every car).
     pub race_ticks: u32,
@@ -120,7 +123,9 @@ pub fn run_harness_race(track: &Track, entries: Vec<HarnessEntry>, laps: u32, ma
     let mut progress_mark = vec![0.0f32; n];
     let mut no_progress = vec![0.0f32; n];
     let station_len = len / LINE_STATIONS as f32;
-    let mut on_wall = vec![false; n];
+    // Ticks since each car's last wall impact.
+    let mut off_wall = vec![u32::MAX; n];
+    let gap_ticks = (WALL_CONTACT_GAP_S / HARNESS_DT).round() as u32;
     let mut ticks = 0u32;
 
     let steps = (max_time_s / HARNESS_DT) as usize;
@@ -150,10 +155,14 @@ pub fn run_harness_race(track: &Track, entries: Vec<HarnessEntry>, laps: u32, ma
             }
         }
         for i in 0..n {
-            if touching[i] && !on_wall[i] && !results[i].finished {
-                results[i].wall_contacts += 1;
+            if touching[i] {
+                if off_wall[i] >= gap_ticks && !results[i].finished {
+                    results[i].wall_contacts += 1;
+                }
+                off_wall[i] = 0;
+            } else {
+                off_wall[i] = off_wall[i].saturating_add(1);
             }
-            on_wall[i] = touching[i];
         }
         let (cars, trackers) = (&world.vehicles, &world.trackers);
 
@@ -530,6 +539,11 @@ pub struct EvalOpponent {
     pub rank: usize,
     pub finished: bool,
     pub mean_flying_lap: Option<f32>,
+    pub spins: u32,
+    pub offs: u32,
+    pub mistakes: u32,
+    pub wall_contacts: u32,
+    pub longest_no_progress_s: f32,
 }
 
 /// Outcome of an `EvalRequest`. Every field but `error` and `wall_time_ms` is deterministic.
@@ -554,6 +568,8 @@ pub struct EvalResult {
     pub steps: u32,
     /// Ticks times cars.
     pub car_steps: u64,
+    /// The circuit is a closed spline loop (a lap race), not an arena or an open layout.
+    pub closed_loop: bool,
     pub wall_time_ms: f64,
     pub opponents: Vec<EvalOpponent>,
 }
@@ -666,10 +682,23 @@ fn try_eval_race(req: &EvalRequest) -> Result<EvalResult, String> {
         controls_hash: s.controls_hash,
         steps: s.race_ticks,
         car_steps: s.race_ticks as u64 * n as u64,
+        closed_loop: matches!(track.kind, tdrace_core::track::TrackKind::Circuit) && track.spline.closed,
         wall_time_ms: 0.0,
         opponents: (0..n)
             .filter(|&i| i != req.subject_slot)
-            .map(|i| EvalOpponent { rank: rank(i), finished: results[i].finished, mean_flying_lap: results[i].mean_flying_lap() })
+            .map(|i| {
+                let r = &results[i];
+                EvalOpponent {
+                    rank: rank(i),
+                    finished: r.finished,
+                    mean_flying_lap: r.mean_flying_lap(),
+                    spins: r.stats.spins,
+                    offs: r.stats.offs,
+                    mistakes: r.stats.total_mistakes(),
+                    wall_contacts: r.wall_contacts,
+                    longest_no_progress_s: r.longest_no_progress_s,
+                }
+            })
             .collect(),
     };
     let floats = out.lap_times.iter().copied().chain([out.longest_no_progress_s]).chain(out.mean_flying_lap).chain(out.best_lap);

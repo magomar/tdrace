@@ -50,6 +50,17 @@ def worker_binary() -> Path:
     return path
 
 
+def launch_circuits() -> list[tuple[str, str]]:
+    """(module, circuit id) of every launch circuit, as `bot_eval_worker` lists them."""
+    out = subprocess.run(
+        [str(worker_binary()), "--list-launch-circuits"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout
+    return [(c["module"], c["id"]) for c in json.loads(out)]
+
+
 class Worker:
     """A running `bot_eval_worker`."""
 

@@ -1,16 +1,19 @@
-"""Spec 083 calibration runs: throughput measurement and an EvoRL smoke run (more stages follow).
+"""Spec 083 calibration runs: throughput, EvoRL smoke run, baseline audit (more stages follow).
 
 See specs/083_evorl_bot_driving_style_and_performance_optimization.md.
 
     python tools/bot_tuning/run_campaign.py throughput --workers 28 --out results/throughput.json
     python tools/bot_tuning/run_campaign.py evorl-smoke --workers 28 --db results/smoke.sqlite
+    python tools/bot_tuning/run_campaign.py audit --workers 28 --out results/audit_baseline.json
 """
 
 from __future__ import annotations
 
 import argparse
 import dataclasses
+import itertools
 import json
+import math
 import os
 import platform
 import sys
@@ -102,6 +105,157 @@ def evorl_smoke(workers: int, db: Path) -> dict[str, Any]:
     return {"elapsed_s": elapsed, "fitness": dataclasses.asdict(fit)}
 
 
+STYLES = ["balanced", "smooth", "aggressive", "tenacious", "calculating", "bold"]
+TIERS = [1, 2, 3, 4, 5]
+# Spec 083: a bot without progress for longer than this is stuck (classic_circuits_bot_tests).
+STUCK_S = 10.0
+
+
+def grid_request(
+    module: str, circuit: str, tier: int, seed: int, cars: int
+) -> dict[str, Any]:
+    """A grid of `cars` bots at one tier, one per style (Balanced is the subject)."""
+    drivers = [{"style": style, "tier": tier} for style in STYLES[:cars]]
+    return {
+        "circuit": f"{module}/{circuit}",
+        "laps": 3,
+        "seed": seed,
+        "subject": drivers[0],
+        "opponents": drivers[1:],
+    }
+
+
+def _grid_race(job: tuple[str, str, int, int]) -> dict[str, Any]:
+    """One audit race; the grid shrinks when the circuit has fewer than 6 grid positions."""
+    module, circuit, tier, seed = job
+    for cars in (6, 4, 2, 1):
+        result = worker.race(grid_request(module, circuit, tier, seed, cars))
+        if not (result["error"] and "grid positions" in result["error"]):
+            break
+    return {
+        "module": module,
+        "circuit": circuit,
+        "tier": tier,
+        "seed": seed,
+        "cars": cars,
+        **result,
+    }
+
+
+def _mean_se(xs: list[float]) -> tuple[float | None, float | None]:
+    if not xs:
+        return None, None
+    mean = sum(xs) / len(xs)
+    if len(xs) < 2:
+        return mean, None
+    var = sum((x - mean) ** 2 for x in xs) / (len(xs) - 1)
+    return mean, math.sqrt(var / len(xs))
+
+
+def summarize_circuit(races: list[dict[str, Any]]) -> dict[str, Any]:
+    """Per-tier pace, mistakes and stalls of one circuit, and whether the tier order holds."""
+    errors = sorted({r["error"] for r in races if r["error"]})
+    ok = [r for r in races if not r["error"]]
+    tiers: dict[int, dict[str, Any]] = {}
+    for tier in TIERS:
+        rs = [r for r in ok if r["tier"] == tier]
+        per_car = [
+            {
+                k: r[k]
+                for k in (
+                    "finished",
+                    "mean_flying_lap",
+                    "spins",
+                    "offs",
+                    "mistakes",
+                    "wall_contacts",
+                    "longest_no_progress_s",
+                )
+            }
+            for r in rs
+        ] + [o for r in rs for o in r["opponents"]]
+        # One sample per race: the mean flying lap of the grid, so seeds are independent.
+        race_means = []
+        for r in rs:
+            laps = [
+                c["mean_flying_lap"]
+                for c in [r, *r["opponents"]]
+                if c["mean_flying_lap"]
+            ]
+            if laps:
+                race_means.append(sum(laps) / len(laps))
+        mean, se = _mean_se(race_means)
+        n_laps = max(1, 3 * len(per_car))  # scheduled laps
+        tiers[tier] = {
+            "races": len(rs),
+            "cars": len(per_car),
+            "mean_flying_lap": mean,
+            "se": se,
+            "dnf": sum(1 for c in per_car if not c["finished"]),
+            "stuck": sum(1 for c in per_car if c["longest_no_progress_s"] > STUCK_S),
+            "max_no_progress_s": max(
+                (c["longest_no_progress_s"] for c in per_car), default=0.0
+            ),
+            "spins_per_lap": sum(c["spins"] for c in per_car) / n_laps,
+            "offs_per_lap": sum(c["offs"] for c in per_car) / n_laps,
+            "mistakes_per_lap": sum(c["mistakes"] for c in per_car) / n_laps,
+            "wall_contacts_per_lap": sum(c["wall_contacts"] for c in per_car) / n_laps,
+        }
+    t4 = tiers[4]["mean_flying_lap"]
+    for t in tiers.values():
+        t["delta_vs_t4"] = (
+            (t["mean_flying_lap"] / t4 - 1.0) if t4 and t["mean_flying_lap"] else None
+        )
+    order = []
+    for slow, fast in itertools.pairwise(TIERS):
+        a, b = tiers[slow], tiers[fast]
+        held = None
+        if (
+            a["mean_flying_lap"]
+            and b["mean_flying_lap"]
+            and a["se"] is not None
+            and b["se"] is not None
+        ):
+            held = a["mean_flying_lap"] - b["mean_flying_lap"] > 2.0 * math.hypot(
+                a["se"], b["se"]
+            )
+        order.append(held)
+    closed = all(r["closed_loop"] for r in ok) if ok else None
+    return {
+        "closed_loop": closed,
+        "errors": errors,
+        "grid_cars": max((r["cars"] for r in ok), default=0),
+        "tiers": tiers,
+        "order_held": order,
+    }
+
+
+def audit(
+    workers: int, seeds: int, circuits: list[tuple[str, str]] | None
+) -> dict[str, Any]:
+    """Every tier on every launch circuit, `seeds` 3-lap grid races each."""
+    circuits = circuits or worker.launch_circuits()
+    jobs = [
+        (m, c, tier, 1000 + seed)
+        for m, c in circuits
+        for tier in TIERS
+        for seed in range(seeds)
+    ]
+    started = time.perf_counter()
+    with ProcessPoolExecutor(max_workers=workers) as pool:
+        races = list(pool.map(_grid_race, jobs, chunksize=1))
+    by_circuit: dict[str, list[dict[str, Any]]] = {}
+    for r in races:
+        by_circuit.setdefault(f"{r['module']}/{r['circuit']}", []).append(r)
+    return {
+        "host": platform.node(),
+        "elapsed_s": time.perf_counter() - started,
+        "races": len(races),
+        "seeds": seeds,
+        "circuits": {k: summarize_circuit(v) for k, v in by_circuit.items()},
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -115,12 +269,24 @@ def main() -> None:
     smoke.add_argument("--workers", type=int, default=8)
     smoke.add_argument("--db", type=Path, default=Path("results/smoke.sqlite"))
     smoke.add_argument("--out", type=Path)
+    au = sub.add_parser("audit", help="every tier on every launch circuit")
+    au.add_argument("--workers", type=int, default=8)
+    au.add_argument("--seeds", type=int, default=8)
+    au.add_argument(
+        "--circuit", action="append", help="module/id; default: all launch circuits"
+    )
+    au.add_argument("--out", type=Path)
     args = parser.parse_args()
 
     if args.command == "throughput":
         report = throughput(args.workers, args.rounds)
     elif args.command == "evorl-smoke":
         report = evorl_smoke(args.workers, args.db)
+    elif args.command == "audit":
+        chosen = (
+            [tuple(c.split("/", 1)) for c in args.circuit] if args.circuit else None
+        )
+        report = audit(args.workers, args.seeds, chosen)
     out = json.dumps(report, indent=2)
     print(out)
     if args.out:
