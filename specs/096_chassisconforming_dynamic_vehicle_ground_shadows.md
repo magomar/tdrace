@@ -4,6 +4,7 @@ template: feature
 title: "Chassis-Conforming Dynamic Vehicle Ground Shadows"
 description: "Replaces generic rounded rectangular drop shadows with dynamic ground shadows taking the exact contour of the vehicle chassis, utilizing sprite alpha mask projections for texture-based vehicles and multi-polygon body silhouettes for procedural archetypes."
 status: in_progress
+receipt: "docs/receipts/spec-096-receipt.md"
 verified: { by: "human:mario", at: "2026-10-10T22:52:15Z", hash: "7f81e01701e0" }
 created: 2026-10-06
 generated: { by: agent/antigravity, at: 2026-10-06T17:14:19Z }
