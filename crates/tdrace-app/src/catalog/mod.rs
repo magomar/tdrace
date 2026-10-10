@@ -275,7 +275,12 @@ impl RealCarModel {
         };
 
         // Spec 043: grip stat, drivetrain and brakes must reach the per-wheel assemblies.
-        cfg.finalized()
+        let cfg = cfg.finalized();
+        if self.category() == tdrace_core::CarCategory::Rally {
+            cfg.with_rally_balance()
+        } else {
+            cfg
+        }
     }
 
     /// Returns the engine sound archetype for this real car model.

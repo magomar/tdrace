@@ -100,11 +100,10 @@ impl ClassicGameModule {
         cfg.steer_speed = 8.5;
         cfg.steer_return_speed = 12.0;
         cfg.downforce_coefficient = 1.10;
-        cfg.drive_bias = 0.45; // 4WD 45:55 front/rear torque split
         cfg.tire.slide_grip = 0.94;
         cfg.tire.peak_slip_angle_deg = 10.2;
         cfg.assists = tdrace_core::physics::config::DriverAssistsConfig::arcade();
-        cfg.finalized()
+        cfg.with_rally_balance() // 4WD, 30:70 front/rear torque split, softer rear tire
     }
 
     /// 150 BHP Mudlark Cross Car: single-seat motorcycle-engine cross car, RWD, light and agile on turn-in.

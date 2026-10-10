@@ -621,6 +621,12 @@ impl Default for DifferentialType {
 /// Default load transfer response (Hz). The pre-043 filter `alpha = dt * 15` was ~2.4 Hz.
 pub const DEFAULT_WEIGHT_TRANSFER_HZ: f32 = 3.0;
 
+/// Most torque an all-wheel-drive rally car sends to the front axle (see [`CarConfig::with_rally_balance`]).
+pub const RALLY_FRONT_TORQUE_SHARE: f32 = 0.30;
+
+/// Rear grip / front grip of an all-wheel-drive rally car (see [`CarConfig::with_rally_balance`]).
+pub const RALLY_REAR_GRIP_SCALE: f32 = 0.92;
+
 pub fn default_front_differential() -> DifferentialType {
     DifferentialType::Open
 }
@@ -1685,6 +1691,25 @@ impl CarConfig {
     /// Alias for `kart()` representing the classic 200cc sprint kart.
     pub fn classic_kart() -> Self {
         Self::kart()
+    }
+
+    /// Rally handling balance: an all-wheel-drive car sends most torque to the rear axle and runs a
+    /// rear tire with 8% less grip than the front.
+    ///
+    /// A 50:50 or 45:55 AWD car grips with all four tires, so under throttle it pushes wide: at
+    /// 30-40 m/s on dirt its nose rotated at 0.24-0.29 rad/s against 0.44-0.47 for the rear-drive
+    /// Mudlark, with a body slip angle of 4 degrees against 18. With this balance the nose rotates
+    /// at 0.37-0.43 rad/s and the car slides on the throttle. Rear-drive and front-drive cars keep
+    /// their own balance.
+    #[must_use]
+    pub fn with_rally_balance(mut self) -> Self {
+        if self.drive_bias > RALLY_FRONT_TORQUE_SHARE && self.drive_bias < 1.0 {
+            self.drive_bias = RALLY_FRONT_TORQUE_SHARE;
+        }
+        if self.drive_bias > 0.0 && self.drive_bias < 1.0 {
+            self.rear_axle.grip_scale = RALLY_REAR_GRIP_SCALE;
+        }
+        self.finalized()
     }
 
     /// Rally spec: AWD traction, softened tire curve for loose surfaces, high ride height.

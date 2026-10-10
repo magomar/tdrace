@@ -740,7 +740,7 @@ mod tests {
         assert!(kart.steer_speed >= 10.0);
 
         let rally = ClassicGameModule::car_classic_rally();
-        assert_eq!(rally.drive_bias, 0.45);
+        assert_eq!(rally.drive_bias, tdrace_core::physics::config::RALLY_FRONT_TORQUE_SHARE);
         assert!(rally.assists.counter_steer_assist_enabled);
 
         let mudlark = ClassicGameModule::car_classic_ax_mudlark();

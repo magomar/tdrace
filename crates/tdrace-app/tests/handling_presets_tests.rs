@@ -208,9 +208,9 @@ fn test_classic_drift_chassis_calibration_is_applied() {
     assert!((kart.caster_jacking_factor - 1.40).abs() < 1e-6);
 
     let rally = ClassicGameModule::car_classic_rally();
-    assert!((rally.drive_bias - 0.45).abs() < 1e-6);
-    assert!((rally.wheels[0].drive_torque_factor - 0.225).abs() < 1e-6);
-    assert!((rally.wheels[2].drive_torque_factor - 0.275).abs() < 1e-6);
+    assert!((rally.drive_bias - 0.30).abs() < 1e-6);
+    assert!((rally.wheels[0].drive_torque_factor - 0.15).abs() < 1e-6);
+    assert!((rally.wheels[2].drive_torque_factor - 0.35).abs() < 1e-6);
 }
 
 #[test]

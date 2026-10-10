@@ -2977,6 +2977,55 @@ mod tests {
         }
     }
 
+    /// Yaw rate and body slip angle after 2.5 s of full steer at `speed` on dirt with 35% throttle.
+    fn dirt_corner_yaw_and_slip(cfg: CarConfig, speed: f32) -> (f32, f32) {
+        let mut car = Car::new(cfg).with_pose(Vec2::ZERO, 0.0);
+        car.set_velocity(Vec2::new(speed, 0.0));
+        let ctrl = CarControls::new(0.35, 1.0, 0.0, false);
+        for _ in 0..150 {
+            car.step(&ctrl, SurfaceType::Dirt, 1.0 / 60.0);
+        }
+        (
+            car.state.angular_velocity.abs(),
+            car.state.sideslip_angle.abs().to_degrees(),
+        )
+    }
+
+    #[test]
+    fn test_rally_balance_only_reshapes_all_wheel_drive() {
+        let rwd = CarConfig::sports_car().with_rally_balance();
+        assert_eq!(rwd.drive_bias, 0.0, "rear-drive keeps its drive bias");
+        assert_eq!(rwd.rear_axle.grip_scale, 1.0, "rear-drive keeps its rear grip");
+
+        let mut fwd = CarConfig::sports_car();
+        fwd.drive_bias = 1.0;
+        let fwd = fwd.with_rally_balance();
+        assert_eq!(fwd.drive_bias, 1.0, "front-drive keeps its drive bias");
+        assert_eq!(fwd.rear_axle.grip_scale, 1.0, "front-drive keeps its rear grip");
+
+        let mut awd = CarConfig::sports_car();
+        awd.drive_bias = 0.5;
+        let awd = awd.with_rally_balance();
+        assert_eq!(awd.drive_bias, crate::config::RALLY_FRONT_TORQUE_SHARE);
+        assert_eq!(awd.rear_axle.grip_scale, crate::config::RALLY_REAR_GRIP_SCALE);
+
+        let mut rear_biased = CarConfig::sports_car();
+        rear_biased.drive_bias = 0.2;
+        let rear_biased = rear_biased.with_rally_balance();
+        assert_eq!(rear_biased.drive_bias, 0.2, "a drive bias already behind the cap is kept");
+    }
+
+    #[test]
+    fn test_rally_car_rotates_into_a_corner_under_throttle() {
+        // The Mudlark-style rear-drive car sits at about 0.44 rad/s and 18 degrees; the 45:55 rally
+        // car measured 0.29 rad/s and 4 degrees at 30 m/s (pushing wide, nose barely rotating).
+        for speed in [30.0f32, 40.0] {
+            let (yaw, slip) = dirt_corner_yaw_and_slip(CarConfig::rally_car().with_rally_balance(), speed);
+            assert!(yaw >= 0.34, "rally car at {speed} m/s turns its nose at only {yaw:.2} rad/s");
+            assert!(slip >= 10.0, "rally car at {speed} m/s holds only {slip:.1} deg of body slip");
+        }
+    }
+
     #[test]
     fn test_reverse_drive_bias_distribution() {
         let sports = Car::new(CarConfig::sports_car()); // RWD: drive_bias = 0.0
