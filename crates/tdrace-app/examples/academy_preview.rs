@@ -83,6 +83,12 @@ async fn main() {
     }
     shoot(&mut session, &dir, "academy-hud-wear-31").await;
 
+    // Overheated tyres: the wheel borders of the cockpit HUD turn red.
+    for wheel in session.world.vehicles[0].state.wheel_assemblies.iter_mut() {
+        wheel.temperature = 130.0;
+    }
+    shoot(&mut session, &dir, "academy-hud-overheat").await;
+
     // Worn out at the flag: no medal.
     for wheel in session.world.vehicles[0].state.wheel_assemblies.iter_mut() {
         wheel.wear = 0.55;
@@ -96,4 +102,20 @@ async fn main() {
     assert_eq!(eval.medal, AcademyMedal::None);
     println!("worn out: {:?}", eval.tyres_worn_out);
     shoot(&mut session, &dir, "academy-result-worn-out").await;
+
+    // A cleared mission re-run past the daily stipend limit.
+    for id in AcademyLessonId::tier_lessons(2) {
+        let def = AcademyLessonDef::find(*id).unwrap();
+        session.active_profile.academy_progress.record_attempt(*id, def.gold_time_sec - 1.0, true);
+    }
+    session.active_profile.academy_progress.stipend_day = Some(chrono::Local::now().format("%Y-%m-%d").to_string());
+    session.active_profile.academy_progress.stipends_today = 5;
+    // The race reloads the profile from the database.
+    session.hof_db.as_ref().unwrap().update_profile(&session.active_profile).unwrap();
+    setup_academy_session(&mut session, AcademyLessonId::Acad2ScandinavianFlick).unwrap();
+    session.init_race();
+    session.state = GameState::Racing;
+    finish_race(&mut session);
+    println!("stipend limit reached: {:?}", session.academy_last_evaluation.as_ref().map(|e| e.stipend_limit_reached));
+    shoot(&mut session, &dir, "academy-result-stipend-limit").await;
 }

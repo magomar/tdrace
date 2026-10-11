@@ -969,9 +969,66 @@ mod multitier {
 
 mod multitier_ui {
     use tdrace_app::game::academy::{evaluate_academy_attempt_on, AcademyChallengeState, AcademyLessonDef};
+    use tdrace_app::game::{GameState, RaceSession};
     use tdrace_app::profile::{AcademyLessonId, AcademyMedal, PlayerProfile};
     use tdrace_app::ui::academy_ui::{academy_result_summary, lesson_targets_text, tier_unlock_rule};
     use tdrace_app::ui::hud::academy_wear_label;
+
+    /// Presses `key` on the Academy screen with the cursor on `selected_idx`. Returns the new cursor.
+    fn press_on_academy(session: &mut RaceSession, selected_idx: usize, key: macroquad::input::KeyCode) -> usize {
+        session.state = GameState::ClassicAcademy { selected_idx, showing_graduation: false };
+        tdrace_app::game::inject_key_presses_for_tests(&[key]);
+        session.update();
+        tdrace_app::game::inject_key_presses_for_tests(&[]);
+        match session.state {
+            GameState::ClassicAcademy { selected_idx, .. } => selected_idx,
+            ref other => panic!("left the Academy screen: {other:?}"),
+        }
+    }
+
+    fn graduate(profile: &mut PlayerProfile) {
+        for id in AcademyLessonId::ALL {
+            let def = AcademyLessonDef::find(id).unwrap();
+            profile.academy_progress.record_attempt(id, def.bronze_time_sec - 0.1, true);
+        }
+    }
+
+    #[test]
+    fn test_academy_cursor_moves_inside_a_tier_and_across_tier_tabs() {
+        use macroquad::input::KeyCode;
+        let mut session = RaceSession::new();
+        // Up and Down stay inside the four missions of the tier
+        assert_eq!(press_on_academy(&mut session, 0, KeyCode::Down), 1);
+        assert_eq!(press_on_academy(&mut session, 3, KeyCode::Down), 0);
+        assert_eq!(press_on_academy(&mut session, 4, KeyCode::Up), 7);
+        assert_eq!(press_on_academy(&mut session, 11, KeyCode::Down), 8);
+        // Right and Left change the tier tab and keep the row
+        assert_eq!(press_on_academy(&mut session, 1, KeyCode::Right), 5);
+        assert_eq!(press_on_academy(&mut session, 5, KeyCode::Right), 9);
+        assert_eq!(press_on_academy(&mut session, 9, KeyCode::Right), 1);
+        assert_eq!(press_on_academy(&mut session, 1, KeyCode::Left), 9);
+        assert_eq!(press_on_academy(&mut session, 6, KeyCode::E), 10);
+        assert_eq!(press_on_academy(&mut session, 6, KeyCode::Q), 2);
+    }
+
+    #[test]
+    fn test_a_locked_tier_cannot_be_started_and_an_open_one_can() {
+        use macroquad::input::KeyCode;
+        let mut session = RaceSession::new();
+        // Rookie: Tier 2 and Tier 3 missions are locked
+        for idx in [4, 8] {
+            let _ = press_on_academy(&mut session, idx, KeyCode::Enter);
+            assert_eq!(session.active_academy_lesson, None, "mission {idx} must not start");
+        }
+        // Graduated: a Tier 2 mission starts
+        graduate(&mut session.active_profile);
+        let _ = press_on_academy(&mut session, 5, KeyCode::Enter);
+        assert_eq!(session.active_academy_lesson, Some(AcademyLessonId::Acad2ScandinavianFlick));
+        // Tier 3 is still locked
+        session.active_academy_lesson = None;
+        let _ = press_on_academy(&mut session, 9, KeyCode::Enter);
+        assert_eq!(session.active_academy_lesson, None);
+    }
 
     #[test]
     fn test_wear_banner_reads_worst_wheel_against_the_cap() {
