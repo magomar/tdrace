@@ -1,4 +1,4 @@
-//! Spec 064 calibration: a headless reference run of every Tier 2 and Tier 3 Academy mission.
+//! Spec 064 and Spec 109 calibration: a headless reference run of every Academy mission, Tiers 1 to 3.
 //!
 //! The reference driver is a Contender balanced bot with no human mistakes. It drives the mission's
 //! circuit and car with the mission's own rules (damage, wear scale, start wear, laps, joker rule,
@@ -269,7 +269,7 @@ fn reference_for(def: &AcademyLessonDef) -> Reference {
 }
 
 fn missions() -> Vec<AcademyLessonDef> {
-    [2u8, 3].iter().flat_map(|t| AcademyLessonDef::tier_curriculum(*t)).collect()
+    [1u8, 2, 3].iter().flat_map(|t| AcademyLessonDef::tier_curriculum(*t)).collect()
 }
 
 /// Prints what the targets are set from. Run: cargo test --release -p tdrace-app --test
@@ -277,8 +277,7 @@ fn missions() -> Vec<AcademyLessonDef> {
 #[test]
 #[ignore]
 fn print_reference_table() {
-    let mut lessons: Vec<AcademyLessonDef> = AcademyLessonDef::tier_curriculum(1);
-    lessons.extend(missions());
+    let lessons = missions();
     for def in lessons {
         let r = run_mission_reference(&def);
         let len = tdrace_core::catalog::official_track("classic", &def.track_slug).spline.total_length();
@@ -303,7 +302,7 @@ fn print_reference_table() {
 
 /// Scenario: every mission can be passed cleanly
 ///
-/// Given each Tier 2 and Tier 3 mission with its circuit, car and rules
+/// Given each Academy mission of Tiers 1 to 3 with its circuit, car and rules
 /// When the reference driver runs it headless
 /// Then the reference finishes, the attempt is clean, and it earns at least Bronze
 /// (a mission whose Bronze target the reference run cannot meet cleanly does not ship)
@@ -438,3 +437,28 @@ fn search_drift_script() {
 
 
 
+
+/// Scenario: a player can graduate (Spec 109)
+///
+/// Given a rookie profile and the four Tier 1 lessons run in order at the reference pace
+/// When Lesson 4 ends at Bronze or better
+/// Then the profile holds Class D and Tier 2 is unlocked
+#[test]
+fn a_player_at_the_reference_pace_graduates_and_opens_tier_2() {
+    let mut profile = PlayerProfile::new_rookie("Graduate");
+    assert!(!profile.academy_progress.is_tier_unlocked(2));
+    for def in AcademyLessonDef::tier_curriculum(1) {
+        assert!(profile.academy_progress.is_lesson_unlocked(def.id), "{} is locked", def.id.slug());
+        let r = reference_for(&def);
+        let mut state = AcademyChallengeState::new(def.id);
+        state.observe(r.worst_wear, r.best_drift);
+        if r.max_impact > 0.0 {
+            state.register_collision(r.max_impact);
+        }
+        let eval = evaluate_academy_attempt_on(&mut profile, def.id, r.time, &state, "2026-10-11");
+        assert_eq!(eval.medal, AcademyMedal::Gold, "{}: {:?}", def.id.slug(), r);
+    }
+    assert!(profile.academy_progress.is_graduated());
+    assert_eq!(profile.license_grade, tdrace_app::profile::LicenseGrade::ClassD);
+    assert!(profile.academy_progress.is_tier_unlocked(2));
+}
