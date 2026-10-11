@@ -609,7 +609,7 @@ pub fn render_garage_screen(
                         px + pw * 0.5,
                         py + ph * 0.5 + scaler.s(4.0),
                         scaler.font_s(10.5),
-                        if selected { Color::new(r, g, b, 1.0) } else { Palette::UI_TEXT_MUTED },
+                        if selected { Palette::WHITE } else { Palette::UI_TEXT_MUTED },
                     );
                 }
                 fonts.draw_ui_regular(
