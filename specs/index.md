@@ -127,6 +127,7 @@ Table of contents providing progressive disclosure of project constitution and t
 | [104](104_autocross_and_rallycross_tournament_sprint_weekend_format.md) | Autocross and Rallycross Tournament Sprint Weekend Format | Feature Spec | `implemented` | `human:mario` | [017](017_declarative_championship_format_and_editor.md), [050](050_fia_autocross_championship_and_vehicle_roster.md), [051](051_rallycross_6tier_career_progression_and_expanded_circuit_roster.md), [103](103_autocross_and_rallycross_launch_chutes_and_templated_track_components.md) | Implements the authentic 3-stage tournament weekend format (4 Qualifying Heats -> 2 Semifinals -> Grand Final & Consolation B-Final) across a 32-driver field for Autocross and Rallycross championships, providing dynamic grid seeding, Option A continuous player racing, bracket visualization, and 64-driver 4-stage scalability. |
 | [105](105_redrawing_the_23_official_rallycross_jokers_to_fit_junction_components.md) | Redrawing the 23 Official Rallycross Jokers to Fit Junction Components | Architecture Spec | `draft` | — | [081](081_rallycross_joker_lap_segments_for_classic_and_openstreetmap_circuits.md), [088](088_rallycross_jokers_built_from_openstreetmap_joker_ways.md), [102](102_predefined_junction_components_for_road_splits_and_joker_loops.md), [103](103_autocross_and_rallycross_launch_chutes_and_templated_track_components.md) | Moves the 23 official rallycross jokers onto the junction components of spec 102. The old jokers do not fit (0 of 23 convert within 2.0 m), so each one is redrawn: same anchors and side, a new first and last stretch that a Taper or TurnOff can hold, and a free road that keeps the old route. Each redrawn circuit then gets closed junction walls, a collidable nose and a bake that never clips a wall. |
 | [106](106_classic_autocross_launch_chutes_and_tencar_rallycross_chutes.md) | Classic Autocross launch chutes and ten-car Rallycross chutes | Feature Spec | `implemented` | `human:mario` | [103](103_autocross_and_rallycross_launch_chutes_and_templated_track_components.md) | Gives the 3 Classic Autocross circuits the Autocross launch chute (8 cars), makes every Rallycross chute hold 10 cars with a 3-2-3-2 grid, and moves the Classic grandstands that stood inside the wall line, on Meadow Sprint partly on the road. |
+| [109](109_classic_academy_tier_1_medal_target_recalibration.md) | Classic Academy Tier 1 Medal Target Recalibration | Feature Spec | `implemented` | `human:mario` | [060](060_classic_academy_and_grassroots_career_onboarding.md), [064](064_classic_module_multitier_academy_missions_and_degradation_curriculum.md) | Retargets the four Spec 060 Tier 1 lesson medal times from a headless reference run, because the shipped times (18.5 to 68 s) cannot be reached on the current circuits and nobody can graduate. Bounties, unlock rules and licences stay as they are. |
 
 ### 🗺️ Specification Dependency Graph
 
@@ -189,9 +190,11 @@ flowchart LR
     104["104: Autocross and Rallycross Tournament Sprint Weekend Format"]
     105["105: Redrawing the 23 Official Rallycross Jokers to Fit Junction Components"]
     106["106: Classic Autocross launch chutes and ten-car Rallycross chutes"]
+    109["109: Classic Academy Tier 1 Medal Target Recalibration"]
     055 --> 047
     062 --> 063
     055 --> 064
+    060 --> 064
     062 --> 064
     078 --> 064
     072 --> 074
@@ -269,4 +272,6 @@ flowchart LR
     102 --> 105
     103 --> 105
     103 --> 106
+    060 --> 109
+    064 --> 109
 ```

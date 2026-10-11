@@ -248,9 +248,9 @@ impl AcademyLessonDef {
                 description: "Master apex kerb clipping and smooth throttle exit on asphalt.".to_string(),
                 track_slug: "gt_velocity_park".to_string(),
                 car_slug: "classic_gt".to_string(),
-                gold_time_sec: 18.5,
-                silver_time_sec: 20.0,
-                bronze_time_sec: 22.5,
+                gold_time_sec: 61.2,
+                silver_time_sec: 66.5,
+                bronze_time_sec: 74.2,
                 bronze_credit_bounty: 1_000,
                 silver_credit_bounty: 500,
                 gold_credit_bounty: 500,
@@ -265,9 +265,9 @@ impl AcademyLessonDef {
                 description: "Brake from high speed into a downhill chicane without locking wheels.".to_string(),
                 track_slug: "gt_ridge_ring".to_string(),
                 car_slug: "classic_gt".to_string(),
-                gold_time_sec: 24.0,
-                silver_time_sec: 26.0,
-                bronze_time_sec: 29.0,
+                gold_time_sec: 62.0,
+                silver_time_sec: 67.4,
+                bronze_time_sec: 75.2,
                 bronze_credit_bounty: 1_500,
                 silver_credit_bounty: 750,
                 gold_credit_bounty: 750,
@@ -282,9 +282,9 @@ impl AcademyLessonDef {
                 description: "Navigate asphalt-to-gravel transition, Scandinavian flick, and jump landings.".to_string(),
                 track_slug: "rx_quarry_sprint".to_string(),
                 car_slug: "classic_rally".to_string(),
-                gold_time_sec: 32.0,
-                silver_time_sec: 35.0,
-                bronze_time_sec: 39.0,
+                gold_time_sec: 58.2,
+                silver_time_sec: 63.3,
+                bronze_time_sec: 70.6,
                 bronze_credit_bounty: 2_000,
                 silver_credit_bounty: 1_000,
                 gold_credit_bounty: 1_000,
@@ -299,9 +299,9 @@ impl AcademyLessonDef {
                 description: "2-lap sprint race against the Academy Instructor pace car with clean overtaking.".to_string(),
                 track_slug: "ax_meadow_sprint".to_string(),
                 car_slug: "classic_ax_mudlark".to_string(),
-                gold_time_sec: 68.0,
-                silver_time_sec: 73.0,
-                bronze_time_sec: 80.0,
+                gold_time_sec: 104.8,
+                silver_time_sec: 114.0,
+                bronze_time_sec: 127.2,
                 bronze_credit_bounty: 2_500,
                 silver_credit_bounty: 1_500,
                 gold_credit_bounty: 1_500,
@@ -323,7 +323,7 @@ impl AcademyLessonDef {
         self
     }
 
-    /// Medal targets of Tiers 2 and 3 come from the headless reference run of
+    /// Medal targets of all tiers come from the headless reference run of
     /// `tdrace-app/tests/academy_calibration_tests.rs` (Gold about 3% over the reference lap, Silver 12%,
     /// Bronze 25%). Rerun `print_reference_table` there after any change to a circuit, a car or the tyre model.
     fn tier_2_curriculum() -> Vec<Self> {

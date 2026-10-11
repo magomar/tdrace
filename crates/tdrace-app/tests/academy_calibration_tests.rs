@@ -1,4 +1,4 @@
-//! Spec 064 calibration: a headless reference run of every Tier 2 and Tier 3 Academy mission.
+//! Spec 064 and Spec 109 calibration: a headless reference run of every Academy mission, Tiers 1 to 3.
 //!
 //! The reference driver is a Contender balanced bot with no human mistakes. It drives the mission's
 //! circuit and car with the mission's own rules (damage, wear scale, start wear, laps, joker rule,
@@ -28,6 +28,8 @@ struct Reference {
     finished: bool,
     /// Race time of the player in seconds, including a joker penalty.
     time: f32,
+    /// Best lap of the player in seconds: the time Tier 1 lessons 1 to 3 are scored on.
+    best_lap: f32,
     worst_wear: f32,
     /// Hardest landing as impulse (touchdown speed x 100).
     max_landing: f32,
@@ -124,6 +126,7 @@ fn run_reference_scripted(def: &AcademyLessonDef, style: DrivingStyle, tier: Dri
     let mut r = Reference {
         finished: false,
         time: 0.0,
+        best_lap: 0.0,
         worst_wear: 0.0,
         max_landing: 0.0,
         best_drift: 0.0,
@@ -206,6 +209,7 @@ fn run_reference_scripted(def: &AcademyLessonDef, style: DrivingStyle, tier: Dri
             let row = results.iter().find(|row| row.car == player_idx).expect("player row");
             r.finished = true;
             r.time = row.time + row.penalty;
+            r.best_lap = world.trackers[player_idx].best_lap_time.unwrap_or(0.0);
             r.position = row.position as u32;
             r.jokers = row.jokers;
             break;
@@ -265,7 +269,7 @@ fn reference_for(def: &AcademyLessonDef) -> Reference {
 }
 
 fn missions() -> Vec<AcademyLessonDef> {
-    [2u8, 3].iter().flat_map(|t| AcademyLessonDef::tier_curriculum(*t)).collect()
+    [1u8, 2, 3].iter().flat_map(|t| AcademyLessonDef::tier_curriculum(*t)).collect()
 }
 
 /// Prints what the targets are set from. Run: cargo test --release -p tdrace-app --test
@@ -273,17 +277,17 @@ fn missions() -> Vec<AcademyLessonDef> {
 #[test]
 #[ignore]
 fn print_reference_table() {
-    let mut lessons: Vec<AcademyLessonDef> = AcademyLessonDef::tier_curriculum(1);
-    lessons.extend(missions());
+    let lessons = missions();
     for def in lessons {
         let r = run_mission_reference(&def);
         let len = tdrace_core::catalog::official_track("classic", &def.track_slug).spline.total_length();
         println!(
-            "{:<10} len={:6.0} fin={} time={:7.2} wear={:.3} landing={:6.1} drift={:7.1} impact={:6.1} offtrk={:4.1} pos={} jokers={}/{}",
+            "{:<10} len={:6.0} fin={} time={:7.2} lap={:7.2} wear={:.3} landing={:6.1} drift={:7.1} impact={:6.1} offtrk={:4.1} pos={} jokers={}/{}",
             def.id.slug(),
             len,
             r.finished,
             r.time,
+            r.best_lap,
             r.worst_wear,
             r.max_landing,
             r.best_drift,
@@ -298,7 +302,7 @@ fn print_reference_table() {
 
 /// Scenario: every mission can be passed cleanly
 ///
-/// Given each Tier 2 and Tier 3 mission with its circuit, car and rules
+/// Given each Academy mission of Tiers 1 to 3 with its circuit, car and rules
 /// When the reference driver runs it headless
 /// Then the reference finishes, the attempt is clean, and it earns at least Bronze
 /// (a mission whose Bronze target the reference run cannot meet cleanly does not ship)
@@ -433,3 +437,28 @@ fn search_drift_script() {
 
 
 
+
+/// Scenario: a player can graduate (Spec 109)
+///
+/// Given a rookie profile and the four Tier 1 lessons run in order at the reference pace
+/// When Lesson 4 ends at Bronze or better
+/// Then the profile holds Class D and Tier 2 is unlocked
+#[test]
+fn a_player_at_the_reference_pace_graduates_and_opens_tier_2() {
+    let mut profile = PlayerProfile::new_rookie("Graduate");
+    assert!(!profile.academy_progress.is_tier_unlocked(2));
+    for def in AcademyLessonDef::tier_curriculum(1) {
+        assert!(profile.academy_progress.is_lesson_unlocked(def.id), "{} is locked", def.id.slug());
+        let r = reference_for(&def);
+        let mut state = AcademyChallengeState::new(def.id);
+        state.observe(r.worst_wear, r.best_drift);
+        if r.max_impact > 0.0 {
+            state.register_collision(r.max_impact);
+        }
+        let eval = evaluate_academy_attempt_on(&mut profile, def.id, r.time, &state, "2026-10-11");
+        assert_eq!(eval.medal, AcademyMedal::Gold, "{}: {:?}", def.id.slug(), r);
+    }
+    assert!(profile.academy_progress.is_graduated());
+    assert_eq!(profile.license_grade, tdrace_app::profile::LicenseGrade::ClassD);
+    assert!(profile.academy_progress.is_tier_unlocked(2));
+}
