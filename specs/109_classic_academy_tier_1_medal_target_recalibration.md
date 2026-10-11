@@ -4,6 +4,7 @@ template: feature
 title: "Classic Academy Tier 1 Medal Target Recalibration"
 description: "Retargets the four Spec 060 Tier 1 lesson medal times from a headless reference run, because the shipped times (18.5 to 68 s) cannot be reached on the current circuits and nobody can graduate. Bounties, unlock rules and licences stay as they are."
 status: in_progress
+receipt: "docs/receipts/spec-109-receipt.md"
 verified: { by: human:mario, at: 2026-10-11T15:38:52Z, hash: "967750b33f30" }
 created: 2026-10-11
 generated: { by: agent/unknown, at: 2026-10-11T15:32:53Z }
