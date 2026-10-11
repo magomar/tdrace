@@ -28,6 +28,8 @@ struct Reference {
     finished: bool,
     /// Race time of the player in seconds, including a joker penalty.
     time: f32,
+    /// Best lap of the player in seconds: the time Tier 1 lessons 1 to 3 are scored on.
+    best_lap: f32,
     worst_wear: f32,
     /// Hardest landing as impulse (touchdown speed x 100).
     max_landing: f32,
@@ -124,6 +126,7 @@ fn run_reference_scripted(def: &AcademyLessonDef, style: DrivingStyle, tier: Dri
     let mut r = Reference {
         finished: false,
         time: 0.0,
+        best_lap: 0.0,
         worst_wear: 0.0,
         max_landing: 0.0,
         best_drift: 0.0,
@@ -206,6 +209,7 @@ fn run_reference_scripted(def: &AcademyLessonDef, style: DrivingStyle, tier: Dri
             let row = results.iter().find(|row| row.car == player_idx).expect("player row");
             r.finished = true;
             r.time = row.time + row.penalty;
+            r.best_lap = world.trackers[player_idx].best_lap_time.unwrap_or(0.0);
             r.position = row.position as u32;
             r.jokers = row.jokers;
             break;
@@ -279,11 +283,12 @@ fn print_reference_table() {
         let r = run_mission_reference(&def);
         let len = tdrace_core::catalog::official_track("classic", &def.track_slug).spline.total_length();
         println!(
-            "{:<10} len={:6.0} fin={} time={:7.2} wear={:.3} landing={:6.1} drift={:7.1} impact={:6.1} offtrk={:4.1} pos={} jokers={}/{}",
+            "{:<10} len={:6.0} fin={} time={:7.2} lap={:7.2} wear={:.3} landing={:6.1} drift={:7.1} impact={:6.1} offtrk={:4.1} pos={} jokers={}/{}",
             def.id.slug(),
             len,
             r.finished,
             r.time,
+            r.best_lap,
             r.worst_wear,
             r.max_landing,
             r.best_drift,
