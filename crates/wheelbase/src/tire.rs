@@ -826,6 +826,7 @@ impl WheelAssembly {
     ///   slip past the tyre's grip peak (tdrace-6dl0): clean driving barely wears the tread, a drift does.
     ///   `wear_rate_scale` (`CarConfig::wear_rate_scale`) multiplies the wear step only, on top of the
     ///   compound's own `wear_rate`: 1.0 is the normal rate, 0.0 stops the tread wearing (Spec 064).
+    #[allow(clippy::too_many_arguments)]
     pub fn step_thermal_and_wear(
         &mut self,
         fx: f32,

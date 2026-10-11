@@ -141,15 +141,15 @@ fn run_reference_scripted(def: &AcademyLessonDef, style: DrivingStyle, tier: Dri
     let max_steps = (def.rules.laps as f32 * 300.0 / DT) as usize;
     for _ in 0..max_steps {
         let mut controls: Vec<CarControls> = Vec::with_capacity(n);
-        for i in 0..n {
+        for (i, driver) in drivers.iter_mut().enumerate() {
             let others: Vec<&Car> = world.vehicles.iter().enumerate().filter(|(j, _)| *j != i).map(|(_, c)| c).collect();
-            drivers[i].sync_race_state(BotRaceState {
+            driver.sync_race_state(BotRaceState {
                 lap: world.trackers[i].current_lap,
                 jokers: world.jokers_taken(i),
                 total_laps: rules.laps,
                 mandatory_jokers: joker.mandatory,
             });
-            let mut c = drivers[i].compute_controls(&world.vehicles[i], &track, &others, DT);
+            let mut c = driver.compute_controls(&world.vehicles[i], &track, &others, DT);
             if let (true, Some(sc)) = (i == player_idx, script) {
                 let progress = world.trackers[i].progress_distance;
                 if script_started.is_none() && world.trackers[i].current_lap == 1 && progress >= sc.start_m && progress < sc.start_m + 40.0 {

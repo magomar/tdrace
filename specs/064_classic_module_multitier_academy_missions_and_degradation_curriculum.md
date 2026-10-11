@@ -144,79 +144,79 @@ The profile model lives in `crates/arcade-race-core/src/profile.rs` (re-exported
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Tier 2 missions run with damage and wear off**
-  - [ ] **Given** the player setting `gameplay.car_damage` is on and Tier 2 is unlocked
-  - [ ] **When** the player starts `acad_2_1` and hits a wall at 100 km/h
-  - [ ] **Then** the car rebounds with the normal collision response
-  - [ ] **And** car health stays at 100% and no repair bill is created
-  - [ ] **And** after a sustained drift all four wheels still show wear 0.0
+  - [x] **Given** the player setting `gameplay.car_damage` is on and Tier 2 is unlocked
+  - [x] **When** the player starts `acad_2_1` and hits a wall at 100 km/h
+  - [x] **Then** the car rebounds with the normal collision response
+  - [x] **And** car health stays at 100% and no repair bill is created
+  - [x] **And** after a sustained drift all four wheels still show wear 0.0
 
 - **Scenario: Tier 3 scales tyre wear**
-  - [ ] **Given** the same car, circuit and sustained-slide input run twice, once with `wear_rate_scale` 1.0 and once with the Tier 3 value
-  - [ ] **When** both runs reach the same distance
-  - [ ] **Then** the worst-wheel wear of the Tier 3 run is the scale times the other run, within 5%
-  - [ ] **And** the cockpit HUD wheel borders show the overheat colour in the Tier 3 run
+  - [x] **Given** the same car, circuit and sustained-slide input run twice, once with `wear_rate_scale` 1.0 and once with the Tier 3 value
+  - [x] **When** both runs reach the same distance
+  - [x] **Then** the worst-wheel wear of the Tier 3 run is the scale times the other run, within 5%
+  - [x] **And** the cockpit HUD wheel borders show the overheat colour in the Tier 3 run
 
 - **Scenario: A worn-out finish in a wear-capped mission gives no medal**
-  - [ ] **Given** a player driving `acad_3_1`
-  - [ ] **When** the player finishes 3 laps faster than the Gold time with worst-wheel wear above the cap
-  - [ ] **Then** the result screen shows `TYRES WORN OUT` and no medal
-  - [ ] **And** no bounty is paid and the attempt counter rises by 1
+  - [x] **Given** a player driving `acad_3_1`
+  - [x] **When** the player finishes 3 laps faster than the Gold time with worst-wheel wear above the cap
+  - [x] **Then** the result screen shows `TYRES WORN OUT` and no medal
+  - [x] **And** no bounty is paid and the attempt counter rises by 1
 
 - **Scenario: Nursing Worn Rubber starts on worn tyres**
-  - [ ] **Given** a player starting `acad_3_3`
-  - [ ] **When** the race starts at the grid
-  - [ ] **Then** all four player wheels have wear 0.65
-  - [ ] **And** the first following race outside the Academy starts with wear 0.0 on all wheels
+  - [x] **Given** a player starting `acad_3_3`
+  - [x] **When** the race starts at the grid
+  - [x] **Then** all four player wheels have wear 0.65
+  - [x] **And** the first following race outside the Academy starts with wear 0.0 on all wheels
 
 - **Scenario: Tier unlock rules**
-  - [ ] **Given** a profile graduated from Tier 1 with Bronze on 2 of 4 Tier 2 missions
-  - [ ] **When** the player opens the Tier 3 tab
-  - [ ] **Then** every Tier 3 mission is locked and shows the unlock rule
-  - [ ] **And** after Bronze on a third Tier 2 mission, Tier 3 is unlocked
+  - [x] **Given** a profile graduated from Tier 1 with Bronze on 2 of 4 Tier 2 missions
+  - [x] **When** the player opens the Tier 3 tab
+  - [x] **Then** every Tier 3 mission is locked and shows the unlock rule
+  - [x] **And** after Bronze on a third Tier 2 mission, Tier 3 is unlocked
 
 - **Scenario: Licenses follow tier passes and never go down**
-  - [ ] **Given** a Class D profile
-  - [ ] **When** the player earns Bronze on 3 of 4 Tier 2 missions
-  - [ ] **Then** `license_grade` is `ClassC`
-  - [ ] **And** after Bronze on 3 of 4 Tier 3 missions it is `ClassB`
-  - [ ] **And** a profile that already holds Class A keeps Class A after passing Tier 2
+  - [x] **Given** a Class D profile
+  - [x] **When** the player earns Bronze on 3 of 4 Tier 2 missions
+  - [x] **Then** `license_grade` is `ClassC`
+  - [x] **And** after Bronze on 3 of 4 Tier 3 missions it is `ClassB`
+  - [x] **And** a profile that already holds Class A keeps Class A after passing Tier 2
 
 - **Scenario: Medal bounties pay once, as deltas**
-  - [ ] **Given** a profile with 5,000 Cr and no medal on `acad_2_1`
-  - [ ] **When** the player earns Silver, then Gold, then Gold again
-  - [ ] **Then** the balance is 5,000 + 3,750 after Silver and 5,000 + 5,000 after Gold
-  - [ ] **And** the second Gold pays the stipend only, not a bounty
+  - [x] **Given** a profile with 5,000 Cr and no medal on `acad_2_1`
+  - [x] **When** the player earns Silver, then Gold, then Gold again
+  - [x] **Then** the balance is 5,000 + 3,750 after Silver and 5,000 + 5,000 after Gold
+  - [x] **And** the second Gold pays the stipend only, not a bounty
 
 - **Scenario: Stipends are capped per day**
-  - [ ] **Given** a profile with all Tier 2 missions cleared
-  - [ ] **When** the player re-runs a Tier 2 mission 6 times on the same local day
-  - [ ] **Then** the first 5 runs each pay 2,000 Cr
-  - [ ] **And** the 6th pays 0 Cr and the result screen says the daily stipend limit is reached
-  - [ ] **And** on the next local day the stipend pays again
+  - [x] **Given** a profile with all Tier 2 missions cleared
+  - [x] **When** the player re-runs a Tier 2 mission 6 times on the same local day
+  - [x] **Then** the first 5 runs each pay 2,000 Cr
+  - [x] **And** the 6th pays 0 Cr and the result screen says the daily stipend limit is reached
+  - [x] **And** on the next local day the stipend pays again
 
 - **Scenario: Old saves keep their Tier 1 progress**
-  - [ ] **Given** a profile saved by the Spec 060 build with Gold on lesson 1 and a Class D license
-  - [ ] **When** the profile loads in the new build
-  - [ ] **Then** lesson 1 still shows Gold and its bounties are not paid again
-  - [ ] **And** Tier 2 is unlocked only if Lesson 4 was cleared at Bronze or better
+  - [x] **Given** a profile saved by the Spec 060 build with Gold on lesson 1 and a Class D license
+  - [x] **When** the profile loads in the new build
+  - [x] **Then** lesson 1 still shows Gold and its bounties are not paid again
+  - [x] **And** Tier 2 is unlocked only if Lesson 4 was cleared at Bronze or better
 
 - **Scenario: Clean landing mission**
-  - [ ] **Given** a player driving `acad_2_3`
-  - [ ] **When** the car lands off a ramp with an impulse above the landing limit
-  - [ ] **Then** the attempt is invalidated with the reason `Rough Landing`
-  - [ ] **And** a lap with every landing under the limit and a time under the Bronze target earns a medal
+  - [x] **Given** a player driving `acad_2_3`
+  - [x] **When** the car lands off a ramp with an impulse above the landing limit
+  - [x] **Then** the attempt is invalidated with the reason `Rough Landing`
+  - [x] **And** a lap with every landing under the limit and a time under the Bronze target earns a medal
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Modified Files
-- `[ ]` `crates/arcade-race-core/src/profile.rs` -> lesson ids, `tier`, `AcademySessionRules`, `AcademyObjective`, tier unlock, license grants, stipend fields.
-- `[ ]` `crates/tdrace-app/src/game/academy.rs` -> objective validators, stipend rule, session set-up with per-mission rules.
-- `[ ]` `crates/tdrace-app/src/game/mod.rs` -> Academy session rules applied and restored (damage, wear scale, start wear), landing and wear checks in the race loop.
-- `[ ]` `crates/tdrace-app/src/ui/academy_ui.rs` -> tier tabs and mission cards.
-- `[ ]` `crates/tdrace-app/src/ui/hud.rs` -> wear-against-cap banner line.
-- `[ ]` `crates/wheelbase/src/car.rs`, `crates/wheelbase/src/tire.rs`, `crates/wheelbase/src/config.rs` -> `wear_rate_scale` in the wear step.
+- `[x]` `crates/arcade-race-core/src/profile.rs` -> lesson ids, `tier`, `AcademySessionRules`, `AcademyObjective`, tier unlock, license grants, stipend fields.
+- `[x]` `crates/tdrace-app/src/game/academy.rs` -> objective validators, stipend rule, session set-up with per-mission rules.
+- `[x]` `crates/tdrace-app/src/game/mod.rs` -> Academy session rules applied and restored (damage, wear scale, start wear), landing and wear checks in the race loop.
+- `[x]` `crates/tdrace-app/src/ui/academy_ui.rs` -> tier tabs and mission cards.
+- `[x]` `crates/tdrace-app/src/ui/hud.rs` -> wear-against-cap banner line.
+- `[x]` `crates/wheelbase/src/car.rs`, `crates/wheelbase/src/tire.rs`, `crates/wheelbase/src/config.rs` -> `wear_rate_scale` in the wear step.
 - `[ ]` `crates/race-kit/src/world.rs` -> only if the wear scale is carried by `RaceRules` instead of the car config (decided in task 3).
-- `[ ]` `crates/tdrace-app/tests/career_onboarding_tests.rs`, `crates/arcade-race-core/tests/profile_tests.rs` -> new and extended tests.
-- `[ ]` `specs/constitution/ROADMAP.md` -> entry text matches the 3-tier scope.
+- `[x]` `crates/tdrace-app/tests/career_onboarding_tests.rs`, `crates/arcade-race-core/tests/profile_tests.rs` -> new and extended tests.
+- `[x]` `specs/constitution/ROADMAP.md` -> entry text matches the 3-tier scope.
