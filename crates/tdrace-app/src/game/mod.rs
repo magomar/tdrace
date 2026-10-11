@@ -9203,18 +9203,19 @@ impl RaceSession {
             return;
         }
 
-        let total_lessons = 4;
+        // `selected_idx` counts the lessons over all tiers. The tier shown is its group of four, and
+        // Up and Down move inside the tier.
+        let lessons_per_tier = academy::AcademyLessonId::tier_lessons(1).len();
+        let tier_count = academy::ACADEMY_TIER_COUNT as usize;
+        let mut tier_idx = selected_idx / lessons_per_tier;
+        let mut row = selected_idx % lessons_per_tier;
         if is_key_pressed(KeyCode::Up)
             || is_key_pressed(KeyCode::W)
             || self.input.gamepad.snapshot.dpad_up_pressed
             || self.input.gamepad.snapshot.nav_up
         {
             self.audio.play_sfx(SfxType::UiMove);
-            if selected_idx == 0 {
-                selected_idx = total_lessons - 1;
-            } else {
-                selected_idx -= 1;
-            }
+            row = (row + lessons_per_tier - 1) % lessons_per_tier;
         }
         if is_key_pressed(KeyCode::Down)
             || is_key_pressed(KeyCode::S)
@@ -9222,21 +9223,47 @@ impl RaceSession {
             || self.input.gamepad.snapshot.nav_down
         {
             self.audio.play_sfx(SfxType::UiMove);
-            selected_idx = (selected_idx + 1) % total_lessons;
+            row = (row + 1) % lessons_per_tier;
+        }
+        // Left and Right (or A, D, Q, E) change the tier tab and keep the row.
+        if is_key_pressed(KeyCode::Left)
+            || is_key_pressed(KeyCode::A)
+            || is_key_pressed(KeyCode::Q)
+            || self.input.gamepad.snapshot.dpad_left_pressed
+            || self.input.gamepad.snapshot.nav_left
+        {
+            self.audio.play_sfx(SfxType::UiMove);
+            tier_idx = (tier_idx + tier_count - 1) % tier_count;
+        }
+        if is_key_pressed(KeyCode::Right)
+            || is_key_pressed(KeyCode::D)
+            || is_key_pressed(KeyCode::E)
+            || self.input.gamepad.snapshot.dpad_right_pressed
+            || self.input.gamepad.snapshot.nav_right
+        {
+            self.audio.play_sfx(SfxType::UiMove);
+            tier_idx = (tier_idx + 1) % tier_count;
         }
 
-        // Mouse click on lesson cards
+        // Mouse click on tier tabs and mission cards
         let mut mouse_confirmed = false;
         if mouse_clicked {
-            for i in 0..total_lessons {
+            for t in 0..tier_count {
+                let (tx, ty, tw, th) = crate::ui::academy_tab_rect(sw, sh, t);
+                if mx >= tx && mx <= tx + tw && my >= ty && my <= ty + th {
+                    tier_idx = t;
+                }
+            }
+            for i in 0..lessons_per_tier {
                 let (cx, cy, cw, ch) = crate::ui::academy_card_rect(sw, sh, i);
                 if mx >= cx && mx <= cx + cw && my >= cy && my <= cy + ch {
-                    selected_idx = i;
+                    row = i;
                     mouse_confirmed = true;
                     break;
                 }
             }
         }
+        selected_idx = tier_idx * lessons_per_tier + row;
 
         // Escape: Back to Modality Select
         if is_key_pressed(KeyCode::Escape)
@@ -14346,6 +14373,9 @@ impl RaceSession {
                 match current_view {
                     FinishedScreenView::Results => {
                         render_results_screen(&self.fonts, &self.track.name, &self.results, self.is_time_attack, self.championship_session.is_some(), self.last_xp_receipt.as_ref());
+                        if let (Some(_), Some(eval)) = (self.active_academy_lesson, self.academy_last_evaluation.as_ref()) {
+                            crate::ui::render_academy_result_banner(&self.fonts, eval);
+                        }
                     }
                     FinishedScreenView::HallOfFame => {
                         render_hall_of_fame_screen(
@@ -16348,8 +16378,20 @@ impl RaceSession {
                 );
 
                 if let (Some(lesson_id), Some(challenge)) = (self.active_academy_lesson, self.academy_challenge.as_ref()) {
-                    let progress_fraction = player_tracker.normalized_progress.clamp(0.0, 1.0);
-                    crate::ui::render_academy_hud(&self.fonts, lesson_id, challenge, self.session_time, progress_fraction);
+                    // Medal targets are for the whole race, so the progress is counted over all laps.
+                    let lap_done = player_tracker.current_lap.saturating_sub(1) as f32;
+                    let progress_fraction =
+                        ((lap_done + player_tracker.normalized_progress) / self.total_laps.max(1) as f32).clamp(0.0, 1.0);
+                    let hottest_tire_temp_c =
+                        player_car.state.wheel_assemblies.iter().map(|w| w.temperature).fold(0.0, f32::max);
+                    crate::ui::render_academy_hud(
+                        &self.fonts,
+                        lesson_id,
+                        challenge,
+                        self.session_time,
+                        progress_fraction,
+                        hottest_tire_temp_c,
+                    );
                 }
 
                 // F5: Telemetry Panel

@@ -345,7 +345,7 @@ impl AcademyLessonDef {
             lesson(
                 AcademyLessonId::Acad2DirtDrift,
                 "Dirt Drift Angle",
-                "Hold a long, controlled slide on the dirt and bank the points.",
+                "Hold a long controlled slide on the dirt and bank it.",
                 "ax_clay_bowl",
                 "classic_ax_brawler",
                 (1200.0, 900.0, 600.0),
@@ -381,7 +381,7 @@ impl AcademyLessonDef {
             lesson(
                 AcademyLessonId::Acad2MixedQualifier,
                 "Mixed-Surface Qualifier",
-                "Two-lap sprint with the mandatory joker lap. The penalty counts in your time.",
+                "Two laps with the mandatory joker lap. The penalty counts.",
                 "rx_canyon_flyer",
                 "classic_rally",
                 (0.0, 0.0, 0.0),
@@ -415,7 +415,7 @@ impl AcademyLessonDef {
             lesson(
                 AcademyLessonId::Acad3ThermalThrottle,
                 "Thermal Throttle Care",
-                "Three-lap pace run. Finish with the worst tyre under the wear cap.",
+                "Three-lap pace run. Keep the worst tyre under the cap.",
                 "gt_ridge_ring",
                 "classic_gt",
                 (0.0, 0.0, 0.0),
@@ -427,7 +427,7 @@ impl AcademyLessonDef {
             lesson(
                 AcademyLessonId::Acad3OvalStint,
                 "Oval Stint Management",
-                "Five-lap oval stint above 180 km/h average, with the worst tyre under the wear cap.",
+                "Five-lap stint above 180 km/h. Worst tyre under the cap.",
                 "stock_tri_oval_speedway",
                 "classic_nascar",
                 (0.0, 0.0, 0.0),
@@ -439,7 +439,7 @@ impl AcademyLessonDef {
             lesson(
                 AcademyLessonId::Acad3WornRubber,
                 "Nursing Worn Rubber",
-                "Start on tyres that are already 65% worn. Bring them round for two clean laps.",
+                "Start on 65% worn tyres. Two clean laps.",
                 "gt_coastal_grand_prix",
                 "classic_gt",
                 (0.0, 0.0, 0.0),
@@ -451,7 +451,7 @@ impl AcademyLessonDef {
             lesson(
                 AcademyLessonId::Acad3TyreConservation,
                 "Tyre Conservation Sprint",
-                "Four-lap sprint against three AI cars. Finish near the front with the worst tyre under the wear cap.",
+                "Four-lap sprint vs 3 AI cars. Finish up front, tyres under cap.",
                 "stock_roval",
                 "classic_nascar",
                 (0.0, 0.0, 0.0),
@@ -660,12 +660,17 @@ impl ClassicAcademyProgress {
         self.lessons.get(&id).map(|p| p.completed && p.highest_medal >= AcademyMedal::Bronze).unwrap_or(false)
     }
 
+    /// How many lessons of the tier have Bronze or better.
+    pub fn tier_bronze_count(&self, tier: u8) -> usize {
+        AcademyLessonId::tier_lessons(tier).iter().filter(|id| self.has_bronze(**id)).count()
+    }
+
     /// Whether Bronze or better is on 3 of the 4 lessons of the tier (Spec 064). Tier 1 passes by graduation.
     pub fn is_tier_passed(&self, tier: u8) -> bool {
         if tier == 1 {
             return self.is_graduated();
         }
-        AcademyLessonId::tier_lessons(tier).iter().filter(|id| self.has_bronze(**id)).count() >= ACADEMY_TIER_PASS_COUNT
+        self.tier_bronze_count(tier) >= ACADEMY_TIER_PASS_COUNT
     }
 
     /// Tier 1 is always open. Tier 2 opens on graduation (Class D). Tier 3 and later open when the

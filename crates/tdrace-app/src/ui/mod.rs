@@ -22,8 +22,8 @@ pub mod academy_ui;
 pub mod tournament_bracket;
 
 pub use academy_ui::{
-    academy_card_rect, graduation_showroom_button_rect, render_academy_curriculum_screen,
-    render_academy_hud, render_graduation_ceremony_modal,
+    academy_card_rect, academy_tab_rect, graduation_showroom_button_rect, render_academy_curriculum_screen,
+    render_academy_hud, render_academy_result_banner, render_graduation_ceremony_modal,
 };
 pub use lan_ui::render_lan_hub_screen;
 pub use settings::{cycle_surface_texture_quality, SurfaceTextureSettings};

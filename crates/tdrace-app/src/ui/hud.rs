@@ -13,6 +13,7 @@ use crate::render::marker::PlayerVisibilityOptions;
 use cabinet::ui::{
     CountDown, LayoutRect, MetricBar, ToastItem, ToastOverlay, ToastSeverity, Tooltip,
 };
+use race_ui::hud::chassis_telemetry::tire_temp_to_color;
 use race_ui::hud::widgets::{
     render_cockpit_chassis_telemetry, render_compound_badge, render_lap_timer,
     render_joker_badge, render_position_and_lap, CockpitTelemetryMode, JokerBadge,
@@ -796,6 +797,27 @@ fn render_stage_badge(fonts: &Fonts, scaler: &UiScaler, right_x: f32, y: f32, la
     draw_rectangle(x, y, pill_w, pill_h, Color::new(col.r * 0.25, col.g * 0.25, col.b * 0.25, 0.90));
     draw_rectangle_lines(x, y, pill_w, pill_h, scaler.s(1.8), col);
     fonts.draw_ui_bold(label, x + (pill_w - text_w) * 0.5, y + scaler.s(18.0), scaler.font_s(14.0), col);
+}
+
+/// Text of the Academy wear banner line: the worst wheel's wear against the mission's cap (Spec 064).
+pub fn academy_wear_label(worst_wear: f32, max_wear: f32) -> String {
+    format!("WEAR {:.0}% / {:.0}%", worst_wear * 100.0, max_wear * 100.0)
+}
+
+/// Academy tyre-discipline banner line, centred on `center_x` (Spec 064): `WEAR 31% / 40%`. It takes the
+/// thermal colour of the hottest tyre (blue cold, green optimal, amber warm, red overheated) and turns red
+/// once the wear is over the cap.
+pub fn render_academy_wear_line(
+    fonts: &Fonts,
+    scaler: &UiScaler,
+    center_x: f32,
+    y: f32,
+    worst_wear: f32,
+    max_wear: f32,
+    hottest_tire_temp_c: f32,
+) {
+    let col = if worst_wear > max_wear { Palette::RED } else { tire_temp_to_color(hottest_tire_temp_c) };
+    fonts.draw_display_centered(&academy_wear_label(worst_wear, max_wear), center_x, y, scaler.font_s(14.0), col);
 }
 
 /// True when the car's tires are worn or its health is low enough that a pit stop is advised (Spec 062).

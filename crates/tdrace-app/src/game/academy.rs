@@ -7,7 +7,7 @@
 use serde::{Deserialize, Serialize};
 pub use tdrace_core::profile::{
     AcademyAttemptResult, AcademyLessonDef, AcademyLessonId, AcademyLessonProgress, AcademyMedal,
-    AcademyObjective, AcademySessionRules, ClassicAcademyProgress, LicenseGrade,
+    AcademyObjective, AcademySessionRules, ClassicAcademyProgress, LicenseGrade, ACADEMY_TIER_COUNT,
 };
 use tdrace_core::physics::car::LANDING_SPEED_LIMIT_MPS;
 use crate::game::RaceSession;
@@ -178,6 +178,8 @@ pub struct AcademyAttemptEvaluation {
     pub failure_reason: Option<String>,
     /// The clean attempt would have earned a medal, but the worst tyre was over the mission's wear cap.
     pub tyres_worn_out: bool,
+    /// Worst wheel wear [0.0, 1.0] at the flag.
+    pub worst_wear: f32,
     /// A cleared mission was re-run and the daily stipend limit was already reached.
     pub stipend_limit_reached: bool,
     /// The licence grade this attempt raised the profile to, if it did.
@@ -305,6 +307,7 @@ pub fn evaluate_academy_attempt_on(
         total_credits_balance: profile.credits,
         failure_reason,
         tyres_worn_out,
+        worst_wear: result.worst_wear,
         stipend_limit_reached,
         license_earned,
     }

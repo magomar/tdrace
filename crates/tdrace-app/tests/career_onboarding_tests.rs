@@ -966,3 +966,71 @@ mod multitier {
         assert_eq!(loaded.academy_progress, profile.academy_progress);
     }
 }
+
+mod multitier_ui {
+    use tdrace_app::game::academy::{evaluate_academy_attempt_on, AcademyChallengeState, AcademyLessonDef};
+    use tdrace_app::profile::{AcademyLessonId, AcademyMedal, PlayerProfile};
+    use tdrace_app::ui::academy_ui::{academy_result_summary, lesson_targets_text, tier_unlock_rule};
+    use tdrace_app::ui::hud::academy_wear_label;
+
+    #[test]
+    fn test_wear_banner_reads_worst_wheel_against_the_cap() {
+        assert_eq!(academy_wear_label(0.31, 0.40), "WEAR 31% / 40%");
+        assert_eq!(academy_wear_label(0.0, 0.40), "WEAR 0% / 40%");
+    }
+
+    #[test]
+    fn test_locked_tiers_show_their_unlock_rule() {
+        let mut profile = PlayerProfile::new_rookie("Mick");
+        assert!(tier_unlock_rule(2, &profile).contains("Tier 1"));
+        assert!(tier_unlock_rule(3, &profile).contains("0 / 4"));
+        profile.academy_progress.license_granted = true;
+        let def = AcademyLessonDef::find(AcademyLessonId::Acad2ScandinavianFlick).unwrap();
+        profile.academy_progress.record_attempt(def.id, def.bronze_time_sec - 0.1, true);
+        assert!(tier_unlock_rule(3, &profile).contains("1 / 4"));
+        assert!(tier_unlock_rule(1, &profile).is_empty());
+    }
+
+    #[test]
+    fn test_target_lines_use_the_unit_of_each_objective() {
+        let text = |id| lesson_targets_text(&AcademyLessonDef::find(id).unwrap());
+        assert!(text(AcademyLessonId::Acad2DirtDrift).contains("drift pts"));
+        assert!(text(AcademyLessonId::Acad3ThermalThrottle).contains("WEAR 40% MAX"));
+        assert!(text(AcademyLessonId::Acad3TyreConservation).contains("1st Gold"));
+        assert!(text(AcademyLessonId::Acad2RampBalance).contains("CLEAN LANDING"));
+        assert!(text(AcademyLessonId::Lesson1ApexLine).contains("Gold 18.5s"));
+    }
+
+    #[test]
+    fn test_result_banner_says_tyres_worn_out_and_the_stipend_limit() {
+        let mut profile = PlayerProfile::new_rookie("Jenson");
+        let day = "2026-10-11";
+        for id in AcademyLessonId::ALL {
+            let def = AcademyLessonDef::find(id).unwrap();
+            let mut s = AcademyChallengeState::new(id);
+            s.observe(0.0, 0.0);
+            evaluate_academy_attempt_on(&mut profile, id, def.bronze_time_sec - 0.1, &s, day);
+        }
+        // Worn out
+        let id = AcademyLessonId::Acad3ThermalThrottle;
+        let def = AcademyLessonDef::find(id).unwrap();
+        let mut worn = AcademyChallengeState::new(id);
+        worn.observe(0.55, 0.0);
+        let eval = evaluate_academy_attempt_on(&mut profile, id, def.gold_time_sec - 0.1, &worn, day);
+        let (headline, _) = academy_result_summary(&eval);
+        assert!(headline.contains("TYRES WORN OUT"), "{headline}");
+        assert!(headline.contains("NO MEDAL"), "{headline}");
+        assert_eq!(eval.medal, AcademyMedal::None);
+
+        // Stipend limit
+        let flick = AcademyLessonId::Acad2ScandinavianFlick;
+        let fdef = AcademyLessonDef::find(flick).unwrap();
+        let ok = AcademyChallengeState::new(flick);
+        let mut last = None;
+        for _ in 0..7 {
+            last = Some(evaluate_academy_attempt_on(&mut profile, flick, fdef.bronze_time_sec - 0.1, &ok, day));
+        }
+        let (_, detail) = academy_result_summary(&last.unwrap());
+        assert!(detail.contains("DAILY STIPEND LIMIT"), "{detail}");
+    }
+}
