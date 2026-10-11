@@ -323,6 +323,9 @@ impl AcademyLessonDef {
         self
     }
 
+    /// Medal targets of Tiers 2 and 3 come from the headless reference run of
+    /// `tdrace-app/tests/academy_calibration_tests.rs` (Gold about 3% over the reference lap, Silver 12%,
+    /// Bronze 25%). Rerun `print_reference_table` there after any change to a circuit, a car or the tyre model.
     fn tier_2_curriculum() -> Vec<Self> {
         let lesson = |id, title: &str, description: &str, track: &str, car: &str, targets: (f32, f32, f32), xp, rules, objective| Self {
             id,
@@ -348,7 +351,7 @@ impl AcademyLessonDef {
                 "Hold a long controlled slide on the dirt and bank it.",
                 "ax_clay_bowl",
                 "classic_ax_brawler",
-                (1200.0, 900.0, 600.0),
+                (16.0, 12.0, 8.0),
                 250,
                 AcademySessionRules::basics(),
                 AcademyObjective::DriftScore,
@@ -360,7 +363,7 @@ impl AcademyLessonDef {
                 "One clean lap across the tarmac-to-gravel transitions.",
                 "rx_hilltop_leap",
                 "classic_rally",
-                (0.0, 0.0, 0.0),
+                (77.7, 84.5, 94.3),
                 300,
                 AcademySessionRules::basics(),
                 AcademyObjective::BestTime,
@@ -372,7 +375,7 @@ impl AcademyLessonDef {
                 "One lap with a clean landing off every big ramp.",
                 "at_dune_sea",
                 "classic_offroad",
-                (0.0, 0.0, 0.0),
+                (57.9, 62.9, 70.2),
                 350,
                 AcademySessionRules::basics(),
                 AcademyObjective::CleanLanding,
@@ -384,7 +387,7 @@ impl AcademyLessonDef {
                 "Two laps with the mandatory joker lap. The penalty counts.",
                 "rx_canyon_flyer",
                 "classic_rally",
-                (0.0, 0.0, 0.0),
+                (150.1, 163.2, 182.1),
                 450,
                 AcademySessionRules { laps: 2, joker_required: true, ..AcademySessionRules::basics() },
                 AcademyObjective::BestTime,
@@ -418,7 +421,7 @@ impl AcademyLessonDef {
                 "Three-lap pace run. Keep the worst tyre under the cap.",
                 "gt_ridge_ring",
                 "classic_gt",
-                (0.0, 0.0, 0.0),
+                (178.4, 194.0, 216.5),
                 500,
                 AcademySessionRules::tyre_discipline(3),
                 AcademyObjective::WearCap { max_wear: 0.40 },
@@ -427,10 +430,10 @@ impl AcademyLessonDef {
             lesson(
                 AcademyLessonId::Acad3OvalStint,
                 "Oval Stint Management",
-                "Five-lap stint above 180 km/h. Worst tyre under the cap.",
+                "Five-lap oval stint. Keep the worst tyre under the cap.",
                 "stock_tri_oval_speedway",
                 "classic_nascar",
-                (0.0, 0.0, 0.0),
+                (193.4, 210.3, 234.7),
                 550,
                 AcademySessionRules::tyre_discipline(5),
                 AcademyObjective::WearCap { max_wear: 0.40 },
@@ -442,7 +445,7 @@ impl AcademyLessonDef {
                 "Start on 65% worn tyres. Two clean laps.",
                 "gt_coastal_grand_prix",
                 "classic_gt",
-                (0.0, 0.0, 0.0),
+                (155.3, 168.9, 188.5),
                 600,
                 AcademySessionRules { start_wear: 0.65, ..AcademySessionRules::tyre_discipline(2) },
                 AcademyObjective::BestTime,

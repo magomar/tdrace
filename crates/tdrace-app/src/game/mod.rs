@@ -13189,7 +13189,7 @@ impl RaceSession {
                 .vehicles
                 .get(my_car_idx)
                 .map_or(0.0, |car| car.state.wheel_assemblies.iter().map(|w| w.wear).fold(0.0, f32::max));
-            challenge.observe(worst_wear, self.player_race_stats.stunt_stats.max_single_drift_score);
+            challenge.observe(worst_wear, 0.0);
         }
 
         // Dynamic Accelerating Engine Audio (motor sound only)
@@ -13507,6 +13507,10 @@ impl RaceSession {
                     }
                 }
                 if was_drifting && !is_drifting {
+                    // An Academy drift mission banks every drift that ends, whatever its size (Spec 064)
+                    if let Some(challenge) = &mut self.academy_challenge {
+                        challenge.observe(0.0, player_car.state.drift_score);
+                    }
                     // Reset single-maneuver drift score upon ending drift so it doesn't leak into subsequent maneuvers
                     player_car.state.drift_score = 0.0;
                 }
@@ -13895,7 +13899,7 @@ impl RaceSession {
                     .vehicles
                     .get(my_car_idx)
                     .map_or(0.0, |car| car.state.wheel_assemblies.iter().map(|w| w.wear).fold(0.0, f32::max));
-                challenge.observe(worst_wear, self.player_race_stats.stunt_stats.max_single_drift_score);
+                challenge.observe(worst_wear, 0.0);
                 challenge.finish_position = player_pos as u32;
                 if self.player_race_stats.collision_count > 0 && challenge.heavy_collisions == 0 {
                     challenge.heavy_collisions = self.player_race_stats.collision_count;

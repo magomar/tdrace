@@ -9,7 +9,6 @@ pub use tdrace_core::profile::{
     AcademyAttemptResult, AcademyLessonDef, AcademyLessonId, AcademyLessonProgress, AcademyMedal,
     AcademyObjective, AcademySessionRules, ClassicAcademyProgress, LicenseGrade, ACADEMY_TIER_COUNT,
 };
-use tdrace_core::physics::car::LANDING_SPEED_LIMIT_MPS;
 use crate::game::RaceSession;
 use crate::profile::PlayerProfile;
 use crate::ui::menu::{CarChoice, GameMode};
@@ -50,7 +49,7 @@ pub struct AcademyChallengeState {
     pub disqualification_reason: Option<String>,
     /// Hardest landing of the attempt, as impulse (touchdown speed x 100, like a collision impulse).
     pub max_landing_impulse: f32,
-    /// Best single drift banked in the attempt, in drift points.
+    /// Best single drift banked in the attempt, in drift points. A drift banks when it ends without a collision.
     pub drift_score: f32,
     /// Worst wheel wear [0.0, 1.0] so far.
     pub worst_wear: f32,
@@ -61,9 +60,11 @@ pub struct AcademyChallengeState {
 impl AcademyChallengeState {
     pub const MAX_PERMISSIBLE_IMPULSE: f32 = 800.0;
     pub const MAX_PERMISSIBLE_OFF_TRACK_SEC: f32 = 2.0;
-    /// Landing impulse above which a landing is rough: the touchdown speed that starts to damage
-    /// a suspension (Spec 078).
-    pub const MAX_PERMISSIBLE_LANDING_IMPULSE: f32 = LANDING_SPEED_LIMIT_MPS * 100.0;
+    /// Landing impulse above which a landing is rough (touchdown speed 11 m/s). The reference run of
+    /// `at_dune_sea` lands at 8.6 m/s at most, so it clears this with a margin of 25%
+    /// (`tests/academy_calibration_tests.rs`). The touchdown speed that starts to damage a suspension
+    /// (Spec 078) is 4.2 m/s, but Tier 2 runs with damage off.
+    pub const MAX_PERMISSIBLE_LANDING_IMPULSE: f32 = 1_100.0;
 
     pub fn new(lesson_id: AcademyLessonId) -> Self {
         Self {
