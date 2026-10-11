@@ -1,5 +1,6 @@
 // Moved to race-ui (spec 058); re-exported so `crate::render::` paths keep working.
-pub use race_ui::render::{barrier, color, scenery, surface_material, track};
+pub use race_ui::render::{barrier, color, optimal_line, scenery, surface_material, track};
+pub use optimal_line::render_optimal_racing_line;
 
 pub mod car;
 pub mod ghost;

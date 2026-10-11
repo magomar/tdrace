@@ -230,7 +230,8 @@ use crate::render::{
     render_building_shadows_culled, render_buildings_culled,
     render_grandstand_shadows_culled, render_grandstands_culled,
     render_ground_barriers_and_obstacles, render_ground_barriers_and_obstacles_culled,
-    render_ground_track, render_ground_track_culled, render_player_ground_aura,
+    render_ground_track, render_ground_track_culled, render_optimal_racing_line,
+    render_player_ground_aura,
     render_player_overhead_chevron, render_player_sonar_ping, render_pit_box_chevron,
     render_rock_shadows_culled, render_rocks_culled,
     render_tree_canopies_culled,
@@ -857,7 +858,8 @@ impl RaceSession {
         };
 
         let track_manager = TrackManager::default();
-        let track = track_manager.load_track(&track_choice).unwrap_or_else(|_| crate::tracks::official::fallback_track());
+        let mut track = track_manager.load_track(&track_choice).unwrap_or_else(|_| crate::tracks::official::fallback_track());
+        track.ensure_optimal_line();
 
         let mut audio = AudioManager::new();
         audio.settings.master_volume = config.audio.master_volume;
@@ -1420,6 +1422,8 @@ impl RaceSession {
             chevron_brightness: self.config.player_helpers.overhead_chevron_brightness,
             adaptive_enabled: self.config.player_helpers.adaptive_visibility,
             radar_sonar_ping: self.config.player_helpers.radar_sonar_ping,
+            racing_line_mode: self.config.player_helpers.racing_line_mode.to_index(),
+            racing_line_opacity: self.config.player_helpers.racing_line_opacity,
         };
         modal.set_helpers_state(&helpers_state);
         modal.set_input_filter_state(&self.input.filter.config);
@@ -1553,6 +1557,9 @@ impl RaceSession {
                 self.config.player_helpers.overhead_chevron_brightness = h_state.chevron_brightness;
                 self.config.player_helpers.adaptive_visibility = h_state.adaptive_enabled;
                 self.config.player_helpers.radar_sonar_ping = h_state.radar_sonar_ping;
+                self.config.player_helpers.racing_line_mode =
+                    crate::config::RacingLineMode::from_index(h_state.racing_line_mode);
+                self.config.player_helpers.racing_line_opacity = h_state.racing_line_opacity;
 
                 let bot_nameplates = self.visibility_options.bot_nameplates;
                 self.visibility_options = PlayerVisibilityOptions::from(&self.config.player_helpers);
@@ -2187,6 +2194,7 @@ impl RaceSession {
                 }
             }
         }
+        track.ensure_optimal_line();
         track
     }
 
@@ -4859,6 +4867,7 @@ impl RaceSession {
                 self.track = self.load_track_for_session(&self.track_choice);
             }
         }
+        self.track.ensure_optimal_line();
 
         // If starting a brand new championship, synchronize the starting roster size to the circuit grid slots
         let is_new_championship = self.championship_session.as_ref().map(|c| c.is_new()).unwrap_or(false);
@@ -5250,6 +5259,10 @@ impl RaceSession {
     }
 
     fn update_frame(&mut self) {
+        if self.track.cached_optimal_line.is_none() {
+            self.track.ensure_optimal_line();
+        }
+
         let frame_dt = get_frame_time_safe().min(0.1);
         let sw = screen_width_safe();
         let sh = screen_height_safe();
@@ -5609,19 +5622,23 @@ impl RaceSession {
                     });
                 }
 
-                // [6] Cycle Curve Helper Color Scheme (Traffic -> Synthwave -> Contrast -> Rally)
+                // [6] Cycle Mathematically Ideal Racing Line Mode (Full -> Line Only -> Braking Only -> Off -> Full)
                 if is_key_pressed(KeyCode::Key6) {
-                    self.visibility_options.curve_color_scheme = self.visibility_options.curve_color_scheme.next();
+                    self.visibility_options.racing_line_mode = self.visibility_options.racing_line_mode.next();
+                    self.config.player_helpers.racing_line_mode = self.visibility_options.racing_line_mode;
                     self.audio.play_sfx(SfxType::UiMove);
-                    let scheme_str = self.visibility_options.curve_color_scheme.as_str();
+                    let mode = self.visibility_options.racing_line_mode;
+                    let is_on = mode != crate::config::RacingLineMode::Disabled;
+                    let col = if is_on { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
+                    let label = mode.toast_label();
                     if let Some(pos) = my_pos {
-                        self.fx.drift_popups.spawn_text(pos, &format!("[6] COLOR: {}", scheme_str), Palette::NEON_GOLD);
+                        self.fx.drift_popups.spawn_text(pos, &format!("[6] RACING LINE: {}", label), col);
                     }
                     self.visibility_toast = Some(VisibilityToast {
-                        text: format!("[6] COLOR: {}", scheme_str),
-                        is_on: true,
-                        timer: 2.2,
-                        duration: 2.2,
+                        text: format!("VISUAL AID [6]: RACING LINE ({})", label),
+                        is_on,
+                        timer: 2.0,
+                        duration: 2.0,
                     });
                 }
 
@@ -15968,6 +15985,24 @@ impl RaceSession {
         // 1. Ground Track & Environment (elevation < 0.6m)
         render_ground_track_culled(&self.track, view_bounds);
 
+        // 1b. Optimal Racing Line Visual Aid (Spec 110)
+        if self.visibility_options.racing_line_mode != crate::config::RacingLineMode::Disabled {
+            if let Some(opt_line) = self.track.cached_optimal_line.as_ref() {
+                let focus_vehicle = self.world.vehicles.get(focus_car_idx);
+                let player_pos = focus_vehicle.map(|v| v.state.position).unwrap_or(Vec2::ZERO);
+                let player_speed = focus_vehicle.map(|v| v.state.speed).unwrap_or(0.0);
+                render_optimal_racing_line(
+                    &self.track.spline,
+                    opt_line,
+                    player_pos,
+                    player_speed,
+                    self.visibility_options.racing_line_mode,
+                    self.visibility_options.racing_line_opacity,
+                    view_bounds,
+                );
+            }
+        }
+
         // 2. Persistent Ground Skidmarks
         self.fx.render_ground_fx_culled(view_bounds);
 
@@ -16103,6 +16138,26 @@ impl RaceSession {
 
         // 6. Elevated Overpass Bridges (solid opaque concrete deck + drop shadow + ribbon)
         render_elevated_track_culled(&self.track, view_bounds);
+
+        // 6b. Optimal Racing Line Visual Aid on elevated bridge decks (Spec 110)
+        if self.visibility_options.racing_line_mode != crate::config::RacingLineMode::Disabled
+            && (elevated_cars.contains(&focus_car_idx) || focus_under_deck)
+        {
+            if let Some(opt_line) = self.track.cached_optimal_line.as_ref() {
+                let focus_vehicle = self.world.vehicles.get(focus_car_idx);
+                let player_pos = focus_vehicle.map(|v| v.state.position).unwrap_or(Vec2::ZERO);
+                let player_speed = focus_vehicle.map(|v| v.state.speed).unwrap_or(0.0);
+                render_optimal_racing_line(
+                    &self.track.spline,
+                    opt_line,
+                    player_pos,
+                    player_speed,
+                    self.visibility_options.racing_line_mode,
+                    self.visibility_options.racing_line_opacity,
+                    view_bounds,
+                );
+            }
+        }
 
         // 7. Elevated Bridge Barriers & Guardrails (drawn on top of the bridge deck, touching the track)
         render_elevated_barriers_and_obstacles_culled(&self.track, view_bounds);

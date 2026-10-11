@@ -77,6 +77,8 @@ curve_color_scheme = "traffic"
 adaptive_visibility = true
 radar_sonar_ping = true
 bot_nameplates = true
+racing_line_mode = "full"
+racing_line_opacity = 0.70
 
 [cars.drift_car]
 mass = 980.0

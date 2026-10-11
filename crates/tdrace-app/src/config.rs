@@ -12,6 +12,7 @@ use tdrace_core::physics::CarConfig;
 pub use race_ui::camera::{
     CameraConfig, ZoomLevelConfig, REFERENCE_SCREEN_HEIGHT, REFERENCE_SCREEN_WIDTH,
 };
+pub use tdrace_core::track::RacingLineMode;
 
 /// Keyboard handling settings (Spec 043): a preset plus five values.
 ///
@@ -294,6 +295,10 @@ pub struct PlayerHelpersConfig {
     pub radar_sonar_ping: bool,
     /// Floating bot nameplates toggle.
     pub bot_nameplates: bool,
+    /// Racing line trajectory and dynamic braking visual aid display mode.
+    pub racing_line_mode: RacingLineMode,
+    /// Opacity multiplier for the racing line ribbon overlay (0.20 to 1.00).
+    pub racing_line_opacity: f32,
 }
 
 impl Default for PlayerHelpersConfig {
@@ -314,6 +319,8 @@ impl Default for PlayerHelpersConfig {
             adaptive_visibility: true,
             radar_sonar_ping: true,
             bot_nameplates: true,
+            racing_line_mode: RacingLineMode::Full,
+            racing_line_opacity: 0.70,
         }
     }
 }

@@ -1196,6 +1196,7 @@ pub fn create_prototypical_track(
         pit_lane_layout: None,
         branch_layout: None,
         cached_barrier_offset: None,
+        cached_optimal_line: None,
         default_laps,
         car_category,
         car_model_id: None,

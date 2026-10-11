@@ -27,8 +27,8 @@ validation reports no error. Otherwise the circuit keeps its legacy network and 
 | riga_rx | kept legacy | - | - | - | - | - | no split junction within 4.0 m of the old joker (best fit 6.8 m) |
 | rx_canyon_flyer | kept legacy | - | - | - | - | - | no merge junction passes the guards (first: JunctionTooSteep { junction: Exit, angle_deg: 70.54808 }) |
 | rx_hilltop_leap | kept legacy | - | - | - | - | - | no split junction passes the guards (first: JunctionTooSteep { junction: Entry, angle_deg: 73.87443 }) |
-| rx_quarry_sprint | kept legacy | - | - | - | - | - | no split junction within 4.0 m of the old joker (best fit 8.3 m) |
+| rx_quarry_sprint | converted | Taper | Taper | 25 / 40 | 1.50 | 5.17 | - |
 | silverstone_rx | kept legacy | - | - | - | - | - | no split junction passes the guards (first: JunctionTooSteep { junction: Entry, angle_deg: 65.82308 }) |
 | spa_rx | kept legacy | - | - | - | - | - | no split junction within 4.0 m of the old joker (best fit 14.8 m) |
 
-0 of 23 circuits converted.
+1 of 23 circuits converted.

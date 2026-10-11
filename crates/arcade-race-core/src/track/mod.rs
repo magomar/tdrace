@@ -6,12 +6,14 @@ pub mod geometry;
 pub mod junction_kit;
 pub mod launch_chute;
 pub mod network;
+pub mod optimal_line;
 pub mod pit_kit;
 pub mod presets;
 pub mod scenery;
 pub mod spline;
 pub mod validation;
 
+pub use optimal_line::{BrakingUrgency, OptimalLineConfig, OptimalLineNode, OptimalRacingLine, RacingLineMode};
 pub use checkpoint::{Checkpoint, CheckpointCrossResult, MultiRouteProgressTracker, TrackProgressTracker};
 pub use curve::{
     classify_curve_degree, compute_safe_apex_speed, evaluate_curve_approach,
@@ -153,6 +155,9 @@ pub struct Track {
     /// Precomputed runtime barrier offset in meters to avoid expensive wall geometry sweeps.
     #[serde(default, skip_serializing)]
     pub cached_barrier_offset: Option<f32>,
+    /// Precomputed mathematically optimal racing line trajectory and speed profile (Spec 110).
+    #[serde(default, skip_serializing)]
+    pub cached_optimal_line: Option<OptimalRacingLine>,
     #[serde(default = "default_laps_fallback")]
     pub default_laps: u32,
     #[serde(default)]
@@ -206,6 +211,7 @@ impl Default for Track {
             pit_lane_layout: None,
             branch_layout: None,
             cached_barrier_offset: None,
+            cached_optimal_line: None,
             default_laps: 3,
             car_category: CarCategory::Gt,
             car_model_id: None,
@@ -232,6 +238,19 @@ impl Track {
             self.network = Some(TrackNetwork::from_single_spline(&self.spline));
         }
         self.network.as_mut().unwrap()
+    }
+
+    /// Returns the precomputed mathematically optimal racing line, computing and caching it if not yet initialized.
+    pub fn ensure_optimal_line(&mut self) -> &OptimalRacingLine {
+        if self.cached_optimal_line.is_none() {
+            self.cached_optimal_line = Some(OptimalRacingLine::compute_for_spline(&self.spline));
+        }
+        self.cached_optimal_line.as_ref().unwrap()
+    }
+
+    /// Returns the cached optimal racing line if available.
+    pub fn optimal_line(&self) -> Option<&OptimalRacingLine> {
+        self.cached_optimal_line.as_ref()
     }
 
     /// Returns the active track network, falling back to a synthesized single-spline network.
