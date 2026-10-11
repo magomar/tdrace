@@ -2011,6 +2011,17 @@ impl RaceSession {
         self.state = GameState::Menu;
     }
 
+    /// Starts loading every circuit of every menu category in the background (see `prewarm_menu_track_cache`).
+    pub fn prewarm_menu_tracks(&self) {
+        let mut choices: Vec<TrackChoice> = MenuCategoryFilter::ALL
+            .iter()
+            .filter_map(|cat| cat.module_id())
+            .flat_map(|module| self.tracks_for_module(module))
+            .collect();
+        choices.extend(self.track_manager.custom_track_choices());
+        let _ = crate::ui::menu::prewarm_menu_track_cache(choices);
+    }
+
     /// Returns available circuits for a specific motorsport module (presets + custom).
     pub fn tracks_for_module(&self, module_id: &str) -> Vec<TrackChoice> {
         let mut tracks = self.track_manager.preset_track_choices(module_id);
