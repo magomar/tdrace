@@ -114,6 +114,9 @@ pub struct SeriesStandingEntry {
     /// Catalog id of the car the series gives the driver, shown on the bracket cards.
     #[serde(default)]
     pub car_model_id: Option<String>,
+    /// Racing number kept across rounds and heats (spec 092). `None` until the first grid is built.
+    #[serde(default, deserialize_with = "crate::ai::racing_number::deserialize_stored_race_number")]
+    pub race_number: Option<u8>,
 }
 
 pub type TournamentStandingEntry = SeriesStandingEntry;
@@ -133,6 +136,7 @@ impl SeriesStandingEntry {
             ai_style: None,
             ai_tier: None,
             car_model_id: None,
+            race_number: None,
         }
     }
 
@@ -249,6 +253,7 @@ impl SeriesSession {
             let team = format!("{} Racing", rival.driver_name.split_whitespace().last().unwrap_or("Rival"));
             let mut entry = SeriesStandingEntry::new(&rival.driver_id, &rival.driver_name, team);
             entry = entry.with_ai_style_and_tier(Some(rival.style.as_str().to_string()), Some(rival.tier.to_u8()));
+            entry.race_number = rival.race_number;
             standings.push(entry);
         }
         Self {
@@ -279,6 +284,7 @@ impl SeriesSession {
             let team = format!("{} Racing", rival.driver_name.split_whitespace().last().unwrap_or("Rival"));
             let mut entry = SeriesStandingEntry::new(&rival.driver_id, &rival.driver_name, team);
             entry = entry.with_ai_style_and_tier(Some(rival.style.as_str().to_string()), Some(rival.tier.to_u8()));
+            entry.race_number = rival.race_number;
             new_standings.push(entry);
         }
         self.standings = new_standings;
@@ -298,6 +304,7 @@ impl SeriesSession {
                     driver_name: s.driver_name.clone(),
                     style,
                     tier,
+                    race_number: s.race_number,
                 }
             })
             .collect();

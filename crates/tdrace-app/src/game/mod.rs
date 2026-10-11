@@ -2810,6 +2810,7 @@ impl RaceSession {
                             driver_name: s.driver_name.clone(),
                             style,
                             tier: DriverTier::from_u8(tier.clamp(1, 5) as u8),
+                            race_number: s.race_number,
                         }
                     })
                     .collect();
@@ -2981,6 +2982,7 @@ impl RaceSession {
                             driver_name: s.driver_name.clone(),
                             style,
                             tier: DriverTier::from_u8(tier.clamp(1, 5) as u8),
+                            race_number: s.race_number,
                         }
                     })
                     .collect();
@@ -3158,6 +3160,7 @@ impl RaceSession {
                             driver_name: s.driver_name.clone(),
                             style,
                             tier: DriverTier::from_u8(tier.clamp(1, 5) as u8),
+                            race_number: s.race_number,
                         }
                     })
                     .collect();
@@ -3332,6 +3335,7 @@ impl RaceSession {
                             driver_name: s.driver_name.clone(),
                             style,
                             tier: DriverTier::from_u8(tier.clamp(1, 5) as u8),
+                            race_number: s.race_number,
                         }
                     })
                     .collect();
@@ -3517,6 +3521,7 @@ impl RaceSession {
                             driver_name: s.driver_name.clone(),
                             style,
                             tier: DriverTier::from_u8(tier.clamp(1, 5) as u8),
+                            race_number: s.race_number,
                         }
                     })
                     .collect();
@@ -3707,6 +3712,7 @@ impl RaceSession {
                             driver_name: s.driver_name.clone(),
                             style,
                             tier: DriverTier::from_u8(tier.clamp(1, 5) as u8),
+                            race_number: s.race_number,
                         }
                     })
                     .collect();
@@ -4852,6 +4858,7 @@ impl RaceSession {
                                 driver_name: s.driver_name.clone(),
                                 style,
                                 tier: s.ai_tier.map(DriverTier::from_u8).unwrap_or(DriverTier::Rookie),
+                                race_number: s.race_number,
                             }
                         })
                         .collect();
@@ -8332,6 +8339,7 @@ impl RaceSession {
                         academy_progress: p.academy_progress.clone(),
                         owned_cars: p.owned_cars.clone(),
                         car_compounds: p.car_compounds.clone(),
+                        race_number: p.race_number,
                     })
                 });
 

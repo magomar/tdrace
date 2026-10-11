@@ -42,6 +42,7 @@ fn test_profile_schema_and_crud() {
         academy_progress: Default::default(),
         owned_cars: Vec::new(),
         car_compounds: Default::default(),
+        race_number: PlayerProfile::DEFAULT_RACE_NUMBER,
     };
     let p2_id = db.create_profile(&p2).expect("Insert profile 2");
 
@@ -246,6 +247,7 @@ fn test_race_session_profile_integration_and_race_finish_logging() {
         academy_progress: Default::default(),
         owned_cars: Vec::new(),
         car_compounds: Default::default(),
+        race_number: PlayerProfile::DEFAULT_RACE_NUMBER,
     };
 
     if let Some(db) = &session.hof_db {
@@ -379,6 +381,7 @@ fn test_clear_profile_history_and_hall_of_fame() {
         academy_progress: Default::default(),
         owned_cars: Vec::new(),
         car_compounds: Default::default(),
+        race_number: PlayerProfile::DEFAULT_RACE_NUMBER,
     };
     let p2_id = db.create_profile(&p2).expect("Insert profile 2");
 
@@ -1086,6 +1089,7 @@ fn test_player_card_focus_and_roster_manager_navigation() {
         academy_progress: Default::default(),
         owned_cars: Vec::new(),
         car_compounds: Default::default(),
+        race_number: PlayerProfile::DEFAULT_RACE_NUMBER,
     };
     let p2_id = db.create_profile(&p2).expect("Insert driver 2");
 
