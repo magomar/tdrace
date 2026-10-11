@@ -283,6 +283,7 @@ mod lan;
 pub use lan::{LanRaceState, LAN_WAITING_COUNTDOWN};
 
 pub mod academy;
+mod racing_numbers;
 
 /// Source screen that launched the DriverCards dossier view.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -550,6 +551,8 @@ pub struct GridParticipant {
     pub random_seed: u64,
     /// Dynamic skill tier of this driver (from difficulty bell curve or series configuration).
     pub driver_tier: Option<DriverTier>,
+    /// Racing number `1..=99` (spec 092), or `0` when this roster has no numbers.
+    pub race_number: u8,
 }
 
 impl GridParticipant {
@@ -631,6 +634,8 @@ pub struct RaceSession {
 
     pub world: RaceWorld<Car>,
     pub color_schemes: Vec<CarColorScheme>,
+    /// Racing number of each car, in world order like `color_schemes`; `0` or missing means no number (spec 092).
+    pub car_race_numbers: Vec<u8>,
     pub ai_drivers: Vec<BotAiDriver>,
     pub opponent_drivers: Vec<DriverCharacter>,
     pub opponent_tiers: Vec<DriverTier>,
@@ -915,6 +920,7 @@ impl RaceSession {
 
             world: RaceWorld::new(RaceRules::default()),
             color_schemes: Vec::new(),
+            car_race_numbers: Vec::new(),
             ai_drivers: Vec::new(),
             opponent_drivers: Vec::new(),
             opponent_tiers: Vec::new(),
@@ -4072,6 +4078,7 @@ impl RaceSession {
         self.car_model_ids.clear();
         self.car_lights_on.clear();
         self.color_schemes.clear();
+        self.car_race_numbers.clear();
         self.ai_drivers.clear();
         self.opponent_drivers.clear();
 
@@ -4166,6 +4173,8 @@ impl RaceSession {
         if self.game_mode != GameMode::Career && self.championship_session.is_none() {
             self.opponent_tiers = casual_tiers.clone();
         }
+
+        let grid_numbers = self.grid_numbers(seed);
 
         // Resolve the real or fantasy car model
         let mut player_model = if effective_module != "classic" {
@@ -4463,6 +4472,7 @@ impl RaceSession {
             best_circuit_time: player_best_circuit,
             random_seed: player_seed,
             driver_tier: None,
+            race_number: self.player_race_number(),
         });
 
         // 1b. Player 2 participant for Split Screen
@@ -4487,6 +4497,7 @@ impl RaceSession {
                 best_circuit_time: None,
                 random_seed: p2_seed,
                 driver_tier: None,
+                race_number: grid_numbers.player2,
             });
         }
 
@@ -4572,6 +4583,7 @@ impl RaceSession {
                 best_circuit_time: bot_best_circuit,
                 random_seed: bot_seed,
                 driver_tier: Some(bot_tier),
+                race_number: grid_numbers.rivals.get(bot_idx).copied().unwrap_or(0),
             });
         }
 
@@ -4644,6 +4656,7 @@ impl RaceSession {
         self.world.spawn(player_car, TrackProgressTracker::new(num_cps, num_sectors));
         self.car_visual_types.push(player_visual_type);
         self.color_schemes.push(self.player_effective_color_scheme());
+        self.car_race_numbers.push(self.player_race_number());
         self.car_model_ids.push(player_model_id);
         self.car_lights_on.push(true);
 
@@ -4671,6 +4684,7 @@ impl RaceSession {
             self.world.spawn(p2_car, TrackProgressTracker::new(num_cps, num_sectors));
             self.car_visual_types.push(player_visual_type);
             self.color_schemes.push(p2_scheme);
+            self.car_race_numbers.push(grid_numbers.player2);
             self.car_model_ids.push(player_model_id);
             self.car_lights_on.push(true);
         }
@@ -4749,6 +4763,7 @@ impl RaceSession {
             self.world.spawn(bot_car, TrackProgressTracker::new(num_cps, num_sectors));
             self.car_visual_types.push(bot_visual_type);
             self.color_schemes.push(bot_scheme);
+            self.car_race_numbers.push(bot_participant.map(|p| p.race_number).unwrap_or(0));
             self.car_model_ids.push(bot_model_id);
             self.car_lights_on.push(true);
             let bot_tier = if let Some(champ) = &self.championship_session {
@@ -4782,6 +4797,7 @@ impl RaceSession {
             }
             self.ai_drivers.push(bot_ai);
         }
+        self.store_roster_numbers(&grid_numbers.assigned);
         self.apply_car_damage_setting();
     }
 
@@ -9794,6 +9810,7 @@ impl RaceSession {
         self.ai_drivers.clear();
         self.grid_participants.clear();
         self.color_schemes.clear();
+        self.car_race_numbers.clear();
 
         for (i, (slot_id, name, country, car_model, livery)) in slot_info.into_iter().enumerate() {
             let grid_pose = self
@@ -9845,6 +9862,7 @@ impl RaceSession {
                 best_circuit_time: None,
                 random_seed: i as u64,
                 driver_tier: Some(DriverTier::Pro),
+                race_number: 0,
             });
 
             if is_me {

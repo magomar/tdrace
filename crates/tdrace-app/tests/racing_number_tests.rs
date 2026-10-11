@@ -216,3 +216,278 @@ fn a_damaged_rival_number_loads_as_none_instead_of_failing_the_save() {
     let entry: CareerRivalEntry = serde_json::from_value(value).unwrap();
     assert_eq!(entry.race_number, Some(55));
 }
+
+// ---------------------------------------------------------------------------
+// Grids: casual, career, championship and tournament
+// ---------------------------------------------------------------------------
+
+use std::collections::{HashMap, HashSet};
+
+use race_kit::FinishState;
+use tdrace_app::game::{GameState, RaceSession};
+use tdrace_app::series::SeriesDefinition;
+use tdrace_app::ui::menu::GameMode;
+
+const SUPERBUGGY: &str = include_str!("../../../series/autocross/autocross_superbuggy_world_series.toml");
+const WORLD_RX: &str = include_str!("../../../series/rally/rally_world_rallycross_supercars.toml");
+
+fn all_unique(numbers: &[u8]) -> bool {
+    numbers.iter().collect::<HashSet<_>>().len() == numbers.len()
+}
+
+fn grid_numbers(session: &RaceSession) -> Vec<u8> {
+    session.grid_participants.iter().map(|p| p.race_number).collect()
+}
+
+/// The number of every driver on the grid, keyed by driver id (`player` for the human).
+fn grid_numbers_by_driver(session: &RaceSession) -> HashMap<String, u8> {
+    session
+        .grid_participants
+        .iter()
+        .map(|p| {
+            let id = if p.is_player { "player".to_string() } else { session.opponent_drivers[p.bot_index.unwrap()].id.to_string() };
+            (id, p.race_number)
+        })
+        .collect()
+}
+
+fn launch_in(db: HallOfFameDb, toml: &str, player_number: u8) -> RaceSession {
+    let def = SeriesDefinition::from_toml(toml).unwrap();
+    let mut session = RaceSession::new();
+    let mut profile = db.seed_default_profile_if_empty().unwrap();
+    profile.race_number = player_number;
+    db.update_profile(&profile).unwrap();
+    session.hof_db = Some(db);
+    session.refresh_profiles_and_stats();
+    session.launch_or_resume_championship(&def);
+    session
+}
+
+fn finish_race(session: &mut RaceSession) {
+    let n = session.world.vehicles.len();
+    let laps = session.total_laps;
+    for car in 0..n {
+        let time = 10.0 * laps as f32 + car as f32 * 1.5;
+        session.world.finish[car] = FinishState::Finished { time, position: car + 1 };
+        session.world.trackers[car].current_lap = laps + 1;
+        session.world.trackers[car].best_lap_time = Some(time / laps as f32);
+    }
+    session.check_race_finish();
+}
+
+fn press_confirm(session: &mut RaceSession) {
+    session.input.gamepad.snapshot.btn_confirm_pressed = true;
+    match session.state {
+        GameState::Finished => session.update_finished_screen(),
+        GameState::TournamentBracket => session.update_tournament_bracket(),
+        _ => panic!("unexpected state {:?}", session.state),
+    }
+    session.input.gamepad.snapshot.btn_confirm_pressed = false;
+}
+
+/// Scenario: Grid generation eliminates duplicate numbers
+#[test]
+fn an_eight_car_quick_race_grid_has_eight_different_numbers() {
+    let mut session = RaceSession::new();
+    session.active_profile.race_number = 17;
+    session.num_bots = 7;
+    session.init_race();
+
+    let numbers = grid_numbers(&session);
+    assert_eq!(numbers.len(), 8);
+    assert_eq!(numbers.iter().filter(|&&n| n == 17).count(), 1, "exactly one car carries 17");
+    let player = session.grid_participants.iter().find(|p| p.is_player).unwrap();
+    assert_eq!(player.race_number, 17);
+    assert!(numbers.iter().all(|&n| (1..=99).contains(&n)));
+    assert!(all_unique(&numbers), "{numbers:?}");
+
+    // The numbers of the cars in the world follow the cars, not the grid order.
+    assert_eq!(session.car_race_numbers.len(), session.world.vehicles.len());
+    assert_eq!(session.car_race_numbers[0], 17, "car 0 is the player");
+    assert_eq!(session.car_race_numbers.iter().copied().collect::<HashSet<_>>(), numbers.iter().copied().collect::<HashSet<_>>());
+}
+
+#[test]
+fn the_player_number_is_used_even_when_the_profile_value_is_damaged() {
+    let mut session = RaceSession::new();
+    session.active_profile.race_number = 0;
+    session.num_bots = 3;
+    session.init_race();
+    let numbers = grid_numbers(&session);
+    assert_eq!(session.grid_participants.iter().find(|p| p.is_player).unwrap().race_number, 7);
+    assert!(all_unique(&numbers));
+    assert!(numbers.iter().all(|&n| (1..=99).contains(&n)));
+}
+
+#[test]
+fn a_split_screen_grid_gives_player_two_its_own_number() {
+    let mut session = RaceSession::new();
+    session.game_mode = GameMode::SplitScreen;
+    session.active_profile.race_number = 23;
+    session.num_bots = 3;
+    session.init_race();
+    let numbers = grid_numbers(&session);
+    assert_eq!(numbers.len(), 5);
+    assert!(all_unique(&numbers), "{numbers:?}");
+    assert_eq!(numbers.iter().filter(|&&n| n == 23).count(), 1);
+}
+
+#[test]
+fn a_career_roster_keeps_its_numbers_between_races() {
+    let mut session = RaceSession::new();
+    session.game_mode = GameMode::Career;
+    session.active_profile.race_number = 17;
+    session.num_bots = 7;
+    session.init_race();
+
+    let first = grid_numbers_by_driver(&session);
+    assert!(all_unique(&first.values().copied().collect::<Vec<_>>()));
+    let rivals = &session.active_career_progress.career_rivals;
+    assert!(!rivals.is_empty());
+    assert!(rivals.iter().all(|r| r.race_number.is_some()), "every career rival has a stored number");
+
+    session.init_race();
+    assert_eq!(grid_numbers_by_driver(&session), first, "the same rivals keep their numbers in the next race");
+}
+
+/// Scenario: Player number change re-allocates only the colliding rival
+#[test]
+fn changing_the_player_number_moves_only_the_rival_that_has_it() {
+    let mut session = RaceSession::new();
+    session.game_mode = GameMode::Career;
+    session.active_profile.race_number = 17;
+    session.num_bots = 7;
+    session.init_race();
+    let before = grid_numbers_by_driver(&session);
+    let rival_id = before.iter().find(|(id, _)| *id != "player").map(|(id, _)| id.clone()).unwrap();
+    let taken = before[&rival_id];
+
+    session.active_profile.race_number = taken;
+    session.rebuild_roster_participants();
+    let after = grid_numbers_by_driver(&session);
+
+    assert_eq!(after["player"], taken);
+    assert_ne!(after[&rival_id], taken, "the colliding rival got a new number");
+    for (id, number) in &before {
+        if *id != "player" && *id != rival_id {
+            assert_eq!(after[id], *number, "{id} keeps its number");
+        }
+    }
+    assert!(all_unique(&after.values().copied().collect::<Vec<_>>()));
+}
+
+/// Scenario: Old save without numbers loads cleanly
+#[test]
+fn a_roster_saved_without_numbers_gets_unique_numbers() {
+    let mut session = launch_in(HallOfFameDb::open_in_memory().unwrap(), WORLD_RX, 17);
+    for entry in session.championship_session.as_mut().unwrap().standings.iter_mut() {
+        entry.race_number = None;
+    }
+    session.rebuild_roster_participants();
+
+    let standings = &session.championship_session.as_ref().unwrap().standings;
+    let rivals: Vec<u8> = standings.iter().filter(|s| s.driver_id != "player").map(|s| s.race_number.expect("numbered")).collect();
+    assert_eq!(rivals.len(), 31);
+    assert!(all_unique(&rivals));
+    assert!(!rivals.contains(&17));
+}
+
+/// Scenario: Tournament roster of 32 drivers is unique
+#[test]
+fn a_tournament_weekend_numbers_all_32_drivers_and_keeps_them_in_every_race() {
+    for toml in [SUPERBUGGY, WORLD_RX] {
+        let mut session = launch_in(HallOfFameDb::open_in_memory().unwrap(), toml, 17);
+        let champ = session.championship_session.as_ref().unwrap();
+        assert_eq!(champ.standings.len(), 32);
+
+        let roster: HashMap<String, u8> = champ
+            .standings
+            .iter()
+            .map(|s| (s.driver_id.clone(), if s.driver_id == "player" { 17 } else { s.race_number.expect("every rival is numbered") }))
+            .collect();
+        assert!(all_unique(&roster.values().copied().collect::<Vec<_>>()), "32 drivers, 32 numbers");
+        assert_eq!(roster["player"], 17);
+
+        let mut races = 0;
+        let mut seen: HashMap<String, u8> = HashMap::new();
+        while session.championship_session.as_ref().unwrap().tournament_in_progress() {
+            let on_grid = grid_numbers_by_driver(&session);
+            assert_eq!(on_grid.len(), 8);
+            assert!(all_unique(&on_grid.values().copied().collect::<Vec<_>>()));
+            for (id, number) in &on_grid {
+                assert_eq!(roster[id], *number, "{id} wears its roster number");
+                assert_eq!(*seen.entry(id.clone()).or_insert(*number), *number, "{id} keeps its number between races");
+            }
+            races += 1;
+            finish_race(&mut session);
+            press_confirm(&mut session);
+            if session.state == GameState::TournamentBracket {
+                press_confirm(&mut session);
+            }
+        }
+        assert!(races >= 3, "heat, semifinal and final were all built ({races})");
+    }
+}
+
+/// Plays the heat, the semifinal and the final of the weekend on the grid.
+fn play_weekend(session: &mut RaceSession) {
+    while session.championship_session.as_ref().unwrap().tournament_in_progress() {
+        finish_race(session);
+        press_confirm(session);
+        if session.state == GameState::TournamentBracket {
+            press_confirm(session);
+        }
+    }
+}
+
+fn standing_numbers(session: &RaceSession) -> HashMap<String, Option<u8>> {
+    session.championship_session.as_ref().unwrap().standings.iter().map(|s| (s.driver_id.clone(), s.race_number)).collect()
+}
+
+/// Scenario: Rival numbers persist across rounds and saves
+#[test]
+fn rival_numbers_survive_a_finished_round_a_save_and_a_resume() {
+    let path = temp_db_path("resume");
+    let round_one = {
+        let mut session = launch_in(HallOfFameDb::open(&path).unwrap(), SUPERBUGGY, 17);
+        let before = standing_numbers(&session);
+        assert_eq!(before.len(), 32);
+        assert!(before.iter().filter(|(id, _)| *id != "player").all(|(_, n)| n.is_some()));
+        play_weekend(&mut session);
+        assert_eq!(session.championship_session.as_ref().unwrap().current_round, 1, "round 1 is scored");
+        assert_eq!(standing_numbers(&session), before, "round 1 did not change a number");
+        before
+    };
+
+    // A restart: a new session on the same database file resumes the saved championship at round 2.
+    let session = launch_in(HallOfFameDb::open(&path).unwrap(), SUPERBUGGY, 17);
+    assert_eq!(session.championship_session.as_ref().unwrap().current_round, 1);
+    assert_eq!(standing_numbers(&session), round_one, "every rival has the number it had in round 1");
+    let on_grid = grid_numbers_by_driver(&session);
+    assert!(on_grid.iter().all(|(id, n)| *id == "player" || round_one[id] == Some(*n)));
+    let _ = std::fs::remove_dir_all(path.parent().unwrap());
+}
+
+#[test]
+fn a_championship_player_number_change_moves_only_the_colliding_rival() {
+    let mut session = launch_in(HallOfFameDb::open_in_memory().unwrap(), SUPERBUGGY, 17);
+    let before: HashMap<String, Option<u8>> =
+        session.championship_session.as_ref().unwrap().standings.iter().map(|s| (s.driver_id.clone(), s.race_number)).collect();
+    let (rival_id, taken) = before.iter().find(|(id, _)| *id != "player").map(|(id, n)| (id.clone(), n.unwrap())).unwrap();
+
+    session.active_profile.race_number = taken;
+    session.rebuild_roster_participants();
+
+    let after: HashMap<String, Option<u8>> =
+        session.championship_session.as_ref().unwrap().standings.iter().map(|s| (s.driver_id.clone(), s.race_number)).collect();
+    assert_ne!(after[&rival_id], Some(taken));
+    assert!(after[&rival_id].is_some());
+    for (id, number) in &before {
+        if *id != rival_id && *id != "player" {
+            assert_eq!(after[id], *number, "{id} keeps its number");
+        }
+    }
+    let numbers: Vec<u8> = after.iter().filter(|(id, _)| *id != "player").map(|(_, n)| n.unwrap()).collect();
+    assert!(all_unique(&numbers));
+    assert!(!numbers.contains(&taken));
+}

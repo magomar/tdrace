@@ -122,6 +122,7 @@ fn test_lan_launch_session_and_nameplates() {
         best_circuit_time: None,
         random_seed: 99,
         driver_tier: None,
+        race_number: 0,
     });
     session.world.vehicles.push(tdrace_core::car::Car::new(session.config.get_car_config(tdrace_app::ui::menu::CarChoice::SportsCar)));
     session.world.trackers.push(tdrace_core::track::checkpoint::TrackProgressTracker::new(session.track.checkpoints.len(), 3));
@@ -183,6 +184,7 @@ fn test_lan_client_perspective_targeting_and_helpers() {
             best_circuit_time: None,
             random_seed: 1,
             driver_tier: None,
+            race_number: 0,
         },
         tdrace_app::game::GridParticipant {
             is_player: true,
@@ -198,6 +200,7 @@ fn test_lan_client_perspective_targeting_and_helpers() {
             best_circuit_time: None,
             random_seed: 2,
             driver_tier: None,
+            race_number: 0,
         },
     ];
 
