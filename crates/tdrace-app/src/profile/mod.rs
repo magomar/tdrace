@@ -45,6 +45,26 @@ pub struct PlayerProfile {
     pub car_compounds: HashMap<String, CompoundId>,
 }
 
+/// Slicks the garage offers for a GT car, softest first (spec 098).
+pub const GT_GARAGE_COMPOUNDS: [CompoundId; 3] = [CompoundId::SoftSlick, CompoundId::MediumSlick, CompoundId::HardSlick];
+
+/// True for the modules whose cars get a tyre choice in the garage (spec 098).
+pub fn is_gt_garage_module(module_id: &str) -> bool {
+    matches!(module_id, "gt" | "gt_challenge")
+}
+
+impl PlayerProfile {
+    /// The slick chosen in the garage for a car, or `None` when the car keeps its preset compound.
+    /// Only GT module cars have a choice, and only the three garage slicks count; anything else in
+    /// the stored map is ignored (fail closed to the preset).
+    pub fn garage_compound(&self, module_id: &str, car_id: &str) -> Option<CompoundId> {
+        if !is_gt_garage_module(module_id) {
+            return None;
+        }
+        self.car_compounds.get(car_id).copied().filter(|id| GT_GARAGE_COMPOUNDS.contains(id))
+    }
+}
+
 /// Reads the per-car compound map and drops entries whose compound is unknown, so one bad value
 /// never loses the other choices (spec 098: fail closed to the preset compound, never panic).
 fn lenient_car_compounds<'de, D>(deserializer: D) -> Result<HashMap<String, CompoundId>, D::Error>

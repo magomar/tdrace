@@ -4627,7 +4627,12 @@ impl RaceSession {
                 angle: 0.0,
                 grid_slot: player_slot,
             });
-        let mut player_car = Car::new(base_config).with_pose(grid_pose_player.position, grid_pose_player.angle);
+        // Only the player's own car wears the garage compound; player 2 (below) and the bots keep their preset.
+        let mut player_config = base_config;
+        if let Some(id) = player_model.and_then(|pm| self.active_profile.garage_compound(pm.module_id, pm.id)) {
+            player_config.set_slick_compound(id);
+        }
+        let mut player_car = Car::new(player_config).with_pose(grid_pose_player.position, grid_pose_player.angle);
                     player_car.config.player = Self::player_handling(self.assist_profile, &self.input.filter.config);
                     player_car.config.assists = self.assist_profile.to_config();
         self.world.spawn(player_car, TrackProgressTracker::new(num_cps, num_sectors));
@@ -6310,8 +6315,13 @@ impl RaceSession {
                 if let Some(vt) = self.car_visual_types.get_mut(0) {
                     *vt = next_m.visual_type;
                 }
+                let mut next_config = next_m.to_car_config();
+                if let Some(id) = self.active_profile.garage_compound(next_m.module_id, next_m.id) {
+                    next_config.set_slick_compound(id);
+                }
                 if let Some(car) = self.world.vehicles.get_mut(0) {
-                    car.config = next_m.to_car_config();
+                    // set_config also refits the wheel assemblies, which carry the compound in the race.
+                    car.set_config(next_config);
                 }
             } else {
                 let car_idx = bot_idx_opt
@@ -9790,7 +9800,13 @@ impl RaceSession {
                 });
             let canonical_id = Self::canonicalize_car_model_id(&car_model);
             let catalog_model = crate::catalog::find_model_by_id(canonical_id);
-            let car_config = catalog_model.map(|m| m.to_car_config()).unwrap_or(base_config);
+            let mut car_config = catalog_model.map(|m| m.to_car_config()).unwrap_or(base_config);
+            // The owner fits its own garage compound on its own car; the lobby protocol is unchanged.
+            if slot_id == my_slot_id {
+                if let Some(id) = catalog_model.and_then(|m| self.active_profile.garage_compound(m.module_id, m.id)) {
+                    car_config.set_slick_compound(id);
+                }
+            }
 
             let mut car = Car::new(car_config).with_pose(grid_pose.position, grid_pose.angle);
             car.state.velocity = glam::Vec2::ZERO;
