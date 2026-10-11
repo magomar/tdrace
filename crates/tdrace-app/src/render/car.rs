@@ -1904,7 +1904,7 @@ fn render_sand_rail_body(
 }
 
 // ---------------------------------------------------------------------------
-// Racing number plate (spec 092; placement and size by spec 110)
+// Racing number plate (spec 092; placement and size by spec 111)
 // ---------------------------------------------------------------------------
 
 /// Advance width of one Rajdhani-Bold digit, in em.
@@ -1913,10 +1913,10 @@ pub const NUMBER_DIGIT_ADVANCE_EM: f32 = 0.56;
 pub const NUMBER_DIGIT_HEIGHT_EM: f32 = 0.70;
 /// The number never fills more than this fraction of the plate, so the digits keep a margin to the body edge.
 const NUMBER_PLATE_FILL: f32 = 0.9;
-/// The digits are at most this fraction of the body width high (spec 110).
+/// The digits are at most this fraction of the body width high (spec 111).
 pub const NUMBER_MAX_HEIGHT_FRACTION: f32 = 0.35;
 /// The roof number sits this fraction of the cabin length behind the cabin centre: the skeleton cabin includes
-/// the windscreen, so its centre is ahead of the middle of the roof on the sprites (spec 110 contact sheets).
+/// the windscreen, so its centre is ahead of the middle of the roof on the sprites (spec 111 contact sheets).
 pub const NUMBER_ROOF_REARWARD: f32 = 0.15;
 /// The front number sits this fraction of the front zone ahead of the front edge of the cabin: on the bonnet,
 /// clear of the rounded nose.
@@ -1924,7 +1924,7 @@ pub const NUMBER_FRONT_POSITION: f32 = 0.35;
 /// Smallest digit height, in screen pixels, that is still drawn.
 const NUMBER_MIN_PIXEL_HEIGHT: f32 = 5.0;
 
-/// Where a kind of car carries its racing number in the top-down view (spec 110).
+/// Where a kind of car carries its racing number in the top-down view (spec 111).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PlateZone {
     /// Between the front edge of the cabin and the front end of the body, nearer the cabin: the bonnet.

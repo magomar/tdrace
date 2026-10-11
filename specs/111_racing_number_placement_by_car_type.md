@@ -4,7 +4,7 @@ template: feature
 title: "Racing Number Placement by Car Type"
 description: "Makes the racing number on the car smaller and puts it where each kind of car carries it: no number on karts, on the bonnet of buggies and GT cars, on the middle of the roof of stock cars and rally cars."
 status: implemented
-receipt: "docs/receipts/spec-110-receipt.md"
+receipt: "docs/receipts/spec-111-receipt.md"
 verified: { by: human:mario, at: 2026-10-11T18:23:57Z, hash: "fc8920532624" }
 created: 2026-10-11
 generated: { by: agent/claude-opus-5.5, at: 2026-10-11T17:38:06Z }
@@ -119,4 +119,4 @@ No data, save or database change. The change is in `crates/tdrace-app/src/render
 - `[x]` `crates/tdrace-app/examples/racing_number_sheet.rs` (new) -> contact sheet of every catalog car with its number.
 
 ### Verification Assertions
-- Verification receipts will be recorded via `keel receipt 110 --cmd "cargo test -p tdrace-app --test racing_number_render_tests"`.
+- Verification receipts will be recorded via `keel receipt 111 --cmd "cargo test -p tdrace-app --test racing_number_render_tests"`.
