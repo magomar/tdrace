@@ -4627,7 +4627,12 @@ impl RaceSession {
                 angle: 0.0,
                 grid_slot: player_slot,
             });
-        let mut player_car = Car::new(base_config).with_pose(grid_pose_player.position, grid_pose_player.angle);
+        // Only the player's own car wears the garage compound; player 2 (below) and the bots keep their preset.
+        let mut player_config = base_config;
+        if let Some(id) = player_model.and_then(|pm| self.active_profile.garage_compound(pm.module_id, pm.id)) {
+            player_config.set_slick_compound(id);
+        }
+        let mut player_car = Car::new(player_config).with_pose(grid_pose_player.position, grid_pose_player.angle);
                     player_car.config.player = Self::player_handling(self.assist_profile, &self.input.filter.config);
                     player_car.config.assists = self.assist_profile.to_config();
         self.world.spawn(player_car, TrackProgressTracker::new(num_cps, num_sectors));
@@ -6310,8 +6315,13 @@ impl RaceSession {
                 if let Some(vt) = self.car_visual_types.get_mut(0) {
                     *vt = next_m.visual_type;
                 }
+                let mut next_config = next_m.to_car_config();
+                if let Some(id) = self.active_profile.garage_compound(next_m.module_id, next_m.id) {
+                    next_config.set_slick_compound(id);
+                }
                 if let Some(car) = self.world.vehicles.get_mut(0) {
-                    car.config = next_m.to_car_config();
+                    // set_config also refits the wheel assemblies, which carry the compound in the race.
+                    car.set_config(next_config);
                 }
             } else {
                 let car_idx = bot_idx_opt
@@ -8321,6 +8331,7 @@ impl RaceSession {
                         license_grade: p.license_grade,
                         academy_progress: p.academy_progress.clone(),
                         owned_cars: p.owned_cars.clone(),
+                        car_compounds: p.car_compounds.clone(),
                     })
                 });
 
@@ -9789,7 +9800,13 @@ impl RaceSession {
                 });
             let canonical_id = Self::canonicalize_car_model_id(&car_model);
             let catalog_model = crate::catalog::find_model_by_id(canonical_id);
-            let car_config = catalog_model.map(|m| m.to_car_config()).unwrap_or(base_config);
+            let mut car_config = catalog_model.map(|m| m.to_car_config()).unwrap_or(base_config);
+            // The owner fits its own garage compound on its own car; the lobby protocol is unchanged.
+            if slot_id == my_slot_id {
+                if let Some(id) = catalog_model.and_then(|m| self.active_profile.garage_compound(m.module_id, m.id)) {
+                    car_config.set_slick_compound(id);
+                }
+            }
 
             let mut car = Car::new(car_config).with_pose(grid_pose.position, grid_pose.angle);
             car.state.velocity = glam::Vec2::ZERO;
@@ -10300,6 +10317,21 @@ impl RaceSession {
         }
     }
 
+    /// Keeps the slick chosen in the garage for a GT car in the profile, saves it and plays the UI move
+    /// sound (spec 098). The next race build fits it on the player's car.
+    pub fn set_garage_compound(&mut self, car_id: &str, compound: tdrace_core::physics::surface::CompoundId) {
+        self.active_profile.car_compounds.insert(car_id.to_string(), compound);
+        if let Some(db) = &self.hof_db {
+            let _ = db.update_profile(&self.active_profile);
+        }
+        if let Some(id) = self.active_profile.id {
+            if let Some(listed) = self.profile_list.iter_mut().find(|p| p.id == Some(id)) {
+                listed.car_compounds = self.active_profile.car_compounds.clone();
+            }
+        }
+        self.audio.play_sfx(SfxType::UiMove);
+    }
+
     /// Updates inputs, vehicle selection, and turntable/rev stage animations for the Interactive Garage (`GameState::Garage`).
     pub fn update_garage(&mut self, origin: GarageOrigin, frame_dt: f32) {
         if self.garage_entry.is_none() {
@@ -10629,6 +10661,36 @@ impl RaceSession {
                         self.audio.play_sfx(SfxType::UiMove);
                     }
                     break;
+                }
+            }
+        }
+
+        // Tyre compound of a GT car (spec 098): T / Shift+T / L3 cycle the slicks, a click on an option picks it.
+        let tyres_open = origin != GarageOrigin::StartingGrid || self.game_mode.allows_car_change();
+        if let Some(active_car) = models.get(self.garage_car_idx) {
+            if let crate::ui::GarageTyres::Select(current) =
+                crate::ui::garage_tyres(Some(active_car), &self.active_profile, tyres_open)
+            {
+                let held = |a: KeyCode, b: KeyCode| is_key_down(a) || is_key_down(b);
+                let shift = held(KeyCode::LeftShift, KeyCode::RightShift);
+                let ctrl = held(KeyCode::LeftControl, KeyCode::RightControl) || held(KeyCode::LeftSuper, KeyCode::RightSuper);
+                let mut chosen = None;
+                if !ctrl && is_key_pressed(KeyCode::T) {
+                    chosen = Some(crate::ui::garage_next_compound(current, !shift));
+                } else if self.input.gamepad.snapshot.btn_cam_toggle_pressed {
+                    chosen = Some(crate::ui::garage_next_compound(current, true));
+                }
+                if mouse_clicked {
+                    for (i, id) in crate::profile::GT_GARAGE_COMPOUNDS.iter().enumerate() {
+                        let (px, py, pw, ph) = crate::ui::garage_tyre_pill_rect(sw, sh, i);
+                        if mx >= px && mx <= px + pw && my >= py && my <= py + ph {
+                            chosen = Some(*id);
+                            break;
+                        }
+                    }
+                }
+                if let Some(id) = chosen.filter(|id| *id != current) {
+                    self.set_garage_compound(active_car.id, id);
                 }
             }
         }
@@ -14020,6 +14082,7 @@ impl RaceSession {
                     self.active_profile.credits,
                     module_locked,
                     car_change_allowed,
+                    crate::ui::garage_tyres(self.resolve_active_car_model(), &self.active_profile, car_change_allowed),
                 );
             }
             GameState::CircuitViewer(_) => {

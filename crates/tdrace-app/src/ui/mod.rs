@@ -53,8 +53,9 @@ pub use driver_card::render_driver_cards_screen;
 pub use font::Fonts;
 pub use garage::{
     garage_car_card_rect, garage_gallery_card_rect, garage_gallery_tab_rect,
-    garage_select_button_rect, gallery_filter_to_module, module_to_gallery_filter,
-    render_garage_screen, GALLERY_MODULES, GarageViewMode,
+    garage_next_compound, garage_select_button_rect, garage_tyre_pill_rect, garage_tyres,
+    gallery_filter_to_module, module_to_gallery_filter,
+    render_garage_screen, GALLERY_MODULES, GarageTyres, GarageViewMode,
 };
 pub use hall_of_fame::{render_hall_of_fame_screen, render_name_input_modal, PlayerCongrats};
 pub use hud::{format_lap_time, pit_stop_recommended, render_hud, PersonalBestNotification};
