@@ -3,7 +3,8 @@ type: Feature Spec
 template: feature
 title: "Racing Number Placement by Car Type"
 description: "Makes the racing number on the car smaller and puts it where each kind of car carries it: no number on karts, on the bonnet of buggies and GT cars, on the middle of the roof of stock cars and rally cars."
-status: draft
+status: approved
+verified: { by: human:mario, at: 2026-10-11T18:23:57Z, hash: "fc8920532624" }
 created: 2026-10-11
 generated: { by: agent/claude-opus-5.5, at: 2026-10-11T17:38:06Z }
 depends_on:
