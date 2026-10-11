@@ -1,29 +1,99 @@
-//! # Classic Academy User Interface & Graduation Ceremony (Spec 060)
+//! # Classic Academy User Interface & Graduation Ceremony (Spec 060, Spec 064)
 //!
-//! Renders the 4-lesson curriculum selector screen, medal achievements,
-//! challenge HUD pace deltas, and the vector National Grassroots License graduation fanfare.
+//! Renders the tabbed curriculum selector screen (one tier of 4 missions at a time), medal
+//! achievements, challenge HUD pace deltas, the result banner, and the vector National Grassroots
+//! License graduation fanfare.
 
 use macroquad::prelude::*;
 use crate::game::academy::{
-    AcademyChallengeState, AcademyLessonDef, AcademyLessonId, AcademyMedal, AcademyPaceStatus,
+    AcademyAttemptEvaluation, AcademyChallengeState, AcademyLessonDef, AcademyLessonId, AcademyMedal,
+    AcademyObjective, AcademyPaceStatus, LicenseGrade,
 };
+use tdrace_core::profile::{ACADEMY_LESSONS_PER_TIER, ACADEMY_TIER_COUNT, ACADEMY_TIER_PASS_COUNT};
 use crate::profile::PlayerProfile;
 use crate::render::color::Palette;
 use crate::ui::font::Fonts;
 use crate::ui::scaler::UiScaler;
 
-/// Computes bounding rectangle (x, y, w, h) for an Academy lesson card.
+/// Computes bounding rectangle (x, y, w, h) for an Academy lesson card. `idx` is the row (0 to 3) in the
+/// tier shown.
 pub fn academy_card_rect(sw: f32, sh: f32, idx: usize) -> (f32, f32, f32, f32) {
     let scaler = UiScaler::new(sw, sh);
     let card_w = (sw * 0.78).clamp(scaler.s(480.0), scaler.s(820.0));
     let card_x = (sw - card_w) * 0.5;
-    let start_y = scaler.s(120.0);
+    let start_y = scaler.s(156.0);
     let card_gap = scaler.s(10.0);
-    let total_cards = 4.0;
+    let total_cards = ACADEMY_LESSONS_PER_TIER as f32;
     let available_h = (sh - start_y - scaler.s(60.0)).max(scaler.s(260.0));
     let card_h = ((available_h - card_gap * (total_cards - 1.0)) / total_cards).clamp(scaler.s(60.0), scaler.s(92.0));
     let card_y = start_y + (idx as f32) * (card_h + card_gap);
     (card_x, card_y, card_w, card_h)
+}
+
+/// Computes bounding rectangle (x, y, w, h) for the tab of a tier (`tier_idx` 0 to 2).
+pub fn academy_tab_rect(sw: f32, sh: f32, tier_idx: usize) -> (f32, f32, f32, f32) {
+    let scaler = UiScaler::new(sw, sh);
+    let (card_x, _, card_w, _) = academy_card_rect(sw, sh, 0);
+    let gap = scaler.s(8.0);
+    let tab_w = (card_w - gap * (ACADEMY_TIER_COUNT as f32 - 1.0)) / ACADEMY_TIER_COUNT as f32;
+    (card_x + tier_idx as f32 * (tab_w + gap), scaler.s(100.0), tab_w, scaler.s(32.0))
+}
+
+/// Licence the player earns by passing a tier.
+fn tier_license(tier: u8) -> LicenseGrade {
+    match tier {
+        1 => LicenseGrade::ClassD,
+        2 => LicenseGrade::ClassC,
+        _ => LicenseGrade::ClassB,
+    }
+}
+
+/// Why a tier is locked, shown on the tab bar and on its cards.
+pub fn tier_unlock_rule(tier: u8, profile: &PlayerProfile) -> String {
+    match tier {
+        0 | 1 => String::new(),
+        2 => "LOCKED: graduate from Tier 1 first (Bronze or better on Lesson 4, Class D).".to_string(),
+        t => format!(
+            "LOCKED: Bronze or better on {} of 4 Tier {} missions ({} / 4 so far).",
+            ACADEMY_TIER_PASS_COUNT,
+            t - 1,
+            profile.academy_progress.tier_bronze_count(t - 1)
+        ),
+    }
+}
+
+/// The medal targets of a lesson as one line, in the unit of its objective.
+pub fn lesson_targets_text(lesson: &AcademyLessonDef) -> String {
+    match lesson.objective {
+        AcademyObjective::DriftScore => format!(
+            "Gold {:.0} | Silver {:.0} | Bronze {:.0} drift pts",
+            lesson.gold_time_sec, lesson.silver_time_sec, lesson.bronze_time_sec
+        ),
+        AcademyObjective::Podium { max_wear, .. } => {
+            format!("1st Gold | 2nd Silver | finish Bronze | WEAR {:.0}% MAX", max_wear * 100.0)
+        }
+        AcademyObjective::WearCap { max_wear } => format!(
+            "Gold {:.1}s | Silver {:.1}s | Bronze {:.1}s | WEAR {:.0}% MAX",
+            lesson.gold_time_sec, lesson.silver_time_sec, lesson.bronze_time_sec, max_wear * 100.0
+        ),
+        AcademyObjective::CleanLanding => format!(
+            "Gold {:.1}s | Silver {:.1}s | Bronze {:.1}s | CLEAN LANDING",
+            lesson.gold_time_sec, lesson.silver_time_sec, lesson.bronze_time_sec
+        ),
+        AcademyObjective::BestTime => format!(
+            "Gold {:.1}s | Silver {:.1}s | Bronze {:.1}s",
+            lesson.gold_time_sec, lesson.silver_time_sec, lesson.bronze_time_sec
+        ),
+    }
+}
+
+/// The stored personal best of a lesson as text, in the unit of its objective.
+fn lesson_best_text(lesson: &AcademyLessonDef, best: f32) -> String {
+    match lesson.objective {
+        AcademyObjective::DriftScore => format!("BEST: {:.0} pts", best),
+        AcademyObjective::Podium { .. } => format!("BEST: P{:.0}", best),
+        _ => format!("PB: {:.2}s", best),
+    }
 }
 
 /// Returns bounding rectangle for the graduation showroom action button.
@@ -36,7 +106,8 @@ pub fn graduation_showroom_button_rect(sw: f32, sh: f32) -> (f32, f32, f32, f32)
     (btn_x, btn_y, btn_w, btn_h)
 }
 
-/// Renders the Classic Academy curriculum screen.
+/// Renders the Classic Academy curriculum screen: the tier tabs and the four missions of the tier that
+/// `selected_idx` (a lesson index over all tiers) points into.
 pub fn render_academy_curriculum_screen(
     fonts: &Fonts,
     profile: &PlayerProfile,
@@ -45,6 +116,7 @@ pub fn render_academy_curriculum_screen(
     let sw = screen_width();
     let sh = screen_height();
     let scaler = UiScaler::new(sw, sh);
+    let selected_tier = AcademyLessonId::from_index(selected_idx).map_or(1, |id| id.tier());
 
     draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.04, 0.05, 0.08, 0.98));
 
@@ -60,7 +132,7 @@ pub fn render_academy_curriculum_screen(
     );
 
     fonts.draw_ui_regular_centered(
-        "Master handling fundamentals, earn your National Grassroots License, and win seed funds for your first car.",
+        "Master handling fundamentals, earn your racing licences, and win seed funds for your first cars.",
         sw * 0.5,
         scaler.s(58.0),
         scaler.font_s(13.0),
@@ -69,15 +141,20 @@ pub fn render_academy_curriculum_screen(
 
     // Profile Progress Header Strip (Stars & Purse)
     let stars_earned = profile.academy_progress.total_stars();
+    let max_stars = AcademyLessonDef::default_curriculum().len() as u32 * 3;
+    let tier_purse: u64 = AcademyLessonDef::tier_curriculum(selected_tier)
+        .iter()
+        .map(|l| l.bronze_credit_bounty + l.silver_credit_bounty + l.gold_credit_bounty)
+        .sum();
     let status_str = if profile.has_racing_license() {
-        "🎓 LICENSED GRADUATE"
+        format!("🎓 {} DRIVER", profile.license_grade.max(LicenseGrade::ClassD).badge())
     } else {
-        "🔰 ROOKIE CANDIDATE"
+        "🔰 ROOKIE CANDIDATE".to_string()
     };
 
     let summary_text = format!(
-        "{}  •  ⭐ {} / 12 STARS  •  WALLET: {} Cr  •  POTENTIAL PURSE: 14,500 Cr",
-        status_str, stars_earned, profile.credits
+        "{}  •  ⭐ {} / {} STARS  •  WALLET: {} Cr  •  TIER {} PURSE: {} Cr",
+        status_str, stars_earned, max_stars, profile.credits, selected_tier, tier_purse
     );
 
     fonts.draw_ui_bold_centered(
@@ -92,11 +169,43 @@ pub fn render_academy_curriculum_screen(
         },
     );
 
-    // Render 4 Lesson Cards
-    let curriculum = AcademyLessonDef::default_curriculum();
-    for (i, lesson) in curriculum.iter().enumerate() {
-        let (cx, cy, cw, ch) = academy_card_rect(sw, sh, i);
-        let is_sel = i == selected_idx;
+    // Tier tabs
+    for tier in 1..=ACADEMY_TIER_COUNT {
+        let (tx, ty, tw, th) = academy_tab_rect(sw, sh, tier as usize - 1);
+        let is_sel = tier == selected_tier;
+        let unlocked = profile.academy_progress.is_tier_unlocked(tier);
+        let bg = if is_sel { Palette::UI_CARD_BG_HOVER } else { Color::new(0.05, 0.07, 0.10, 0.85) };
+        let border = if is_sel { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER };
+        scaler.draw_glass_card(tx, ty, tw, th, bg, border, if is_sel { 2.2 } else { 1.0 });
+        let label = format!(
+            "{}TIER {} • {}",
+            if unlocked { "" } else { "🔒 " },
+            tier,
+            tier_license(tier).badge()
+        );
+        fonts.draw_ui_bold_centered(
+            &label,
+            tx + tw * 0.5,
+            ty + th * 0.65,
+            scaler.font_s(12.5),
+            if is_sel { Palette::NEON_GOLD } else if unlocked { Palette::WHITE } else { Palette::UI_TEXT_MUTED },
+        );
+    }
+    if !profile.academy_progress.is_tier_unlocked(selected_tier) {
+        fonts.draw_ui_bold_centered(
+            &tier_unlock_rule(selected_tier, profile),
+            sw * 0.5,
+            scaler.s(148.0),
+            scaler.font_s(11.5),
+            Palette::RED,
+        );
+    }
+
+    // Render the 4 mission cards of the tier
+    let curriculum = AcademyLessonDef::tier_curriculum(selected_tier);
+    for (row, lesson) in curriculum.iter().enumerate() {
+        let (cx, cy, cw, ch) = academy_card_rect(sw, sh, row);
+        let is_sel = lesson.id.index() == selected_idx;
         let is_unlocked = profile.academy_progress.is_lesson_unlocked(lesson.id);
         let progress = profile.academy_progress.lessons.get(&lesson.id);
         let medal = progress.map(|p| p.highest_medal).unwrap_or(AcademyMedal::None);
@@ -127,7 +236,11 @@ pub fn render_academy_curriculum_screen(
         // Lesson Badge & Index
         let badge_x = cx + scaler.s(20.0);
         let badge_y = cy + ch * 0.35;
-        let lesson_tag = format!("LESSON {}", i + 1);
+        let lesson_tag = if selected_tier == 1 {
+            format!("LESSON {}", row + 1)
+        } else {
+            format!("MISSION {}-{}", selected_tier, row + 1)
+        };
         fonts.draw_ui_bold(
             &lesson_tag,
             badge_x,
@@ -164,12 +277,8 @@ pub fn render_academy_curriculum_screen(
             Palette::UI_TEXT_MUTED,
         );
 
-        let targets_str = format!(
-            "TARGETS: Gold {:.1}s  |  Silver {:.1}s  |  Bronze {:.1}s",
-            lesson.gold_time_sec, lesson.silver_time_sec, lesson.bronze_time_sec
-        );
         fonts.draw_ui_bold(
-            &targets_str,
+            &lesson_targets_text(lesson),
             info_x,
             cy + ch * 0.72,
             scaler.font_s(10.5),
@@ -177,7 +286,7 @@ pub fn render_academy_curriculum_screen(
         );
 
         // Medal & Best Time Badge (Far Right)
-        let status_x = cx + cw - scaler.s(160.0);
+        let status_x = cx + cw - scaler.s(130.0);
         if !is_unlocked {
             fonts.draw_ui_bold(
                 "🔒 LOCKED",
@@ -209,9 +318,8 @@ pub fn render_academy_curriculum_screen(
             );
 
             if let Some(bt) = best_time {
-                let pb_str = format!("PB: {:.2}s", bt);
                 fonts.draw_ui_regular(
-                    &pb_str,
+                    &lesson_best_text(lesson, bt),
                     status_x,
                     cy + ch * 0.72,
                     scaler.font_s(11.0),
@@ -232,12 +340,63 @@ pub fn render_academy_curriculum_screen(
     // Bottom Navigation Help
     let footer_y = sh - scaler.s(24.0);
     fonts.draw_ui_bold_centered(
-        "[W / S / UP / DOWN] SELECT LESSON  •  [ENTER / SPACE] START CHALLENGE  •  [ESC] BACK",
+        "[W / S / UP / DOWN] SELECT MISSION  •  [A / D / LEFT / RIGHT / Q / E] TIER  •  [ENTER / SPACE] START  •  [ESC] BACK",
         sw * 0.5,
         footer_y,
         scaler.font_s(11.5),
         Palette::UI_TEXT_MUTED,
     );
+}
+
+/// Headline and detail lines of the Academy result banner for an attempt (Spec 064).
+pub fn academy_result_summary(eval: &AcademyAttemptEvaluation) -> (String, String) {
+    let title = AcademyLessonDef::find(eval.lesson_id).map_or_else(String::new, |d| d.title.to_uppercase());
+    let headline = if eval.tyres_worn_out {
+        format!("{}: TYRES WORN OUT • NO MEDAL (WORST WHEEL {:.0}%)", title, eval.worst_wear * 100.0)
+    } else if !eval.clean_attempt {
+        format!(
+            "{}: {}",
+            title,
+            eval.failure_reason.as_deref().unwrap_or("ATTEMPT INVALIDATED").to_uppercase()
+        )
+    } else if eval.medal == AcademyMedal::None {
+        format!("{}: NO MEDAL", title)
+    } else {
+        format!("{}: {} MEDAL • +{} Cr", title, eval.medal.title().to_uppercase(), eval.credits_awarded)
+    };
+    let detail = if let Some(grade) = eval.license_earned {
+        format!("{} LICENCE GRANTED", grade.badge())
+    } else if eval.stipend_limit_reached {
+        "DAILY STIPEND LIMIT REACHED (5 PER DAY)".to_string()
+    } else {
+        format!("WALLET: {} Cr  •  ⭐ {} STARS", eval.total_credits_balance, eval.total_stars)
+    };
+    (headline, detail)
+}
+
+/// Renders the Academy result banner over the race results screen.
+pub fn render_academy_result_banner(fonts: &Fonts, eval: &AcademyAttemptEvaluation) {
+    let sw = screen_width();
+    let sh = screen_height();
+    let scaler = UiScaler::new(sw, sh);
+    let (headline, detail) = academy_result_summary(eval);
+    let good = eval.clean_attempt && eval.medal > AcademyMedal::None;
+
+    let banner_w = (sw * 0.80).clamp(scaler.s(520.0), scaler.s(850.0));
+    let banner_h = scaler.s(48.0);
+    let banner_x = (sw - banner_w) * 0.5;
+    let banner_y = scaler.s(10.0);
+    scaler.draw_glass_card(
+        banner_x,
+        banner_y,
+        banner_w,
+        banner_h,
+        if good { Color::new(0.04, 0.10, 0.08, 0.95) } else { Color::new(0.30, 0.05, 0.05, 0.95) },
+        if good { Palette::NEON_GREEN } else { Palette::RED },
+        2.0,
+    );
+    fonts.draw_ui_bold_centered(&headline, sw * 0.5, banner_y + scaler.s(20.0), scaler.font_s(13.0), Palette::WHITE);
+    fonts.draw_ui_regular_centered(&detail, sw * 0.5, banner_y + scaler.s(39.0), scaler.font_s(11.0), Palette::UI_TEXT_MUTED);
 }
 
 /// Renders the Academy challenge in-race HUD overlay (pace delta and incident alerts).
@@ -247,6 +406,7 @@ pub fn render_academy_hud(
     challenge: &AcademyChallengeState,
     elapsed_time_sec: f32,
     progress_fraction: f32,
+    hottest_tire_temp_c: f32,
 ) {
     let sw = screen_width();
     let scaler = UiScaler::new(sw, screen_height());
@@ -257,7 +417,11 @@ pub fn render_academy_hud(
     };
 
     // Academy Header Banner (Center Top)
-    let banner_w = scaler.s(380.0);
+    let wear_cap = match def.objective {
+        AcademyObjective::WearCap { max_wear } | AcademyObjective::Podium { max_wear, .. } => Some(max_wear),
+        _ => None,
+    };
+    let banner_w = if wear_cap.is_some() { scaler.s(500.0) } else { scaler.s(380.0) };
     let banner_h = scaler.s(48.0);
     let banner_x = (sw - banner_w) * 0.5;
     let banner_y = scaler.s(16.0);
@@ -272,12 +436,27 @@ pub fn render_academy_hud(
         1.5,
     );
 
-    let pace = challenge.pace_status(elapsed_time_sec, progress_fraction);
-    let (pace_text, pace_col) = match pace {
-        AcademyPaceStatus::AheadOfGold(d) => (format!("{:.2}s AHEAD OF GOLD", -d), Palette::NEON_GREEN),
-        AcademyPaceStatus::AheadOfSilver(d) => (format!("{:.2}s AHEAD OF SILVER", -d), Palette::NEON_CYAN),
-        AcademyPaceStatus::AheadOfBronze(d) => (format!("{:.2}s AHEAD OF BRONZE", -d), Palette::NEON_GOLD),
-        AcademyPaceStatus::BehindBronze(d) => (format!("+{:.2}s BEHIND BRONZE", d), Palette::RED),
+    let (pace_text, pace_col) = match def.objective {
+        AcademyObjective::DriftScore => {
+            let best = challenge.drift_score;
+            let col = if best >= def.gold_time_sec {
+                Palette::NEON_GREEN
+            } else if best >= def.silver_time_sec {
+                Palette::NEON_CYAN
+            } else if best >= def.bronze_time_sec {
+                Palette::NEON_GOLD
+            } else {
+                Palette::UI_TEXT_MUTED
+            };
+            (format!("BEST DRIFT {:.0} • BRONZE AT {:.0}", best, def.bronze_time_sec), col)
+        }
+        AcademyObjective::Podium { .. } => ("FINISH 1ST FOR GOLD • 2ND FOR SILVER".to_string(), Palette::NEON_GOLD),
+        _ => match challenge.pace_status(elapsed_time_sec, progress_fraction) {
+            AcademyPaceStatus::AheadOfGold(d) => (format!("{:.2}s AHEAD OF GOLD", -d), Palette::NEON_GREEN),
+            AcademyPaceStatus::AheadOfSilver(d) => (format!("{:.2}s AHEAD OF SILVER", -d), Palette::NEON_CYAN),
+            AcademyPaceStatus::AheadOfBronze(d) => (format!("{:.2}s AHEAD OF BRONZE", -d), Palette::NEON_GOLD),
+            AcademyPaceStatus::BehindBronze(d) => (format!("+{:.2}s BEHIND BRONZE", d), Palette::RED),
+        },
     };
 
     fonts.draw_ui_bold_centered(
@@ -288,13 +467,27 @@ pub fn render_academy_hud(
         Palette::NEON_GOLD,
     );
 
+    // The wear line shares the pace row, so the banner stays as high as the one without a wear cap.
+    let pace_x = if wear_cap.is_some() { sw * 0.5 - banner_w * 0.18 } else { sw * 0.5 };
     fonts.draw_display_centered(
         &pace_text,
-        sw * 0.5,
+        pace_x,
         banner_y + scaler.s(38.0),
         scaler.font_s(14.0),
         pace_col,
     );
+
+    if let Some(max_wear) = wear_cap {
+        crate::ui::hud::render_academy_wear_line(
+            fonts,
+            &scaler,
+            sw * 0.5 + banner_w * 0.30,
+            banner_y + scaler.s(38.0),
+            challenge.worst_wear,
+            max_wear,
+            hottest_tire_temp_c,
+        );
+    }
 
     // Incident / Contact Disqualification Banner
     if !challenge.is_clean() {

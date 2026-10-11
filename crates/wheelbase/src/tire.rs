@@ -822,8 +822,11 @@ impl WheelAssembly {
     /// - Frictional work dissipation: P_diss = (|Fx * s| + |Fy * alpha|) * max(|v_long|, |omega * r|)
     /// - Heating: dT_heat = P_diss * k_heat
     /// - Cooling: dT_cool = k_cool * (1 + 0.035 * v) * (T - T_ambient)
-    /// - Wear: dW = k_wear * P_slide * temp_factor, where P_slide counts only the sideways slip past the
-    ///   tyre's grip peak (tdrace-6dl0): clean driving barely wears the tread, a drift does.
+    /// - Wear: dW = k_wear * P_slide * temp_factor * wear_rate_scale, where P_slide counts only the sideways
+    ///   slip past the tyre's grip peak (tdrace-6dl0): clean driving barely wears the tread, a drift does.
+    ///   `wear_rate_scale` (`CarConfig::wear_rate_scale`) multiplies the wear step only, on top of the
+    ///   compound's own `wear_rate`: 1.0 is the normal rate, 0.0 stops the tread wearing (Spec 064).
+    #[allow(clippy::too_many_arguments)]
     pub fn step_thermal_and_wear(
         &mut self,
         fx: f32,
@@ -832,6 +835,7 @@ impl WheelAssembly {
         slip_angle: f32,
         wheel_speed: f32,
         surface: SurfaceType,
+        wear_rate_scale: f32,
         dt: f32,
     ) {
         let r = self.config.tire_radius;
@@ -866,7 +870,7 @@ impl WheelAssembly {
         let abrasion = if surface.is_loose_deformable() { LOOSE_GROUND_WEAR } else { 1.0 };
         let p_slide = (fy * slide_lat).abs() * v_rub * abrasion;
         let k_wear = self.config.compound.wear_rate * DRIFT_WEAR_GAIN;
-        let wear_rate = p_slide * k_wear * temp_wear_boost;
+        let wear_rate = p_slide * k_wear * temp_wear_boost * wear_rate_scale;
         self.wear = (self.wear + wear_rate * dt).clamp(0.0, 1.0);
     }
 
@@ -1084,7 +1088,7 @@ mod tests {
         let dt = 1.0 / 60.0;
         let steps = (8.5 / dt) as usize;
         for _ in 0..steps {
-            wheel.step_thermal_and_wear(3500.0, 4200.0, 0.35, 0.40, 18.0, SurfaceType::Asphalt, dt);
+            wheel.step_thermal_and_wear(3500.0, 4200.0, 0.35, 0.40, 18.0, SurfaceType::Asphalt, 1.0, dt);
         }
 
         // Surface temperature must rise above 120°C

@@ -136,7 +136,7 @@ fn test_thermal_grip_degradation_under_prolonged_power_drifting() {
     let dt = 1.0 / 60.0;
     let steps = (8.5 / dt) as usize;
     for _ in 0..steps {
-        wheel.step_thermal_and_wear(3500.0, 4200.0, 0.35, 0.40, 18.0, SurfaceType::Asphalt, dt);
+        wheel.step_thermal_and_wear(3500.0, 4200.0, 0.35, 0.40, 18.0, SurfaceType::Asphalt, 1.0, dt);
     }
 
     // Surface temperature rises above 120°C
@@ -620,4 +620,66 @@ fn test_a_car_with_one_axle_or_side_on_a_curb_drives_off() {
             assert!(car.state().speed > 5.0, "{surfaces:?}: {:.1} m/s after 3 s", car.state().speed);
         }
     }
+}
+
+/// Worst wheel wear after 8 s of a sustained handbrake slide on asphalt with the given config.
+fn sustained_slide_worst_wear(config: CarConfig) -> f32 {
+    let mut car = Car::new(config);
+    car.state.velocity = Vec2::new(22.0, 0.0);
+    let controls = CarControls { throttle: 1.0, steer: 0.8, handbrake: true, ..Default::default() };
+    let dt = 1.0 / 60.0;
+    for _ in 0..(8.0 / dt) as usize {
+        car.step(&controls, SurfaceType::Asphalt, dt);
+    }
+    car.state.wheel_assemblies.iter().map(|w| w.wear).fold(0.0, f32::max)
+}
+
+/// Spec 064: `wear_rate_scale` multiplies the tread wear step.
+///
+/// Given the same car, surface and sustained-slide input run with scale 1.0, 3.0 and 0.0
+/// When the runs have covered the same time
+/// Then the worst-wheel wear of the 3.0 run is 3 times the 1.0 run, within 5%
+/// And the 0.0 run wears nothing
+#[test]
+fn test_wear_rate_scale_multiplies_the_tread_wear_step() {
+    let with_scale = |scale: f32| {
+        let mut cfg = CarConfig::sports_car();
+        cfg.wear_rate_scale = scale;
+        sustained_slide_worst_wear(cfg)
+    };
+    let normal = with_scale(1.0);
+    let scaled = with_scale(3.0);
+    let off = with_scale(0.0);
+
+    assert!(normal > 0.001, "the slide must wear the tread at the normal rate (got {normal})");
+    assert!(
+        ((scaled / normal) - 3.0).abs() < 0.15,
+        "scale 3.0 must triple the wear: normal {normal}, scaled {scaled}"
+    );
+    assert_eq!(off, 0.0, "scale 0.0 must stop the tread wearing");
+}
+
+/// The scale is its own multiplier: it stacks on the compound's wear rate and does not replace it.
+#[test]
+fn test_wear_rate_scale_is_separate_from_the_compound_wear_rate() {
+    let wear = |compound, scale: f32| {
+        let mut cfg = CarConfig::sports_car().with_compound(compound);
+        cfg.wear_rate_scale = scale;
+        sustained_slide_worst_wear(cfg)
+    };
+    let soft_1 = wear(wheelbase::CompoundId::SoftSlick, 1.0);
+    let soft_3 = wear(wheelbase::CompoundId::SoftSlick, 3.0);
+    let hard_3 = wear(wheelbase::CompoundId::HardSlick, 3.0);
+    assert!(((soft_3 / soft_1) - 3.0).abs() < 0.15, "soft: {soft_1} -> {soft_3}");
+    assert!(hard_3 < soft_3, "the compound still sets its own rate under the scale: hard {hard_3}, soft {soft_3}");
+}
+
+/// A config saved before Spec 064 has no `wear_rate_scale` and keeps the normal wear.
+#[test]
+fn test_wear_rate_scale_defaults_to_one() {
+    assert_eq!(CarConfig::sports_car().wear_rate_scale, 1.0);
+    let mut json: serde_json::Value = serde_json::to_value(CarConfig::sports_car()).unwrap();
+    json.as_object_mut().unwrap().remove("wear_rate_scale");
+    let cfg: CarConfig = serde_json::from_value(json).unwrap();
+    assert_eq!(cfg.wear_rate_scale, 1.0);
 }

@@ -643,6 +643,10 @@ pub fn default_damage_enabled() -> bool {
     true
 }
 
+pub fn default_wear_rate_scale() -> f32 {
+    1.0
+}
+
 /// Physical exterior chassis dimensions and anchor points (Spec 075).
 ///
 /// Decouples visual geometry and collision bounds from dynamic mass distribution.
@@ -1116,6 +1120,10 @@ pub struct CarConfig {
     /// Whether mechanical damage simulation (collisions, kerb strikes, jump landings) is enabled.
     #[serde(default = "default_damage_enabled")]
     pub damage_enabled: bool,
+    /// Multiplies the tread wear of all four tyres, on top of the compound's own wear rate (1.0 = normal,
+    /// 0.0 = tyres do not wear). An Academy session sets it per mission (Spec 064).
+    #[serde(default = "default_wear_rate_scale")]
+    pub wear_rate_scale: f32,
     /// Total vehicle mass in kilograms.
     pub mass: f32,
     /// Yaw moment of inertia around the vertical axis in kg*m^2.
@@ -1274,6 +1282,8 @@ struct CarConfigRaw {
     pub engine_placement: Option<EnginePlacement>,
     #[serde(default)]
     pub damage_enabled: Option<bool>,
+    #[serde(default)]
+    pub wear_rate_scale: Option<f32>,
 }
 
 impl From<CarConfigRaw> for CarConfig {
@@ -1316,6 +1326,7 @@ impl From<CarConfigRaw> for CarConfig {
         let mut cfg = Self {
             engine_placement,
             damage_enabled: raw.damage_enabled.unwrap_or(true),
+            wear_rate_scale: raw.wear_rate_scale.unwrap_or(1.0),
             mass: raw.mass,
             inertia: raw.inertia,
             wheelbase: raw.wheelbase,
@@ -1553,6 +1564,7 @@ impl CarConfig {
             suspension: SuspensionConfig::for_archetype(SuspensionArchetype::DoubleWishbone),
             engine_placement: EnginePlacement::FrontEngine,
             damage_enabled: true,
+            wear_rate_scale: 1.0,
         }
         .finalized()
     }
@@ -1708,6 +1720,7 @@ impl CarConfig {
             suspension: SuspensionConfig::for_archetype(SuspensionArchetype::RigidKart),
             engine_placement: EnginePlacement::MidEngine,
             damage_enabled: true,
+            wear_rate_scale: 1.0,
         }
         .finalized()
     }
@@ -1880,6 +1893,7 @@ impl CarConfig {
             suspension: SuspensionConfig::for_archetype(SuspensionArchetype::SolidLiveAxle),
             engine_placement: EnginePlacement::FrontEngine,
             damage_enabled: true,
+            wear_rate_scale: 1.0,
         }
         .finalized()
     }
@@ -1991,6 +2005,7 @@ impl CarConfig {
             suspension: SuspensionConfig::for_archetype(SuspensionArchetype::LongTravelOffRoad),
             engine_placement: EnginePlacement::RearEngine,
             damage_enabled: true,
+            wear_rate_scale: 1.0,
         }
         .finalized()
     }

@@ -2165,7 +2165,8 @@ fn racing_data(scope: Scope, cars: &[CodexCar], circuits: &[CodexCircuit]) -> Co
         ],
     };
 
-    let curriculum = AcademyLessonDef::default_curriculum()
+    // The Codex lists the Tier 1 course. Tiers 2 and 3 (Spec 064) need their own Codex fields first.
+    let curriculum = AcademyLessonDef::tier_curriculum(1)
         .into_iter()
         .map(|l| CodexAcademyLesson {
             id: l.id.slug(),

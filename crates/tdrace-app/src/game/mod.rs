@@ -1462,10 +1462,38 @@ impl RaceSession {
         }
     }
 
+    /// Rules of the active Academy mission (Spec 064), if an Academy session is running.
+    pub fn academy_rules(&self) -> Option<academy::AcademySessionRules> {
+        self.active_academy_lesson.and_then(academy::AcademyLessonDef::find).map(|def| def.rules)
+    }
+
+    /// Whether car damage is on for this race: an Academy mission sets it itself, any other race
+    /// follows the player's `gameplay.car_damage` setting. The setting is never rewritten, so it is back
+    /// the moment the Academy session ends.
+    pub fn car_damage_enabled(&self) -> bool {
+        self.academy_rules().map_or(self.config.gameplay.car_damage, |rules| rules.damage_enabled)
+    }
+
+    /// Applies the tyre rules of the active Academy mission (Spec 064): its wear scale on every car and
+    /// its start wear on the player's four tyres. Any other race keeps the cars as built: wear scale 1.0
+    /// on fresh tyres.
+    fn apply_academy_tyre_rules(&mut self) {
+        let Some(rules) = self.academy_rules() else { return };
+        let player_idx = self.player_car_index();
+        for (i, car) in self.world.vehicles.iter_mut().enumerate() {
+            car.config.wear_rate_scale = rules.wear_rate_scale;
+            if i == player_idx {
+                for wheel in car.state.wheel_assemblies.iter_mut() {
+                    wheel.wear = rules.start_wear;
+                }
+            }
+        }
+    }
+
     /// Synchronizes the car damage gameplay setting with world physics rules and vehicles.
     /// When disabled, all vehicle damage is repaired to pristine full health.
     pub fn apply_car_damage_setting(&mut self) {
-        let damage = self.config.gameplay.car_damage;
+        let damage = self.car_damage_enabled();
         self.world.rules.damage_enabled = damage;
         for car in &mut self.world.vehicles {
             car.config.damage_enabled = damage;
@@ -4801,6 +4829,7 @@ impl RaceSession {
         }
         self.store_roster_numbers(&grid_numbers.assigned);
         self.apply_car_damage_setting();
+        self.apply_academy_tyre_rules();
     }
 
     /// Initializes or resets the racing circuit, cars, grid spawns, AI drivers, and camera.
@@ -9224,18 +9253,19 @@ impl RaceSession {
             return;
         }
 
-        let total_lessons = 4;
+        // `selected_idx` counts the lessons over all tiers. The tier shown is its group of four, and
+        // Up and Down move inside the tier.
+        let lessons_per_tier = academy::AcademyLessonId::tier_lessons(1).len();
+        let tier_count = academy::ACADEMY_TIER_COUNT as usize;
+        let mut tier_idx = selected_idx / lessons_per_tier;
+        let mut row = selected_idx % lessons_per_tier;
         if is_key_pressed(KeyCode::Up)
             || is_key_pressed(KeyCode::W)
             || self.input.gamepad.snapshot.dpad_up_pressed
             || self.input.gamepad.snapshot.nav_up
         {
             self.audio.play_sfx(SfxType::UiMove);
-            if selected_idx == 0 {
-                selected_idx = total_lessons - 1;
-            } else {
-                selected_idx -= 1;
-            }
+            row = (row + lessons_per_tier - 1) % lessons_per_tier;
         }
         if is_key_pressed(KeyCode::Down)
             || is_key_pressed(KeyCode::S)
@@ -9243,21 +9273,47 @@ impl RaceSession {
             || self.input.gamepad.snapshot.nav_down
         {
             self.audio.play_sfx(SfxType::UiMove);
-            selected_idx = (selected_idx + 1) % total_lessons;
+            row = (row + 1) % lessons_per_tier;
+        }
+        // Left and Right (or A, D, Q, E) change the tier tab and keep the row.
+        if is_key_pressed(KeyCode::Left)
+            || is_key_pressed(KeyCode::A)
+            || is_key_pressed(KeyCode::Q)
+            || self.input.gamepad.snapshot.dpad_left_pressed
+            || self.input.gamepad.snapshot.nav_left
+        {
+            self.audio.play_sfx(SfxType::UiMove);
+            tier_idx = (tier_idx + tier_count - 1) % tier_count;
+        }
+        if is_key_pressed(KeyCode::Right)
+            || is_key_pressed(KeyCode::D)
+            || is_key_pressed(KeyCode::E)
+            || self.input.gamepad.snapshot.dpad_right_pressed
+            || self.input.gamepad.snapshot.nav_right
+        {
+            self.audio.play_sfx(SfxType::UiMove);
+            tier_idx = (tier_idx + 1) % tier_count;
         }
 
-        // Mouse click on lesson cards
+        // Mouse click on tier tabs and mission cards
         let mut mouse_confirmed = false;
         if mouse_clicked {
-            for i in 0..total_lessons {
+            for t in 0..tier_count {
+                let (tx, ty, tw, th) = crate::ui::academy_tab_rect(sw, sh, t);
+                if mx >= tx && mx <= tx + tw && my >= ty && my <= ty + th {
+                    tier_idx = t;
+                }
+            }
+            for i in 0..lessons_per_tier {
                 let (cx, cy, cw, ch) = crate::ui::academy_card_rect(sw, sh, i);
                 if mx >= cx && mx <= cx + cw && my >= cy && my <= cy + ch {
-                    selected_idx = i;
+                    row = i;
                     mouse_confirmed = true;
                     break;
                 }
             }
         }
+        selected_idx = tier_idx * lessons_per_tier + row;
 
         // Escape: Back to Modality Select
         if is_key_pressed(KeyCode::Escape)
@@ -12893,7 +12949,7 @@ impl RaceSession {
         // elevation & banking, tree canopy drag, jump ramps, car-to-car and wall collisions, lap tracking.
         // Everything below reacts to its events, in the order they happened.
         self.world.rules.format = self.race_format();
-        self.world.rules.damage_enabled = self.config.gameplay.car_damage;
+        self.world.rules.damage_enabled = self.car_damage_enabled();
         self.world.rules.joker = joker_rule_for(&self.track);
         if self.lan_ghost_collisions() {
             self.world.rules.collision.iterations = 0;
@@ -12936,6 +12992,9 @@ impl RaceSession {
         for ev in &race_events {
             if let RaceEvent::Landed { car: i, air_time, position, speed } = *ev {
                 if i == my_car_idx {
+                    if let (Some(challenge), Some(car)) = (&mut self.academy_challenge, self.world.vehicles.get(i)) {
+                        challenge.register_landing(car.state.last_touchdown_speed * 100.0);
+                    }
                     self.audio.play_sfx(SfxType::Landing);
                     self.camera.add_trauma(0.25);
                     if air_time >= 0.20 {
@@ -13177,6 +13236,12 @@ impl RaceSession {
             if let Some(tracker) = self.world.trackers.get(my_car_idx) {
                 challenge.set_off_track_seconds(tracker.off_track_timer);
             }
+            let worst_wear = self
+                .world
+                .vehicles
+                .get(my_car_idx)
+                .map_or(0.0, |car| car.state.wheel_assemblies.iter().map(|w| w.wear).fold(0.0, f32::max));
+            challenge.observe(worst_wear, 0.0);
         }
 
         // Dynamic Accelerating Engine Audio (motor sound only)
@@ -13494,6 +13559,10 @@ impl RaceSession {
                     }
                 }
                 if was_drifting && !is_drifting {
+                    // An Academy drift mission banks every drift that ends, whatever its size (Spec 064)
+                    if let Some(challenge) = &mut self.academy_challenge {
+                        challenge.observe(0.0, player_car.state.drift_score);
+                    }
                     // Reset single-maneuver drift score upon ending drift so it doesn't leak into subsequent maneuvers
                     player_car.state.drift_score = 0.0;
                 }
@@ -13868,12 +13937,22 @@ impl RaceSession {
             // Academy Challenge Evaluation
             if let Some(lesson_id) = self.active_academy_lesson {
                 let finish_time = self.player_race_stats.best_lap_time().unwrap_or(self.session_time);
-                let attempt_time = if lesson_id == academy::AcademyLessonId::Lesson4GraduationSprint && self.total_laps >= 2 {
+                // Tier 2 and 3 missions are measured on the total race time, which includes a joker penalty.
+                let attempt_time = if lesson_id.tier() > 1 {
+                    player_time
+                } else if lesson_id == academy::AcademyLessonId::Lesson4GraduationSprint && self.total_laps >= 2 {
                     self.session_time
                 } else {
                     finish_time
                 };
                 let mut challenge = self.academy_challenge.take().unwrap_or_else(|| academy::AcademyChallengeState::new(lesson_id));
+                let worst_wear = self
+                    .world
+                    .vehicles
+                    .get(my_car_idx)
+                    .map_or(0.0, |car| car.state.wheel_assemblies.iter().map(|w| w.wear).fold(0.0, f32::max));
+                challenge.observe(worst_wear, 0.0);
+                challenge.finish_position = player_pos as u32;
                 if self.player_race_stats.collision_count > 0 && challenge.heavy_collisions == 0 {
                     challenge.heavy_collisions = self.player_race_stats.collision_count;
                 }
@@ -14350,6 +14429,9 @@ impl RaceSession {
                 match current_view {
                     FinishedScreenView::Results => {
                         render_results_screen(&self.fonts, &self.track.name, &self.results, self.is_time_attack, self.championship_session.is_some(), self.last_xp_receipt.as_ref());
+                        if let (Some(_), Some(eval)) = (self.active_academy_lesson, self.academy_last_evaluation.as_ref()) {
+                            crate::ui::render_academy_result_banner(&self.fonts, eval);
+                        }
                     }
                     FinishedScreenView::HallOfFame => {
                         render_hall_of_fame_screen(
@@ -16369,8 +16451,20 @@ impl RaceSession {
                 );
 
                 if let (Some(lesson_id), Some(challenge)) = (self.active_academy_lesson, self.academy_challenge.as_ref()) {
-                    let progress_fraction = player_tracker.normalized_progress.clamp(0.0, 1.0);
-                    crate::ui::render_academy_hud(&self.fonts, lesson_id, challenge, self.session_time, progress_fraction);
+                    // Medal targets are for the whole race, so the progress is counted over all laps.
+                    let lap_done = player_tracker.current_lap.saturating_sub(1) as f32;
+                    let progress_fraction =
+                        ((lap_done + player_tracker.normalized_progress) / self.total_laps.max(1) as f32).clamp(0.0, 1.0);
+                    let hottest_tire_temp_c =
+                        player_car.state.wheel_assemblies.iter().map(|w| w.temperature).fold(0.0, f32::max);
+                    crate::ui::render_academy_hud(
+                        &self.fonts,
+                        lesson_id,
+                        challenge,
+                        self.session_time,
+                        progress_fraction,
+                        hottest_tire_temp_c,
+                    );
                 }
 
                 // F5: Telemetry Panel
