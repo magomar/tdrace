@@ -782,7 +782,10 @@ impl MultiRouteProgressTracker {
 
         // 4b. Sibling branch: at a split the transition above picks the branch nearest the car, which can be
         //     the main line while the car takes the joker. When the car is off the current segment and on a
-        //     segment that follows the same predecessor in another layout, move to that sibling.
+        //     segment that follows the same predecessor in another layout, move to that sibling. Only in the
+        //     sibling's first half: a car that takes it leaves the current branch near the split, while near the
+        //     merge the two branches meet again and a car that runs wide onto the sibling did not take it
+        //     (tdrace-t6bzw: on rx_hilltop_leap that moved a main-line car 54 m ahead to the joker's distance).
         if !proj.is_on_track && !proj.is_on_curb {
             let current = self.current_segment_id;
             let prev = network.layouts.iter().find_map(|l| {
@@ -798,7 +801,10 @@ impl MultiRouteProgressTracker {
                 for sid in siblings {
                     if let Some(sib) = network.get_segment(sid) {
                         let sib_proj = sib.project_point(car_pos);
-                        if (sib_proj.is_on_track || sib_proj.is_on_curb) && car.forward_vector().dot(sib_proj.tangent) > -0.25 {
+                        if (sib_proj.is_on_track || sib_proj.is_on_curb)
+                            && sib_proj.progress_distance < sib.length * 0.5
+                            && car.forward_vector().dot(sib_proj.tangent) > -0.25
+                        {
                             self.current_segment_id = sid;
                             proj = sib_proj;
                             break;

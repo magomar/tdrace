@@ -352,3 +352,26 @@ fn test_no_joker_for_a_car_in_the_infield_next_to_the_joker() {
     let tracker = drive_with_road_width_joker_gate(&path);
     assert_eq!(tracker.joker_laps_completed, 0, "a car off the joker road gets no joker");
 }
+
+#[test]
+fn test_main_line_car_that_runs_wide_onto_the_joker_near_the_merge_stays_on_the_main_line() {
+    // tdrace-t6bzw: the car drives the main branch, runs wide onto the joker road 10 m before the merge
+    // (at (150, 8): 12 m off the main road, on the joker road), then rejoins at the merge.
+    let (network, checkpoints) = create_test_branching_network();
+    let mut path = vec![Vec2::new(-2.0, 0.0), Vec2::new(60.0, 0.0), Vec2::new(110.0, -25.0), Vec2::new(140.0, -10.0), Vec2::new(150.0, 8.0)];
+    path.extend(RETURN_TO_FINISH);
+    let mut tracker = MultiRouteProgressTracker::from_network(&network, None, 3);
+    let mut car = Car::new(CarConfig::sports_car());
+    for leg in path.windows(2) {
+        let steps = (leg[1] - leg[0]).length().ceil() as usize;
+        let dir = (leg[1] - leg[0]).normalize();
+        for k in 1..=steps {
+            car.state.position = leg[0].lerp(leg[1], k as f32 / steps as f32);
+            car.state.angle = dir.y.atan2(dir.x);
+            tracker.update(&car, &network, &checkpoints, 0.016);
+            assert_ne!(tracker.current_segment_id, SegmentId(2), "on the joker branch at {:?}", car.state.position);
+        }
+    }
+    assert_eq!(tracker.current_lap, 2, "the lap counts");
+    assert_eq!(tracker.joker_laps_completed, 0, "no joker");
+}
