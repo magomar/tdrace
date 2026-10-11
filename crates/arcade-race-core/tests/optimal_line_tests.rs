@@ -42,8 +42,34 @@ fn test_optimal_line_curvature_reduction() {
     assert!(optimal_line.total_length > 50.0);
 
     // Integrated squared curvature of the optimal line should be finite and smooth
-    assert!(optimal_line.integrated_curvature >= 0.0);
-    println!("Integrated curvature of optimal line: {:.4}", optimal_line.integrated_curvature);
+    let max_offset = optimal_line.nodes.iter().map(|n| n.lateral_offset).fold(f32::NEG_INFINITY, f32::max);
+    let min_offset = optimal_line.nodes.iter().map(|n| n.lateral_offset).fold(f32::INFINITY, f32::min);
+
+    // Verify significant lateral excursion: outside entry/exit (< -4.5m) and inside apex (> +4.5m)
+    assert!(max_offset > 4.5, "Optimal line must hug inside apex curb (max offset: {:.2}m)", max_offset);
+    assert!(min_offset < -4.5, "Optimal line must take outside entry/exit (min offset: {:.2}m)", min_offset);
+
+    // Verify specific apex clipping for Curve 1 (apex at d=209.6m) and Curve 2 (apex at d=574.4m)
+    let apex1_node = optimal_line.nodes.iter()
+        .min_by(|a, b| (a.spline_distance - 209.6).abs().partial_cmp(&(b.spline_distance - 209.6).abs()).unwrap())
+        .unwrap();
+    assert!(apex1_node.lateral_offset > 5.0, "Curve 1 apex should clip inside (offset={:.2}m)", apex1_node.lateral_offset);
+
+    let apex2_node = optimal_line.nodes.iter()
+        .min_by(|a, b| (a.spline_distance - 574.4).abs().partial_cmp(&(b.spline_distance - 574.4).abs()).unwrap())
+        .unwrap();
+    assert!(apex2_node.lateral_offset > 5.0, "Curve 2 apex should clip inside (offset={:.2}m)", apex2_node.lateral_offset);
+
+    // Verify entry and exit are on the outside of the turn (< -4.5m)
+    let entry1_node = optimal_line.nodes.iter()
+        .min_by(|a, b| (a.spline_distance - 138.8).abs().partial_cmp(&(b.spline_distance - 138.8).abs()).unwrap())
+        .unwrap();
+    assert!(entry1_node.lateral_offset < -4.5, "Curve 1 entry should be wide on outside (offset={:.2}m)", entry1_node.lateral_offset);
+
+    let exit1_node = optimal_line.nodes.iter()
+        .min_by(|a, b| (a.spline_distance - 283.0).abs().partial_cmp(&(b.spline_distance - 283.0).abs()).unwrap())
+        .unwrap();
+    assert!(exit1_node.lateral_offset < -4.5, "Curve 1 exit should be wide on outside (offset={:.2}m)", exit1_node.lateral_offset);
 }
 
 #[test]
@@ -86,4 +112,38 @@ fn test_optimal_line_velocity_profiling_and_braking_evaluation() {
 
     assert_eq!(eval_slow.urgency, 0.0, "Slow speed approach should require 0 braking urgency");
     assert!(!eval_slow.must_brake);
+}
+
+#[test]
+fn test_optimal_line_figure_eight_apex_clipping() {
+    let track = create_prototypical_track("gt", TrackShape::HorizontalEight, RaceDirection::Right);
+    let optimal_line = OptimalRacingLine::compute_for_spline(&track.spline);
+
+    assert_eq!(optimal_line.nodes.len(), track.spline.samples.len());
+
+    // In HorizontalEight, there are both Left and Right turns.
+    // Verify that apex offsets clip to the inside for both turn directions:
+    // Curve 2 (Right hairpin, apex at d=292.8m) should have large negative offset (< -5.0m).
+    let right_hairpin = optimal_line.nodes.iter()
+        .min_by(|a, b| (a.spline_distance - 292.8).abs().partial_cmp(&(b.spline_distance - 292.8).abs()).unwrap())
+        .unwrap();
+    assert!(right_hairpin.lateral_offset < -5.0, "Right hairpin apex should clip inside right (offset={:.2}m)", right_hairpin.lateral_offset);
+
+    // Curve 5 (Left hairpin, apex at d=695.9m) should have large positive offset (> 5.0m).
+    let left_hairpin = optimal_line.nodes.iter()
+        .min_by(|a, b| (a.spline_distance - 695.9).abs().partial_cmp(&(b.spline_distance - 695.9).abs()).unwrap())
+        .unwrap();
+    assert!(left_hairpin.lateral_offset > 5.0, "Left hairpin apex should clip inside left (offset={:.2}m)", left_hairpin.lateral_offset);
+
+    // Curve 0 (Left chicane turn, apex at d=39.6m) should have positive offset (> 0.5m).
+    let left_turn = optimal_line.nodes.iter()
+        .min_by(|a, b| (a.spline_distance - 39.6).abs().partial_cmp(&(b.spline_distance - 39.6).abs()).unwrap())
+        .unwrap();
+    assert!(left_turn.lateral_offset > 0.5, "Left chicane apex should clip inside left (offset={:.2}m)", left_turn.lateral_offset);
+
+    // Curve 1 (Right chicane turn, apex at d=171.6m) should have negative offset (< -0.5m).
+    let right_turn = optimal_line.nodes.iter()
+        .min_by(|a, b| (a.spline_distance - 171.6).abs().partial_cmp(&(b.spline_distance - 171.6).abs()).unwrap())
+        .unwrap();
+    assert!(right_turn.lateral_offset < -0.5, "Right chicane apex should clip inside right (offset={:.2}m)", right_turn.lateral_offset);
 }
