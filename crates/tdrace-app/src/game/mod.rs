@@ -10317,6 +10317,21 @@ impl RaceSession {
         }
     }
 
+    /// Keeps the slick chosen in the garage for a GT car in the profile, saves it and plays the UI move
+    /// sound (spec 098). The next race build fits it on the player's car.
+    pub fn set_garage_compound(&mut self, car_id: &str, compound: tdrace_core::physics::surface::CompoundId) {
+        self.active_profile.car_compounds.insert(car_id.to_string(), compound);
+        if let Some(db) = &self.hof_db {
+            let _ = db.update_profile(&self.active_profile);
+        }
+        if let Some(id) = self.active_profile.id {
+            if let Some(listed) = self.profile_list.iter_mut().find(|p| p.id == Some(id)) {
+                listed.car_compounds = self.active_profile.car_compounds.clone();
+            }
+        }
+        self.audio.play_sfx(SfxType::UiMove);
+    }
+
     /// Updates inputs, vehicle selection, and turntable/rev stage animations for the Interactive Garage (`GameState::Garage`).
     pub fn update_garage(&mut self, origin: GarageOrigin, frame_dt: f32) {
         if self.garage_entry.is_none() {
@@ -10646,6 +10661,36 @@ impl RaceSession {
                         self.audio.play_sfx(SfxType::UiMove);
                     }
                     break;
+                }
+            }
+        }
+
+        // Tyre compound of a GT car (spec 098): T / Shift+T / L3 cycle the slicks, a click on an option picks it.
+        let tyres_open = origin != GarageOrigin::StartingGrid || self.game_mode.allows_car_change();
+        if let Some(active_car) = models.get(self.garage_car_idx) {
+            if let crate::ui::GarageTyres::Select(current) =
+                crate::ui::garage_tyres(Some(active_car), &self.active_profile, tyres_open)
+            {
+                let held = |a: KeyCode, b: KeyCode| is_key_down(a) || is_key_down(b);
+                let shift = held(KeyCode::LeftShift, KeyCode::RightShift);
+                let ctrl = held(KeyCode::LeftControl, KeyCode::RightControl) || held(KeyCode::LeftSuper, KeyCode::RightSuper);
+                let mut chosen = None;
+                if !ctrl && is_key_pressed(KeyCode::T) {
+                    chosen = Some(crate::ui::garage_next_compound(current, !shift));
+                } else if self.input.gamepad.snapshot.btn_cam_toggle_pressed {
+                    chosen = Some(crate::ui::garage_next_compound(current, true));
+                }
+                if mouse_clicked {
+                    for (i, id) in crate::profile::GT_GARAGE_COMPOUNDS.iter().enumerate() {
+                        let (px, py, pw, ph) = crate::ui::garage_tyre_pill_rect(sw, sh, i);
+                        if mx >= px && mx <= px + pw && my >= py && my <= py + ph {
+                            chosen = Some(*id);
+                            break;
+                        }
+                    }
+                }
+                if let Some(id) = chosen.filter(|id| *id != current) {
+                    self.set_garage_compound(active_car.id, id);
                 }
             }
         }
@@ -14037,6 +14082,7 @@ impl RaceSession {
                     self.active_profile.credits,
                     module_locked,
                     car_change_allowed,
+                    crate::ui::garage_tyres(self.resolve_active_car_model(), &self.active_profile, car_change_allowed),
                 );
             }
             GameState::CircuitViewer(_) => {
