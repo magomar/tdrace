@@ -128,6 +128,7 @@ Table of contents providing progressive disclosure of project constitution and t
 | [105](105_redrawing_the_23_official_rallycross_jokers_to_fit_junction_components.md) | Redrawing the 23 Official Rallycross Jokers to Fit Junction Components | Architecture Spec | `approved` | `human:mario` | [081](081_rallycross_joker_lap_segments_for_classic_and_openstreetmap_circuits.md), [088](088_rallycross_jokers_built_from_openstreetmap_joker_ways.md), [102](102_predefined_junction_components_for_road_splits_and_joker_loops.md), [103](103_autocross_and_rallycross_launch_chutes_and_templated_track_components.md) | Moves the 23 official rallycross jokers onto the junction components of spec 102. The old jokers do not fit (0 of 23 convert within 2.0 m), so each one is redrawn: same anchors and side, a new first and last stretch that a Taper or TurnOff can hold, and a free road that keeps the old route. Each redrawn circuit then gets closed junction walls, a collidable nose and a bake that never clips a wall. |
 | [106](106_classic_autocross_launch_chutes_and_tencar_rallycross_chutes.md) | Classic Autocross launch chutes and ten-car Rallycross chutes | Feature Spec | `implemented` | `human:mario` | [103](103_autocross_and_rallycross_launch_chutes_and_templated_track_components.md) | Gives the 3 Classic Autocross circuits the Autocross launch chute (8 cars), makes every Rallycross chute hold 10 cars with a 3-2-3-2 grid, and moves the Classic grandstands that stood inside the wall line, on Meadow Sprint partly on the road. |
 | [109](109_classic_academy_tier_1_medal_target_recalibration.md) | Classic Academy Tier 1 Medal Target Recalibration | Feature Spec | `implemented` | `human:mario` | [060](060_classic_academy_and_grassroots_career_onboarding.md), [064](064_classic_module_multitier_academy_missions_and_degradation_curriculum.md) | Retargets the four Spec 060 Tier 1 lesson medal times from a headless reference run, because the shipped times (18.5 to 68 s) cannot be reached on the current circuits and nobody can graduate. Bounties, unlock rules and licences stay as they are. |
+| [110](110_mathematically_ideal_racing_line_visual_aid.md) | Mathematically Ideal Racing Line Visual Aid: Minimum-Curvature Trajectory, Dynamic Braking Zones, and Surface Ribbon Overlays | Feature Spec | `implemented` | `human:mario` | [037](037_player_car_visibility_aids_and_locator_mechanisms.md), [058](058_raceui_rendering_camera_effects_and_hud_primitives.md), [071](071_centripetal_catmullrom_and_variable_density_track_splines.md), [085](085_bifurcation_pacenote_hud_driving_aids_and_decluttered_track_junctions.md) | Formulates, solves, and renders a mathematically optimal racing line visual aid along the circuit ribbon using constrained minimum-curvature quadratic optimization and forward-backward velocity profiling, featuring dynamic vehicle-relative braking cues, in-race hotkey toggles, and Settings > Gameplay > Visual Aids configuration. |
 
 ### 🗺️ Specification Dependency Graph
 
@@ -142,6 +143,7 @@ flowchart LR
     024["024: Cross-Module AI Character Rosters and Dynamic Tier Assignment"]
     026["026: Top-Down Pre-Baked Vehicle Wheel Steering Animations"]
     027["027: Championship Trophy Badges & Player Profile Trophy Cabinet"]
+    037["037: Player Car Visibility Aids, Locator Mechanisms, and Helpers Settings Architecture"]
     042["042: JSON-Only Official Circuit Catalog and Embedded Track Data"]
     046["046: Human-Like Bot Driving with Tiered Mistakes and Varied Lines"]
     047["047: Fictional Branding and Real-World IP Removal for Steam Release"]
@@ -149,6 +151,7 @@ flowchart LR
     051["051: Rallycross 6-Tier Career Progression and Expanded Circuit Roster"]
     052["052: Karting 6-Tier Career Progression and Expanded 20-Circuit Roster"]
     055["055: Classic Circuits Revamp"]
+    058["058: race-ui Rendering, Camera, Effects and HUD Primitives"]
     060["060: Classic Academy and Grassroots Career Onboarding"]
     062["062: Circuit Pit Lanes and Interactive Pit Stop Procedures"]
     063["063: Damage Modelling, In-Race Field Repairs, and Garage Maintenance Economy"]
@@ -191,6 +194,7 @@ flowchart LR
     105["105: Redrawing the 23 Official Rallycross Jokers to Fit Junction Components"]
     106["106: Classic Autocross launch chutes and ten-car Rallycross chutes"]
     109["109: Classic Academy Tier 1 Medal Target Recalibration"]
+    110["110: Mathematically Ideal Racing Line Visual Aid: Minimum-Curvature Trajectory, Dynamic Braking Zones, and Surface Ribbon Overlays"]
     055 --> 047
     062 --> 063
     055 --> 064
@@ -274,4 +278,8 @@ flowchart LR
     103 --> 106
     060 --> 109
     064 --> 109
+    037 --> 110
+    058 --> 110
+    071 --> 110
+    085 --> 110
 ```
