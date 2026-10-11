@@ -3,7 +3,7 @@ type: Feature Spec
 template: feature
 title: "Player Preferred Racing Number Customization and Persistent Non-Conflicting Bot Grids"
 description: "Adds a player-chosen racing number (1-99) saved on the profile, gives every AI rival a persistent number that never collides with the player or another rival, and draws the number on the car in the race, on nameplates and on the starting grid."
-status: in_progress
+status: implemented
 receipt: "docs/receipts/spec-092-receipt.md"
 verified: { by: human:mario, at: 2026-10-11T06:56:00Z, hash: "d57679e729ed" }
 created: 2026-10-05
