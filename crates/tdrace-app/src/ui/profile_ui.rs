@@ -2020,6 +2020,7 @@ pub fn render_profile_create_screen(
     alias_input: &str,
     country_idx: usize,
     livery_idx: usize,
+    race_number: u8,
     cursor_timer: f32,
     is_editing: bool,
 ) {
@@ -2031,7 +2032,7 @@ pub fn render_profile_create_screen(
     draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.03, 0.04, 0.07, 0.95));
 
     let box_w = (sw * 0.75).clamp(scaler.s(480.0), scaler.s(680.0));
-    let box_h = scaler.s(460.0);
+    let box_h = scaler.s(520.0);
     let x = (sw - box_w) * 0.5;
     let y = (sh - box_h) * 0.5;
 
@@ -2156,6 +2157,11 @@ pub fn render_profile_create_screen(
     fonts.draw_ui_bold(&livery_name, sw_x, field_y + scaler.s(44.0), scaler.font_s(14.0), Palette::WHITE);
     fonts.draw_ui_regular("[Left / Right]", field_x + field_w - scaler.s(90.0), field_y + scaler.s(28.0), scaler.font_s(12.0), Palette::NEON_MAGENTA);
 
+    field_y += field_h + scaler.s(22.0);
+
+    // Field 4: Racing Number
+    render_race_number_field(&scaler, fonts, field_x, field_y, field_w, field_h, race_number, active_field == 4);
+
     // Footer Prompts
     let help_line = if is_editing {
         "[TAB / UP / DOWN] Next Field  |  [ENTER / A] Save Changes  |  [ESC / B] Cancel"
@@ -2169,6 +2175,21 @@ pub fn render_profile_create_screen(
         scaler.font_s(13.5),
         Palette::WHITE,
     );
+}
+
+/// The racing number field of the profile editors: the chosen number and how to change it.
+fn render_race_number_field(scaler: &UiScaler, fonts: &Fonts, x: f32, y: f32, w: f32, h: f32, race_number: u8, is_focused: bool) {
+    let border_col = if is_focused { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER };
+    draw_rectangle(x, y, w, h, Color::new(0.08, 0.10, 0.15, 0.90));
+    draw_rectangle_lines(x, y, w, h, if is_focused { 2.0 } else { 1.0 }, border_col);
+    fonts.draw_ui_bold(
+        "RACING NUMBER 1-99 [◄ / ► OR DIGITS]",
+        x + scaler.s(10.0),
+        y - scaler.s(4.0),
+        scaler.font_s(10.0),
+        if is_focused { Palette::NEON_GOLD } else { Palette::UI_TEXT_MUTED },
+    );
+    fonts.draw_display(&format!("#{}", race_number), x + scaler.s(14.0), y + h * 0.5 + scaler.s(7.0), scaler.font_s(20.0), Palette::NEON_GOLD);
 }
 
 fn render_text_field(
@@ -2227,6 +2248,7 @@ pub fn render_player_roster_manager_screen(
     country_idx: usize,
     livery_idx: usize,
     assist_mode: AssistProfile,
+    race_number: u8,
     stats: &ProfileCareerStats,
     cursor_timer: f32,
     status_msg: Option<&str>,
@@ -2408,7 +2430,7 @@ pub fn render_player_roster_manager_screen(
         if active_column == 1 { Palette::NEON_CYAN } else { Palette::WHITE },
     );
     fonts.draw_ui_regular(
-        "MODIFY NAME, ALIAS, NATIONALITY BANNER, TEAM LIVERY, AND DRIVING DIFFICULTY",
+        "MODIFY NAME, ALIAS, NATIONALITY BANNER, TEAM LIVERY, DRIVING DIFFICULTY, AND RACING NUMBER",
         col_right_x + right_pad,
         ry + scaler.s(26.0),
         scaler.font_s(10.5),
@@ -2474,7 +2496,7 @@ pub fn render_player_roster_manager_screen(
 
     ry += field_h + scaler.s(22.0);
 
-    // Row 3: Field 4 (Assist Mode Profile) and Field 5 (Save Button)
+    // Row 3: Field 4 (Assist Mode Profile) and Field 5 (Racing Number)
     let f4_sel = active_column == 1 && field_idx == 4;
     let f5_sel = active_column == 1 && field_idx == 5;
 
@@ -2484,15 +2506,22 @@ pub fn render_player_roster_manager_screen(
     fonts.draw_ui_bold("DRIVING ASSISTS / HANDLING [◄ / ►]", col_right_x + right_pad + scaler.s(10.0), ry - scaler.s(4.0), scaler.font_s(10.0), if f4_sel { Palette::NEON_GOLD } else { Palette::UI_TEXT_MUTED });
     fonts.draw_ui_bold(assist_mode.title(), col_right_x + right_pad + scaler.s(14.0), ry + scaler.s(24.0), scaler.font_s(12.5), Palette::NEON_GOLD);
 
-    let save_x = col_right_x + right_pad + field_w + scaler.s(12.0);
-    let (s_bg, s_border, s_col) = if f5_sel {
+    render_race_number_field(&scaler, fonts, col_right_x + right_pad + field_w + scaler.s(12.0), ry, field_w, field_h, race_number, f5_sel);
+
+    ry += field_h + scaler.s(22.0);
+
+    // Row 4: Field 6 (Save Button)
+    let f6_sel = active_column == 1 && field_idx == 6;
+    let save_x = col_right_x + right_pad;
+    let save_w = right_inner_w;
+    let (s_bg, s_border, s_col) = if f6_sel {
         (Color::new(0.08, 0.28, 0.35, 0.95), Palette::NEON_CYAN, Palette::WHITE)
     } else {
         (Color::new(0.08, 0.16, 0.22, 0.90), Palette::UI_CARD_BORDER, Palette::NEON_CYAN)
     };
-    draw_rectangle(save_x, ry, field_w, field_h, s_bg);
-    draw_rectangle_lines(save_x, ry, field_w, field_h, if f5_sel { 2.0 } else { 1.2 }, s_border);
-    fonts.draw_ui_bold_centered("[ENTER / A] SAVE CHANGES", save_x + field_w * 0.5, ry + scaler.s(24.0), scaler.font_s(13.0), s_col);
+    draw_rectangle(save_x, ry, save_w, field_h, s_bg);
+    draw_rectangle_lines(save_x, ry, save_w, field_h, if f6_sel { 2.0 } else { 1.2 }, s_border);
+    fonts.draw_ui_bold_centered("[ENTER / A] SAVE CHANGES", save_x + save_w * 0.5, ry + scaler.s(24.0), scaler.font_s(13.0), s_col);
 
     ry += field_h + scaler.s(16.0);
 

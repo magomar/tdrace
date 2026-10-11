@@ -23,6 +23,34 @@ pub fn is_valid_race_number(number: u8) -> bool {
     (MIN_RACE_NUMBER..=MAX_RACE_NUMBER).contains(&number)
 }
 
+/// The number after one Left (`forward == false`) or Right step in the profile editor, wrapping at both ends.
+/// A number outside the range counts as `MIN_RACE_NUMBER`.
+pub fn step_race_number(current: u8, forward: bool) -> u8 {
+    let current = if is_valid_race_number(current) { current } else { MIN_RACE_NUMBER };
+    match (forward, current) {
+        (true, MAX_RACE_NUMBER) => MIN_RACE_NUMBER,
+        (true, n) => n + 1,
+        (false, MIN_RACE_NUMBER) => MAX_RACE_NUMBER,
+        (false, n) => n - 1,
+    }
+}
+
+/// The number after the player types `digit` (0..=9) in the profile editor. The digit is appended when the result
+/// is still a valid number (7 then 3 gives 73), otherwise it starts a new number (73 then 5 gives 5). A typed 0
+/// that would make an invalid number, and anything that is not a digit, leave the number as it is.
+pub fn type_race_digit(current: u8, digit: u8) -> u8 {
+    if digit > 9 {
+        return current;
+    }
+    let appended = u16::from(current) * 10 + u16::from(digit);
+    let next = if is_valid_race_number(current) && appended <= u16::from(MAX_RACE_NUMBER) { appended as u8 } else { digit };
+    if is_valid_race_number(next) {
+        next
+    } else {
+        current
+    }
+}
+
 /// Serde reader for a rival's saved number: a missing, null or out-of-range value loads as `None`
 /// ("no number yet") instead of failing the whole save.
 pub fn deserialize_stored_race_number<'de, D>(deserializer: D) -> Result<Option<u8>, D::Error>
@@ -92,6 +120,35 @@ mod tests {
         assert!(is_valid_race_number(99));
         assert!(!is_valid_race_number(100));
         assert!(!is_valid_race_number(255));
+    }
+
+    #[test]
+    fn stepping_wraps_at_both_ends() {
+        assert_eq!(step_race_number(7, true), 8);
+        assert_eq!(step_race_number(7, false), 6);
+        assert_eq!(step_race_number(99, true), 1);
+        assert_eq!(step_race_number(1, false), 99);
+        assert_eq!(step_race_number(0, true), 2, "an invalid number steps from the smallest one");
+        assert_eq!(step_race_number(150, false), 99);
+    }
+
+    #[test]
+    fn typing_digits_builds_a_number_and_never_leaves_the_range() {
+        assert_eq!(type_race_digit(7, 3), 73);
+        assert_eq!(type_race_digit(73, 5), 5, "a third digit starts over");
+        assert_eq!(type_race_digit(17, 4), 4);
+        assert_eq!(type_race_digit(3, 0), 30);
+        assert_eq!(type_race_digit(17, 0), 17, "0 alone is not a number, so the number stays");
+        assert_eq!(type_race_digit(9, 9), 99);
+        assert_eq!(type_race_digit(7, 10), 7);
+        for current in 0..=255u8 {
+            for digit in 0..=255u8 {
+                let next = type_race_digit(current, digit);
+                assert!(is_valid_race_number(next) || !is_valid_race_number(current), "{current} + {digit} -> {next}");
+            }
+        }
+        assert_eq!(type_race_digit(0, 4), 4);
+        assert_eq!(type_race_digit(200, 4), 4);
     }
 
     #[test]

@@ -322,6 +322,7 @@ fn test_profile_editing_workflow() {
         input_alias: default_prof.alias.clone(),
         country_idx,
         livery_idx: 2,
+        race_number: default_prof.race_number,
         cursor_timer: 0.0,
     };
 

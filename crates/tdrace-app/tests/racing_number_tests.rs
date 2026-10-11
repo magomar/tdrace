@@ -491,3 +491,144 @@ fn a_championship_player_number_change_moves_only_the_colliding_rival() {
     assert!(all_unique(&numbers));
     assert!(!numbers.contains(&taken));
 }
+
+// ---------------------------------------------------------------------------
+// Profile editor: the number field on the create and modify screens
+// ---------------------------------------------------------------------------
+
+use macroquad::input::KeyCode;
+use tdrace_app::game::inject_key_presses_for_tests;
+
+/// Runs one frame with `keys` held as "pressed this frame".
+fn press(session: &mut RaceSession, keys: &[KeyCode]) {
+    inject_key_presses_for_tests(keys);
+    session.update();
+    inject_key_presses_for_tests(&[]);
+}
+
+fn press_times(session: &mut RaceSession, key: KeyCode, times: usize) {
+    for _ in 0..times {
+        press(session, &[key]);
+    }
+}
+
+fn session_with_profiles(count: usize) -> RaceSession {
+    let mut session = RaceSession::new();
+    let db = HallOfFameDb::open_in_memory().unwrap();
+    db.seed_default_profile_if_empty().unwrap();
+    for i in 1..count {
+        let mut profile = PlayerProfile::new_rookie(format!("Extra {i}"));
+        profile.is_active = false;
+        profile.race_number = 20 + i as u8;
+        db.create_profile(&profile).unwrap();
+    }
+    session.hof_db = Some(db);
+    session.refresh_profiles_and_stats();
+    session
+}
+
+/// Scenario: Player defines a preferred racing number (create screen)
+#[test]
+fn the_create_screen_saves_the_chosen_number() {
+    let mut session = session_with_profiles(1);
+    session.state = GameState::ModuleSelect { selected_idx: 0 };
+    press(&mut session, &[KeyCode::N]);
+    match session.state {
+        GameState::ProfileCreate { race_number, .. } => assert_eq!(race_number, 7, "a new profile starts on the default"),
+        ref other => panic!("expected ProfileCreate, got {other:?}"),
+    }
+
+    // Name, alias, country, livery, number.
+    press_times(&mut session, KeyCode::Tab, 4);
+    press_times(&mut session, KeyCode::Right, 3);
+    match session.state {
+        GameState::ProfileCreate { race_number, field_idx, .. } => assert_eq!((field_idx, race_number), (4, 10)),
+        ref other => panic!("expected ProfileCreate, got {other:?}"),
+    }
+    press(&mut session, &[KeyCode::Enter]);
+
+    assert!(matches!(session.state, GameState::ProfileManager { .. }));
+    assert_eq!(session.active_profile.race_number, 10, "the new profile is active with its number");
+    let stored = session.hof_db.as_ref().unwrap().get_active_profile().unwrap();
+    assert_eq!(stored.race_number, 10, "the number is in the database");
+}
+
+#[test]
+fn the_number_field_wraps_between_1_and_99() {
+    let mut session = session_with_profiles(1);
+    session.state = GameState::ModuleSelect { selected_idx: 0 };
+    press(&mut session, &[KeyCode::N]);
+    press_times(&mut session, KeyCode::Tab, 4);
+    press_times(&mut session, KeyCode::Left, 6);
+    match session.state {
+        GameState::ProfileCreate { race_number, .. } => assert_eq!(race_number, 1),
+        ref other => panic!("expected ProfileCreate, got {other:?}"),
+    }
+    press(&mut session, &[KeyCode::Left]);
+    match session.state {
+        GameState::ProfileCreate { race_number, .. } => assert_eq!(race_number, 99, "Left from 1 goes to 99"),
+        ref other => panic!("expected ProfileCreate, got {other:?}"),
+    }
+    press(&mut session, &[KeyCode::Right]);
+    match session.state {
+        GameState::ProfileCreate { race_number, .. } => assert_eq!(race_number, 1, "Right from 99 goes to 1"),
+        ref other => panic!("expected ProfileCreate, got {other:?}"),
+    }
+}
+
+/// Scenario: Player defines a preferred racing number (modify screen)
+#[test]
+fn the_roster_manager_edits_and_saves_the_number_of_the_selected_driver() {
+    let mut session = session_with_profiles(2);
+    let first_id = session.profile_list[0].id.unwrap();
+    let second_id = session.profile_list[1].id.unwrap();
+    session.open_player_roster_manager(0);
+    match session.state {
+        GameState::PlayerRosterManager { race_number, .. } => assert_eq!(race_number, session.profile_list[0].race_number),
+        ref other => panic!("expected PlayerRosterManager, got {other:?}"),
+    }
+
+    // Into the right column, down to the number field (name, alias, country, livery, assists, number).
+    press(&mut session, &[KeyCode::Tab]);
+    press_times(&mut session, KeyCode::Down, 5);
+    match session.state {
+        GameState::PlayerRosterManager { field_idx, .. } => assert_eq!(field_idx, 5),
+        ref other => panic!("expected PlayerRosterManager, got {other:?}"),
+    }
+    press_times(&mut session, KeyCode::Right, 2);
+    press(&mut session, &[KeyCode::Enter]);
+
+    let db = session.hof_db.as_ref().unwrap();
+    let first = db.get_profile_by_id(first_id).unwrap().unwrap();
+    assert_eq!(first.race_number, 9, "7 plus two steps");
+    assert_eq!(db.get_profile_by_id(second_id).unwrap().unwrap().race_number, 21, "the other driver is untouched");
+}
+
+#[test]
+fn saving_another_field_in_the_roster_manager_keeps_the_number() {
+    let mut session = session_with_profiles(1);
+    let id = session.profile_list[0].id.unwrap();
+    session.hof_db.as_ref().unwrap().update_profile(&PlayerProfile { race_number: 42, ..session.profile_list[0].clone() }).unwrap();
+    session.refresh_profiles_and_stats();
+    session.open_player_roster_manager(0);
+    press(&mut session, &[KeyCode::Tab]);
+    press_times(&mut session, KeyCode::Down, 2); // country
+    press(&mut session, &[KeyCode::Right]);
+    press(&mut session, &[KeyCode::Enter]);
+    let saved = session.hof_db.as_ref().unwrap().get_profile_by_id(id).unwrap().unwrap();
+    assert_eq!(saved.race_number, 42);
+}
+
+#[test]
+fn the_roster_manager_shows_the_number_of_the_driver_it_moves_to() {
+    let mut session = session_with_profiles(2);
+    session.open_player_roster_manager(0);
+    press(&mut session, &[KeyCode::Down]);
+    match session.state {
+        GameState::PlayerRosterManager { selected_idx, race_number, .. } => {
+            assert_eq!(selected_idx, 1);
+            assert_eq!(race_number, session.profile_list[1].race_number);
+        }
+        ref other => panic!("expected PlayerRosterManager, got {other:?}"),
+    }
+}

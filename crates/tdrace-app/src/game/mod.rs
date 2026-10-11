@@ -378,6 +378,7 @@ pub enum GameState {
         country_idx: usize,
         livery_idx: usize,
         assist_mode: AssistProfile,
+        race_number: u8,
         cursor_timer: f32,
         status_msg: Option<String>,
     },
@@ -388,6 +389,7 @@ pub enum GameState {
         input_alias: String,
         country_idx: usize,
         livery_idx: usize,
+        race_number: u8,
         cursor_timer: f32,
     },
     TrackManager {
@@ -5699,6 +5701,7 @@ impl RaceSession {
                 country_idx,
                 livery_idx,
                 assist_mode,
+                race_number,
                 cursor_timer,
                 status_msg,
             } = std::mem::replace(&mut self.state, GameState::Menu)
@@ -5712,6 +5715,7 @@ impl RaceSession {
                     country_idx,
                     livery_idx,
                     assist_mode,
+                    race_number,
                     cursor_timer,
                     status_msg,
                     frame_dt,
@@ -5728,6 +5732,7 @@ impl RaceSession {
                 input_alias,
                 country_idx,
                 livery_idx,
+                race_number,
                 cursor_timer,
             } = std::mem::replace(&mut self.state, GameState::Menu)
             {
@@ -5738,6 +5743,7 @@ impl RaceSession {
                     input_alias,
                     country_idx,
                     livery_idx,
+                    race_number,
                     cursor_timer,
                     frame_dt,
                 );
@@ -8009,6 +8015,7 @@ impl RaceSession {
                 country_idx,
                 livery_idx,
                 assist_mode: p.last_mode,
+                race_number: p.race_number,
                 cursor_timer: 0.0,
                 status_msg: None,
             };
@@ -8027,6 +8034,7 @@ impl RaceSession {
         mut country_idx: usize,
         mut livery_idx: usize,
         mut assist_mode: AssistProfile,
+        mut race_number: u8,
         mut cursor_timer: f32,
         mut status_msg: Option<String>,
         frame_dt: f32,
@@ -8067,6 +8075,7 @@ impl RaceSession {
                     country_idx = 1;
                     livery_idx = next_livery;
                     assist_mode = AssistProfile::Arcade;
+                    race_number = new_profile.race_number;
                     active_column = 1;
                     field_idx = 0;
                     status_msg = Some("New driver added. Enter details and press Save.".to_string());
@@ -8079,6 +8088,7 @@ impl RaceSession {
                         country_idx,
                         livery_idx,
                         assist_mode,
+                        race_number,
                         cursor_timer,
                         status_msg,
                     };
@@ -8109,6 +8119,7 @@ impl RaceSession {
                             c.0 == np.color_scheme.primary && c.1 == np.color_scheme.secondary
                         }).unwrap_or(0);
                         assist_mode = np.last_mode;
+                        race_number = np.race_number;
                         if let Some(npid) = np.id {
                             if let Some(db) = &self.hof_db {
                                 self.active_profile_stats = db.get_stats_for_profile(npid).unwrap_or_default();
@@ -8126,6 +8137,7 @@ impl RaceSession {
                         country_idx,
                         livery_idx,
                         assist_mode,
+                        race_number,
                         cursor_timer,
                         status_msg,
                     };
@@ -8171,6 +8183,7 @@ impl RaceSession {
                         c.0 == p.color_scheme.primary && c.1 == p.color_scheme.secondary
                     }).unwrap_or(0);
                     assist_mode = p.last_mode;
+                    race_number = p.race_number;
                     if let Some(pid) = p.id {
                         if let Some(db) = &self.hof_db {
                             self.active_profile_stats = db.get_stats_for_profile(pid).unwrap_or_default();
@@ -8191,6 +8204,7 @@ impl RaceSession {
                         c.0 == p.color_scheme.primary && c.1 == p.color_scheme.secondary
                     }).unwrap_or(0);
                     assist_mode = p.last_mode;
+                    race_number = p.race_number;
                     if let Some(pid) = p.id {
                         if let Some(db) = &self.hof_db {
                             self.active_profile_stats = db.get_stats_for_profile(pid).unwrap_or_default();
@@ -8221,14 +8235,14 @@ impl RaceSession {
             if is_key_pressed(KeyCode::Up) || (field_idx > 1 && (is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up)) {
                 self.audio.play_sfx(SfxType::UiMove);
                 if field_idx == 0 {
-                    field_idx = 5;
+                    field_idx = 6;
                 } else {
                     field_idx -= 1;
                 }
             }
             if is_key_pressed(KeyCode::Down) || (field_idx > 1 && (is_key_pressed(KeyCode::S) || self.input.gamepad.snapshot.nav_down)) {
                 self.audio.play_sfx(SfxType::UiMove);
-                field_idx = (field_idx + 1) % 6;
+                field_idx = (field_idx + 1) % 7;
             }
 
             // Text input for fields 0 (Name) and 1 (Alias)
@@ -8303,6 +8317,8 @@ impl RaceSession {
                         AssistProfile::Pro => AssistProfile::Arcade,
                     };
                 }
+            } else if field_idx == 5 {
+                race_number = self.edit_race_number(race_number);
             }
 
             // Save Changes (Enter on Save button, or Enter on country/livery/assist, or Ctrl+S)
@@ -8355,7 +8371,7 @@ impl RaceSession {
                         academy_progress: p.academy_progress.clone(),
                         owned_cars: p.owned_cars.clone(),
                         car_compounds: p.car_compounds.clone(),
-                        race_number: p.race_number,
+                        race_number: PlayerProfile::race_number_from_i64(i64::from(race_number)),
                     })
                 });
 
@@ -8379,6 +8395,7 @@ impl RaceSession {
             country_idx,
             livery_idx,
             assist_mode,
+            race_number,
             cursor_timer,
             status_msg,
         };
@@ -8394,6 +8411,7 @@ impl RaceSession {
         mut input_alias: String,
         mut country_idx: usize,
         mut livery_idx: usize,
+        mut race_number: u8,
         mut cursor_timer: f32,
         frame_dt: f32,
     ) {
@@ -8402,12 +8420,12 @@ impl RaceSession {
         // Field switching (Tab, Up, Down)
         if is_key_pressed(KeyCode::Tab) || is_key_pressed(KeyCode::Down) {
             self.audio.play_sfx(SfxType::UiMove);
-            field_idx = (field_idx + 1) % 4;
+            field_idx = (field_idx + 1) % 5;
         }
         if is_key_pressed(KeyCode::Up) {
             self.audio.play_sfx(SfxType::UiMove);
             if field_idx == 0 {
-                field_idx = 3;
+                field_idx = 4;
             } else {
                 field_idx -= 1;
             }
@@ -8472,6 +8490,10 @@ impl RaceSession {
             }
         }
 
+        if field_idx == 4 {
+            race_number = self.edit_race_number(race_number);
+        }
+
         // Confirm & Save Profile
         if is_key_pressed(KeyCode::Enter)
             || is_key_pressed(KeyCode::KpEnter)
@@ -8503,6 +8525,7 @@ impl RaceSession {
                 if let Some(edit_id) = editing_id {
                     let mut updated = PlayerProfile::new(&final_name, &final_alias, country_opt.as_deref(), scheme);
                     updated.id = Some(edit_id);
+                    updated.race_number = PlayerProfile::race_number_from_i64(i64::from(race_number));
                     if let Some(existing) = self.profile_list.iter().find(|p| p.id == Some(edit_id)) {
                         updated.is_active = existing.is_active;
                     }
@@ -8511,6 +8534,7 @@ impl RaceSession {
                 } else {
                     let mut new_profile = PlayerProfile::new(&final_name, &final_alias, country_opt.as_deref(), scheme);
                     new_profile.is_active = true;
+                    new_profile.race_number = PlayerProfile::race_number_from_i64(i64::from(race_number));
                     if let Ok(new_id) = db.create_profile(&new_profile) {
                         let _ = db.set_active_profile(new_id);
                     }
@@ -8541,6 +8565,7 @@ impl RaceSession {
             input_alias,
             country_idx,
             livery_idx,
+            race_number,
             cursor_timer,
         };
     }
@@ -8709,6 +8734,7 @@ impl RaceSession {
                 input_alias: String::new(),
                 country_idx: 1, // Spain default
                 livery_idx: next_livery,
+                race_number: PlayerProfile::DEFAULT_RACE_NUMBER,
                 cursor_timer: 0.0,
             };
             return;
@@ -14403,6 +14429,7 @@ impl RaceSession {
                 country_idx,
                 livery_idx,
                 assist_mode,
+                race_number,
                 cursor_timer,
                 ref status_msg,
             } => {
@@ -14417,6 +14444,7 @@ impl RaceSession {
                     country_idx,
                     livery_idx,
                     assist_mode,
+                    race_number,
                     &self.active_profile_stats,
                     cursor_timer,
                     status_msg.as_deref(),
@@ -14429,6 +14457,7 @@ impl RaceSession {
                 ref input_alias,
                 country_idx,
                 livery_idx,
+                race_number,
                 cursor_timer,
             } => {
                 render_profile_create_screen(
@@ -14438,6 +14467,7 @@ impl RaceSession {
                     input_alias,
                     country_idx,
                     livery_idx,
+                    race_number,
                     cursor_timer,
                     editing_id.is_some(),
                 );

@@ -1,7 +1,9 @@
 //! Racing numbers for the grid (spec 092): one number per car, no two the same, stable across rounds.
 
-use super::RaceSession;
-use crate::ai::allocate_rival_numbers;
+use macroquad::input::KeyCode;
+
+use super::{get_char_pressed, is_key_pressed, RaceSession, SfxType};
+use crate::ai::{allocate_rival_numbers, step_race_number, type_race_digit};
 use crate::profile::PlayerProfile;
 use crate::ui::menu::GameMode;
 
@@ -19,6 +21,30 @@ impl RaceSession {
     /// The racing number of the active profile, `DEFAULT_RACE_NUMBER` if it is out of range.
     pub fn player_race_number(&self) -> u8 {
         PlayerProfile::race_number_from_i64(i64::from(self.active_profile.race_number))
+    }
+
+    /// One frame of input for the racing number field of the profile editor: Left/Right (or A/D, D-pad) step the
+    /// number, digits type it. Returns the new number, always in `1..=99`.
+    pub(super) fn edit_race_number(&mut self, current: u8) -> u8 {
+        let mut number = PlayerProfile::race_number_from_i64(i64::from(current));
+        let snapshot = &self.input.gamepad.snapshot;
+        let left = is_key_pressed(KeyCode::Left) || is_key_pressed(KeyCode::A) || snapshot.nav_left;
+        let right = is_key_pressed(KeyCode::Right) || is_key_pressed(KeyCode::D) || snapshot.nav_right;
+        if left {
+            number = step_race_number(number, false);
+            self.audio.play_sfx(SfxType::UiMove);
+        }
+        if right {
+            number = step_race_number(number, true);
+            self.audio.play_sfx(SfxType::UiMove);
+        }
+        while let Some(c) = get_char_pressed() {
+            if let Some(digit) = c.to_digit(10) {
+                number = type_race_digit(number, digit as u8);
+                self.audio.play_sfx(SfxType::UiMove);
+            }
+        }
+        number
     }
 
     /// Numbers the grid that `rebuild_roster_participants` is about to build. A championship or career roster
