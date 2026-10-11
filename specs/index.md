@@ -128,6 +128,7 @@ Table of contents providing progressive disclosure of project constitution and t
 | [105](105_redrawing_the_23_official_rallycross_jokers_to_fit_junction_components.md) | Redrawing the 23 Official Rallycross Jokers to Fit Junction Components | Architecture Spec | `draft` | — | [081](081_rallycross_joker_lap_segments_for_classic_and_openstreetmap_circuits.md), [088](088_rallycross_jokers_built_from_openstreetmap_joker_ways.md), [102](102_predefined_junction_components_for_road_splits_and_joker_loops.md), [103](103_autocross_and_rallycross_launch_chutes_and_templated_track_components.md) | Moves the 23 official rallycross jokers onto the junction components of spec 102. The old jokers do not fit (0 of 23 convert within 2.0 m), so each one is redrawn: same anchors and side, a new first and last stretch that a Taper or TurnOff can hold, and a free road that keeps the old route. Each redrawn circuit then gets closed junction walls, a collidable nose and a bake that never clips a wall. |
 | [106](106_classic_autocross_launch_chutes_and_tencar_rallycross_chutes.md) | Classic Autocross launch chutes and ten-car Rallycross chutes | Feature Spec | `implemented` | `human:mario` | [103](103_autocross_and_rallycross_launch_chutes_and_templated_track_components.md) | Gives the 3 Classic Autocross circuits the Autocross launch chute (8 cars), makes every Rallycross chute hold 10 cars with a 3-2-3-2 grid, and moves the Classic grandstands that stood inside the wall line, on Meadow Sprint partly on the road. |
 | [109](109_classic_academy_tier_1_medal_target_recalibration.md) | Classic Academy Tier 1 Medal Target Recalibration | Feature Spec | `implemented` | `human:mario` | [060](060_classic_academy_and_grassroots_career_onboarding.md), [064](064_classic_module_multitier_academy_missions_and_degradation_curriculum.md) | Retargets the four Spec 060 Tier 1 lesson medal times from a headless reference run, because the shipped times (18.5 to 68 s) cannot be reached on the current circuits and nobody can graduate. Bounties, unlock rules and licences stay as they are. |
+| [110](110_racing_number_placement_by_car_type.md) | Racing Number Placement by Car Type | Feature Spec | `draft` | — | [092](092_player_racing_number_customization_and_persistent_nonconflicting_bot_rosters.md) | Makes the racing number on the car smaller and puts it where each kind of car carries it: no number on karts, on the front of buggies, GT cars and open-wheelers, on the roof of stock cars and rally cars. |
 
 ### 🗺️ Specification Dependency Graph
 
@@ -191,6 +192,7 @@ flowchart LR
     105["105: Redrawing the 23 Official Rallycross Jokers to Fit Junction Components"]
     106["106: Classic Autocross launch chutes and ten-car Rallycross chutes"]
     109["109: Classic Academy Tier 1 Medal Target Recalibration"]
+    110["110: Racing Number Placement by Car Type"]
     055 --> 047
     062 --> 063
     055 --> 064
@@ -274,4 +276,5 @@ flowchart LR
     103 --> 106
     060 --> 109
     064 --> 109
+    092 --> 110
 ```
