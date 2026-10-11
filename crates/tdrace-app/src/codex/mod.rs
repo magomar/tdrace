@@ -29,7 +29,8 @@ use cabinet::input::mapping::{ArcadeAction, InputMap, InputSource};
 use cabinet::net::INTERP_DELAY_SEC;
 use race_kit::world::PIT_STOP_REPAIR_AMOUNT;
 use race_ui::camera::{CameraConfig, MAX_CAR_SCREEN_OFFSET_FRAC};
-use tdrace_core::profile::AcademyLessonDef;
+use tdrace_core::profile::{AcademyLessonDef, AcademyObjective, ACADEMY_DAILY_STIPEND_CAP, ACADEMY_TIER_PASS_COUNT};
+use crate::game::academy::AcademyChallengeState;
 
 use crate::ai::{DriverCharacter, DriverQuality, DriverTier};
 use crate::audio::EngineSoundType;
@@ -1618,10 +1619,20 @@ pub struct CodexCareerInfo {
 pub struct CodexAcademyLesson {
     pub id: &'static str,
     pub index: usize,
+    /// Academy tier: 1 (Class D course), 2 (surface mastery) or 3 (tyre discipline), Spec 064.
+    pub tier: u8,
     pub title: String,
     pub description: String,
     pub track_slug: String,
     pub car_slug: String,
+    /// What the medal is measured on: `best_time`, `drift_score`, `clean_landing`, `wear_cap` or `podium`.
+    /// The three targets below are seconds, except for `drift_score` (drift points, larger is better)
+    /// and `podium` (unused: the finishing position decides).
+    pub objective: &'static str,
+    /// Worst-wheel wear at the flag that a `wear_cap` or `podium` mission allows (0.0 to 1.0).
+    pub max_wear: Option<f32>,
+    /// Lowest finishing place that still earns Bronze in a `podium` mission.
+    pub max_position: Option<u32>,
     pub gold_time_sec: f32,
     pub silver_time_sec: f32,
     pub bronze_time_sec: f32,
@@ -1629,6 +1640,14 @@ pub struct CodexAcademyLesson {
     pub silver_credit_bounty: u64,
     pub gold_credit_bounty: u64,
     pub base_xp_reward: u32,
+    /// Credits of the re-run stipend of this tier.
+    pub stipend_credits: u64,
+    pub damage_enabled: bool,
+    pub wear_rate_scale: f32,
+    pub start_wear: f32,
+    pub laps: u32,
+    pub bots: usize,
+    pub joker_required: bool,
 }
 
 #[derive(Serialize)]
@@ -1641,10 +1660,29 @@ pub struct CodexLicenceGrade {
 }
 
 #[derive(Serialize)]
+pub struct CodexAcademyTier {
+    pub tier: u8,
+    pub name: &'static str,
+    /// Licence grade a pass of the tier grants, as in `licence_grades`.
+    pub licence_grade: &'static str,
+    pub unlock_rule: &'static str,
+    /// Sum of all medal bounties of the tier, in Credits.
+    pub bounty_total: u64,
+    pub stipend_credits: u64,
+}
+
+#[derive(Serialize)]
 pub struct CodexAcademyInfo {
+    pub tiers: Vec<CodexAcademyTier>,
     pub curriculum: Vec<CodexAcademyLesson>,
     pub max_permissible_impulse: f32,
     pub max_permissible_off_track_sec: f32,
+    /// Landing impulse above which a landing is rough in a clean-landing mission.
+    pub max_permissible_landing_impulse: f32,
+    /// Bronze or better on this many of the 4 missions of a tier passes it.
+    pub tier_pass_count: usize,
+    /// Most Test Driver Stipends paid per profile per local day, across all tiers.
+    pub daily_stipend_cap: u8,
     pub licence_grades: Vec<CodexLicenceGrade>,
 }
 
@@ -2165,25 +2203,77 @@ fn racing_data(scope: Scope, cars: &[CodexCar], circuits: &[CodexCircuit]) -> Co
         ],
     };
 
-    // The Codex lists the Tier 1 course. Tiers 2 and 3 (Spec 064) need their own Codex fields first.
-    let curriculum = AcademyLessonDef::tier_curriculum(1)
+    let curriculum: Vec<CodexAcademyLesson> = AcademyLessonDef::default_curriculum()
         .into_iter()
-        .map(|l| CodexAcademyLesson {
-            id: l.id.slug(),
-            index: l.id.index() + 1,
-            title: l.title,
-            description: l.description,
-            track_slug: l.track_slug,
-            car_slug: l.car_slug,
-            gold_time_sec: l.gold_time_sec,
-            silver_time_sec: l.silver_time_sec,
-            bronze_time_sec: l.bronze_time_sec,
-            bronze_credit_bounty: l.bronze_credit_bounty,
-            silver_credit_bounty: l.silver_credit_bounty,
-            gold_credit_bounty: l.gold_credit_bounty,
-            base_xp_reward: l.base_xp_reward,
+        .map(|l| {
+            let (objective, max_wear, max_position) = match l.objective {
+                AcademyObjective::BestTime => ("best_time", None, None),
+                AcademyObjective::DriftScore => ("drift_score", None, None),
+                AcademyObjective::CleanLanding => ("clean_landing", None, None),
+                AcademyObjective::WearCap { max_wear } => ("wear_cap", Some(max_wear), None),
+                AcademyObjective::Podium { max_position, max_wear } => ("podium", Some(max_wear), Some(max_position)),
+            };
+            CodexAcademyLesson {
+                id: l.id.slug(),
+                index: l.id.index() + 1,
+                tier: l.tier,
+                stipend_credits: l.stipend_credits(),
+                title: l.title,
+                description: l.description,
+                track_slug: l.track_slug,
+                car_slug: l.car_slug,
+                objective,
+                max_wear,
+                max_position,
+                gold_time_sec: l.gold_time_sec,
+                silver_time_sec: l.silver_time_sec,
+                bronze_time_sec: l.bronze_time_sec,
+                bronze_credit_bounty: l.bronze_credit_bounty,
+                silver_credit_bounty: l.silver_credit_bounty,
+                gold_credit_bounty: l.gold_credit_bounty,
+                base_xp_reward: l.base_xp_reward,
+                damage_enabled: l.rules.damage_enabled,
+                wear_rate_scale: l.rules.wear_rate_scale,
+                start_wear: l.rules.start_wear,
+                laps: l.rules.laps,
+                bots: l.rules.bots,
+                joker_required: l.rules.joker_required,
+            }
         })
         .collect();
+    let tier_bounty_total = |tier: u8| -> u64 {
+        curriculum
+            .iter()
+            .filter(|l| l.tier == tier)
+            .map(|l| l.bronze_credit_bounty + l.silver_credit_bounty + l.gold_credit_bounty)
+            .sum()
+    };
+    let tiers = vec![
+        CodexAcademyTier {
+            tier: 1,
+            name: "Rookie Foundations",
+            licence_grade: "ClassD",
+            unlock_rule: "Open from the start. The four lessons unlock one after the other (Bronze or better on the lesson before). Bronze or better on Lesson 4 graduates the driver.",
+            bounty_total: tier_bounty_total(1),
+            stipend_credits: 1_500,
+        },
+        CodexAcademyTier {
+            tier: 2,
+            name: "Surface Mastery",
+            licence_grade: "ClassC",
+            unlock_rule: "Unlocks on graduation (Class D). Bronze or better on 3 of the 4 missions earns Class C.",
+            bounty_total: tier_bounty_total(2),
+            stipend_credits: 2_000,
+        },
+        CodexAcademyTier {
+            tier: 3,
+            name: "Tyre Discipline",
+            licence_grade: "ClassB",
+            unlock_rule: "Unlocks with Bronze or better on 3 of the 4 Tier 2 missions. Bronze or better on 3 of the 4 missions earns Class B.",
+            bounty_total: tier_bounty_total(3),
+            stipend_credits: 3_000,
+        },
+    ];
 
     let licence_grades = vec![
         CodexLicenceGrade {
@@ -2224,9 +2314,13 @@ fn racing_data(scope: Scope, cars: &[CodexCar], circuits: &[CodexCircuit]) -> Co
     ];
 
     let academy = CodexAcademyInfo {
+        tiers,
         curriculum,
         max_permissible_impulse: 800.0,
         max_permissible_off_track_sec: 2.0,
+        max_permissible_landing_impulse: AcademyChallengeState::MAX_PERMISSIBLE_LANDING_IMPULSE,
+        tier_pass_count: ACADEMY_TIER_PASS_COUNT,
+        daily_stipend_cap: ACADEMY_DAILY_STIPEND_CAP,
         licence_grades,
     };
 
