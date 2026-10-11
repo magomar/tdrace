@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, HashMap};
 use serde::{Deserialize, Deserializer, Serialize};
 use tdrace_core::physics::surface::CompoundId;
 
-use crate::ai::{CareerRivalEntry, DriverTier, RosterEvolutionEngine, RosterEvolutionReport};
+use crate::ai::{is_valid_race_number, CareerRivalEntry, DriverTier, RosterEvolutionEngine, RosterEvolutionReport};
 use crate::render::color::CarColorScheme;
 pub use tdrace_core::physics::config::AssistProfile;
 pub use cabinet::profile::country::{draw_country_banner, CountryInfo, CountryRegistry};
@@ -43,6 +43,10 @@ pub struct PlayerProfile {
     /// uses its preset compound.
     #[serde(default, deserialize_with = "lenient_car_compounds")]
     pub car_compounds: HashMap<String, CompoundId>,
+    /// Racing number the player chose, `1..=99` (spec 092). Anything outside that range loads as
+    /// `DEFAULT_RACE_NUMBER`.
+    #[serde(default = "PlayerProfile::default_race_number", deserialize_with = "lenient_race_number")]
+    pub race_number: u8,
 }
 
 /// Slicks the garage offers for a GT car, softest first (spec 098).
@@ -78,6 +82,16 @@ where
         .collect())
 }
 
+/// Reads the racing number and replaces an invalid one with the default (spec 092: fail closed,
+/// never reject the whole profile for one bad number).
+fn lenient_race_number<'de, D>(deserializer: D) -> Result<u8, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let raw = i64::deserialize(deserializer)?;
+    Ok(PlayerProfile::race_number_from_i64(raw))
+}
+
 /// Parses the JSON stored in the `car_compounds` column; invalid JSON gives an empty map.
 pub fn parse_car_compounds(json: &str) -> HashMap<String, CompoundId> {
     lenient_car_compounds(&mut serde_json::Deserializer::from_str(json)).unwrap_or_default()
@@ -102,12 +116,24 @@ impl Default for PlayerProfile {
             academy_progress: ClassicAcademyProgress::default(),
             owned_cars: Vec::new(),
             car_compounds: Default::default(),
+            race_number: Self::DEFAULT_RACE_NUMBER,
         }
     }
 }
 
 impl PlayerProfile {
     pub const STARTING_CREDITS: u64 = 10_000;
+    /// Racing number of a new profile and the fallback for an invalid stored number.
+    pub const DEFAULT_RACE_NUMBER: u8 = 7;
+
+    pub fn default_race_number() -> u8 {
+        Self::DEFAULT_RACE_NUMBER
+    }
+
+    /// A stored or typed racing number, or `DEFAULT_RACE_NUMBER` when it is outside `1..=99`.
+    pub fn race_number_from_i64(value: i64) -> u8 {
+        u8::try_from(value).ok().filter(|&n| is_valid_race_number(n)).unwrap_or(Self::DEFAULT_RACE_NUMBER)
+    }
 
     pub fn default_starting_credits() -> u64 {
         Self::STARTING_CREDITS
@@ -132,6 +158,7 @@ impl PlayerProfile {
             academy_progress: ClassicAcademyProgress::default(),
             owned_cars: Vec::new(),
             car_compounds: Default::default(),
+            race_number: Self::DEFAULT_RACE_NUMBER,
         }
     }
 
@@ -174,6 +201,7 @@ impl PlayerProfile {
             academy_progress: ClassicAcademyProgress::default(),
             owned_cars: Vec::new(),
             car_compounds: Default::default(),
+            race_number: Self::DEFAULT_RACE_NUMBER,
         }
     }
 

@@ -418,6 +418,19 @@ pub struct VehicleNameplateItem<'a> {
     pub elevation: f32,
     /// Distance from the focus player car.
     pub distance_to_player: f32,
+    /// Racing number (spec 092), `0` for none. The plate reads `#NN NAME`.
+    pub race_number: u8,
+}
+
+impl VehicleNameplateItem<'_> {
+    /// Text of the plate: the racing number before the name when the car has one.
+    pub fn label(&self) -> String {
+        if crate::ai::is_valid_race_number(self.race_number) {
+            format!("#{} {}", self.race_number, self.name)
+        } else {
+            self.name.to_string()
+        }
+    }
 }
 
 /// Deconflicted layout position for a projected nameplate on screen.
@@ -480,7 +493,7 @@ pub fn deconflict_nameplates<'a>(
         }
 
         // Measure text dimensions for pill layout
-        let text_dim = fonts.measure_ui_bold(item.name, 12.0);
+        let text_dim = fonts.measure_ui_bold(&item.label(), 12.0);
         let tier_w = if item.tier_label.is_some() { 24.0 } else { 0.0 };
         let badge_w = (text_dim.width + tier_w + 16.0).max(48.0);
         let badge_h = 20.0;
@@ -596,7 +609,7 @@ pub fn render_floating_bot_nameplates(
             ry,
             name_w,
             badge.height,
-            badge.item.name,
+            &badge.item.label(),
             Color::new(0.95, 0.96, 0.98, alpha),
         );
     }

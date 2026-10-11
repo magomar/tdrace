@@ -2,26 +2,29 @@
 type: Feature Spec
 template: feature
 title: "Player Preferred Racing Number Customization and Persistent Non-Conflicting Bot Grids"
-description: "Decouples baked numbers and real-world IP from vehicle sprites, provides player custom number and livery palette selection, and implements persistent non-conflicting random number and color assignment across AI bot rosters."
-status: draft
+description: "Adds a player-chosen racing number (1-99) saved on the profile, gives every AI rival a persistent number that never collides with the player or another rival, and draws the number on the car in the race, on nameplates and on the starting grid."
+status: implemented
+receipt: "docs/receipts/spec-092-receipt.md"
+verified: { by: human:mario, at: 2026-10-11T06:56:00Z, hash: "d57679e729ed" }
 created: 2026-10-05
 generated: { by: agent/antigravity, at: 2026-10-05T18:37:12Z }
 depends_on:
   - "024"
   - "027"
-  - "047"
+  - "104"
 ---
 
-# Feature Spec: Player Preferred Racing Number Customization and Persistent Non-Conflicting Bot Grids 🏎️🔢🎨
+# Feature Spec: Player Preferred Racing Number Customization and Persistent Non-Conflicting Bot Grids 🏎️🔢
 
-In competitive motorsport, vehicle liveries and racing numbers are fundamental identifiers of driver identity. Previously in **TdRace**, competition numbers (e.g., `#17`, `#32`, `#3`, `#24`) and sponsor graphics were baked directly into 2D raster bitmap textures (`assets/textures/vehicles/{laterals,topdown}/**`). This caused duplicate numbers on starting grids when multiple opponents drove similar chassis, prevented players from choosing their own racing number, and created visual discrepancies between lateral showroom sprites and in-race top-down sprites.
+In motorsport a racing number identifies the driver. In **TdRace** today no car shows a number: the vehicle sprites (`assets/textures/vehicles/{laterals,topdown}/**`) that were sampled in a contact sheet (GT, NASCAR, Rallycross) show no baked numbers, the player cannot choose one, and AI rivals have no number at all. Starting grids, nameplates and results identify rivals by name only.
+
+> **Review note (2026-10-11).** The first draft assumed a sprite clean-up, a new livery editor, a new RNG dependency and a per-grid bot pool. A check against the code on `main` showed that: sprite and logo clean-up belongs to [Spec 047](047_fictional_branding_and_realworld_ip_removal_for_steam_release.md); the player livery picker and the bot colour de-duplication already exist; `rand` is not a `tdrace-app` dependency; and rosters now reach 32 drivers ([Spec 104](104_autocross_and_rallycross_tournament_sprint_weekend_format.md)). This text is the reduced scope. Out of scope is listed at the end.
 
 This specification establishes:
-1. **Zero-Baked-Number Base Sprites:** Complete erasure of baked numbers, brand emblems, and sponsor decals from both lateral (`1024×512`) and top-down (`512×512`) vehicle sprites, leaving clean bodywork panels and neutral number roundels.
-2. **Player Number & Livery Customization:** A dedicated customization interface in the Garage / Profile allowing players to select their preferred racing number (0–999) and primary/secondary/accent colorway.
-3. **Non-Conflicting Bot Grid De-Duplication:** Dynamic grid seeding that assigns unique random numbers and color schemes to all AI competitors whenever the player changes their preferences, guaranteeing zero number collisions or identical color combinations.
-4. **Persistent Rival Identities:** Once assigned, AI competitors retain their numbers and liveries persistently across heats, rounds, and championships, re-shuffling only when the player updates their own selection.
-5. **Procedural In-Game Decal Rendering:** Runtime projection of competition numbers onto vehicle doors (lateral) and roofs/hoods (top-down) using crisp vector typography and vehicle-specific anchor coordinates.
+1. **Player racing number:** a number from `1` to `99`, chosen in the profile editor and saved on the player profile.
+2. **Roster-wide unique bot numbers:** every AI rival in a roster (career rivals, championship or tournament standings, or a casual grid) gets one number. No two drivers in the roster share a number, and none shares the player's number.
+3. **Persistence:** a rival keeps its number across heats, rounds and championship races. Only a rival that collides with a new player number is given a new number.
+4. **Procedural number plate:** the number is drawn at run time on the car (top-down view), on the in-race nameplate and on the starting grid and driver card. Vehicle sprites are not edited.
 
 ---
 
@@ -29,181 +32,193 @@ This specification establishes:
 
 ```mermaid
 flowchart TD
-    subgraph UI ["Garage / Profile Customization"]
-        A["Player Opens Garage / Profile Settings"]
-        B["Player Selects Preferred Number (e.g. #7)"]
-        C["Player Customizes Livery Palette (Primary, Secondary, Accent)"]
-        D["Save Preferences to Local Profile DB (tdrace_records.db)"]
+    subgraph UI ["Profile Editor (create / modify)"]
+        A["Player opens profile editor"]
+        B["Player picks number 1..99 (Left/Right, digits)"]
+        D["Save number on the profile (player_profiles.race_number)"]
     end
 
-    subgraph GridEngine ["Grid Generation & Non-Conflicting Seeding"]
-        E{"Did Player Number or Color Change?"}
-        F["Read Persistent Bot Roster from Database"]
-        G["Trigger De-Conflict Re-Shuffle"]
-        H["Filter Out Player Number from Available Pool (00..99)"]
-        I["Assign Distinct Random Numbers to All AI Grid Entrants"]
-        J["Assign Harmonized Distinct Colorways via Mask Tinting"]
-        K["Persist Bot Number & Color Assignments to Session/Series DB"]
+    subgraph Alloc ["Number Allocation (pure function)"]
+        E{"Roster has stored numbers?"}
+        F["Keep stored numbers"]
+        G["Re-allocate only the rival that collides with the player"]
+        H["Give new numbers to rivals with none (old saves, new rivals)"]
+        K["Write numbers back into the roster entry (career rival or championship standing)"]
     end
 
-    subgraph Rendering ["Runtime Decal & Roster Display"]
-        L["Showroom / Garage: Dynamic Number on Lateral Door Panel"]
-        M["In-Race Top-Down: Dynamic Number on Roof / Hood Panel"]
-        N["HUD / Starting Grid: Driver Nameplate with Correct # Badge"]
+    subgraph Rendering ["Display"]
+        L["In-race top-down: number plate on the car"]
+        M["Nameplate: number before the name"]
+        N["Starting grid and driver card: number badge"]
     end
 
-    A --> B --> C --> D --> E
-    E -- No --> F --> L & M & N
-    E -- Yes --> G --> H --> I --> J --> K --> L & M & N
+    A --> B --> D --> E
+    E -- Yes --> F --> G --> K
+    E -- No or partly --> H --> K
+    K --> L & M & N
 ```
 
-### 1. Garage & Profile Number Selection
-In the **Garage** or **Player Profile** screen:
-- A new interactive numeric selector allows the player to input or cycle their preferred competition number (`1` to `99`, or up to `999`).
-- A palette selector allows picking primary, secondary, and accent paint finishes from predefined motorsport colorways.
-- When saved, the preference updates `player_profile.preferred_number` and `player_profile.preferred_livery_palette`.
+### 1. Number selection (profile editor)
+- A new field in the profile create and modify screens (`GameState::ProfileCreate`, drawn in `profile_ui.rs`) lets the player step through `1..=99` with Left/Right and type digits. The garage (`ui/garage.rs`) is a car showroom and shop, so it is not used.
+- The number is stored on the profile as `PlayerProfile.race_number: u8`. New and existing profiles default to `PlayerProfile::DEFAULT_RACE_NUMBER` (`7`).
+- Livery colours are **not** changed by this spec. The existing `PlayerProfile.color_scheme` picker stays as it is.
 
-### 2. Live Race Grid & Top-Down In-Race Presentation
-- During race heats, every vehicle displays its assigned number:
-  - **Top-Down (In-Race):** Rendered onto the vehicle roof or hood centered on the designated `number_plate_topdown` coordinate derived from [`ChassisSkeleton`](075_physical_chassis_skeleton_explicit_anchor_points_and_proportional_rendering_harmonization.md).
-  - **Lateral (Showroom / Garage):** Rendered onto the door panel centered on `number_plate_lateral`.
-- Player vehicle displays the player's preferred number in bold, high-contrast typography.
-- AI competitors each display their uniquely assigned persistent number.
+### 2. Display
+- **Top-down in-race:** the number is drawn on the car by the car renderer at an anchor derived from the existing `ChassisSkeleton` (roof or cabin centre), rotated with the car heading. Open-wheel and kart bodies use the cabin centre (driver seat). `ChassisSkeleton` in `wheelbase` is not changed.
+- **Nameplate:** `VehicleNameplateItem` gets the number; the plate shows `#NN NAME`.
+- **Starting grid and driver card:** the participant row and card show a number badge. `GridParticipant` gets `race_number: u8`.
+- **Lateral (showroom) sprites:** no number is drawn. Door anchors would need data for every sprite. See Out of Scope.
+- The player's own number is shown in the same way as rivals.
 
 ---
 
 ## 🧭 Visual Standards & Technical Conventions
 
-### 1. Sprite Clean-Up Mandate (Laterals & Top-Downs)
-- **Zero Baked Numbers:** All digits (`17`, `32`, `2`, etc.) are stripped from vehicle doors, quarter panels, roofs, and hoods. Bodywork panels are smooth and clean.
-- **Zero Brand IP:** All manufacturer logos (Chevy bowtie, Audi rings, Ford oval, etc.) and sponsor trademarks (Goodyear, Red Bull, Haas, STP, Michelin, etc.) are removed.
-- **Top-Down & Lateral Parity:** Top-down sprites are harmonized with lateral sprites so that roof colors, hood stripes, and rear wings match identically.
+### 1. Sprites are not edited
+- No sprite is repainted by this spec. Removal of real logos and sponsor marks, and the audit for baked text, stay in Spec 047. The number plate is drawn over the existing sprite or procedural body.
+- Sprite bodies and procedural bodies (Classic cars without a sprite) get the same plate.
 
-### 2. Number Font & Decal Projection
-- Numbers render using the game's bold motorsport typeface ([`Rajdhani-Bold`](../crates/cabinet/src/ui/font.rs)).
-- High-contrast rendering: white glyphs with black outlines for dark roofs; black glyphs with white outlines for bright roofs.
-- Rotation is aligned to vehicle heading $\theta$. In top-down view, digits point toward the right (+X) heading.
+### 2. Number font and plate
+- Digits use the bold display typeface ([`Rajdhani-Bold`](../crates/cabinet/src/ui/font.rs)).
+- Contrast rule (pure function, unit tested): white glyphs with a black outline when the body colour luminance is below 0.5, black glyphs with a white outline otherwise. The colour used is the car's effective primary colour.
+- Rotation follows vehicle heading. In top-down view the digits read along the +X heading.
+- The plate size is bounded by the cabin length and body width from the skeleton, so it stays legible on karts and is never larger than the roof.
 
 ---
 
 ## ⚙️ Backend Models & API Endpoints
 
-### 1. Profile & Database Schema (`crates/tdrace-app/src/db/mod.rs`)
+### 1. Persistence (no new table)
+New data goes into columns and JSON blobs that already exist, so only one SQLite change is needed.
 
+| Data | Where | Change |
+| :--- | :--- | :--- |
+| Player number | `player_profiles` | New column `race_number INTEGER NOT NULL DEFAULT 7` (`ALTER TABLE` migration in `db/mod.rs`, same pattern as `license_grade`). `PlayerProfile.race_number: u8`, `#[serde(default = ...)]`. |
+| Career rival number | `profile_module_progress.career_rivals` (JSON) | `CareerRivalEntry.race_number: Option<u8>` with `#[serde(default)]`. |
+| Championship and tournament rival number | `profile_module_progress.active_championship` (JSON) | `SeriesStandingEntry.race_number: Option<u8>` with `#[serde(default)]`. |
+| Casual race (Quick, Custom, split screen) | not stored | Numbers come from the allocator with the grid seed. Casual rosters are re-sampled for every race today, so they are not persistent either. |
+
+`None` means "no number yet". Old saves load with `None` and get numbers on first use. No migration of the JSON is needed.
+
+### 2. Allocator (`crates/tdrace-app/src/ai/`, new file `racing_number.rs`)
 ```rust
-pub struct PlayerLiveryPreference {
-    pub preferred_number: u16,
-    pub primary_color: [u8; 3],
-    pub secondary_color: [u8; 3],
-    pub accent_color: [u8; 3],
-}
-
-pub struct BotEntrantAssignment {
-    pub driver_id: String,
-    pub car_model_id: String,
-    pub assigned_number: u16,
-    pub livery_seed: u32,
-    pub primary_color: [u8; 3],
-    pub secondary_color: [u8; 3],
-}
+/// Fills in missing numbers and fixes collisions. Returns one number per rival, in order.
+/// `stored[i]` is the number already saved for rival i, if any.
+pub fn allocate_rival_numbers(
+    player: u8,
+    stored: &[Option<u8>],
+    seed: u64,
+) -> Result<Vec<u8>, RosterTooLarge>
 ```
+Rules:
+1. Valid numbers are `1..=99`. A stored number outside this range counts as missing.
+2. A stored number that equals `player`, or that appeared earlier in `stored`, counts as missing. Earlier entries win, so only the colliding rival changes.
+3. Each rival with a missing number takes the next number from a pool of the unused numbers, shuffled with `LcgRng::new(seed)` (the existing `race-kit` RNG; no new dependency).
+4. A roster of more than 98 rivals cannot be numbered. The function does not panic and does not return duplicates: it returns `RosterTooLarge`. The caller logs it and shows no numbers for that roster. Real rosters are 8 to 64 (Spec 104).
+5. The function is pure and deterministic: same inputs, same output.
 
-### 2. Non-Conflicting Grid Seeding Algorithm (`crates/tdrace-app/src/ai/driver.rs`)
+Call site: `Game::rebuild_roster_participants`, the one place that builds every grid, after the opponent list is resolved and before the participants are built. For career and championship rosters the result is written back to the `CareerRivalEntry` or `SeriesStandingEntry` and saved through the existing save path. The pool is the whole roster (up to 32 or 64 drivers), not the 8 cars of one heat, so a rival has the same number in the heat, the semifinal and the final.
 
-```rust
-pub fn generate_nonconflicting_grid(
-    player_pref: &PlayerLiveryPreference,
-    bot_roster: &[DriverProfile],
-    series_seed: u64,
-) -> Vec<BotEntrantAssignment> {
-    let mut used_numbers = std::collections::HashSet::new();
-    used_numbers.insert(player_pref.preferred_number);
-
-    let mut rng = SmallRng::seed_from_u64(series_seed);
-    let mut available_numbers: Vec<u16> = (1..=99)
-        .filter(|n| !used_numbers.contains(n))
-        .collect();
-    available_numbers.shuffle(&mut rng);
-
-    bot_roster
-        .iter()
-        .zip(available_numbers.into_iter())
-        .map(|(bot, num)| {
-            // Assign distinct colorway avoiding player primary
-            let colorway = pick_distinct_bot_colorway(&player_pref.primary_color, &mut rng);
-            BotEntrantAssignment {
-                driver_id: bot.id.clone(),
-                car_model_id: bot.car_model_id.clone(),
-                assigned_number: num,
-                livery_seed: rng.next_u32(),
-                primary_color: colorway.0,
-                secondary_color: colorway.1,
-            }
-        })
-        .collect()
-}
-```
-
-### 3. Persistence Rules
-- **State Stability:** Bot entrant assignments are saved in `tdrace_records.db` keyed by championship session ID or modality roster key.
-- **Invalidation Trigger:** Whenever `player_profile.preferred_number` or `player_profile.preferred_livery_palette` is modified by the user:
-  - If any active bot entrant shares the new player number or colorway:
-    - The grid generator re-allocates a non-conflicting number/color to that bot and updates the database.
-  - If no conflict exists, existing bot identities remain untouched to preserve rival continuity.
+### 3. Persistence rules
+- **Stable:** a stored, valid, non-colliding rival number is never changed.
+- **Player number change:** the profile is saved first. The next `rebuild_roster_participants` runs the allocator, and only a rival with the same number as the player gets a new one. Other rivals keep their numbers.
+- **Bot colours:** unchanged. `resolve_bot_color_scheme` keeps de-conflicting colours per grid against the player and the cars already on that grid. Colour uniqueness across a 32-driver roster is not possible with the 9 preset colours and is not required.
+- **Split screen:** player 2 gets a number from the allocator like a rival slot. It is not stored.
+- **LAN multiplayer:** out of scope. LAN lobbies show no numbers.
 
 ---
 
 ## 🛡️ Security & Role-Based Access Controls (RBAC)
 
-1. **Deterministic Grid Seeding Boundary**: Custom number allocation and bot de-duplication are deterministic operations executed client-side. The seeding RNG uses isolated session and seed counters, preventing race-condition corruption across concurrent local profile states.
-2. **Profile Sanitization**: Custom numbers are constrained to strictly validated unsigned integer ranges (`0..=999`) and alphanumeric inputs are sanitized to prevent injection attacks or database corruption in `tdrace_records.db`.
-3. **Headless Presentation Decoupling**: Vector number rendering and sprite clean-ups operate strictly within presentation-layer rendering crates (`cabinet`, `race-ui`, `tdrace-app`). Core deterministic physics simulations (`wheelbase`, `arcade-race-core`) remain free of font and visual dependencies.
+1. **Range validation, fail closed:** `race_number` is a `u8` validated to `1..=99` on input, on profile load and on roster load. A value outside the range, from damaged data, is treated as missing. It is never drawn and never used as an index.
+2. **No free text:** the number is chosen with digits and arrows only, so no string reaches the database. All SQL uses bound parameters, as the existing `update_profile` does.
+3. **Determinism:** the allocator uses `LcgRng` with an explicit seed and has no clock or global state. The physics crates (`wheelbase`, `arcade-race-core`, `race-kit`) are not changed.
+4. **Headless boundary:** font and drawing code stay in `tdrace-app` (`render`, `ui`). The allocator is pure and has no graphics dependency.
 
 ---
 
 ## 🧪 Verification & Acceptance Criteria
 
-- **Scenario: Player defines a preferred competition number**
-  - [ ] **Given** the player opens the Garage or Profile menu
-  - [ ] **When** the player changes their preferred racing number to "7"
-  - [ ] **Then** the preference is persisted in the local profile database
-  - [ ] **And** the player's car displays number "7" across showroom and in-race views
+- **Scenario: Player defines a preferred racing number**
+  - [x] **Given** the player opens the profile editor
+  - [x] **When** the player sets the number to 7 and saves
+  - [x] **Then** the number is stored in `player_profiles.race_number` and is still 7 after the profile is reloaded from the database
+  - [x] **And** the player car, the nameplate and the starting grid row show 7
+
+- **Scenario: Out-of-range number is rejected**
+  - [x] **Given** a stored player number of 0 or 100 (damaged data), or a typed number of 150
+  - [x] **When** the profile loads or the player confirms the field
+  - [x] **Then** the value is clamped or replaced by the default
+  - [x] **And** an invalid number never reaches the allocator or the renderer
 
 - **Scenario: Grid generation eliminates duplicate numbers**
-  - [ ] **Given** the player has selected preferred number "17"
-  - [ ] **When** an 8-car starting grid is launched in Single Race or Championship mode
-  - [ ] **Then** exactly one vehicle on the grid carries number "17"
-  - [ ] **And** all 7 AI bot competitors carry unique numbers distinct from "17" and each other
-  - [ ] **And** no two cars share the same number
+  - [x] **Given** the player number is 17
+  - [x] **When** an 8-car grid is built for a Quick Race
+  - [x] **Then** exactly one car carries 17
+  - [x] **And** the 7 AI cars carry numbers that differ from 17 and from each other
 
-- **Scenario: Bot numbers and colorways remain persistent across heats**
-  - [ ] **Given** a championship with 8 competitors has been generated
-  - [ ] **When** the player completes Round 1 and advances to Round 2
-  - [ ] **Then** every AI bot retains its exact number and colorway from Round 1
-  - [ ] **And** rival driver identities remain consistent
+- **Scenario: Tournament roster of 32 drivers is unique**
+  - [x] **Given** an Autocross or Rallycross tournament weekend with the player and 31 rivals
+  - [x] **When** the 4 heats, the 2 semifinals and the final are built
+  - [x] **Then** all 32 drivers have different numbers
+  - [x] **And** every rival has the same number in the heat, the semifinal and the final
 
-- **Scenario: Player number change triggers non-conflicting bot re-allocation**
-  - [ ] **Given** an active bot is assigned number "42"
-  - [ ] **When** the player updates their preferred number to "42"
-  - [ ] **Then** the grid de-conflict engine assigns a new available number to that bot
-  - [ ] **And** no number collision occurs on the next starting grid
+- **Scenario: Rival numbers persist across rounds and saves**
+  - [x] **Given** a career or championship roster has been numbered
+  - [x] **When** the player finishes round 1, the profile is saved and reloaded, and round 2 is built
+  - [x] **Then** every rival has the number it had in round 1
 
-- **Scenario: Top-down and lateral sprites contain zero baked-in numbers**
-  - [ ] **Given** any vehicle sprite texture in "assets/textures/vehicles/"
-  - [ ] **When** scanned for baked-in door, roof, or hood numbers
-  - [ ] **Then** all vehicle bodywork panels are blank of permanent numeric bitmaps
-  - [ ] **And** numbers are rendered strictly via procedural decal overlays
+- **Scenario: Player number change re-allocates only the colliding rival**
+  - [x] **Given** one rival has number 42 and the others have other numbers
+  - [x] **When** the player changes their number to 42 and the next grid is built
+  - [x] **Then** that rival gets a new unused number
+  - [x] **And** all other rivals keep their numbers
+  - [x] **And** no two cars on the grid share a number
+
+- **Scenario: Old save without numbers loads cleanly**
+  - [x] **Given** a saved career or championship whose rival entries have no `race_number`
+  - [x] **When** the game loads it and builds a grid
+  - [x] **Then** the save loads without error
+  - [x] **And** the rivals get unique numbers that differ from the player's
+
+- **Scenario: Allocator is deterministic and does not overflow**
+  - [x] **Given** the same player number, stored numbers and seed
+  - [x] **When** the allocator runs twice
+  - [x] **Then** both runs return identical numbers
+  - [x] **And** a roster of 99 rivals returns `RosterTooLarge` with no duplicate numbers and no panic
+
+- **Scenario: Number plate is legible and anchored to the car**
+  - [x] **Given** a Classic kart, an Autocross car and a Rallycross car (Steam v1 categories)
+  - [x] **When** the race is drawn at the default camera zoom
+  - [x] **Then** the number is centred on the cabin or roof, rotated with the car, and inside the body outline
+  - [x] **And** the glyph colours follow the body luminance rule (unit tests of the anchor and contrast functions, plus one screenshot per category)
+
+---
+
+## 🚫 Out of Scope
+- Sprite repainting, logo removal and neutral number roundels (Spec 047 and Spec 093 own sprites).
+- Numbers on lateral showroom sprites (needs door anchor data for each sprite; a later spec).
+- A new livery editor, an accent colour, or colour persistence for bots.
+- Numbers `0`, `00` and `100..=999`.
+- LAN multiplayer numbers (protocol change).
+- Numbers in series TOML files (`DriverConfig`), replays and ghost cars.
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Modified Files
-- `[ ]` [`crates/tdrace-app/src/profile/mod.rs`](../crates/tdrace-app/src/profile/mod.rs) -> Add preferred_number and preferred_palette fields to PlayerProfile.
-- `[ ]` [`crates/tdrace-app/src/ai/driver.rs`](../crates/tdrace-app/src/ai/driver.rs) -> Implement generate_nonconflicting_grid algorithm.
-- `[ ]` [`crates/tdrace-app/src/render/car.rs`](../crates/tdrace-app/src/render/car.rs) -> Procedural dynamic number projection on vehicle doors and roofs.
-- `[ ]` [`crates/tdrace-app/src/ui/garage.rs`](../crates/tdrace-app/src/ui/garage.rs) -> Interactive number selector and livery color picker.
+- `[x]` [`crates/tdrace-app/src/profile/mod.rs`](../crates/tdrace-app/src/profile/mod.rs) -> `PlayerProfile.race_number` and default.
+- `[x]` [`crates/tdrace-app/src/db/mod.rs`](../crates/tdrace-app/src/db/mod.rs) -> `race_number` column migration, insert and update.
+- `[x]` [`crates/tdrace-app/src/ai/career.rs`](../crates/tdrace-app/src/ai/career.rs) -> `CareerRivalEntry.race_number`.
+- `[x]` [`crates/tdrace-app/src/series/mod.rs`](../crates/tdrace-app/src/series/mod.rs) -> `SeriesStandingEntry.race_number`.
+- `[x]` `crates/tdrace-app/src/ai/racing_number.rs` (new) -> `allocate_rival_numbers`.
+- `[x]` [`crates/tdrace-app/src/game/mod.rs`](../crates/tdrace-app/src/game/mod.rs) -> `GridParticipant.race_number`, allocator call in `rebuild_roster_participants`, profile editor input, plate draw call, nameplate items.
+- `[x]` [`crates/tdrace-app/src/ui/profile_ui.rs`](../crates/tdrace-app/src/ui/profile_ui.rs) -> number field in the create and modify screens.
+- `[x]` [`crates/tdrace-app/src/render/car.rs`](../crates/tdrace-app/src/render/car.rs) -> plate anchor, contrast and draw.
+- `[x]` [`crates/tdrace-app/src/render/marker.rs`](../crates/tdrace-app/src/render/marker.rs) -> number on `VehicleNameplateItem`.
+- `[x]` [`crates/tdrace-app/src/ui/starting_grid.rs`](../crates/tdrace-app/src/ui/starting_grid.rs) and [`crates/tdrace-app/src/ui/driver_card.rs`](../crates/tdrace-app/src/ui/driver_card.rs) -> number badge.
+- `[x]` `crates/tdrace-app/tests/racing_number_tests.rs` (new) -> allocator, persistence, grid and tournament tests.
 
 ### Verification Assertions
-- Verification receipts will be recorded via `keel receipt 092 --cmd "cargo test -p tdrace-app test_grid_number_deconfliction"`.
-
+- Verification receipts will be recorded via `keel receipt 092 --cmd "cargo test -p tdrace-app --test racing_number_tests"`.

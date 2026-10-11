@@ -49,7 +49,7 @@ pub use curve_indicator::{
     compute_curve_colors, compute_indicator_alpha, curve_indicator_lookahead,
     render_bifurcation_pacenote, render_curve_pacenote, upcoming_bifurcation, CurveColorScheme,
 };
-pub use driver_card::render_driver_cards_screen;
+pub use driver_card::{race_number_label, render_driver_cards_screen};
 pub use font::Fonts;
 pub use garage::{
     garage_car_card_rect, garage_gallery_card_rect, garage_gallery_tab_rect,

@@ -47,6 +47,8 @@ pub fn starting_grid_columns(sw: f32, sh: f32) -> (f32, f32, f32, f32) {
 /// A grid roster row, pre-formatted for the `DataTable` roster.
 struct GridRosterRow {
     position: usize,
+    /// Racing number as shown in the NO. column; empty when the roster has no numbers (spec 092).
+    race_number: String,
     driver: String,
     car: String,
     status: String,
@@ -995,6 +997,7 @@ pub fn render_starting_grid_screen(
                     (
                         GridRosterRow {
                             position: slot,
+                            race_number: crate::ui::driver_card::race_number_label(participant.race_number),
                             driver: format!("{}  \"{}\"", display_name, participant.alias),
                             car: participant.car_title.clone(),
                             status,
@@ -1013,9 +1016,10 @@ pub fn render_starting_grid_screen(
             let mut table = DataTable::<GridRosterRow>::new(0.0, 0.0, table_bounds.w, scaler.s(46.0), scaler.s(28.0));
             table.is_focused = roster_header_is_focused;
             table.add_column(DataColumn::new("pos", "POS", 8.0, ColumnAlign::Left, |r| format!("P{}", r.position)));
-            table.add_column(DataColumn::new("driver", "DRIVER", 34.0, ColumnAlign::Left, |r| r.driver.clone()));
+            table.add_column(DataColumn::new("no", "NO.", 7.0, ColumnAlign::Left, |r| r.race_number.clone()));
+            table.add_column(DataColumn::new("driver", "DRIVER", 31.0, ColumnAlign::Left, |r| r.driver.clone()));
             table.add_column(DataColumn::new("car", "VEHICLE", 24.0, ColumnAlign::Left, |r| r.car.clone()));
-            table.add_column(DataColumn::new("status", "FORM / SEED", 34.0, ColumnAlign::Left, |r| r.status.clone()));
+            table.add_column(DataColumn::new("status", "FORM / SEED", 30.0, ColumnAlign::Left, |r| r.status.clone()));
             table.set_rows(rows.into_iter().map(|(row, is_player)| {
                 let pos = row.position;
                 DataRow::new(pos.to_string(), row)

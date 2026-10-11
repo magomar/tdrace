@@ -130,6 +130,7 @@ fn test_deconflict_nameplates_viewport_culling() {
             position: Vec2::new(0.0, 0.0), // Inside viewport (centered)
             elevation: 0.0,
             distance_to_player: 15.0,
+            race_number: 0,
         },
         VehicleNameplateItem {
             car_idx: 2,
@@ -139,6 +140,7 @@ fn test_deconflict_nameplates_viewport_culling() {
             position: Vec2::new(2000.0, 2000.0), // Far outside viewport -> culled
             elevation: 0.0,
             distance_to_player: 20.0,
+            race_number: 0,
         },
     ];
 
@@ -163,6 +165,7 @@ fn test_deconflict_nameplates_max_five_closest_limit() {
             position: Vec2::new(0.0, 1.0),
             elevation: 0.0,
             distance_to_player: 5.0,
+            race_number: 0,
         },
         VehicleNameplateItem {
             car_idx: 2,
@@ -172,6 +175,7 @@ fn test_deconflict_nameplates_max_five_closest_limit() {
             position: Vec2::new(0.0, 2.0),
             elevation: 0.0,
             distance_to_player: 10.0,
+            race_number: 0,
         },
         VehicleNameplateItem {
             car_idx: 3,
@@ -181,6 +185,7 @@ fn test_deconflict_nameplates_max_five_closest_limit() {
             position: Vec2::new(0.0, 3.0),
             elevation: 0.0,
             distance_to_player: 15.0,
+            race_number: 0,
         },
         VehicleNameplateItem {
             car_idx: 4,
@@ -190,6 +195,7 @@ fn test_deconflict_nameplates_max_five_closest_limit() {
             position: Vec2::new(0.0, 4.0),
             elevation: 0.0,
             distance_to_player: 20.0,
+            race_number: 0,
         },
         VehicleNameplateItem {
             car_idx: 5,
@@ -199,6 +205,7 @@ fn test_deconflict_nameplates_max_five_closest_limit() {
             position: Vec2::new(0.0, 5.0),
             elevation: 0.0,
             distance_to_player: 25.0,
+            race_number: 0,
         },
         VehicleNameplateItem {
             car_idx: 6,
@@ -208,6 +215,7 @@ fn test_deconflict_nameplates_max_five_closest_limit() {
             position: Vec2::new(0.0, 6.0),
             elevation: 0.0,
             distance_to_player: 30.0, // 6th closest -> must be excluded
+            race_number: 0,
         },
         VehicleNameplateItem {
             car_idx: 7,
@@ -217,6 +225,7 @@ fn test_deconflict_nameplates_max_five_closest_limit() {
             position: Vec2::new(0.0, 7.0),
             elevation: 0.0,
             distance_to_player: 35.0, // 7th closest -> must be excluded
+            race_number: 0,
         },
         VehicleNameplateItem {
             car_idx: 8,
@@ -226,6 +235,7 @@ fn test_deconflict_nameplates_max_five_closest_limit() {
             position: Vec2::new(0.0, 8.0),
             elevation: 0.0,
             distance_to_player: 40.0, // 8th closest -> must be excluded
+            race_number: 0,
         },
     ];
 
@@ -254,6 +264,7 @@ fn test_deconflict_nameplates_anti_crowding_stacking() {
             position: Vec2::new(0.0, 0.0),
             elevation: 0.0,
             distance_to_player: 10.0, // Closest
+            race_number: 0,
         },
         VehicleNameplateItem {
             car_idx: 2,
@@ -263,6 +274,7 @@ fn test_deconflict_nameplates_anti_crowding_stacking() {
             position: Vec2::new(0.0, 0.1),
             elevation: 0.0,
             distance_to_player: 12.0, // Overlaps CarA
+            race_number: 0,
         },
         VehicleNameplateItem {
             car_idx: 3,
@@ -272,6 +284,7 @@ fn test_deconflict_nameplates_anti_crowding_stacking() {
             position: Vec2::new(0.0, 0.2),
             elevation: 0.0,
             distance_to_player: 14.0, // Overlaps CarA and CarB
+            race_number: 0,
         },
     ];
 
@@ -314,6 +327,7 @@ fn test_deconflict_nameplates_viewport_frustum_culling() {
             position: Vec2::new(5000.0, 5000.0), // Far outside
             elevation: 0.0,
             distance_to_player: 10.0, // Distance within 25m, but off-screen
+            race_number: 0,
         },
     ];
 
@@ -334,6 +348,7 @@ fn test_deconflict_nameplates_master_alpha_fade() {
         position: Vec2::new(0.0, 0.0),
         elevation: 0.0,
         distance_to_player: 15.0,
+        race_number: 0,
     }];
 
     // Near zero master alpha -> empty
@@ -373,6 +388,7 @@ fn test_render_floating_bot_nameplates_headless_execution() {
             position: Vec2::new(10.0, 10.0),
             elevation: 0.5,
             distance_to_player: 12.0,
+            race_number: 0,
         },
         VehicleNameplateItem {
             car_idx: 2,
@@ -382,6 +398,7 @@ fn test_render_floating_bot_nameplates_headless_execution() {
             position: Vec2::new(15.0, 15.0),
             elevation: 0.0,
             distance_to_player: 35.0,
+            race_number: 0,
         },
     ];
 

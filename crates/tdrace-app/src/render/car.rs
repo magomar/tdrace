@@ -1902,3 +1902,168 @@ fn render_sand_rail_body(
         );
     }
 }
+
+// ---------------------------------------------------------------------------
+// Racing number plate (spec 092)
+// ---------------------------------------------------------------------------
+
+/// Advance width of one Rajdhani-Bold digit, in em.
+pub const NUMBER_DIGIT_ADVANCE_EM: f32 = 0.56;
+/// Height of a Rajdhani-Bold digit, in em.
+pub const NUMBER_DIGIT_HEIGHT_EM: f32 = 0.70;
+/// The number never fills more than this fraction of the plate, so the digits keep a margin to the body edge.
+const NUMBER_PLATE_FILL: f32 = 0.9;
+/// The plate is this fraction of the body width: the roof is narrower than the fenders.
+const NUMBER_PLATE_WIDTH_FRACTION: f32 = 0.7;
+/// Smallest digit height, in screen pixels, that is still drawn.
+const NUMBER_MIN_PIXEL_HEIGHT: f32 = 5.0;
+
+/// Where the racing number sits on a car and how much room it has, in the car's own frame (metres).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct NumberPlate {
+    /// Centre of the plate, measured forward from the geometric centre of the body.
+    pub forward_offset: f32,
+    /// Half of the plate along the heading: bounded by the cabin length.
+    pub half_len: f32,
+    /// Half of the plate across the car: bounded by the body width.
+    pub half_width: f32,
+}
+
+/// The number plate for a chassis: the centre of the cabin (roof, or the driver seat of a kart or open-wheeler),
+/// as long as the cabin and as wide as the roof. Pure: only the `ChassisSkeleton` and the axle positions are read.
+pub fn number_plate(chassis: &tdrace_core::physics::config::ChassisSkeleton, wheelbase: f32, cg_to_front: f32, cg_to_rear: f32) -> NumberPlate {
+    let geom_offset = chassis.geometric_center_offset_from_cg(cg_to_front, cg_to_rear);
+    let cabin_front = cg_to_front + chassis.cabin_start_offset;
+    let cabin_rear = -cg_to_rear + chassis.cabin_end_offset;
+    let body_half_len = chassis.half_length(wheelbase);
+    // A skeleton whose cabin edges cross has no cabin; fall back to the middle third of the body.
+    let (centre, cabin_len) = if cabin_front - cabin_rear > 0.1 {
+        ((cabin_front + cabin_rear) * 0.5, cabin_front - cabin_rear)
+    } else {
+        (geom_offset, body_half_len * 2.0 / 3.0)
+    };
+    let forward_offset = centre - geom_offset;
+    // The plate stays on the body: no longer than twice the room from its own centre to the nearest end.
+    let room_to_end = (body_half_len - forward_offset.abs()).max(0.0);
+    NumberPlate {
+        forward_offset,
+        half_len: (cabin_len * 0.5).min(room_to_end),
+        half_width: chassis.half_width() * NUMBER_PLATE_WIDTH_FRACTION,
+    }
+}
+
+/// Size of the digits, in em (metres of font size), so `digits` characters fit inside `plate` with a margin.
+pub fn number_em_size(plate: &NumberPlate, digits: usize) -> f32 {
+    let digits = digits.max(1) as f32;
+    let by_length = 2.0 * plate.half_len * NUMBER_PLATE_FILL / (digits * NUMBER_DIGIT_ADVANCE_EM);
+    let by_width = 2.0 * plate.half_width * NUMBER_PLATE_FILL / NUMBER_DIGIT_HEIGHT_EM;
+    by_length.min(by_width).max(0.0)
+}
+
+/// Brightness of a colour, 0.0 (black) to 1.0 (white): Rec. 709 weights on the colour values.
+pub fn color_luminance(c: Color) -> f32 {
+    0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b
+}
+
+/// Glyph and outline colours for a number drawn on a body of colour `body`: white on a dark body with a black
+/// outline, black on a light body with a white outline (luminance 0.5 counts as light).
+pub fn number_glyph_colors(body: Color) -> (Color, Color) {
+    if color_luminance(body) < 0.5 {
+        (Palette::WHITE, Color::new(0.0, 0.0, 0.0, 1.0))
+    } else {
+        (Color::new(0.0, 0.0, 0.0, 1.0), Palette::WHITE)
+    }
+}
+
+/// A racing number to draw on one car: where, how big and in what colours, in world space.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct CarNumberItem {
+    pub number: u8,
+    /// World position of the plate centre.
+    pub center: Vec2,
+    /// World heading of the car, radians.
+    pub angle: f32,
+    /// Size of the digits, in em (world metres).
+    pub em: f32,
+    /// Effective primary colour of the body under the number.
+    pub body_color: Color,
+}
+
+impl CarNumberItem {
+    /// The number plate of `car`, placed on the body as `render_car_with_visual_type_model_and_shadows` places it
+    /// (roll, pitch and jump lift included). `None` when `number` is not a valid racing number.
+    pub fn for_car(car: &Car, number: u8, body_color: Color) -> Option<Self> {
+        if !crate::ai::is_valid_race_number(number) {
+            return None;
+        }
+        let fwd = car.forward_vector();
+        let right = car.right_vector();
+        let z_lift = car.state.elevation.max(0.0) + car.state.ramp_elevation.max(0.0);
+        let roll_offset_lat = (-car.state.acceleration_local.y * 0.015).clamp(-0.18, 0.18);
+        let grade_pitch_vis = (-car.state.road_grade_slope * 0.20).clamp(-0.12, 0.12);
+        let pitch_offset_long = (car.state.acceleration_local.x * 0.012 + grade_pitch_vis).clamp(-0.18, 0.18);
+        let air_scale = 1.0 + (z_lift * 0.07).min(0.35);
+        let plate = number_plate(&car.config.chassis, car.config.wheelbase, car.config.cg_to_front, car.config.cg_to_rear);
+        let geom_offset = car.config.chassis.geometric_center_offset_from_cg(car.config.cg_to_front, car.config.cg_to_rear);
+        let center = car.state.position
+            + right * roll_offset_lat
+            + fwd * pitch_offset_long
+            + Vec2::new(0.0, -z_lift * 1.6)
+            + fwd * ((geom_offset + plate.forward_offset) * air_scale);
+        let digits = if number >= 10 { 2 } else { 1 };
+        Some(Self { number, center, angle: car.state.angle, em: number_em_size(&plate, digits) * air_scale, body_color })
+    }
+}
+
+/// Draws racing numbers on cars in screen space: projected through `camera`, rotated with the car, glyphs by
+/// the contrast rule. Numbers whose digits would be under 5 px high are skipped, as are cars outside the viewport.
+pub fn render_car_numbers(
+    fonts: &crate::ui::font::Fonts,
+    camera: &crate::camera::RaceCamera,
+    viewport_rect: Option<(f32, f32, f32, f32)>,
+    items: &[CarNumberItem],
+) {
+    let Some(font) = fonts.display.as_ref() else {
+        return;
+    };
+    let (sw, sh) = crate::camera::RaceCamera::get_screen_dimensions_safe();
+    let (vp_x, vp_y, vp_w, vp_h) = viewport_rect.unwrap_or((0.0, 0.0, sw, sh));
+    for item in items {
+        let em_px = item.em * camera.current_zoom;
+        if em_px * NUMBER_DIGIT_HEIGHT_EM < NUMBER_MIN_PIXEL_HEIGHT {
+            continue;
+        }
+        let center = camera.world_to_screen_with_viewport(item.center, sw, sh);
+        let reach = em_px * 1.5;
+        if center.x - reach < vp_x || center.x + reach > vp_x + vp_w || center.y - reach < vp_y || center.y + reach > vp_y + vp_h {
+            continue;
+        }
+        let (glyph, outline) = number_glyph_colors(item.body_color);
+        let text = item.number.to_string();
+        let _ = std::panic::catch_unwind(|| draw_rotated_number(font, &text, center, -item.angle, em_px, glyph, outline));
+    }
+}
+
+/// Draws `text` centred on `center`, its baseline running along the screen angle `rotation` (clockwise, radians).
+fn draw_rotated_number(font: &macroquad::text::Font, text: &str, center: Vec2, rotation: f32, em_px: f32, glyph: Color, outline: Color) {
+    let raster = em_px.round().clamp(8.0, 512.0);
+    let scale = em_px / raster;
+    let params = |color: Color| macroquad::text::TextParams {
+        font: Some(font),
+        font_size: raster as u16,
+        font_scale: scale,
+        color,
+        rotation,
+        ..Default::default()
+    };
+    let size = macroquad::text::measure_text(text, Some(font), raster as u16, scale);
+    // The text box is `size.width` along the baseline and `size.offset_y` above it; centre it on `center`.
+    let (sin, cos) = rotation.sin_cos();
+    let local = Vec2::new(-size.width * 0.5, size.offset_y * 0.5);
+    let origin = center + Vec2::new(local.x * cos - local.y * sin, local.x * sin + local.y * cos);
+    let reach = (em_px * 0.06).max(1.0);
+    for (dx, dy) in [(-1.0, 0.0), (1.0, 0.0), (0.0, -1.0), (0.0, 1.0), (-0.7, -0.7), (0.7, -0.7), (-0.7, 0.7), (0.7, 0.7)] {
+        macroquad::text::draw_text_ex(text, origin.x + dx * reach, origin.y + dy * reach, params(outline));
+    }
+    macroquad::text::draw_text_ex(text, origin.x, origin.y, params(glyph));
+}

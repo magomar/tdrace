@@ -215,7 +215,7 @@ use crate::profile::{
     ChampionshipAward, CountryRegistry, LicenseGrade, ModuleCareerProgress, PlayerProfile,
     ProfileCareerStats, RaceHistoryEntry,
 };
-use crate::render::car::render_car_with_visual_type_model_and_shadows;
+use crate::render::car::{render_car_numbers, render_car_with_visual_type_model_and_shadows};
 use crate::render::color::{CarColorScheme, Palette};
 use crate::editor::{
     is_mouse_over_editor_ui, render_editor_grid, render_editor_gizmos, render_editor_junction_labels, render_editor_ui,
@@ -283,6 +283,7 @@ mod lan;
 pub use lan::{LanRaceState, LAN_WAITING_COUNTDOWN};
 
 pub mod academy;
+mod racing_numbers;
 
 /// Source screen that launched the DriverCards dossier view.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -377,6 +378,7 @@ pub enum GameState {
         country_idx: usize,
         livery_idx: usize,
         assist_mode: AssistProfile,
+        race_number: u8,
         cursor_timer: f32,
         status_msg: Option<String>,
     },
@@ -387,6 +389,7 @@ pub enum GameState {
         input_alias: String,
         country_idx: usize,
         livery_idx: usize,
+        race_number: u8,
         cursor_timer: f32,
     },
     TrackManager {
@@ -550,6 +553,8 @@ pub struct GridParticipant {
     pub random_seed: u64,
     /// Dynamic skill tier of this driver (from difficulty bell curve or series configuration).
     pub driver_tier: Option<DriverTier>,
+    /// Racing number `1..=99` (spec 092), or `0` when this roster has no numbers.
+    pub race_number: u8,
 }
 
 impl GridParticipant {
@@ -631,6 +636,8 @@ pub struct RaceSession {
 
     pub world: RaceWorld<Car>,
     pub color_schemes: Vec<CarColorScheme>,
+    /// Racing number of each car, in world order like `color_schemes`; `0` or missing means no number (spec 092).
+    pub car_race_numbers: Vec<u8>,
     pub ai_drivers: Vec<BotAiDriver>,
     pub opponent_drivers: Vec<DriverCharacter>,
     pub opponent_tiers: Vec<DriverTier>,
@@ -915,6 +922,7 @@ impl RaceSession {
 
             world: RaceWorld::new(RaceRules::default()),
             color_schemes: Vec::new(),
+            car_race_numbers: Vec::new(),
             ai_drivers: Vec::new(),
             opponent_drivers: Vec::new(),
             opponent_tiers: Vec::new(),
@@ -2810,6 +2818,7 @@ impl RaceSession {
                             driver_name: s.driver_name.clone(),
                             style,
                             tier: DriverTier::from_u8(tier.clamp(1, 5) as u8),
+                            race_number: s.race_number,
                         }
                     })
                     .collect();
@@ -2981,6 +2990,7 @@ impl RaceSession {
                             driver_name: s.driver_name.clone(),
                             style,
                             tier: DriverTier::from_u8(tier.clamp(1, 5) as u8),
+                            race_number: s.race_number,
                         }
                     })
                     .collect();
@@ -3158,6 +3168,7 @@ impl RaceSession {
                             driver_name: s.driver_name.clone(),
                             style,
                             tier: DriverTier::from_u8(tier.clamp(1, 5) as u8),
+                            race_number: s.race_number,
                         }
                     })
                     .collect();
@@ -3332,6 +3343,7 @@ impl RaceSession {
                             driver_name: s.driver_name.clone(),
                             style,
                             tier: DriverTier::from_u8(tier.clamp(1, 5) as u8),
+                            race_number: s.race_number,
                         }
                     })
                     .collect();
@@ -3517,6 +3529,7 @@ impl RaceSession {
                             driver_name: s.driver_name.clone(),
                             style,
                             tier: DriverTier::from_u8(tier.clamp(1, 5) as u8),
+                            race_number: s.race_number,
                         }
                     })
                     .collect();
@@ -3707,6 +3720,7 @@ impl RaceSession {
                             driver_name: s.driver_name.clone(),
                             style,
                             tier: DriverTier::from_u8(tier.clamp(1, 5) as u8),
+                            race_number: s.race_number,
                         }
                     })
                     .collect();
@@ -4066,6 +4080,7 @@ impl RaceSession {
         self.car_model_ids.clear();
         self.car_lights_on.clear();
         self.color_schemes.clear();
+        self.car_race_numbers.clear();
         self.ai_drivers.clear();
         self.opponent_drivers.clear();
 
@@ -4160,6 +4175,8 @@ impl RaceSession {
         if self.game_mode != GameMode::Career && self.championship_session.is_none() {
             self.opponent_tiers = casual_tiers.clone();
         }
+
+        let grid_numbers = self.grid_numbers(seed);
 
         // Resolve the real or fantasy car model
         let mut player_model = if effective_module != "classic" {
@@ -4457,6 +4474,7 @@ impl RaceSession {
             best_circuit_time: player_best_circuit,
             random_seed: player_seed,
             driver_tier: None,
+            race_number: self.player_race_number(),
         });
 
         // 1b. Player 2 participant for Split Screen
@@ -4481,6 +4499,7 @@ impl RaceSession {
                 best_circuit_time: None,
                 random_seed: p2_seed,
                 driver_tier: None,
+                race_number: grid_numbers.player2,
             });
         }
 
@@ -4566,6 +4585,7 @@ impl RaceSession {
                 best_circuit_time: bot_best_circuit,
                 random_seed: bot_seed,
                 driver_tier: Some(bot_tier),
+                race_number: grid_numbers.rivals.get(bot_idx).copied().unwrap_or(0),
             });
         }
 
@@ -4638,6 +4658,7 @@ impl RaceSession {
         self.world.spawn(player_car, TrackProgressTracker::new(num_cps, num_sectors));
         self.car_visual_types.push(player_visual_type);
         self.color_schemes.push(self.player_effective_color_scheme());
+        self.car_race_numbers.push(self.player_race_number());
         self.car_model_ids.push(player_model_id);
         self.car_lights_on.push(true);
 
@@ -4665,6 +4686,7 @@ impl RaceSession {
             self.world.spawn(p2_car, TrackProgressTracker::new(num_cps, num_sectors));
             self.car_visual_types.push(player_visual_type);
             self.color_schemes.push(p2_scheme);
+            self.car_race_numbers.push(grid_numbers.player2);
             self.car_model_ids.push(player_model_id);
             self.car_lights_on.push(true);
         }
@@ -4743,6 +4765,7 @@ impl RaceSession {
             self.world.spawn(bot_car, TrackProgressTracker::new(num_cps, num_sectors));
             self.car_visual_types.push(bot_visual_type);
             self.color_schemes.push(bot_scheme);
+            self.car_race_numbers.push(bot_participant.map(|p| p.race_number).unwrap_or(0));
             self.car_model_ids.push(bot_model_id);
             self.car_lights_on.push(true);
             let bot_tier = if let Some(champ) = &self.championship_session {
@@ -4776,6 +4799,7 @@ impl RaceSession {
             }
             self.ai_drivers.push(bot_ai);
         }
+        self.store_roster_numbers(&grid_numbers.assigned);
         self.apply_car_damage_setting();
     }
 
@@ -4852,6 +4876,7 @@ impl RaceSession {
                                 driver_name: s.driver_name.clone(),
                                 style,
                                 tier: s.ai_tier.map(DriverTier::from_u8).unwrap_or(DriverTier::Rookie),
+                                race_number: s.race_number,
                             }
                         })
                         .collect();
@@ -5676,6 +5701,7 @@ impl RaceSession {
                 country_idx,
                 livery_idx,
                 assist_mode,
+                race_number,
                 cursor_timer,
                 status_msg,
             } = std::mem::replace(&mut self.state, GameState::Menu)
@@ -5689,6 +5715,7 @@ impl RaceSession {
                     country_idx,
                     livery_idx,
                     assist_mode,
+                    race_number,
                     cursor_timer,
                     status_msg,
                     frame_dt,
@@ -5705,6 +5732,7 @@ impl RaceSession {
                 input_alias,
                 country_idx,
                 livery_idx,
+                race_number,
                 cursor_timer,
             } = std::mem::replace(&mut self.state, GameState::Menu)
             {
@@ -5715,6 +5743,7 @@ impl RaceSession {
                     input_alias,
                     country_idx,
                     livery_idx,
+                    race_number,
                     cursor_timer,
                     frame_dt,
                 );
@@ -7986,6 +8015,7 @@ impl RaceSession {
                 country_idx,
                 livery_idx,
                 assist_mode: p.last_mode,
+                race_number: p.race_number,
                 cursor_timer: 0.0,
                 status_msg: None,
             };
@@ -8004,6 +8034,7 @@ impl RaceSession {
         mut country_idx: usize,
         mut livery_idx: usize,
         mut assist_mode: AssistProfile,
+        mut race_number: u8,
         mut cursor_timer: f32,
         mut status_msg: Option<String>,
         frame_dt: f32,
@@ -8044,6 +8075,7 @@ impl RaceSession {
                     country_idx = 1;
                     livery_idx = next_livery;
                     assist_mode = AssistProfile::Arcade;
+                    race_number = new_profile.race_number;
                     active_column = 1;
                     field_idx = 0;
                     status_msg = Some("New driver added. Enter details and press Save.".to_string());
@@ -8056,6 +8088,7 @@ impl RaceSession {
                         country_idx,
                         livery_idx,
                         assist_mode,
+                        race_number,
                         cursor_timer,
                         status_msg,
                     };
@@ -8086,6 +8119,7 @@ impl RaceSession {
                             c.0 == np.color_scheme.primary && c.1 == np.color_scheme.secondary
                         }).unwrap_or(0);
                         assist_mode = np.last_mode;
+                        race_number = np.race_number;
                         if let Some(npid) = np.id {
                             if let Some(db) = &self.hof_db {
                                 self.active_profile_stats = db.get_stats_for_profile(npid).unwrap_or_default();
@@ -8103,6 +8137,7 @@ impl RaceSession {
                         country_idx,
                         livery_idx,
                         assist_mode,
+                        race_number,
                         cursor_timer,
                         status_msg,
                     };
@@ -8148,6 +8183,7 @@ impl RaceSession {
                         c.0 == p.color_scheme.primary && c.1 == p.color_scheme.secondary
                     }).unwrap_or(0);
                     assist_mode = p.last_mode;
+                    race_number = p.race_number;
                     if let Some(pid) = p.id {
                         if let Some(db) = &self.hof_db {
                             self.active_profile_stats = db.get_stats_for_profile(pid).unwrap_or_default();
@@ -8168,6 +8204,7 @@ impl RaceSession {
                         c.0 == p.color_scheme.primary && c.1 == p.color_scheme.secondary
                     }).unwrap_or(0);
                     assist_mode = p.last_mode;
+                    race_number = p.race_number;
                     if let Some(pid) = p.id {
                         if let Some(db) = &self.hof_db {
                             self.active_profile_stats = db.get_stats_for_profile(pid).unwrap_or_default();
@@ -8198,14 +8235,14 @@ impl RaceSession {
             if is_key_pressed(KeyCode::Up) || (field_idx > 1 && (is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up)) {
                 self.audio.play_sfx(SfxType::UiMove);
                 if field_idx == 0 {
-                    field_idx = 5;
+                    field_idx = 6;
                 } else {
                     field_idx -= 1;
                 }
             }
             if is_key_pressed(KeyCode::Down) || (field_idx > 1 && (is_key_pressed(KeyCode::S) || self.input.gamepad.snapshot.nav_down)) {
                 self.audio.play_sfx(SfxType::UiMove);
-                field_idx = (field_idx + 1) % 6;
+                field_idx = (field_idx + 1) % 7;
             }
 
             // Text input for fields 0 (Name) and 1 (Alias)
@@ -8280,6 +8317,8 @@ impl RaceSession {
                         AssistProfile::Pro => AssistProfile::Arcade,
                     };
                 }
+            } else if field_idx == 5 {
+                race_number = self.edit_race_number(race_number);
             }
 
             // Save Changes (Enter on Save button, or Enter on country/livery/assist, or Ctrl+S)
@@ -8332,6 +8371,7 @@ impl RaceSession {
                         academy_progress: p.academy_progress.clone(),
                         owned_cars: p.owned_cars.clone(),
                         car_compounds: p.car_compounds.clone(),
+                        race_number: PlayerProfile::race_number_from_i64(i64::from(race_number)),
                     })
                 });
 
@@ -8355,6 +8395,7 @@ impl RaceSession {
             country_idx,
             livery_idx,
             assist_mode,
+            race_number,
             cursor_timer,
             status_msg,
         };
@@ -8370,6 +8411,7 @@ impl RaceSession {
         mut input_alias: String,
         mut country_idx: usize,
         mut livery_idx: usize,
+        mut race_number: u8,
         mut cursor_timer: f32,
         frame_dt: f32,
     ) {
@@ -8378,12 +8420,12 @@ impl RaceSession {
         // Field switching (Tab, Up, Down)
         if is_key_pressed(KeyCode::Tab) || is_key_pressed(KeyCode::Down) {
             self.audio.play_sfx(SfxType::UiMove);
-            field_idx = (field_idx + 1) % 4;
+            field_idx = (field_idx + 1) % 5;
         }
         if is_key_pressed(KeyCode::Up) {
             self.audio.play_sfx(SfxType::UiMove);
             if field_idx == 0 {
-                field_idx = 3;
+                field_idx = 4;
             } else {
                 field_idx -= 1;
             }
@@ -8448,6 +8490,10 @@ impl RaceSession {
             }
         }
 
+        if field_idx == 4 {
+            race_number = self.edit_race_number(race_number);
+        }
+
         // Confirm & Save Profile
         if is_key_pressed(KeyCode::Enter)
             || is_key_pressed(KeyCode::KpEnter)
@@ -8479,6 +8525,7 @@ impl RaceSession {
                 if let Some(edit_id) = editing_id {
                     let mut updated = PlayerProfile::new(&final_name, &final_alias, country_opt.as_deref(), scheme);
                     updated.id = Some(edit_id);
+                    updated.race_number = PlayerProfile::race_number_from_i64(i64::from(race_number));
                     if let Some(existing) = self.profile_list.iter().find(|p| p.id == Some(edit_id)) {
                         updated.is_active = existing.is_active;
                     }
@@ -8487,6 +8534,7 @@ impl RaceSession {
                 } else {
                     let mut new_profile = PlayerProfile::new(&final_name, &final_alias, country_opt.as_deref(), scheme);
                     new_profile.is_active = true;
+                    new_profile.race_number = PlayerProfile::race_number_from_i64(i64::from(race_number));
                     if let Ok(new_id) = db.create_profile(&new_profile) {
                         let _ = db.set_active_profile(new_id);
                     }
@@ -8517,6 +8565,7 @@ impl RaceSession {
             input_alias,
             country_idx,
             livery_idx,
+            race_number,
             cursor_timer,
         };
     }
@@ -8685,6 +8734,7 @@ impl RaceSession {
                 input_alias: String::new(),
                 country_idx: 1, // Spain default
                 livery_idx: next_livery,
+                race_number: PlayerProfile::DEFAULT_RACE_NUMBER,
                 cursor_timer: 0.0,
             };
             return;
@@ -9786,6 +9836,7 @@ impl RaceSession {
         self.ai_drivers.clear();
         self.grid_participants.clear();
         self.color_schemes.clear();
+        self.car_race_numbers.clear();
 
         for (i, (slot_id, name, country, car_model, livery)) in slot_info.into_iter().enumerate() {
             let grid_pose = self
@@ -9837,6 +9888,7 @@ impl RaceSession {
                 best_circuit_time: None,
                 random_seed: i as u64,
                 driver_tier: Some(DriverTier::Pro),
+                race_number: 0,
             });
 
             if is_me {
@@ -14344,7 +14396,8 @@ impl RaceSession {
             }
             GameState::DriverCards(_) => {
                 let drivers = self.active_module_drivers();
-                render_driver_cards_screen(&self.fonts, &drivers, self.driver_cards_idx);
+                let race_numbers: Vec<u8> = drivers.iter().map(|d| self.driver_race_number(d.id)).collect();
+                render_driver_cards_screen(&self.fonts, &drivers, &race_numbers, self.driver_cards_idx);
             }
             GameState::ProfileManager { selected_idx } => {
                 render_profile_manager_screen(
@@ -14377,6 +14430,7 @@ impl RaceSession {
                 country_idx,
                 livery_idx,
                 assist_mode,
+                race_number,
                 cursor_timer,
                 ref status_msg,
             } => {
@@ -14391,6 +14445,7 @@ impl RaceSession {
                     country_idx,
                     livery_idx,
                     assist_mode,
+                    race_number,
                     &self.active_profile_stats,
                     cursor_timer,
                     status_msg.as_deref(),
@@ -14403,6 +14458,7 @@ impl RaceSession {
                 ref input_alias,
                 country_idx,
                 livery_idx,
+                race_number,
                 cursor_timer,
             } => {
                 render_profile_create_screen(
@@ -14412,6 +14468,7 @@ impl RaceSession {
                     input_alias,
                     country_idx,
                     livery_idx,
+                    race_number,
                     cursor_timer,
                     editing_id.is_some(),
                 );
@@ -16156,6 +16213,7 @@ impl RaceSession {
                     position: car.state.position,
                     elevation: car.dynamic_elevation(),
                     distance_to_player: dist,
+                    race_number: self.car_race_numbers.get(i).copied().unwrap_or(0),
                 });
             } else if self.is_split_screen() && i == 0 {
                 items.push(VehicleNameplateItem {
@@ -16166,6 +16224,7 @@ impl RaceSession {
                     position: car.state.position,
                     elevation: car.dynamic_elevation(),
                     distance_to_player: dist,
+                    race_number: self.car_race_numbers.get(i).copied().unwrap_or(0),
                 });
             } else if self.is_split_screen() && i == 1 {
                 items.push(VehicleNameplateItem {
@@ -16176,6 +16235,7 @@ impl RaceSession {
                     position: car.state.position,
                     elevation: car.dynamic_elevation(),
                     distance_to_player: dist,
+                    race_number: self.car_race_numbers.get(i).copied().unwrap_or(0),
                 });
             } else {
                 let bot_idx = i.saturating_sub(bot_offset);
@@ -16199,6 +16259,7 @@ impl RaceSession {
                     position: car.state.position,
                     elevation: car.dynamic_elevation(),
                     distance_to_player: dist,
+                    race_number: self.car_race_numbers.get(i).copied().unwrap_or(0),
                 });
             }
         }
@@ -16223,6 +16284,11 @@ impl RaceSession {
                 let p2_nameplates = self.collect_bot_nameplates(1);
                 render_floating_bot_nameplates(&self.fonts, &self.camera_p2, Some(s_rect2), &p2_nameplates, 1.0);
             }
+
+            // Racing numbers on the cars (spec 092)
+            let [s_rect1, s_rect2] = self.split_layout.screen_rects(sw, sh);
+            render_car_numbers(&self.fonts, &self.camera, Some(s_rect1), &self.collect_car_numbers(0));
+            render_car_numbers(&self.fonts, &self.camera_p2, Some(s_rect2), &self.collect_car_numbers(1));
         } else {
             let focus_idx = self.player_car_index();
             self.render_world_viewport(&self.camera, focus_idx, None);
@@ -16232,6 +16298,9 @@ impl RaceSession {
                 let nameplates = self.collect_bot_nameplates(focus_idx);
                 render_floating_bot_nameplates(&self.fonts, &self.camera, None, &nameplates, 1.0);
             }
+
+            // Racing numbers on the cars (spec 092)
+            render_car_numbers(&self.fonts, &self.camera, None, &self.collect_car_numbers(focus_idx));
         }
     }
 
