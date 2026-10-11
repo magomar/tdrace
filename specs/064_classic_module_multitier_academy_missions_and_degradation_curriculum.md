@@ -4,6 +4,7 @@ template: feature
 title: "Classic Module Multi-Tier Academy Missions and Degradation Curriculum"
 description: "Extends the Classic Academy from the one 4-lesson Class D course (Spec 060) to three tiers on the 18 revamped circuits: the existing damage-free basics, Class C surface mastery, and Class B tyre discipline with per-mission wear scaling. Tier 4 (pit stops, full damage) is deferred to the GT DLC under Spec 100."
 status: in_progress
+receipt: "docs/receipts/spec-064-receipt.md"
 verified: { by: human:mario, at: 2026-10-11T06:56:00Z, hash: "01b553dabf12" }
 created: 2026-09-29
 generated: { by: agent/antigravity, at: 2026-09-29T15:56:00Z }
