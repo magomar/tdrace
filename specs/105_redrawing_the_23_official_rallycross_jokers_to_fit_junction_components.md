@@ -3,7 +3,7 @@ type: Architecture Spec
 template: architecture
 title: "Redrawing the 23 Official Rallycross Jokers to Fit Junction Components"
 description: "Moves the 23 official rallycross jokers onto the junction components of spec 102. The old jokers do not fit (0 of 23 convert within 2.0 m), so each one is redrawn: same anchors and side, a new first and last stretch that a Taper or TurnOff can hold, and a free road that keeps the old route. Each redrawn circuit then gets closed junction walls, a collidable nose and a bake that never clips a wall."
-status: approved
+status: in_progress
 verified: { by: human:mario, at: 2026-10-11T16:38:59Z, hash: "d4325b626f7c" }
 created: 2026-10-09
 generated: { by: agent/claude-sonnet-5-5, at: 2026-10-09T16:20:00Z }
