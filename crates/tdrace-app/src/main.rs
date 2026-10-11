@@ -34,6 +34,7 @@ fn window_conf() -> Conf {
 async fn main() {
     let mut session = RaceSession::new();
     session.init_audio().await;
+    session.prewarm_menu_tracks();
 
     // Parse CLI arguments for direct motorsport module or championship launch
     let args: Vec<String> = std::env::args().collect();

@@ -175,13 +175,51 @@ static MENU_TRACK_CACHE: std::sync::Mutex<
     Option<std::collections::HashMap<String, tdrace_core::track::Track>>,
 > = std::sync::Mutex::new(None);
 
+/// Bumped on every cache clear, so a background prewarm never stores a track loaded before the clear.
+static MENU_TRACK_CACHE_GENERATION: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
 /// Clears the cached resolved menu tracks (e.g. after track edit or save).
 pub fn clear_menu_track_cache() {
     if let Ok(mut guard) = MENU_TRACK_CACHE.lock() {
+        MENU_TRACK_CACHE_GENERATION.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         if let Some(cache) = guard.as_mut() {
             cache.clear();
         }
     }
+}
+
+/// Loads the given circuits into the menu cache on a background thread.
+/// Without this, the first visit to a circuit category loads every visible card on the
+/// UI thread and the menu freezes for up to half a second.
+pub fn prewarm_menu_track_cache(choices: Vec<TrackChoice>) -> Option<std::thread::JoinHandle<()>> {
+    let dir = crate::storage::resolve_user_tracks_dir();
+    std::thread::Builder::new()
+        .name("menu-track-prewarm".into())
+        .spawn(move || {
+            for choice in &choices {
+                let cache_key = format!("{}:{}", choice.track_id(), dir.display());
+                let generation = MENU_TRACK_CACHE_GENERATION.load(std::sync::atomic::Ordering::SeqCst);
+                let cached = MENU_TRACK_CACHE
+                    .lock()
+                    .map(|guard| guard.as_ref().is_some_and(|c| c.contains_key(&cache_key)))
+                    .unwrap_or(true);
+                if cached {
+                    continue;
+                }
+                let Some(track) = resolve_track_for_menu_with_dir_uncached(choice, &dir) else {
+                    continue;
+                };
+                if let Ok(mut guard) = MENU_TRACK_CACHE.lock() {
+                    if MENU_TRACK_CACHE_GENERATION.load(std::sync::atomic::Ordering::SeqCst) == generation {
+                        guard
+                            .get_or_insert_with(std::collections::HashMap::new)
+                            .entry(cache_key)
+                            .or_insert(track);
+                    }
+                }
+            }
+        })
+        .ok()
 }
 
 /// Resolves a TrackChoice to a concrete Track instance for UI preview rendering.
