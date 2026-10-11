@@ -29,7 +29,7 @@ TRAINING_CIRCUITS: list[tuple[str, str]] = [
     ("autocross", "nova_paka_ax"),
     ("autocross", "st_junien_ax"),
     ("rally", "holjes_rx"),
-    ("rally", "lydden_hill"),
+    ("rally", "mettet_rx"),
     ("rally", "montalegre_rx"),
 ]
 

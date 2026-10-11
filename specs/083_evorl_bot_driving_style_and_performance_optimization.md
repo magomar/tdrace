@@ -4,7 +4,7 @@ template: architecture
 title: "EvoRL Bot Performance Calibration on the Launch Circuits"
 description: "Offline EvoRL calibration pipeline, run on the blaze compute box, that tunes the existing bot controller gains and the five driver-tier quality settings so bots drive cleanly and keep a monotonic tier pace ladder on every Steam-launch circuit (Classic, Karting, Autocross, Rallycross)."
 status: in_progress
-verified: { by: human:mario, at: 2026-10-10T22:49:59Z, hash: "7d33f1c261f1" }
+verified: { by: human:mario, at: 2026-10-11T06:11:52Z, hash: "5303f6636105" }
 created: 2026-10-03
 generated: { by: agent/claude, at: 2026-10-11T00:00:00Z }
 depends_on:
@@ -176,16 +176,28 @@ as `Outcome.ERROR`.
   - classic: `gt_coastal_grand_prix`, `stock_tri_oval_speedway`, `gt_ridge_ring`, `kart_pine_grove`
   - kart: `lonato`, `genk`, `whilton_mill`
   - autocross: `maggiora_ax`, `nova_paka_ax`, `st_junien_ax`
-  - rally: `holjes_rx`, `lydden_hill`, `montalegre_rx`
+  - rally: `holjes_rx`, `mettet_rx`, `montalegre_rx`
 - **Held-out set:** every other closed-loop launch circuit (about 60). The campaign never sees them.
+- **Circuits with a known circuit bug** are left out of the held-out checks while that bug is open.
+  These are the Rallycross circuits listed in `tdrace-699t6`, `tdrace-xg1x`, `tdrace-bppc` and
+  `tdrace-4nmh3` (13 circuits at the baseline audit). Their bots fail to finish, stall for minutes, or
+  set impossible laps, so they cannot measure the bot. The report still shows them. They are
+  re-checked after spec 105 (Rallycross joker redraw) lands.
+
+> **Amendment (2026-10-11).** The baseline audit found these circuit bugs after approval.
+> `lydden_hill` (24 DNFs) was replaced in training by `mettet_rx` (no stalls, no DNFs).
 
 ### 3. Fitness
 **Stage A (shared controller).** This stage uses T4 Balanced head-to-head against the current baseline
 profile in 2-car races. Seats are swapped with the same seed (EvoRL pair-atomic common random numbers).
 - The outcome is WIN, DRAW or LOSS by finish order. A DNF, or more than 3 wall contacts, is a LOSS.
+  A wall contact is a wall impact after at least 0.25 s without one, so one scrape counts once.
 - The ranking uses the Wilson 95 % lower bound on the win rate (EvoRL default).
-- A candidate is disqualified if it has any `longest_no_progress_s > 10 s` (the
-  `classic_circuits_bot_tests` limit) or any spin at T4.
+- A match is *disqualified* if the subject spins or goes more than 10 s without progress (the
+  `classic_circuits_bot_tests` limit). The score is the Wilson bound minus the share of disqualified
+  matches. A hard reject is not used, because the T4 baseline already spins on Karting circuits
+  (`tdrace-4dyav`): every candidate would be rejected.
+- The baked candidate must not spin more, or stall more, than the baseline on the training circuits.
 
 **Stage B (tier ladder).** The fitness is the pace-band error, from the result metrics:
 
@@ -333,8 +345,8 @@ cargo run -p tdrace-app --release --bin bot_behaviour_benchmark
 
 #### Scenario: Calibration generalizes to held-out circuits
 - [ ] **Given** the baked constants
-- [ ] **When** the same sweep runs on every held-out launch circuit
-- [ ] **Then** the tier order holds on at least 90 % of held-out circuits
+- [ ] **When** the same sweep runs on every held-out launch circuit without an open circuit bug (see "Circuits and cars")
+- [ ] **Then** the tier order holds on at least 90 % of those circuits
 - [ ] **And** the T4 DNF count is no higher than the baseline audit on every circuit
 - [ ] **And** the T4 Stage A win rate against the old baseline, over all held-out circuits, is at least 50 %.
 
