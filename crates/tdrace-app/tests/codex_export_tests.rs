@@ -273,9 +273,9 @@ fn racing_data_matches_series_formats_and_academy() {
     let curriculum = academy["curriculum"].as_array().unwrap();
     assert_eq!(curriculum.len(), 4);
     assert_eq!(curriculum[0]["id"].as_str().unwrap(), "lesson_1_apex_line");
-    assert_eq!(curriculum[0]["gold_time_sec"].as_f64().unwrap(), 18.5);
+    assert_eq!(curriculum[0]["gold_time_sec"].as_f64().unwrap() as f32, 61.2f32);
     assert_eq!(curriculum[3]["id"].as_str().unwrap(), "lesson_4_graduation_sprint");
-    assert_eq!(curriculum[3]["gold_time_sec"].as_f64().unwrap(), 68.0);
+    assert_eq!(curriculum[3]["gold_time_sec"].as_f64().unwrap() as f32, 104.8f32);
 
     let licences = academy["licence_grades"].as_array().unwrap();
     assert_eq!(licences.len(), 5);

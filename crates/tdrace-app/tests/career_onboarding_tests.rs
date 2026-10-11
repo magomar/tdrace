@@ -43,7 +43,7 @@ fn test_rookie_profile_database_persistence() {
     rookie.owned_cars.push("kart_blackline_cadet_t1".to_string());
 
     // Record lesson 1 completion
-    let (medal, cr, _) = rookie.academy_progress.record_attempt(AcademyLessonId::Lesson1ApexLine, 18.0, true);
+    let (medal, cr, _) = rookie.academy_progress.record_attempt(AcademyLessonId::Lesson1ApexLine, 59.5, true);
     assert_eq!(medal, AcademyMedal::Gold);
     assert_eq!(cr, 2_000);
 
@@ -91,13 +91,13 @@ fn test_academy_curriculum_graduation_grants_license() {
     assert!(!rookie.has_racing_license());
 
     // Complete lessons 1, 2, 3 with Bronze
-    rookie.academy_progress.record_attempt(AcademyLessonId::Lesson1ApexLine, 22.0, true);
-    rookie.academy_progress.record_attempt(AcademyLessonId::Lesson2BrakingChicane, 28.0, true);
-    rookie.academy_progress.record_attempt(AcademyLessonId::Lesson3SurfaceTransition, 38.0, true);
+    rookie.academy_progress.record_attempt(AcademyLessonId::Lesson1ApexLine, 72.7, true);
+    rookie.academy_progress.record_attempt(AcademyLessonId::Lesson2BrakingChicane, 72.6, true);
+    rookie.academy_progress.record_attempt(AcademyLessonId::Lesson3SurfaceTransition, 68.8, true);
     assert!(!rookie.has_racing_license());
 
     // Complete Lesson 4 (Graduation Sprint) with Bronze
-    let (medal, cr, _) = rookie.academy_progress.record_attempt(AcademyLessonId::Lesson4GraduationSprint, 79.0, true);
+    let (medal, cr, _) = rookie.academy_progress.record_attempt(AcademyLessonId::Lesson4GraduationSprint, 125.3, true);
     assert_eq!(medal, AcademyMedal::Bronze);
     assert_eq!(cr, 2_500);
 
@@ -114,11 +114,11 @@ fn test_academy_all_bronze_progression_purse_and_unlocks() {
     assert_eq!(rookie.credits, 10_000);
     assert_eq!(rookie.driver_xp, 0);
 
-    // Lesson 1: Bronze (target <= 22.5s)
+    // Lesson 1: Bronze (target <= 74.2s)
     assert!(rookie.academy_progress.is_lesson_unlocked(AcademyLessonId::Lesson1ApexLine));
     assert!(!rookie.academy_progress.is_lesson_unlocked(AcademyLessonId::Lesson2BrakingChicane));
     let state1 = AcademyChallengeState::new(AcademyLessonId::Lesson1ApexLine);
-    let eval1 = academy::evaluate_academy_attempt(&mut rookie, AcademyLessonId::Lesson1ApexLine, 21.0, &state1);
+    let eval1 = academy::evaluate_academy_attempt(&mut rookie, AcademyLessonId::Lesson1ApexLine, 69.6, &state1);
     assert_eq!(eval1.medal, AcademyMedal::Bronze);
     assert_eq!(eval1.credits_awarded, 1_000);
     assert_eq!(rookie.credits, 11_000);
@@ -126,9 +126,9 @@ fn test_academy_all_bronze_progression_purse_and_unlocks() {
     assert_eq!(rookie.driver_xp, 200);
     assert!(rookie.academy_progress.is_lesson_unlocked(AcademyLessonId::Lesson2BrakingChicane));
 
-    // Lesson 2: Bronze (target <= 29.0s)
+    // Lesson 2: Bronze (target <= 75.2s)
     let state2 = AcademyChallengeState::new(AcademyLessonId::Lesson2BrakingChicane);
-    let eval2 = academy::evaluate_academy_attempt(&mut rookie, AcademyLessonId::Lesson2BrakingChicane, 27.5, &state2);
+    let eval2 = academy::evaluate_academy_attempt(&mut rookie, AcademyLessonId::Lesson2BrakingChicane, 71.3, &state2);
     assert_eq!(eval2.medal, AcademyMedal::Bronze);
     assert_eq!(eval2.credits_awarded, 1_500);
     assert_eq!(rookie.credits, 12_500);
@@ -136,9 +136,9 @@ fn test_academy_all_bronze_progression_purse_and_unlocks() {
     assert_eq!(rookie.driver_xp, 450);
     assert!(rookie.academy_progress.is_lesson_unlocked(AcademyLessonId::Lesson3SurfaceTransition));
 
-    // Lesson 3: Bronze (target <= 39.0s)
+    // Lesson 3: Bronze (target <= 70.6s)
     let state3 = AcademyChallengeState::new(AcademyLessonId::Lesson3SurfaceTransition);
-    let eval3 = academy::evaluate_academy_attempt(&mut rookie, AcademyLessonId::Lesson3SurfaceTransition, 37.0, &state3);
+    let eval3 = academy::evaluate_academy_attempt(&mut rookie, AcademyLessonId::Lesson3SurfaceTransition, 66.9, &state3);
     assert_eq!(eval3.medal, AcademyMedal::Bronze);
     assert_eq!(eval3.credits_awarded, 2_000);
     assert_eq!(rookie.credits, 14_500);
@@ -146,9 +146,9 @@ fn test_academy_all_bronze_progression_purse_and_unlocks() {
     assert_eq!(rookie.driver_xp, 750);
     assert!(rookie.academy_progress.is_lesson_unlocked(AcademyLessonId::Lesson4GraduationSprint));
 
-    // Lesson 4: Bronze (target <= 80.0s)
+    // Lesson 4: Bronze (target <= 127.2s)
     let state4 = AcademyChallengeState::new(AcademyLessonId::Lesson4GraduationSprint);
-    let eval4 = academy::evaluate_academy_attempt(&mut rookie, AcademyLessonId::Lesson4GraduationSprint, 78.0, &state4);
+    let eval4 = academy::evaluate_academy_attempt(&mut rookie, AcademyLessonId::Lesson4GraduationSprint, 123.4, &state4);
     assert_eq!(eval4.medal, AcademyMedal::Bronze);
     assert_eq!(eval4.credits_awarded, 2_500);
     assert_eq!(rookie.credits, 17_000); // 10,000 seed + 7,000 purse!
@@ -166,10 +166,10 @@ fn test_academy_all_silver_and_gold_curriculum_purses() {
     // Silver Curriculum Run
     let mut rookie_silver = PlayerProfile::new_rookie("Niki");
     let times_silver = [
-        (AcademyLessonId::Lesson1ApexLine, 19.5),
-        (AcademyLessonId::Lesson2BrakingChicane, 25.5),
-        (AcademyLessonId::Lesson3SurfaceTransition, 34.0),
-        (AcademyLessonId::Lesson4GraduationSprint, 72.0),
+        (AcademyLessonId::Lesson1ApexLine, 64.7),
+        (AcademyLessonId::Lesson2BrakingChicane, 66.1),
+        (AcademyLessonId::Lesson3SurfaceTransition, 61.6),
+        (AcademyLessonId::Lesson4GraduationSprint, 112.2),
     ];
     for (id, time) in times_silver {
         let state = AcademyChallengeState::new(id);
@@ -187,10 +187,10 @@ fn test_academy_all_silver_and_gold_curriculum_purses() {
     // Gold Curriculum Run
     let mut rookie_gold = PlayerProfile::new_rookie("Jackie");
     let times_gold = [
-        (AcademyLessonId::Lesson1ApexLine, 18.0),
-        (AcademyLessonId::Lesson2BrakingChicane, 23.5),
-        (AcademyLessonId::Lesson3SurfaceTransition, 31.0),
-        (AcademyLessonId::Lesson4GraduationSprint, 67.0),
+        (AcademyLessonId::Lesson1ApexLine, 59.5),
+        (AcademyLessonId::Lesson2BrakingChicane, 60.7),
+        (AcademyLessonId::Lesson3SurfaceTransition, 56.4),
+        (AcademyLessonId::Lesson4GraduationSprint, 103.3),
     ];
     for (id, time) in times_gold {
         let state = AcademyChallengeState::new(id);
@@ -214,22 +214,22 @@ fn test_academy_attempt_idempotency_on_replay() {
 
     // First attempt: Gold (2,000 Cr bounty + 100 distance XP)
     let state = AcademyChallengeState::new(AcademyLessonId::Lesson1ApexLine);
-    let eval1 = academy::evaluate_academy_attempt(&mut rookie, AcademyLessonId::Lesson1ApexLine, 18.0, &state);
+    let eval1 = academy::evaluate_academy_attempt(&mut rookie, AcademyLessonId::Lesson1ApexLine, 59.5, &state);
     assert_eq!(eval1.medal, AcademyMedal::Gold);
     assert_eq!(eval1.credits_awarded, 2_000);
     assert_eq!(rookie.credits, 12_000); // 10,000 seed + 2,000 bounty
     assert!(eval1.is_new_best);
 
-    // Replay attempt: achieves Gold again with a faster time (17.5s)
+    // Replay attempt: achieves Gold again with a faster time (57.9s)
     // Awards practice stipend (+1,500 Cr) and distance XP (+100 XP), but NO duplicate 2,000 Cr bounty
-    let eval2 = academy::evaluate_academy_attempt(&mut rookie, AcademyLessonId::Lesson1ApexLine, 17.5, &state);
+    let eval2 = academy::evaluate_academy_attempt(&mut rookie, AcademyLessonId::Lesson1ApexLine, 57.9, &state);
     assert_eq!(eval2.medal, AcademyMedal::Gold);
     assert_eq!(eval2.credits_awarded, 1_500); // Practice stipend
     assert_eq!(rookie.credits, 13_500); // 12,000 + 1,500 practice stipend
     assert!(eval2.is_new_best); // Best time updated
     assert_eq!(
         rookie.academy_progress.lessons.get(&AcademyLessonId::Lesson1ApexLine).unwrap().best_time_sec,
-        Some(17.5)
+        Some(57.9)
     );
 }
 
@@ -246,7 +246,7 @@ fn test_academy_clean_attempt_and_disqualification_rules() {
     let eval_collision = academy::evaluate_academy_attempt(
         &mut rookie,
         AcademyLessonId::Lesson1ApexLine,
-        18.0,
+        59.5,
         &state_collision,
     );
     assert_eq!(eval_collision.medal, AcademyMedal::None);
@@ -262,7 +262,7 @@ fn test_academy_clean_attempt_and_disqualification_rules() {
     let eval_offtrack = academy::evaluate_academy_attempt(
         &mut rookie,
         AcademyLessonId::Lesson1ApexLine,
-        18.0,
+        59.5,
         &state_offtrack,
     );
     assert_eq!(eval_offtrack.medal, AcademyMedal::None);
@@ -302,30 +302,30 @@ fn test_academy_pace_status_real_time_splits() {
     use tdrace_app::game::academy::{AcademyChallengeState, AcademyPaceStatus};
 
     let challenge = AcademyChallengeState::new(AcademyLessonId::Lesson1ApexLine);
-    // Lesson 1: Gold 18.5s, Silver 20.0s, Bronze 22.5s
+    // Lesson 1: Gold 61.2s, Silver 66.5s, Bronze 74.2s
     // At 50% progress (fraction = 0.5):
-    // Gold target = 9.25s, Silver target = 10.0s, Bronze target = 11.25s
+    // Gold target = 30.6s, Silver target = 33.25s, Bronze target = 37.1s
 
-    // At 8.5s elapsed -> Ahead of Gold
-    match challenge.pace_status(8.5, 0.5) {
+    // At 28.0s elapsed -> Ahead of Gold
+    match challenge.pace_status(28.0, 0.5) {
         AcademyPaceStatus::AheadOfGold(delta) => assert!(delta < 0.0),
         other => panic!("Expected AheadOfGold, got {:?}", other),
     }
 
-    // At 9.8s elapsed -> Ahead of Silver
-    match challenge.pace_status(9.8, 0.5) {
+    // At 32.0s elapsed -> Ahead of Silver
+    match challenge.pace_status(32.0, 0.5) {
         AcademyPaceStatus::AheadOfSilver(delta) => assert!(delta < 0.0),
         other => panic!("Expected AheadOfSilver, got {:?}", other),
     }
 
-    // At 10.8s elapsed -> Ahead of Bronze
-    match challenge.pace_status(10.8, 0.5) {
+    // At 36.0s elapsed -> Ahead of Bronze
+    match challenge.pace_status(36.0, 0.5) {
         AcademyPaceStatus::AheadOfBronze(delta) => assert!(delta < 0.0),
         other => panic!("Expected AheadOfBronze, got {:?}", other),
     }
 
-    // At 12.0s elapsed -> Behind Bronze
-    match challenge.pace_status(12.0, 0.5) {
+    // At 40.0s elapsed -> Behind Bronze
+    match challenge.pace_status(40.0, 0.5) {
         AcademyPaceStatus::BehindBronze(delta) => assert!(delta > 0.0),
         other => panic!("Expected BehindBronze, got {:?}", other),
     }
@@ -1055,7 +1055,7 @@ mod multitier_ui {
         assert!(text(AcademyLessonId::Acad3ThermalThrottle).contains("WEAR 40% MAX"));
         assert!(text(AcademyLessonId::Acad3TyreConservation).contains("1st Gold"));
         assert!(text(AcademyLessonId::Acad2RampBalance).contains("CLEAN LANDING"));
-        assert!(text(AcademyLessonId::Lesson1ApexLine).contains("Gold 18.5s"));
+        assert!(text(AcademyLessonId::Lesson1ApexLine).contains("Gold 61.2s"));
     }
 
     #[test]
