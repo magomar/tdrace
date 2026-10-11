@@ -199,3 +199,33 @@ fn test_track_json_serialization_preserves_all_scenery_fields() {
     assert_eq!(deserialized.geometry.grandstands, original_grandstands);
     assert_eq!(deserialized.geometry.trees, original_trees);
 }
+
+/// No tree or rock may stand on a road, joker detours and launch chutes included (tdrace-mju8k).
+#[test]
+fn test_no_tree_or_rock_on_any_road_segment() {
+    let mut hits = Vec::new();
+    for c in tdrace_core::catalog::circuits() {
+        let track = c.load().unwrap_or_else(|e| panic!("{}/{}: {}", c.module, c.id, e));
+        let mut roads: Vec<(String, &[tdrace_core::track::spline::SplineSample])> =
+            vec![("main spline".to_string(), &track.spline.samples)];
+        if let Some(net) = &track.network {
+            roads.extend(net.segments.iter().map(|s| (format!("segment {:?} ({})", s.id, s.name), s.samples.as_slice())));
+        }
+        let objects = track
+            .geometry
+            .trees
+            .iter()
+            .map(|t| (format!("tree {}", t.id), t.position))
+            .chain(track.geometry.rocks.iter().map(|r| (format!("rock {}", r.id), r.position)));
+        for (label, pos) in objects {
+            for (road, samples) in &roads {
+                if let Some(s) = samples.iter().min_by(|a, b| a.point.distance(pos).total_cmp(&b.point.distance(pos))) {
+                    if s.point.distance(pos) < s.width * 0.5 {
+                        hits.push(format!("{}/{}: {} at {:?} is on {}", c.module, c.id, label, pos, road));
+                    }
+                }
+            }
+        }
+    }
+    assert!(hits.is_empty(), "scenery on the road:\n{}", hits.join("\n"));
+}
