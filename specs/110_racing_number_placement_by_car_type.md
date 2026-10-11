@@ -72,33 +72,33 @@ No data, save or database change. The change is in `crates/tdrace-app/src/render
 ## 🧪 Verification & Acceptance Criteria
 
 - **Scenario: Karts show no number on the car**
-  - [ ] **Given** a race with karts or superkarts and the player number 17
-  - [ ] **When** the race is drawn
-  - [ ] **Then** no kart has a number drawn on its body
-  - [ ] **And** the nameplates and the starting grid still show the kart numbers
+  - [x] **Given** a race with karts or superkarts and the player number 17
+  - [x] **When** the race is drawn
+  - [x] **Then** no kart has a number drawn on its body
+  - [x] **And** the nameplates and the starting grid still show the kart numbers
 
 - **Scenario: Buggies and GT cars show the number on the bonnet**
-  - [ ] **Given** every catalog model and car preset whose visual type is `SandRail` or `TouringGT`
-  - [ ] **When** the number plate is placed
-  - [ ] **Then** the plate centre is ahead of the cabin centre and between the front edge of the cabin and the front end of the body
-  - [ ] **And** the digits are inside the body outline
+  - [x] **Given** every catalog model and car preset whose visual type is `SandRail` or `TouringGT`
+  - [x] **When** the number plate is placed
+  - [x] **Then** the plate centre is ahead of the cabin centre and between the front edge of the cabin and the front end of the body
+  - [x] **And** the digits are inside the body outline
 
 - **Scenario: Stock cars and rally cars show the number on the roof**
-  - [ ] **Given** every catalog model and car preset whose visual type is `StockCar` or `RallyHatch`
-  - [ ] **When** the number plate is placed
-  - [ ] **Then** the plate centre is 15% of the cabin length behind the cabin centre
-  - [ ] **And** the digits are inside the cabin and inside the body outline
+  - [x] **Given** every catalog model and car preset whose visual type is `StockCar` or `RallyHatch`
+  - [x] **When** the number plate is placed
+  - [x] **Then** the plate centre is 15% of the cabin length behind the cabin centre
+  - [x] **And** the digits are inside the cabin and inside the body outline
 
 - **Scenario: Numbers are smaller**
-  - [ ] **Given** any car that shows a number
-  - [ ] **When** the digit size is computed
-  - [ ] **Then** the digit height is at most 35% of the body width
-  - [ ] **And** two digits fit inside their zone along the car
+  - [x] **Given** any car that shows a number
+  - [x] **When** the digit size is computed
+  - [x] **Then** the digit height is at most 35% of the body width
+  - [x] **And** two digits fit inside their zone along the car
 
 - **Scenario: Screenshots per category**
-  - [ ] **Given** a Classic kart race, a Classic Autocross race and a Classic Rallycross race at the default camera zoom
-  - [ ] **When** the race is drawn
-  - [ ] **Then** the karts show no number, the Autocross buggies show it at the front and the Rallycross cars on the roof (one screenshot per category)
+  - [x] **Given** a Classic kart race, a Classic Autocross race and a Classic Rallycross race at the default camera zoom
+  - [x] **When** the race is drawn
+  - [x] **Then** the karts show no number, the Autocross buggies show it at the front and the Rallycross cars on the roof (one screenshot per category)
 
 ---
 
@@ -112,10 +112,10 @@ No data, save or database change. The change is in `crates/tdrace-app/src/render
 ## 🔗 Traceability & Codebase Mapping
 
 ### Modified Files
-- `[ ]` [`crates/tdrace-app/src/render/car.rs`](../crates/tdrace-app/src/render/car.rs) -> placement by visual type, front and roof zones, smaller digits.
-- `[ ]` [`crates/tdrace-app/src/game/racing_numbers.rs`](../crates/tdrace-app/src/game/racing_numbers.rs) -> pass the visual type of each car.
-- `[ ]` [`crates/tdrace-app/tests/racing_number_render_tests.rs`](../crates/tdrace-app/tests/racing_number_render_tests.rs) -> placement and size tests.
-- `[ ]` `crates/tdrace-app/examples/racing_number_sheet.rs` (new) -> contact sheet of every catalog car with its number.
+- `[x]` [`crates/tdrace-app/src/render/car.rs`](../crates/tdrace-app/src/render/car.rs) -> placement by visual type, front and roof zones, smaller digits.
+- `[x]` [`crates/tdrace-app/src/game/racing_numbers.rs`](../crates/tdrace-app/src/game/racing_numbers.rs) -> pass the visual type of each car.
+- `[x]` [`crates/tdrace-app/tests/racing_number_render_tests.rs`](../crates/tdrace-app/tests/racing_number_render_tests.rs) -> placement and size tests.
+- `[x]` `crates/tdrace-app/examples/racing_number_sheet.rs` (new) -> contact sheet of every catalog car with its number.
 
 ### Verification Assertions
 - Verification receipts will be recorded via `keel receipt 110 --cmd "cargo test -p tdrace-app --test racing_number_render_tests"`.
