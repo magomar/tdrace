@@ -1,4 +1,4 @@
-//! Contact sheet for Spec 110: every catalog car of one kind with its racing number, as drawn in a race (sprite
+//! Contact sheet for Spec 111: every catalog car of one kind with its racing number, as drawn in a race (sprite
 //! body, number in its zone). One sheet per visual type: `racing_number_sheet_<kind>.png` in TDRACE_UI_PREVIEW_DIR
 //! (default: current directory).
 use macroquad::prelude::*;

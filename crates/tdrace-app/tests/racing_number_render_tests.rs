@@ -1,5 +1,5 @@
 //! Spec 092: the racing number plate on the car, the nameplate label and the grid and card badges.
-//! Spec 110: where each kind of car carries the number, and its size.
+//! Spec 111: where each kind of car carries the number, and its size.
 
 use glam::Vec2;
 use macroquad::color::Color;
@@ -71,7 +71,7 @@ fn every_livery_in_the_game_gets_a_readable_pair() {
 
 
 // ---------------------------------------------------------------------------
-// Placement by car type (spec 110)
+// Placement by car type (spec 111)
 // ---------------------------------------------------------------------------
 
 #[test]
