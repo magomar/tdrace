@@ -984,16 +984,18 @@ fn test_arcade_settings_modal_helpers_tab_integration() {
     assert_eq!(modal.gameplay_sub_tab, 0); // General
     assert_eq!(modal.nav.column_lengths[3], 7);
 
-    // 2. Switch to VISUAL AIDS subtab and verify 12 rows
+    // 2. Switch to VISUAL AIDS subtab and verify 14 rows
     modal.switch_gameplay_subtab(1);
     assert_eq!(modal.gameplay_sub_tab, 1);
-    assert_eq!(modal.nav.column_lengths[3], 12);
+    assert_eq!(modal.nav.column_lengths[3], 14);
 
     // 3. Verify default state matches HelpersSettingsState::default() and Full preset
     let def_helpers = HelpersSettingsState::default();
     assert_eq!(modal.helpers_state(), def_helpers);
     assert_eq!(modal.visual_aids_preset_dropdown.selected_index, 0); // Full
     assert!(def_helpers.radar_sonar_ping);
+    assert_eq!(def_helpers.racing_line_mode, 0);
+    assert!((def_helpers.racing_line_opacity - 0.70).abs() < 1e-4);
     assert!(!modal.has_changes());
 
     // 4. Test presets: Minimal (1) and Off (2)
@@ -1002,12 +1004,14 @@ fn test_arcade_settings_modal_helpers_tab_integration() {
     assert!(!modal.helpers_state().aura_enabled);
     assert!(modal.helpers_state().ribbon_enabled);
     assert!((modal.helpers_state().ribbon_scale - 0.80).abs() < 1e-4);
+    assert_eq!(modal.helpers_state().racing_line_mode, 2); // Braking Only
 
     modal.apply_visual_aids_preset(2); // Off
     assert_eq!(modal.visual_aids_preset_dropdown.selected_index, 2);
     assert!(!modal.helpers_state().aura_enabled);
     assert!(!modal.helpers_state().ribbon_enabled);
     assert!(!modal.helpers_state().chevron_enabled);
+    assert_eq!(modal.helpers_state().racing_line_mode, 3); // Disabled
 
     modal.apply_visual_aids_preset(0); // Restore Full
     assert_eq!(modal.visual_aids_preset_dropdown.selected_index, 0);
@@ -1030,6 +1034,8 @@ fn test_arcade_settings_modal_helpers_tab_integration() {
     modal.chevron_brightness_slider.set_value(1.50);
     modal.adaptive_dropdown.set_selected(1);
     modal.radar_ping_dropdown.set_selected(1);
+    modal.racing_line_dropdown.set_selected(1);
+    modal.racing_line_opacity_slider.set_value(90.0);
 
     let state = modal.helpers_state();
     assert!(!state.ribbon_enabled);
@@ -1039,6 +1045,8 @@ fn test_arcade_settings_modal_helpers_tab_integration() {
     assert!((state.chevron_brightness - 1.50).abs() < 1e-4);
     assert!(!state.adaptive_enabled);
     assert!(!state.radar_sonar_ping);
+    assert_eq!(state.racing_line_mode, 1);
+    assert!((state.racing_line_opacity - 0.90).abs() < 1e-4);
 
     // 5. Test set_helpers_state
     let custom = HelpersSettingsState {
@@ -1052,6 +1060,8 @@ fn test_arcade_settings_modal_helpers_tab_integration() {
         chevron_brightness: 0.75,
         adaptive_enabled: false,
         radar_sonar_ping: false,
+        racing_line_mode: 1,
+        racing_line_opacity: 0.60,
     };
     modal.set_helpers_state(&custom);
     let cur = modal.helpers_state();
@@ -1066,6 +1076,8 @@ fn test_arcade_settings_modal_helpers_tab_integration() {
     assert!((cur.chevron_brightness - custom.chevron_brightness).abs() < 1e-4);
     assert_eq!(cur.adaptive_enabled, custom.adaptive_enabled);
     assert_eq!(cur.radar_sonar_ping, custom.radar_sonar_ping);
+    assert_eq!(cur.racing_line_mode, custom.racing_line_mode);
+    assert!((cur.racing_line_opacity - custom.racing_line_opacity).abs() < 1e-4);
 
     // 6. Test restore_defaults restores helpers
     modal.restore_defaults();
@@ -1080,6 +1092,8 @@ fn test_arcade_settings_modal_helpers_tab_integration() {
     assert!((restored.chevron_brightness - def_helpers.chevron_brightness).abs() < 1e-4);
     assert_eq!(restored.adaptive_enabled, def_helpers.adaptive_enabled);
     assert_eq!(restored.radar_sonar_ping, def_helpers.radar_sonar_ping);
+    assert_eq!(restored.racing_line_mode, def_helpers.racing_line_mode);
+    assert!((restored.racing_line_opacity - def_helpers.racing_line_opacity).abs() < 1e-4);
 }
 
 #[test]
@@ -1133,7 +1147,7 @@ fn test_arcade_settings_modal_gameplay_subtab_navigation() {
     modal.update(&mut ctx);
     assert!(modal.is_subtab_focused);
     assert_eq!(modal.gameplay_sub_tab, 1);
-    assert_eq!(modal.nav.column_lengths[3], 12);
+    assert_eq!(modal.nav.column_lengths[3], 14);
 
     // 6. Press Down Arrow from Subtab Bar -> enters row 0 of Visual Driving Aids!
     ctx.gamepad = &gp_down;

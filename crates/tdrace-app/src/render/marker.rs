@@ -42,6 +42,10 @@ pub struct PlayerVisibilityOptions {
     pub bot_nameplates: bool,
     /// Option 7: Expanding sonar / radar ping ripples when switching cameras or spinning out.
     pub sonar_ping: bool,
+    /// Option 8: Mathematically ideal racing line visual aid display mode.
+    pub racing_line_mode: tdrace_core::track::RacingLineMode,
+    /// Opacity multiplier for the racing line ribbon overlay (0.20 to 1.00).
+    pub racing_line_opacity: f32,
 }
 
 impl Default for PlayerVisibilityOptions {
@@ -62,6 +66,8 @@ impl Default for PlayerVisibilityOptions {
             curve_color_scheme: CurveColorScheme::Traffic,
             bot_nameplates: true,
             sonar_ping: true,
+            racing_line_mode: tdrace_core::track::RacingLineMode::Full,
+            racing_line_opacity: 0.70,
         }
     }
 }
@@ -90,6 +96,8 @@ impl From<&crate::config::PlayerHelpersConfig> for PlayerVisibilityOptions {
             curve_color_scheme,
             bot_nameplates: cfg.bot_nameplates,
             sonar_ping: cfg.radar_sonar_ping,
+            racing_line_mode: cfg.racing_line_mode,
+            racing_line_opacity: cfg.racing_line_opacity,
         }
     }
 }
@@ -118,6 +126,8 @@ impl From<&PlayerVisibilityOptions> for crate::config::PlayerHelpersConfig {
             adaptive_visibility: opts.adaptive_visibility,
             radar_sonar_ping: opts.sonar_ping,
             bot_nameplates: opts.bot_nameplates,
+            racing_line_mode: opts.racing_line_mode,
+            racing_line_opacity: opts.racing_line_opacity,
         }
     }
 }
