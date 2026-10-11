@@ -8321,6 +8321,7 @@ impl RaceSession {
                         license_grade: p.license_grade,
                         academy_progress: p.academy_progress.clone(),
                         owned_cars: p.owned_cars.clone(),
+                        car_compounds: p.car_compounds.clone(),
                     })
                 });
 

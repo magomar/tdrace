@@ -1,5 +1,6 @@
-use std::collections::BTreeMap;
-use serde::{Deserialize, Serialize};
+use std::collections::{BTreeMap, HashMap};
+use serde::{Deserialize, Deserializer, Serialize};
+use tdrace_core::physics::surface::CompoundId;
 
 use crate::ai::{CareerRivalEntry, DriverTier, RosterEvolutionEngine, RosterEvolutionReport};
 use crate::render::color::CarColorScheme;
@@ -38,6 +39,28 @@ pub struct PlayerProfile {
     pub academy_progress: ClassicAcademyProgress,
     #[serde(default)]
     pub owned_cars: Vec<String>,
+    /// Slick compound chosen in the garage per GT car model id (spec 098). A car with no entry
+    /// uses its preset compound.
+    #[serde(default, deserialize_with = "lenient_car_compounds")]
+    pub car_compounds: HashMap<String, CompoundId>,
+}
+
+/// Reads the per-car compound map and drops entries whose compound is unknown, so one bad value
+/// never loses the other choices (spec 098: fail closed to the preset compound, never panic).
+fn lenient_car_compounds<'de, D>(deserializer: D) -> Result<HashMap<String, CompoundId>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let raw = HashMap::<String, serde_json::Value>::deserialize(deserializer)?;
+    Ok(raw
+        .into_iter()
+        .filter_map(|(car, value)| serde_json::from_value(value).ok().map(|id| (car, id)))
+        .collect())
+}
+
+/// Parses the JSON stored in the `car_compounds` column; invalid JSON gives an empty map.
+pub fn parse_car_compounds(json: &str) -> HashMap<String, CompoundId> {
+    lenient_car_compounds(&mut serde_json::Deserializer::from_str(json)).unwrap_or_default()
 }
 
 impl Default for PlayerProfile {
@@ -58,6 +81,7 @@ impl Default for PlayerProfile {
             license_grade: LicenseGrade::None,
             academy_progress: ClassicAcademyProgress::default(),
             owned_cars: Vec::new(),
+            car_compounds: Default::default(),
         }
     }
 }
@@ -87,6 +111,7 @@ impl PlayerProfile {
             license_grade: LicenseGrade::None,
             academy_progress: ClassicAcademyProgress::default(),
             owned_cars: Vec::new(),
+            car_compounds: Default::default(),
         }
     }
 
@@ -128,6 +153,7 @@ impl PlayerProfile {
             license_grade: LicenseGrade::None,
             academy_progress: ClassicAcademyProgress::default(),
             owned_cars: Vec::new(),
+            car_compounds: Default::default(),
         }
     }
 
