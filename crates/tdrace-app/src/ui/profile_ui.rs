@@ -2178,6 +2178,7 @@ pub fn render_profile_create_screen(
 }
 
 /// The racing number field of the profile editors: the chosen number and how to change it.
+#[allow(clippy::too_many_arguments)]
 fn render_race_number_field(scaler: &UiScaler, fonts: &Fonts, x: f32, y: f32, w: f32, h: f32, race_number: u8, is_focused: bool) {
     let border_col = if is_focused { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER };
     draw_rectangle(x, y, w, h, Color::new(0.08, 0.10, 0.15, 0.90));
