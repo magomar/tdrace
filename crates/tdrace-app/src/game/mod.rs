@@ -215,7 +215,7 @@ use crate::profile::{
     ChampionshipAward, CountryRegistry, LicenseGrade, ModuleCareerProgress, PlayerProfile,
     ProfileCareerStats, RaceHistoryEntry,
 };
-use crate::render::car::render_car_with_visual_type_model_and_shadows;
+use crate::render::car::{render_car_numbers, render_car_with_visual_type_model_and_shadows};
 use crate::render::color::{CarColorScheme, Palette};
 use crate::editor::{
     is_mouse_over_editor_ui, render_editor_grid, render_editor_gizmos, render_editor_junction_labels, render_editor_ui,
@@ -14396,7 +14396,8 @@ impl RaceSession {
             }
             GameState::DriverCards(_) => {
                 let drivers = self.active_module_drivers();
-                render_driver_cards_screen(&self.fonts, &drivers, self.driver_cards_idx);
+                let race_numbers: Vec<u8> = drivers.iter().map(|d| self.driver_race_number(d.id)).collect();
+                render_driver_cards_screen(&self.fonts, &drivers, &race_numbers, self.driver_cards_idx);
             }
             GameState::ProfileManager { selected_idx } => {
                 render_profile_manager_screen(
@@ -16212,6 +16213,7 @@ impl RaceSession {
                     position: car.state.position,
                     elevation: car.dynamic_elevation(),
                     distance_to_player: dist,
+                    race_number: self.car_race_numbers.get(i).copied().unwrap_or(0),
                 });
             } else if self.is_split_screen() && i == 0 {
                 items.push(VehicleNameplateItem {
@@ -16222,6 +16224,7 @@ impl RaceSession {
                     position: car.state.position,
                     elevation: car.dynamic_elevation(),
                     distance_to_player: dist,
+                    race_number: self.car_race_numbers.get(i).copied().unwrap_or(0),
                 });
             } else if self.is_split_screen() && i == 1 {
                 items.push(VehicleNameplateItem {
@@ -16232,6 +16235,7 @@ impl RaceSession {
                     position: car.state.position,
                     elevation: car.dynamic_elevation(),
                     distance_to_player: dist,
+                    race_number: self.car_race_numbers.get(i).copied().unwrap_or(0),
                 });
             } else {
                 let bot_idx = i.saturating_sub(bot_offset);
@@ -16255,6 +16259,7 @@ impl RaceSession {
                     position: car.state.position,
                     elevation: car.dynamic_elevation(),
                     distance_to_player: dist,
+                    race_number: self.car_race_numbers.get(i).copied().unwrap_or(0),
                 });
             }
         }
@@ -16279,6 +16284,11 @@ impl RaceSession {
                 let p2_nameplates = self.collect_bot_nameplates(1);
                 render_floating_bot_nameplates(&self.fonts, &self.camera_p2, Some(s_rect2), &p2_nameplates, 1.0);
             }
+
+            // Racing numbers on the cars (spec 092)
+            let [s_rect1, s_rect2] = self.split_layout.screen_rects(sw, sh);
+            render_car_numbers(&self.fonts, &self.camera, Some(s_rect1), &self.collect_car_numbers(0));
+            render_car_numbers(&self.fonts, &self.camera_p2, Some(s_rect2), &self.collect_car_numbers(1));
         } else {
             let focus_idx = self.player_car_index();
             self.render_world_viewport(&self.camera, focus_idx, None);
@@ -16288,6 +16298,9 @@ impl RaceSession {
                 let nameplates = self.collect_bot_nameplates(focus_idx);
                 render_floating_bot_nameplates(&self.fonts, &self.camera, None, &nameplates, 1.0);
             }
+
+            // Racing numbers on the cars (spec 092)
+            render_car_numbers(&self.fonts, &self.camera, None, &self.collect_car_numbers(focus_idx));
         }
     }
 

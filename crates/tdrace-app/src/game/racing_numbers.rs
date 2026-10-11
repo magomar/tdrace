@@ -5,6 +5,8 @@ use macroquad::input::KeyCode;
 use super::{get_char_pressed, is_key_pressed, RaceSession, SfxType};
 use crate::ai::{allocate_rival_numbers, step_race_number, type_race_digit};
 use crate::profile::PlayerProfile;
+use crate::render::car::CarNumberItem;
+use crate::render::color::CarColorScheme;
 use crate::ui::menu::GameMode;
 
 /// Numbers for the cars of a grid. `0` means "no number" (valid numbers are `1..=99`).
@@ -45,6 +47,57 @@ impl RaceSession {
             }
         }
         number
+    }
+
+    /// The racing number a rival has on the current grid or in the saved roster, `0` when it has none or when it
+    /// is the player's own number (a stale roster entry that the next grid will move).
+    pub fn driver_race_number(&self, driver_id: &str) -> u8 {
+        let on_grid = self
+            .grid_participants
+            .iter()
+            .find(|p| p.bot_index.and_then(|idx| self.opponent_drivers.get(idx)).is_some_and(|d| d.id == driver_id))
+            .map(|p| p.race_number);
+        let saved = || {
+            let in_champ = self.championship_session.as_ref().and_then(|c| c.standings.iter().find(|s| s.driver_id == driver_id)).and_then(|s| s.race_number);
+            in_champ.or_else(|| self.active_career_progress.career_rivals.iter().find(|r| r.driver_id == driver_id).and_then(|r| r.race_number))
+        };
+        let number = on_grid.filter(|&n| n != 0).or_else(saved).unwrap_or(0);
+        if number == self.player_race_number() {
+            0
+        } else {
+            number
+        }
+    }
+
+    /// The racing numbers to draw on the cars for the viewport that follows `focus_car_idx`. A car under a bridge
+    /// deck, a LAN car and a car without a number get none.
+    pub fn collect_car_numbers(&self, focus_car_idx: usize) -> Vec<CarNumberItem> {
+        self.world
+            .vehicles
+            .iter()
+            .enumerate()
+            .filter(|&(i, car)| {
+                !self.lan_car_left(i)
+                    && !super::is_under_bridge_deck(&self.track, car.state.position, car.total_elevation())
+            })
+            .filter_map(|(i, car)| {
+                let number = self.car_race_numbers.get(i).copied().unwrap_or(0);
+                CarNumberItem::for_car(car, number, self.effective_body_color(i, focus_car_idx))
+            })
+            .collect()
+    }
+
+    /// The primary colour the car renderer paints car `i` with: Classic and Career player cars wear the colour of
+    /// their catalog model, every other car its livery.
+    fn effective_body_color(&self, i: usize, focus_car_idx: usize) -> macroquad::color::Color {
+        let scheme = self.color_schemes.get(i).copied().unwrap_or(CarColorScheme::from_index(0));
+        let is_player = !self.is_split_screen() && i == focus_car_idx || self.is_split_screen() && i < 2;
+        if !self.is_lan_multiplayer && (self.active_module_id == "classic" || self.game_mode == GameMode::Career) && is_player {
+            if let Some(model) = self.car_model_ids.get(i).copied().flatten().and_then(crate::catalog::find_model_by_id) {
+                return model.primary_color;
+            }
+        }
+        scheme.primary
     }
 
     /// Numbers the grid that `rebuild_roster_participants` is about to build. A championship or career roster
