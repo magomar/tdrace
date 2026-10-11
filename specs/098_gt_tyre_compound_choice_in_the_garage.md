@@ -94,41 +94,41 @@ Other tuning (brake bias, gearing, springs) is out of scope on purpose. Tuning w
 ## 🧪 Verification & Acceptance Criteria
 
 - **Scenario: A GT player chooses a compound in the garage**
-  - [ ] **Given** the player opens the garage on a GT module car
-  - [ ] **When** the player changes TYRES from MEDIUM to SOFT and confirms the car
-  - [ ] **Then** the race starts with Soft Slick on all four wheels of the player's car
-  - [ ] **And** the cockpit compound badge shows SOFT
+  - [x] **Given** the player opens the garage on a GT module car
+  - [x] **When** the player changes TYRES from MEDIUM to SOFT and confirms the car
+  - [x] **Then** the race starts with Soft Slick on all four wheels of the player's car
+  - [x] **And** the cockpit compound badge shows SOFT
 
 - **Scenario: The choice is kept per car**
-  - [ ] **Given** the player chose HARD for one GT car and left another GT car untouched
-  - [ ] **When** the game restarts and the player opens the garage
-  - [ ] **Then** the first car shows HARD and the second car shows MEDIUM
+  - [x] **Given** the player chose HARD for one GT car and left another GT car untouched
+  - [x] **When** the game restarts and the player opens the garage
+  - [x] **Then** the first car shows HARD and the second car shows MEDIUM
 
 - **Scenario: Stock cars race on the series compound**
-  - [ ] **Given** the player opens the garage on a stock car
-  - [ ] **When** the detail panel is shown
-  - [ ] **Then** it shows the series compound read-only and offers no selector
+  - [x] **Given** the player opens the garage on a stock car
+  - [x] **When** the detail panel is shown
+  - [x] **Then** it shows the series compound read-only and offers no selector
 
 - **Scenario: Other categories are unchanged**
-  - [ ] **Given** a kart, rally, autocross, extreme off-road or Classic module car
-  - [ ] **When** the garage detail panel is shown
-  - [ ] **Then** there is no TYRES row and the car races on its preset compound
+  - [x] **Given** a kart, rally, autocross, extreme off-road or Classic module car
+  - [x] **When** the garage detail panel is shown
+  - [x] **Then** there is no TYRES row and the car races on its preset compound
 
 - **Scenario: The compound trades grip for wear**
-  - [ ] **Given** the GT3 car (`GtWorldChallengeModule::car_gt3_evo`) on Soft, Medium and Hard
-  - [ ] **When** each runs the skidpad protocol and a 60 s drift on asphalt
-  - [ ] **Then** peak lateral grip orders Soft > Medium > Hard
-  - [ ] **And** drift tread wear orders Soft > Medium > Hard
+  - [x] **Given** the GT3 car (`GtWorldChallengeModule::car_gt3_evo`) on Soft, Medium and Hard
+  - [x] **When** each runs the skidpad protocol and a 60 s drift on asphalt
+  - [x] **Then** peak lateral grip orders Soft > Medium > Hard
+  - [x] **And** drift tread wear orders Soft > Medium > Hard
 
 - **Scenario: Player 2 and bots keep their preset compound**
-  - [ ] **Given** player 1 chose SOFT for a GT car in a split-screen race with bots
-  - [ ] **When** the race starts
-  - [ ] **Then** player 2's car and every bot car use their preset compound
+  - [x] **Given** player 1 chose SOFT for a GT car in a split-screen race with bots
+  - [x] **When** the race starts
+  - [x] **Then** player 2's car and every bot car use their preset compound
 
 - **Scenario: An old profile loads**
-  - [ ] **Given** a profile database written before this spec
-  - [ ] **When** the game loads it
-  - [ ] **Then** every car uses its preset compound and no error is shown
+  - [x] **Given** a profile database written before this spec
+  - [x] **When** the game loads it
+  - [x] **Then** every car uses its preset compound and no error is shown
 
 ---
 
