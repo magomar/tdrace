@@ -10,6 +10,7 @@ use race_kit::{DriveControls, RaceRules, RaceWorld};
 use tdrace_core::catalog;
 use tdrace_core::physics::car::Car;
 use tdrace_core::track::checkpoint::TrackProgressTracker;
+use tdrace_core::track::network::JunctionKind;
 use tdrace_core::track::Track;
 use tdrace_core::CarConfig;
 
@@ -68,4 +69,48 @@ fn test_hilltop_leap_network_walls_stop_a_car() {
     assert!(!track.geometry.network_walls.is_empty());
     let crossed = walls_crossed(&track);
     assert!(crossed.is_empty(), "the car drove through {} network walls:\n{}", crossed.len(), crossed.join("\n"));
+}
+
+/// How near the joker merge a main wall end must meet another wall (m).
+const MERGE_RADIUS_M: f32 = 15.0;
+/// Largest gap between a main wall end and the wall it meets (m).
+const WALL_JOIN_M: f32 = 1.0;
+
+/// Scenario: A car that runs wide at the Hilltop Leap joker merge slides along the walls
+///
+/// Given rx_hilltop_leap, where the joker joins the main road
+/// When the main walls near the merge are checked
+/// Then every main wall end meets another wall, so no blunt wall end and no pocket face the cars
+///
+/// tdrace-ej354: main wall 236 started 4.5 m short of the joker's left wall. Bots that ran wide on a late brake hit
+/// its end at 22-26 m/s and needed 10 s to reverse out of the pocket between the two walls.
+#[test]
+fn test_hilltop_leap_joker_merge_walls_leave_no_pocket() {
+    let track = catalog::find("rx_hilltop_leap", Some("classic")).unwrap().load().unwrap();
+    let net = track.network.as_ref().unwrap();
+    let merge = net
+        .junctions
+        .iter()
+        .find_map(|j| match &j.kind {
+            JunctionKind::Merge { egress_socket, .. } if j.name.contains("Joker") => Some(egress_socket.point),
+            _ => None,
+        })
+        .expect("the joker merge");
+    let main: Vec<_> = track.geometry.inner_walls.iter().chain(&track.geometry.outer_walls).collect();
+    let all: Vec<_> = main.iter().copied().chain(&track.geometry.network_walls).collect();
+    let mut loose = Vec::new();
+    for (i, w) in main.iter().enumerate() {
+        for end in [w.segment.start, w.segment.end] {
+            if end.distance(merge) > MERGE_RADIUS_M {
+                continue;
+            }
+            let joined = all.iter().enumerate().any(|(j, other)| {
+                j != i && [other.segment.start, other.segment.end].iter().any(|p| p.distance(end) < WALL_JOIN_M)
+            });
+            if !joined {
+                loose.push(format!("({:.1}, {:.1})", end.x, end.y));
+            }
+        }
+    }
+    assert!(loose.is_empty(), "main wall ends near the joker merge that meet no wall: {}", loose.join(", "));
 }
