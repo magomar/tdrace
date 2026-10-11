@@ -1454,10 +1454,38 @@ impl RaceSession {
         }
     }
 
+    /// Rules of the active Academy mission (Spec 064), if an Academy session is running.
+    pub fn academy_rules(&self) -> Option<academy::AcademySessionRules> {
+        self.active_academy_lesson.and_then(academy::AcademyLessonDef::find).map(|def| def.rules)
+    }
+
+    /// Whether car damage is on for this race: an Academy mission sets it itself, any other race
+    /// follows the player's `gameplay.car_damage` setting. The setting is never rewritten, so it is back
+    /// the moment the Academy session ends.
+    pub fn car_damage_enabled(&self) -> bool {
+        self.academy_rules().map_or(self.config.gameplay.car_damage, |rules| rules.damage_enabled)
+    }
+
+    /// Applies the tyre rules of the active Academy mission (Spec 064): its wear scale on every car and
+    /// its start wear on the player's four tyres. Any other race keeps the cars as built: wear scale 1.0
+    /// on fresh tyres.
+    fn apply_academy_tyre_rules(&mut self) {
+        let Some(rules) = self.academy_rules() else { return };
+        let player_idx = self.player_car_index();
+        for (i, car) in self.world.vehicles.iter_mut().enumerate() {
+            car.config.wear_rate_scale = rules.wear_rate_scale;
+            if i == player_idx {
+                for wheel in car.state.wheel_assemblies.iter_mut() {
+                    wheel.wear = rules.start_wear;
+                }
+            }
+        }
+    }
+
     /// Synchronizes the car damage gameplay setting with world physics rules and vehicles.
     /// When disabled, all vehicle damage is repaired to pristine full health.
     pub fn apply_car_damage_setting(&mut self) {
-        let damage = self.config.gameplay.car_damage;
+        let damage = self.car_damage_enabled();
         self.world.rules.damage_enabled = damage;
         for car in &mut self.world.vehicles {
             car.config.damage_enabled = damage;
@@ -4777,6 +4805,7 @@ impl RaceSession {
             self.ai_drivers.push(bot_ai);
         }
         self.apply_car_damage_setting();
+        self.apply_academy_tyre_rules();
     }
 
     /// Initializes or resets the racing circuit, cars, grid spawns, AI drivers, and camera.
@@ -12841,7 +12870,7 @@ impl RaceSession {
         // elevation & banking, tree canopy drag, jump ramps, car-to-car and wall collisions, lap tracking.
         // Everything below reacts to its events, in the order they happened.
         self.world.rules.format = self.race_format();
-        self.world.rules.damage_enabled = self.config.gameplay.car_damage;
+        self.world.rules.damage_enabled = self.car_damage_enabled();
         self.world.rules.joker = joker_rule_for(&self.track);
         if self.lan_ghost_collisions() {
             self.world.rules.collision.iterations = 0;
@@ -12884,6 +12913,9 @@ impl RaceSession {
         for ev in &race_events {
             if let RaceEvent::Landed { car: i, air_time, position, speed } = *ev {
                 if i == my_car_idx {
+                    if let (Some(challenge), Some(car)) = (&mut self.academy_challenge, self.world.vehicles.get(i)) {
+                        challenge.register_landing(car.state.last_touchdown_speed * 100.0);
+                    }
                     self.audio.play_sfx(SfxType::Landing);
                     self.camera.add_trauma(0.25);
                     if air_time >= 0.20 {
@@ -13125,6 +13157,12 @@ impl RaceSession {
             if let Some(tracker) = self.world.trackers.get(my_car_idx) {
                 challenge.set_off_track_seconds(tracker.off_track_timer);
             }
+            let worst_wear = self
+                .world
+                .vehicles
+                .get(my_car_idx)
+                .map_or(0.0, |car| car.state.wheel_assemblies.iter().map(|w| w.wear).fold(0.0, f32::max));
+            challenge.observe(worst_wear, self.player_race_stats.stunt_stats.max_single_drift_score);
         }
 
         // Dynamic Accelerating Engine Audio (motor sound only)
@@ -13816,12 +13854,22 @@ impl RaceSession {
             // Academy Challenge Evaluation
             if let Some(lesson_id) = self.active_academy_lesson {
                 let finish_time = self.player_race_stats.best_lap_time().unwrap_or(self.session_time);
-                let attempt_time = if lesson_id == academy::AcademyLessonId::Lesson4GraduationSprint && self.total_laps >= 2 {
+                // Tier 2 and 3 missions are measured on the total race time, which includes a joker penalty.
+                let attempt_time = if lesson_id.tier() > 1 {
+                    player_time
+                } else if lesson_id == academy::AcademyLessonId::Lesson4GraduationSprint && self.total_laps >= 2 {
                     self.session_time
                 } else {
                     finish_time
                 };
                 let mut challenge = self.academy_challenge.take().unwrap_or_else(|| academy::AcademyChallengeState::new(lesson_id));
+                let worst_wear = self
+                    .world
+                    .vehicles
+                    .get(my_car_idx)
+                    .map_or(0.0, |car| car.state.wheel_assemblies.iter().map(|w| w.wear).fold(0.0, f32::max));
+                challenge.observe(worst_wear, self.player_race_stats.stunt_stats.max_single_drift_score);
+                challenge.finish_position = player_pos as u32;
                 if self.player_race_stats.collision_count > 0 && challenge.heavy_collisions == 0 {
                     challenge.heavy_collisions = self.player_race_stats.collision_count;
                 }

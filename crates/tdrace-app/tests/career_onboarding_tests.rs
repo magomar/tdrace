@@ -603,3 +603,366 @@ fn test_feeder_ladder_and_discipline_license_gating() {
 }
 
 
+
+// ---------------------------------------------------------------------------------------------
+// Spec 064: Academy Tiers 2 and 3
+// ---------------------------------------------------------------------------------------------
+
+mod multitier {
+    use tdrace_app::game::academy::{
+        self, evaluate_academy_attempt_on, setup_academy_session, AcademyChallengeState, AcademyLessonDef,
+        AcademyObjective,
+    };
+    use tdrace_app::game::RaceSession;
+    use tdrace_app::profile::{AcademyLessonId, AcademyMedal, LicenseGrade, ModuleCareerProgress, PlayerProfile};
+    use tdrace_core::physics::car::CarControls;
+    use tdrace_core::physics::surface::SurfaceType;
+
+    /// A clean challenge state that earns `medal` on `id`, whatever its objective.
+    fn challenge_for(id: AcademyLessonId, medal: AcademyMedal) -> (f32, AcademyChallengeState) {
+        let def = AcademyLessonDef::find(id).unwrap();
+        let target = match medal {
+            AcademyMedal::Gold => def.gold_time_sec,
+            AcademyMedal::Silver => def.silver_time_sec,
+            _ => def.bronze_time_sec,
+        };
+        let mut state = AcademyChallengeState::new(id);
+        match def.objective {
+            AcademyObjective::DriftScore => state.observe(0.1, target),
+            AcademyObjective::Podium { .. } => {
+                state.observe(0.1, 0.0);
+                state.finish_position = match medal {
+                    AcademyMedal::Gold => 1,
+                    AcademyMedal::Silver => 2,
+                    _ => 3,
+                };
+            }
+            _ => state.observe(0.1, 0.0),
+        }
+        (target, state)
+    }
+
+    fn evaluate(profile: &mut PlayerProfile, id: AcademyLessonId, medal: AcademyMedal, day: &str) -> academy::AcademyAttemptEvaluation {
+        let (time, state) = challenge_for(id, medal);
+        evaluate_academy_attempt_on(profile, id, time, &state, day)
+    }
+
+    fn graduate(profile: &mut PlayerProfile) {
+        for id in AcademyLessonId::ALL {
+            evaluate(profile, id, AcademyMedal::Bronze, "2026-10-11");
+        }
+        assert!(profile.academy_progress.is_graduated());
+    }
+
+    fn session_with_db() -> RaceSession {
+        let mut session = RaceSession::new();
+        session.hof_db = Some(tdrace_app::db::HallOfFameDb::open_in_memory().unwrap());
+        session
+    }
+
+    #[test]
+    fn test_setup_sessions_for_tier_2_and_3_missions() {
+        let mut session = RaceSession::new();
+        let expect = [
+            (AcademyLessonId::Acad2DirtDrift, "ax_clay_bowl", "classic_ax_brawler", 1, 0),
+            (AcademyLessonId::Acad2ScandinavianFlick, "rx_hilltop_leap", "classic_rally", 1, 0),
+            (AcademyLessonId::Acad2RampBalance, "at_dune_sea", "classic_offroad", 1, 0),
+            (AcademyLessonId::Acad2MixedQualifier, "rx_canyon_flyer", "classic_rally", 2, 0),
+            (AcademyLessonId::Acad3ThermalThrottle, "gt_ridge_ring", "classic_gt", 3, 0),
+            (AcademyLessonId::Acad3OvalStint, "stock_tri_oval_speedway", "classic_nascar", 5, 0),
+            (AcademyLessonId::Acad3WornRubber, "gt_coastal_grand_prix", "classic_gt", 2, 0),
+            (AcademyLessonId::Acad3TyreConservation, "stock_roval", "classic_nascar", 4, 3),
+        ];
+        for (id, track, car, laps, bots) in expect {
+            setup_academy_session(&mut session, id).unwrap_or_else(|e| panic!("{}: {e}", id.slug()));
+            assert_eq!(session.active_academy_lesson, Some(id));
+            assert_eq!(session.track_choice.track_id(), track, "{}", id.slug());
+            assert_eq!(session.selected_car_model_id, Some(car), "{}", id.slug());
+            assert_eq!(session.total_laps, laps, "{}", id.slug());
+            assert_eq!(session.num_bots, bots, "{}", id.slug());
+        }
+    }
+
+    #[test]
+    fn test_tier_2_mission_runs_with_damage_and_wear_off_whatever_the_player_setting() {
+        let mut session = session_with_db();
+        session.config.gameplay.car_damage = true;
+        setup_academy_session(&mut session, AcademyLessonId::Acad2DirtDrift).unwrap();
+        session.init_race();
+
+        assert!(session.config.gameplay.car_damage, "the player's own setting is never rewritten");
+        assert!(!session.world.rules.damage_enabled);
+        for car in &session.world.vehicles {
+            assert!(!car.config.damage_enabled);
+            assert_eq!(car.config.wear_rate_scale, 0.0);
+        }
+
+        // A hard hit leaves health at 100% and no repair bill
+        let car = &mut session.world.vehicles[0];
+        car.apply_collision_damage_to_zone(tdrace_core::physics::car::ImpactZone::FrontNose, 20_000.0);
+        assert_eq!(car.state.health, 1.0);
+
+        // After a sustained drift all four wheels still show wear 0.0
+        car.state.velocity = glam::Vec2::new(22.0, 0.0);
+        let controls = CarControls { throttle: 1.0, steer: 0.8, handbrake: true, ..Default::default() };
+        for _ in 0..600 {
+            car.step(&controls, SurfaceType::Dirt, 1.0 / 60.0);
+        }
+        assert!(car.state.wheel_assemblies.iter().all(|w| w.wear == 0.0));
+    }
+
+    #[test]
+    fn test_tier_3_mission_scales_wear_and_worn_rubber_starts_at_65_percent() {
+        let mut session = session_with_db();
+        setup_academy_session(&mut session, AcademyLessonId::Acad3WornRubber).unwrap();
+        session.init_race();
+        assert!(!session.world.rules.damage_enabled);
+        let player = &session.world.vehicles[0];
+        assert_eq!(player.config.wear_rate_scale, 3.0);
+        assert!(player.state.wheel_assemblies.iter().all(|w| w.wear == 0.65));
+
+        // The 3-lap pace run starts on fresh tyres
+        setup_academy_session(&mut session, AcademyLessonId::Acad3ThermalThrottle).unwrap();
+        session.init_race();
+        assert_eq!(session.world.vehicles[0].config.wear_rate_scale, 3.0);
+        assert!(session.world.vehicles[0].state.wheel_assemblies.iter().all(|w| w.wear == 0.0));
+    }
+
+    #[test]
+    fn test_academy_rules_end_with_the_session() {
+        let mut session = session_with_db();
+        session.config.gameplay.car_damage = true;
+        setup_academy_session(&mut session, AcademyLessonId::Acad3WornRubber).unwrap();
+        session.init_race();
+        assert!(!session.world.rules.damage_enabled);
+
+        // Leaving the Academy, then the next race outside it
+        let _ = session.race_exit_target();
+        assert_eq!(session.active_academy_lesson, None);
+        session.init_race();
+        assert!(session.config.gameplay.car_damage);
+        assert!(session.world.rules.damage_enabled, "the player's damage setting is back");
+        for car in &session.world.vehicles {
+            assert!(car.config.damage_enabled);
+            assert_eq!(car.config.wear_rate_scale, 1.0);
+            assert!(car.state.wheel_assemblies.iter().all(|w| w.wear == 0.0));
+        }
+    }
+
+    #[test]
+    fn test_mixed_surface_qualifier_has_the_mandatory_joker_rule() {
+        use tdrace_app::game::joker_rule_for;
+        let mut session = RaceSession::new();
+        setup_academy_session(&mut session, AcademyLessonId::Acad2MixedQualifier).unwrap();
+        assert!(AcademyLessonDef::find(AcademyLessonId::Acad2MixedQualifier).unwrap().rules.joker_required);
+        assert_eq!(joker_rule_for(&session.track).mandatory, 1, "rx_canyon_flyer must carry the joker rule");
+    }
+
+    #[test]
+    fn test_unlock_and_license_flow_through_evaluation() {
+        let mut profile = PlayerProfile::new_rookie("Kimi");
+        assert!(!profile.academy_progress.is_lesson_unlocked(AcademyLessonId::Acad2DirtDrift));
+        graduate(&mut profile);
+        assert_eq!(profile.license_grade, LicenseGrade::ClassD);
+        assert!(profile.academy_progress.is_lesson_unlocked(AcademyLessonId::Acad2DirtDrift));
+
+        // Bronze on 2 of 4 Tier 2 missions: Tier 3 stays locked, a third opens it and grants Class C
+        evaluate(&mut profile, AcademyLessonId::Acad2DirtDrift, AcademyMedal::Bronze, "2026-10-11");
+        evaluate(&mut profile, AcademyLessonId::Acad2ScandinavianFlick, AcademyMedal::Bronze, "2026-10-11");
+        assert!(!profile.academy_progress.is_tier_unlocked(3));
+        assert_eq!(profile.license_grade, LicenseGrade::ClassD);
+        let third = evaluate(&mut profile, AcademyLessonId::Acad2RampBalance, AcademyMedal::Bronze, "2026-10-11");
+        assert!(profile.academy_progress.is_tier_unlocked(3));
+        assert_eq!(profile.license_grade, LicenseGrade::ClassC);
+        assert_eq!(third.license_earned, Some(LicenseGrade::ClassC));
+
+        // Tier 3 pass grants Class B
+        for id in &AcademyLessonId::tier_lessons(3)[..2] {
+            evaluate(&mut profile, *id, AcademyMedal::Bronze, "2026-10-11");
+        }
+        assert_eq!(profile.license_grade, LicenseGrade::ClassC);
+        let pass = evaluate(&mut profile, AcademyLessonId::Acad3WornRubber, AcademyMedal::Bronze, "2026-10-11");
+        assert_eq!(profile.license_grade, LicenseGrade::ClassB);
+        assert_eq!(pass.license_earned, Some(LicenseGrade::ClassB));
+
+        // A Class A holder keeps it
+        let mut ace = PlayerProfile::new_rookie("Lewis");
+        graduate(&mut ace);
+        ace.license_grade = LicenseGrade::ClassA;
+        for id in &AcademyLessonId::tier_lessons(2)[..3] {
+            evaluate(&mut ace, *id, AcademyMedal::Bronze, "2026-10-11");
+        }
+        assert_eq!(ace.license_grade, LicenseGrade::ClassA);
+    }
+
+    #[test]
+    fn test_medal_bounties_pay_as_deltas_and_the_rerun_pays_the_stipend_only() {
+        let mut profile = PlayerProfile::new_rookie("Nico");
+        graduate(&mut profile);
+        profile.credits = 5_000;
+        let id = AcademyLessonId::Acad2DirtDrift;
+
+        evaluate(&mut profile, id, AcademyMedal::Silver, "2026-10-11");
+        assert_eq!(profile.credits, 5_000 + 3_750);
+        evaluate(&mut profile, id, AcademyMedal::Gold, "2026-10-11");
+        assert_eq!(profile.credits, 5_000 + 5_000);
+        let rerun = evaluate(&mut profile, id, AcademyMedal::Gold, "2026-10-11");
+        assert_eq!(profile.credits, 5_000 + 5_000 + 2_000, "the second Gold pays the stipend only");
+        assert_eq!(rerun.credits_awarded, 2_000);
+    }
+
+    #[test]
+    fn test_stipends_are_capped_at_five_per_local_day() {
+        let mut profile = PlayerProfile::new_rookie("Oscar");
+        graduate(&mut profile);
+        for id in AcademyLessonId::tier_lessons(2) {
+            evaluate(&mut profile, *id, AcademyMedal::Bronze, "2026-10-11");
+        }
+        // The first clears paid bounties, no stipend. Bronze again on Tier 2 pays 2,000 each, 5 times a day.
+        let id = AcademyLessonId::Acad2DirtDrift;
+        for run in 1..=5 {
+            let before = profile.credits;
+            let eval = evaluate(&mut profile, id, AcademyMedal::Bronze, "2026-10-12");
+            assert_eq!(profile.credits - before, 2_000, "run {run}");
+            assert!(!eval.stipend_limit_reached);
+        }
+        let before = profile.credits;
+        let sixth = evaluate(&mut profile, id, AcademyMedal::Bronze, "2026-10-12");
+        assert_eq!(profile.credits, before, "the 6th run pays nothing");
+        assert!(sixth.stipend_limit_reached);
+        // Next local day pays again
+        let before = profile.credits;
+        evaluate(&mut profile, id, AcademyMedal::Bronze, "2026-10-13");
+        assert_eq!(profile.credits - before, 2_000);
+    }
+
+    #[test]
+    fn test_stipend_amount_follows_the_tier() {
+        let mut profile = PlayerProfile::new_rookie("Pierre");
+        graduate(&mut profile);
+        let before = profile.credits;
+        // Tier 1 lesson 1 re-run: the Spec 060 stipend of 1,500 Cr
+        evaluate(&mut profile, AcademyLessonId::Lesson1ApexLine, AcademyMedal::Bronze, "2026-10-11");
+        assert_eq!(profile.credits - before, 1_500);
+        for id in &AcademyLessonId::tier_lessons(2)[..3] {
+            evaluate(&mut profile, *id, AcademyMedal::Bronze, "2026-10-11");
+        }
+        let id = AcademyLessonId::Acad3OvalStint;
+        evaluate(&mut profile, id, AcademyMedal::Bronze, "2026-10-11");
+        let before = profile.credits;
+        evaluate(&mut profile, id, AcademyMedal::Bronze, "2026-10-12");
+        assert_eq!(profile.credits - before, 3_000);
+    }
+
+    #[test]
+    fn test_worn_out_tyres_give_no_medal_but_count_the_attempt() {
+        let mut profile = PlayerProfile::new_rookie("Charles");
+        graduate(&mut profile);
+        let id = AcademyLessonId::Acad3ThermalThrottle;
+        let def = AcademyLessonDef::find(id).unwrap();
+        let mut state = AcademyChallengeState::new(id);
+        state.observe(0.55, 0.0);
+        let before = profile.credits;
+        let eval = evaluate_academy_attempt_on(&mut profile, id, def.gold_time_sec - 1.0, &state, "2026-10-11");
+        assert_eq!(eval.medal, AcademyMedal::None);
+        assert!(eval.tyres_worn_out);
+        assert!(eval.clean_attempt);
+        assert_eq!(profile.credits, before);
+        assert_eq!(profile.academy_progress.lessons[&id].attempts, 1);
+
+        // Under the cap the same time earns Gold
+        let mut ok = AcademyChallengeState::new(id);
+        ok.observe(0.39, 0.0);
+        let eval = evaluate_academy_attempt_on(&mut profile, id, def.gold_time_sec - 1.0, &ok, "2026-10-11");
+        assert_eq!(eval.medal, AcademyMedal::Gold);
+        assert!(!eval.tyres_worn_out);
+    }
+
+    #[test]
+    fn test_rough_landing_invalidates_only_the_clean_landing_mission() {
+        let id = AcademyLessonId::Acad2RampBalance;
+        let mut state = AcademyChallengeState::new(id);
+        state.register_landing(AcademyChallengeState::MAX_PERMISSIBLE_LANDING_IMPULSE * 0.9);
+        assert!(state.is_clean());
+        state.register_landing(AcademyChallengeState::MAX_PERMISSIBLE_LANDING_IMPULSE * 1.2);
+        assert!(!state.is_clean());
+        assert!(state.disqualification_reason.as_deref().unwrap().contains("Rough Landing"));
+
+        let mut profile = PlayerProfile::new_rookie("Sergio");
+        graduate(&mut profile);
+        let def = AcademyLessonDef::find(id).unwrap();
+        let eval = evaluate_academy_attempt_on(&mut profile, id, def.gold_time_sec - 1.0, &state, "2026-10-11");
+        assert_eq!(eval.medal, AcademyMedal::None);
+        assert!(eval.failure_reason.unwrap().contains("Rough Landing"));
+
+        // A rally lesson does not care about a hard landing
+        let mut other = AcademyChallengeState::new(AcademyLessonId::Acad2ScandinavianFlick);
+        other.register_landing(5_000.0);
+        assert!(other.is_clean());
+    }
+
+    #[test]
+    fn test_tyre_conservation_sprint_is_scored_on_position_not_on_a_clean_lap() {
+        let mut profile = PlayerProfile::new_rookie("Alex");
+        graduate(&mut profile);
+        let id = AcademyLessonId::Acad3TyreConservation;
+        let mut state = AcademyChallengeState::new(id);
+        state.register_collision(1_500.0); // heavy contact in a 4-car race
+        state.observe(0.30, 0.0);
+        state.finish_position = 2;
+        let eval = evaluate_academy_attempt_on(&mut profile, id, 120.0, &state, "2026-10-11");
+        assert_eq!(eval.medal, AcademyMedal::Silver);
+        assert!(eval.clean_attempt);
+    }
+
+    #[test]
+    fn test_pace_status_of_old_lessons_is_unchanged_and_tier_ids_resolve() {
+        for tier in 1..=3u8 {
+            for id in AcademyLessonId::tier_lessons(tier) {
+                assert!(AcademyLessonDef::find(*id).is_some(), "{}", id.slug());
+            }
+        }
+    }
+
+    /// Spec 064 open balance question: the Tier 2 (25,000 Cr) and Tier 3 (50,000 Cr) purses against the
+    /// car prices of the career they feed. All-Bronze buys the entry car of the class the licence opens,
+    /// all-Gold reaches the next step but never skips a tier of cars.
+    #[test]
+    fn test_tier_purses_fit_the_car_prices_of_the_class_they_open() {
+        let price = ModuleCareerProgress::car_credit_cost_for_module;
+        let purse = |tier: u8, share: u64| -> u64 {
+            AcademyLessonDef::tier_curriculum(tier)
+                .iter()
+                .map(|l| match share {
+                    1 => l.bronze_credit_bounty,
+                    2 => l.bronze_credit_bounty + l.silver_credit_bounty,
+                    _ => l.bronze_credit_bounty + l.silver_credit_bounty + l.gold_credit_bounty,
+                })
+                .sum()
+        };
+        // Tier 2 opens Class C: Autocross and Rallycross
+        assert!(purse(2, 1) >= price("autocross", 1), "all-Bronze Tier 2 buys the Cross Car Junior");
+        assert!(purse(2, 3) >= price("autocross", 2), "all-Gold Tier 2 reaches the Cross Car Senior");
+        assert!(purse(2, 3) < price("autocross", 3), "but not the Buggy 1600");
+        assert!(purse(2, 3) < price("rally", 2), "and not the RX Supercar Lites");
+        // Tier 3 opens Class B: Stock Car and Extreme Off-Road
+        assert!(purse(3, 1) >= price("nascar", 1), "all-Bronze Tier 3 buys the Street Stock");
+        assert!(purse(3, 3) >= price("nascar", 2), "all-Gold Tier 3 reaches the Late Model Stock");
+        assert!(purse(3, 3) < price("nascar", 3), "but not the ARCA car");
+        assert!(purse(3, 3) < price("extreme_offroad", 2), "and not the Trophy Truck");
+    }
+
+    #[test]
+    fn test_academy_progress_with_stipend_fields_survives_the_database() {
+        let db = tdrace_app::db::HallOfFameDb::open_in_memory().unwrap();
+        let mut profile = PlayerProfile::new_rookie("Valtteri");
+        graduate(&mut profile);
+        evaluate(&mut profile, AcademyLessonId::Acad2DirtDrift, AcademyMedal::Gold, "2026-10-11");
+        evaluate(&mut profile, AcademyLessonId::Acad2DirtDrift, AcademyMedal::Gold, "2026-10-11");
+        let id = db.create_profile(&profile).unwrap();
+        let loaded = db.get_profile_by_id(id).unwrap().unwrap();
+        assert_eq!(loaded.academy_progress.stipend_day.as_deref(), Some("2026-10-11"));
+        assert_eq!(loaded.academy_progress.stipends_today, 1);
+        assert_eq!(loaded.academy_progress, profile.academy_progress);
+    }
+}
