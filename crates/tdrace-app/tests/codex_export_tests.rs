@@ -271,11 +271,41 @@ fn racing_data_matches_series_formats_and_academy() {
     // Academy
     let academy = &racing["academy"];
     let curriculum = academy["curriculum"].as_array().unwrap();
-    assert_eq!(curriculum.len(), 4);
+    // Tier 1 (Spec 060), then Tier 2 and Tier 3 (Spec 064), four missions each
+    assert_eq!(curriculum.len(), 12);
     assert_eq!(curriculum[0]["id"].as_str().unwrap(), "lesson_1_apex_line");
+    assert_eq!(curriculum[0]["tier"], 1);
     assert_eq!(curriculum[0]["gold_time_sec"].as_f64().unwrap() as f32, 61.2f32);
     assert_eq!(curriculum[3]["id"].as_str().unwrap(), "lesson_4_graduation_sprint");
     assert_eq!(curriculum[3]["gold_time_sec"].as_f64().unwrap() as f32, 104.8f32);
+    let ids: Vec<&str> = curriculum[4..].iter().map(|l| l["id"].as_str().unwrap()).collect();
+    assert_eq!(ids, ["acad_2_1", "acad_2_2", "acad_2_3", "acad_2_4", "acad_3_1", "acad_3_2", "acad_3_3", "acad_3_4"]);
+    let tier_of = |i: usize| curriculum[i]["tier"].as_u64().unwrap();
+    assert_eq!((tier_of(4), tier_of(7), tier_of(8), tier_of(11)), (2, 2, 3, 3));
+    let objectives: Vec<&str> = curriculum.iter().map(|l| l["objective"].as_str().unwrap()).collect();
+    assert_eq!(objectives[4], "drift_score");
+    assert_eq!(objectives[6], "clean_landing");
+    assert_eq!(objectives[8], "wear_cap");
+    assert_eq!(objectives[11], "podium");
+    // Tier 3 scales the tyre wear and keeps damage off, Worn Rubber starts on 65% wear
+    assert_eq!(curriculum[8]["wear_rate_scale"].as_f64().unwrap(), 3.0);
+    assert_eq!(curriculum[8]["damage_enabled"], false);
+    assert_eq!(curriculum[8]["max_wear"].as_f64().unwrap() as f32, 0.40f32);
+    assert_eq!(curriculum[10]["start_wear"].as_f64().unwrap() as f32, 0.65f32);
+    assert_eq!(curriculum[11]["bots"], 3);
+    assert_eq!(curriculum[7]["joker_required"], true);
+    assert_eq!(curriculum[0]["stipend_credits"], 1_500);
+    assert_eq!(curriculum[4]["stipend_credits"], 2_000);
+    assert_eq!(curriculum[8]["stipend_credits"], 3_000);
+
+    let tiers = academy["tiers"].as_array().unwrap();
+    let totals: Vec<u64> = tiers.iter().map(|t| t["bounty_total"].as_u64().unwrap()).collect();
+    assert_eq!(totals, [14_500, 25_000, 50_000]);
+    let grades: Vec<&str> = tiers.iter().map(|t| t["licence_grade"].as_str().unwrap()).collect();
+    assert_eq!(grades, ["ClassD", "ClassC", "ClassB"]);
+    assert_eq!(academy["daily_stipend_cap"], 5);
+    assert_eq!(academy["tier_pass_count"], 3);
+    assert!(academy["max_permissible_landing_impulse"].as_f64().unwrap() > academy["max_permissible_impulse"].as_f64().unwrap());
 
     let licences = academy["licence_grades"].as_array().unwrap();
     assert_eq!(licences.len(), 5);

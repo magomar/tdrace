@@ -614,10 +614,21 @@ const racing = defineCollection({
       }),
     }),
     academy: z.object({
+      tiers: z.array(
+        z.object({
+          tier: z.number().int(),
+          name: z.string(),
+          licence_grade: z.string(),
+          unlock_rule: z.string(),
+          bounty_total: z.number().int(),
+          stipend_credits: z.number().int(),
+        }),
+      ),
       curriculum: z.array(
         z.object({
           id: z.string(),
           index: z.number().int(),
+          tier: z.number().int(),
           title: z.string(),
           description: z.string(),
           track_slug: z.string(),
@@ -629,10 +640,23 @@ const racing = defineCollection({
           silver_credit_bounty: z.number().int(),
           gold_credit_bounty: z.number().int(),
           base_xp_reward: z.number().int(),
+          objective: z.enum(['best_time', 'drift_score', 'clean_landing', 'wear_cap', 'podium']),
+          max_wear: z.number().nullable(),
+          max_position: z.number().int().nullable(),
+          stipend_credits: z.number().int(),
+          damage_enabled: z.boolean(),
+          wear_rate_scale: z.number(),
+          start_wear: z.number(),
+          laps: z.number().int(),
+          bots: z.number().int(),
+          joker_required: z.boolean(),
         }),
       ),
       max_permissible_impulse: z.number(),
       max_permissible_off_track_sec: z.number(),
+      max_permissible_landing_impulse: z.number(),
+      tier_pass_count: z.number().int(),
+      daily_stipend_cap: z.number().int(),
       licence_grades: z.array(
         z.object({
           grade: z.string(),
