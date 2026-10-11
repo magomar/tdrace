@@ -82,7 +82,8 @@ impl RaceSession {
             })
             .filter_map(|(i, car)| {
                 let number = self.car_race_numbers.get(i).copied().unwrap_or(0);
-                CarNumberItem::for_car(car, number, self.effective_body_color(i, focus_car_idx))
+                let visual_type = self.car_visual_types.get(i).copied().unwrap_or(self.current_visual_type);
+                CarNumberItem::for_car(car, number, self.effective_body_color(i, focus_car_idx), visual_type)
             })
             .collect()
     }

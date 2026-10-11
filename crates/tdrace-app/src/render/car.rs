@@ -1904,7 +1904,7 @@ fn render_sand_rail_body(
 }
 
 // ---------------------------------------------------------------------------
-// Racing number plate (spec 092)
+// Racing number plate (spec 092; placement and size by spec 110)
 // ---------------------------------------------------------------------------
 
 /// Advance width of one Rajdhani-Bold digit, in em.
@@ -1913,42 +1913,73 @@ pub const NUMBER_DIGIT_ADVANCE_EM: f32 = 0.56;
 pub const NUMBER_DIGIT_HEIGHT_EM: f32 = 0.70;
 /// The number never fills more than this fraction of the plate, so the digits keep a margin to the body edge.
 const NUMBER_PLATE_FILL: f32 = 0.9;
-/// The plate is this fraction of the body width: the roof is narrower than the fenders.
-const NUMBER_PLATE_WIDTH_FRACTION: f32 = 0.7;
+/// The digits are at most this fraction of the body width high (spec 110).
+pub const NUMBER_MAX_HEIGHT_FRACTION: f32 = 0.35;
 /// Smallest digit height, in screen pixels, that is still drawn.
 const NUMBER_MIN_PIXEL_HEIGHT: f32 = 5.0;
+
+/// Where a kind of car carries its racing number in the top-down view (spec 110).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PlateZone {
+    /// Between the front edge of the cabin and the front end of the body: bonnet or nose.
+    Front,
+    /// The centre of the cabin.
+    Roof,
+}
+
+/// The zone for a kind of car, `None` when it shows no number on its body: karts carry none; buggies, GT cars and
+/// open-wheelers carry it at the front; stock cars and rally cars on the roof.
+pub fn number_plate_zone(visual_type: VehicleVisualType) -> Option<PlateZone> {
+    match visual_type {
+        VehicleVisualType::GoKart { .. } => None,
+        VehicleVisualType::SandRail { .. } | VehicleVisualType::TouringGT { .. } | VehicleVisualType::OpenWheel { .. } => Some(PlateZone::Front),
+        VehicleVisualType::StockCar { .. } | VehicleVisualType::RallyHatch { .. } => Some(PlateZone::Roof),
+    }
+}
 
 /// Where the racing number sits on a car and how much room it has, in the car's own frame (metres).
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct NumberPlate {
     /// Centre of the plate, measured forward from the geometric centre of the body.
     pub forward_offset: f32,
-    /// Half of the plate along the heading: bounded by the cabin length.
+    /// Half of the plate along the heading: bounded by the length of its zone.
     pub half_len: f32,
-    /// Half of the plate across the car: bounded by the body width.
+    /// Half of the plate across the car: sized so the digits are at most `NUMBER_MAX_HEIGHT_FRACTION` of the body
+    /// width high.
     pub half_width: f32,
 }
 
-/// The number plate for a chassis: the centre of the cabin (roof, or the driver seat of a kart or open-wheeler),
-/// as long as the cabin and as wide as the roof. Pure: only the `ChassisSkeleton` and the axle positions are read.
-pub fn number_plate(chassis: &tdrace_core::physics::config::ChassisSkeleton, wheelbase: f32, cg_to_front: f32, cg_to_rear: f32) -> NumberPlate {
+/// The number plate for a chassis in `zone`. Roof: the centre of the cabin, as long as the cabin. Front: the
+/// middle of the zone from the front edge of the cabin to the front end of the body, as long as that zone.
+/// Pure: only the `ChassisSkeleton` and the axle positions are read.
+pub fn number_plate(
+    chassis: &tdrace_core::physics::config::ChassisSkeleton,
+    wheelbase: f32,
+    cg_to_front: f32,
+    cg_to_rear: f32,
+    zone: PlateZone,
+) -> NumberPlate {
     let geom_offset = chassis.geometric_center_offset_from_cg(cg_to_front, cg_to_rear);
     let cabin_front = cg_to_front + chassis.cabin_start_offset;
     let cabin_rear = -cg_to_rear + chassis.cabin_end_offset;
+    let body_front = cg_to_front + chassis.front_overhang;
     let body_half_len = chassis.half_length(wheelbase);
-    // A skeleton whose cabin edges cross has no cabin; fall back to the middle third of the body.
-    let (centre, cabin_len) = if cabin_front - cabin_rear > 0.1 {
-        ((cabin_front + cabin_rear) * 0.5, cabin_front - cabin_rear)
-    } else {
-        (geom_offset, body_half_len * 2.0 / 3.0)
+    let has_cabin = cabin_front - cabin_rear > 0.1;
+    let (centre, zone_len) = match zone {
+        PlateZone::Roof if has_cabin => ((cabin_front + cabin_rear) * 0.5, cabin_front - cabin_rear),
+        // A skeleton whose cabin edges cross has no cabin; fall back to the middle third of the body.
+        PlateZone::Roof => (geom_offset, body_half_len * 2.0 / 3.0),
+        PlateZone::Front if has_cabin && body_front - cabin_front > 0.1 => ((cabin_front + body_front) * 0.5, body_front - cabin_front),
+        // No cabin, or a cabin that reaches the nose: the front third of the body.
+        PlateZone::Front => (geom_offset + body_half_len * 2.0 / 3.0, body_half_len * 2.0 / 3.0),
     };
     let forward_offset = centre - geom_offset;
     // The plate stays on the body: no longer than twice the room from its own centre to the nearest end.
     let room_to_end = (body_half_len - forward_offset.abs()).max(0.0);
     NumberPlate {
         forward_offset,
-        half_len: (cabin_len * 0.5).min(room_to_end),
-        half_width: chassis.half_width() * NUMBER_PLATE_WIDTH_FRACTION,
+        half_len: (zone_len * 0.5).min(room_to_end),
+        half_width: chassis.half_width() * NUMBER_MAX_HEIGHT_FRACTION / NUMBER_PLATE_FILL,
     }
 }
 
@@ -1991,11 +2022,13 @@ pub struct CarNumberItem {
 
 impl CarNumberItem {
     /// The number plate of `car`, placed on the body as `render_car_with_visual_type_model_and_shadows` places it
-    /// (roll, pitch and jump lift included). `None` when `number` is not a valid racing number.
-    pub fn for_car(car: &Car, number: u8, body_color: Color) -> Option<Self> {
+    /// (roll, pitch and jump lift included), in the zone of its `visual_type`. `None` when `number` is not a valid
+    /// racing number or the kind of car shows no number on its body.
+    pub fn for_car(car: &Car, number: u8, body_color: Color, visual_type: VehicleVisualType) -> Option<Self> {
         if !crate::ai::is_valid_race_number(number) {
             return None;
         }
+        let zone = number_plate_zone(visual_type)?;
         let fwd = car.forward_vector();
         let right = car.right_vector();
         let z_lift = car.state.elevation.max(0.0) + car.state.ramp_elevation.max(0.0);
@@ -2003,7 +2036,7 @@ impl CarNumberItem {
         let grade_pitch_vis = (-car.state.road_grade_slope * 0.20).clamp(-0.12, 0.12);
         let pitch_offset_long = (car.state.acceleration_local.x * 0.012 + grade_pitch_vis).clamp(-0.18, 0.18);
         let air_scale = 1.0 + (z_lift * 0.07).min(0.35);
-        let plate = number_plate(&car.config.chassis, car.config.wheelbase, car.config.cg_to_front, car.config.cg_to_rear);
+        let plate = number_plate(&car.config.chassis, car.config.wheelbase, car.config.cg_to_front, car.config.cg_to_rear, zone);
         let geom_offset = car.config.chassis.geometric_center_offset_from_cg(car.config.cg_to_front, car.config.cg_to_rear);
         let center = car.state.position
             + right * roll_offset_lat
