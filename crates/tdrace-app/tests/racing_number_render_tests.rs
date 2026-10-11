@@ -7,7 +7,7 @@ use tdrace_app::catalog::get_all_models;
 use tdrace_app::module::VehicleVisualType;
 use tdrace_app::render::car::{
     color_luminance, number_em_size, number_glyph_colors, number_plate, number_plate_zone, CarNumberItem, PlateZone,
-    NUMBER_DIGIT_ADVANCE_EM, NUMBER_DIGIT_HEIGHT_EM, NUMBER_MAX_HEIGHT_FRACTION,
+    NUMBER_DIGIT_ADVANCE_EM, NUMBER_DIGIT_HEIGHT_EM, NUMBER_FRONT_POSITION, NUMBER_MAX_HEIGHT_FRACTION, NUMBER_ROOF_REARWARD,
 };
 use tdrace_app::render::color::Palette;
 use tdrace_app::render::VehicleNameplateItem;
@@ -83,7 +83,7 @@ fn each_kind_of_car_has_its_zone() {
     let stock = VehicleVisualType::StockCar { tall_wing: true, roof_fins: true, window_net: true };
     assert_eq!(number_plate_zone(sand_rail), Some(PlateZone::Front), "buggies");
     assert_eq!(number_plate_zone(gt), Some(PlateZone::Front), "GT: bonnet");
-    assert_eq!(number_plate_zone(open_wheel), Some(PlateZone::Front), "open-wheel: nose");
+    assert_eq!(number_plate_zone(open_wheel), None, "open-wheel bodies are the superkarts: karts show none");
     assert_eq!(number_plate_zone(stock), Some(PlateZone::Roof), "stock cars");
     assert_eq!(number_plate_zone(RALLY), Some(PlateZone::Roof), "rally cars");
 }
@@ -95,13 +95,14 @@ fn skeleton() -> ChassisSkeleton {
 }
 
 #[test]
-fn the_roof_plate_is_centred_on_the_cabin() {
+fn the_roof_plate_is_a_little_behind_the_cabin_centre() {
     let s = skeleton();
     let plate = number_plate(&s, 2.6, 1.3, 1.3, PlateZone::Roof);
-    let cabin_centre_from_cg = ((1.3 - 0.4) + (-1.3 + 0.3)) * 0.5; // -0.05
+    // Cabin from -1.0 to +0.9 m (1.9 m long); the plate sits 15% of that behind its centre (-0.05 m).
+    let roof_from_cg = -0.05 - NUMBER_ROOF_REARWARD * 1.9;
     let body_centre_from_cg = s.geometric_center_offset_from_cg(1.3, 1.3);
-    assert!((plate.forward_offset - (cabin_centre_from_cg - body_centre_from_cg)).abs() < 1e-5);
-    assert!((plate.half_len - 0.95).abs() < 1e-5, "as long as the cabin (1.9 m)");
+    assert!((plate.forward_offset - (roof_from_cg - body_centre_from_cg)).abs() < 1e-5);
+    assert!((plate.half_len - (roof_from_cg + 1.0)).abs() < 1e-5, "stops at the rear edge of the cabin");
 }
 
 #[test]
@@ -109,9 +110,10 @@ fn the_front_plate_is_between_the_cabin_and_the_nose() {
     let s = skeleton();
     let plate = number_plate(&s, 2.6, 1.3, 1.3, PlateZone::Front);
     let body_centre_from_cg = s.geometric_center_offset_from_cg(1.3, 1.3);
-    let zone_centre_from_cg = ((1.3 - 0.4) + (1.3 + 0.8)) * 0.5; // 1.5
-    assert!((plate.forward_offset - (zone_centre_from_cg - body_centre_from_cg)).abs() < 1e-5);
-    assert!((plate.half_len - 0.6).abs() < 1e-5, "as long as the zone (1.2 m)");
+    // Zone from the cabin front (+0.9 m) to the nose (+2.1 m); the plate sits 35% of the way, on the bonnet.
+    let zone_from_cg = 0.9 + NUMBER_FRONT_POSITION * 1.2;
+    assert!((plate.forward_offset - (zone_from_cg - body_centre_from_cg)).abs() < 1e-5);
+    assert!((plate.half_len - NUMBER_FRONT_POSITION * 1.2).abs() < 1e-5, "stops at the cabin front edge");
 }
 
 #[test]
@@ -140,7 +142,7 @@ fn a_skeleton_with_crossed_cabin_edges_still_gets_plates_on_the_body() {
     assert!(front.forward_offset > 0.0, "the fallback front plate is still at the front");
 }
 
-/// Scenarios: buggies, GT cars and open-wheelers at the front; stock cars and rally cars on the roof; smaller numbers
+/// Scenarios: buggies and GT cars at the front; stock cars and rally cars on the roof; smaller numbers
 #[test]
 fn every_car_in_the_game_gets_its_plate_inside_the_body() {
     let cars = every_car();
@@ -171,7 +173,9 @@ fn every_car_in_the_game_gets_its_plate_inside_the_body() {
             }
             PlateZone::Roof => {
                 roofs += 1;
-                assert!((centre_from_cg - (cabin_front + cabin_rear) * 0.5).abs() < 1e-4, "{name}: roof plate not on the cabin");
+                let expected = (cabin_front + cabin_rear) * 0.5 - NUMBER_ROOF_REARWARD * (cabin_front - cabin_rear);
+                assert!((centre_from_cg - expected).abs() < 1e-4, "{name}: roof plate not on the middle of the roof");
+                assert!(centre_from_cg - plate.half_len >= cabin_rear - 1e-4, "{name}: roof plate past the cabin");
             }
         }
         for digits in [1, 2] {

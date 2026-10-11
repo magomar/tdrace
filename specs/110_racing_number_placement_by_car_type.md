@@ -2,9 +2,8 @@
 type: Feature Spec
 template: feature
 title: "Racing Number Placement by Car Type"
-description: "Makes the racing number on the car smaller and puts it where each kind of car carries it: no number on karts, on the front of buggies, GT cars and open-wheelers, on the roof of stock cars and rally cars."
-status: in_progress
-verified: { by: human:mario, at: 2026-10-11T17:39:43Z, hash: "a8b021ab288e" }
+description: "Makes the racing number on the car smaller and puts it where each kind of car carries it: no number on karts, on the bonnet of buggies and GT cars, on the middle of the roof of stock cars and rally cars."
+status: draft
 created: 2026-10-11
 generated: { by: agent/claude-opus-5.5, at: 2026-10-11T17:38:06Z }
 depends_on:
@@ -30,18 +29,19 @@ The placement comes from the car's `VehicleVisualType`, so sprite cars and proce
 | `VehicleVisualType` | Kind of car | Number on the car |
 | :--- | :--- | :--- |
 | `GoKart` | Karts | None |
-| `SandRail` | Buggies: Autocross cross cars, off-road sand rails | Front |
+| `OpenWheel` | Superkarts (the only cars with this body) | None |
+| `SandRail` | Buggies: Autocross cross cars, off-road sand rails and trucks | Front |
 | `StockCar` | Stock cars | Roof |
 | `RallyHatch` | Rally and Rallycross cars | Roof |
 | `TouringGT` | GT and sports cars | Front (bonnet) |
-| `OpenWheel` | Open-wheel cars | Front (nose) |
 
-GT and open-wheel are not in Mario's rules. Real GT cars carry the number on the doors and the bonnet, seldom on the roof, and open-wheelers on the nose. The doors cannot be seen from above, so this spec uses the front for both.
+GT is not in Mario's rules. Real GT cars carry the number on the doors and the bonnet, seldom on the roof. The doors cannot be seen from above, so this spec uses the bonnet. A contact sheet of every catalog car (`examples/racing_number_sheet.rs`) showed that all `OpenWheel` bodies are superkarts, so they follow the kart rule.
 
 ### 2. Anchors
 Both anchors come from the existing `ChassisSkeleton`. `ChassisSkeleton` is not changed.
-- **Roof:** the centre of the cabin, as in spec 092.
-- **Front:** the zone from the front edge of the cabin to the front end of the body. The number is centred in that zone.
+- **Roof:** the middle of the roof. The skeleton cabin includes the windscreen, so on the sprites the roof is behind the cabin centre. The number sits 15% of the cabin length behind the cabin centre (Mario, 2026-10-11: rally numbers slightly more to the rear; the contact sheets show the same for stock cars).
+- **Front:** the zone from the front edge of the cabin to the front end of the body. The number sits 35% of the way from the cabin to the nose: on the bonnet, clear of the rounded nose.
+- In both zones the digits stay inside the zone.
 
 ### 3. Size
 - The digit height is at most 35% of the body width (spec 092 allowed up to about 63%).
@@ -71,13 +71,13 @@ No data, save or database change. The change is in `crates/tdrace-app/src/render
 ## 🧪 Verification & Acceptance Criteria
 
 - **Scenario: Karts show no number on the car**
-  - [ ] **Given** a race with karts and the player number 17
+  - [ ] **Given** a race with karts or superkarts and the player number 17
   - [ ] **When** the race is drawn
   - [ ] **Then** no kart has a number drawn on its body
   - [ ] **And** the nameplates and the starting grid still show the kart numbers
 
-- **Scenario: Buggies, GT cars and open-wheelers show the number at the front**
-  - [ ] **Given** every catalog model and car preset whose visual type is `SandRail`, `TouringGT` or `OpenWheel`
+- **Scenario: Buggies and GT cars show the number on the bonnet**
+  - [ ] **Given** every catalog model and car preset whose visual type is `SandRail` or `TouringGT`
   - [ ] **When** the number plate is placed
   - [ ] **Then** the plate centre is ahead of the cabin centre and between the front edge of the cabin and the front end of the body
   - [ ] **And** the digits are inside the body outline
@@ -85,8 +85,8 @@ No data, save or database change. The change is in `crates/tdrace-app/src/render
 - **Scenario: Stock cars and rally cars show the number on the roof**
   - [ ] **Given** every catalog model and car preset whose visual type is `StockCar` or `RallyHatch`
   - [ ] **When** the number plate is placed
-  - [ ] **Then** the plate is centred on the cabin
-  - [ ] **And** the digits are inside the body outline
+  - [ ] **Then** the plate centre is 15% of the cabin length behind the cabin centre
+  - [ ] **And** the digits are inside the cabin and inside the body outline
 
 - **Scenario: Numbers are smaller**
   - [ ] **Given** any car that shows a number
@@ -114,6 +114,7 @@ No data, save or database change. The change is in `crates/tdrace-app/src/render
 - `[ ]` [`crates/tdrace-app/src/render/car.rs`](../crates/tdrace-app/src/render/car.rs) -> placement by visual type, front and roof zones, smaller digits.
 - `[ ]` [`crates/tdrace-app/src/game/racing_numbers.rs`](../crates/tdrace-app/src/game/racing_numbers.rs) -> pass the visual type of each car.
 - `[ ]` [`crates/tdrace-app/tests/racing_number_render_tests.rs`](../crates/tdrace-app/tests/racing_number_render_tests.rs) -> placement and size tests.
+- `[ ]` `crates/tdrace-app/examples/racing_number_sheet.rs` (new) -> contact sheet of every catalog car with its number.
 
 ### Verification Assertions
 - Verification receipts will be recorded via `keel receipt 110 --cmd "cargo test -p tdrace-app --test racing_number_render_tests"`.
