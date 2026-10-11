@@ -29,6 +29,7 @@ struct ClassicJoker {
     split_idx: usize,
     merge_idx: usize,
     joker: Vec<TrackWaypoint>,
+    redraw: Option<rx_joker_fit::Redraw>,
 }
 
 fn wp(x: f32, y: f32, surface: SurfaceType, elevation: f32) -> TrackWaypoint {
@@ -52,6 +53,16 @@ fn classic_jokers() -> Vec<ClassicJoker> {
                 wp(-58.7, -140.0, SurfaceType::Dirt, 0.5),
                 wp(-53.3, -128.8, SurfaceType::Asphalt, 0.0),
             ],
+            redraw: Some(
+                rx_joker_fit::Redraw::new_config(
+                    rx_joker_fit::taper(0.0, 25.0, 4.0),
+                    rx_joker_fit::taper(0.0, 40.0, 5.0),
+                )
+                .with_waypoints(vec![
+                    wp(-66.0, -238.0, SurfaceType::Dirt, -2.5),
+                    wp(-73.0, -222.0, SurfaceType::Concrete, -0.5),
+                ]),
+            ),
         },
         // Split at wp 28 (10.8, -132.2), merge at wp 35 (-92.0, 0.9).
         ClassicJoker {
@@ -68,6 +79,7 @@ fn classic_jokers() -> Vec<ClassicJoker> {
                 wp(-105.8, -14.6, SurfaceType::Dirt, 1.5),
                 wp(-92.0, 0.9, SurfaceType::Asphalt, 1.0),
             ],
+            redraw: None,
         },
         // Split at wp 14 (113.1, -188.6), merge at wp 25 (-139.1, -235.1).
         ClassicJoker {
@@ -84,6 +96,7 @@ fn classic_jokers() -> Vec<ClassicJoker> {
                 wp(-110.0, -284.0, SurfaceType::Dirt, 0.0),
                 wp(-139.1, -235.1, SurfaceType::Dirt, 0.0),
             ],
+            redraw: None,
         },
     ]
 }
@@ -93,7 +106,16 @@ fn build(joker: &ClassicJoker, tracks_dir: &Path) -> rx_joker_fit::Row {
     println!("Processing {:?}...", path);
     let mut track = Track::load_from_file(&path).unwrap_or_else(|e| panic!("failed to load {}: {:?}", joker.id, e));
     track.branch_layout = None;
-    let outcome = rx_joker_fit::convert(&mut track, joker.id, joker.name, joker.split_idx, joker.merge_idx, &joker.joker);
+
+    let outcome = rx_joker_fit::convert_with_redraw(
+        &mut track,
+        joker.id,
+        joker.name,
+        joker.split_idx,
+        joker.merge_idx,
+        &joker.joker,
+        joker.redraw.as_ref(),
+    );
     if let rx_joker_fit::Outcome::Converted(fit) = &outcome {
         println!("  {} -> converted: deviation {:.2} m, joker costs {:.2} s", joker.id, fit.deviation, fit.cost_s);
         track.save_to_file(&path).unwrap_or_else(|e| panic!("failed to save {}: {:?}", joker.id, e));
