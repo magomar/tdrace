@@ -139,58 +139,58 @@ Call site: `Game::rebuild_roster_participants`, the one place that builds every 
 ## 🧪 Verification & Acceptance Criteria
 
 - **Scenario: Player defines a preferred racing number**
-  - [ ] **Given** the player opens the profile editor
-  - [ ] **When** the player sets the number to 7 and saves
-  - [ ] **Then** the number is stored in `player_profiles.race_number` and is still 7 after the profile is reloaded from the database
-  - [ ] **And** the player car, the nameplate and the starting grid row show 7
+  - [x] **Given** the player opens the profile editor
+  - [x] **When** the player sets the number to 7 and saves
+  - [x] **Then** the number is stored in `player_profiles.race_number` and is still 7 after the profile is reloaded from the database
+  - [x] **And** the player car, the nameplate and the starting grid row show 7
 
 - **Scenario: Out-of-range number is rejected**
-  - [ ] **Given** a stored player number of 0 or 100 (damaged data), or a typed number of 150
-  - [ ] **When** the profile loads or the player confirms the field
-  - [ ] **Then** the value is clamped or replaced by the default
-  - [ ] **And** an invalid number never reaches the allocator or the renderer
+  - [x] **Given** a stored player number of 0 or 100 (damaged data), or a typed number of 150
+  - [x] **When** the profile loads or the player confirms the field
+  - [x] **Then** the value is clamped or replaced by the default
+  - [x] **And** an invalid number never reaches the allocator or the renderer
 
 - **Scenario: Grid generation eliminates duplicate numbers**
-  - [ ] **Given** the player number is 17
-  - [ ] **When** an 8-car grid is built for a Quick Race
-  - [ ] **Then** exactly one car carries 17
-  - [ ] **And** the 7 AI cars carry numbers that differ from 17 and from each other
+  - [x] **Given** the player number is 17
+  - [x] **When** an 8-car grid is built for a Quick Race
+  - [x] **Then** exactly one car carries 17
+  - [x] **And** the 7 AI cars carry numbers that differ from 17 and from each other
 
 - **Scenario: Tournament roster of 32 drivers is unique**
-  - [ ] **Given** an Autocross or Rallycross tournament weekend with the player and 31 rivals
-  - [ ] **When** the 4 heats, the 2 semifinals and the final are built
-  - [ ] **Then** all 32 drivers have different numbers
-  - [ ] **And** every rival has the same number in the heat, the semifinal and the final
+  - [x] **Given** an Autocross or Rallycross tournament weekend with the player and 31 rivals
+  - [x] **When** the 4 heats, the 2 semifinals and the final are built
+  - [x] **Then** all 32 drivers have different numbers
+  - [x] **And** every rival has the same number in the heat, the semifinal and the final
 
 - **Scenario: Rival numbers persist across rounds and saves**
-  - [ ] **Given** a career or championship roster has been numbered
-  - [ ] **When** the player finishes round 1, the profile is saved and reloaded, and round 2 is built
-  - [ ] **Then** every rival has the number it had in round 1
+  - [x] **Given** a career or championship roster has been numbered
+  - [x] **When** the player finishes round 1, the profile is saved and reloaded, and round 2 is built
+  - [x] **Then** every rival has the number it had in round 1
 
 - **Scenario: Player number change re-allocates only the colliding rival**
-  - [ ] **Given** one rival has number 42 and the others have other numbers
-  - [ ] **When** the player changes their number to 42 and the next grid is built
-  - [ ] **Then** that rival gets a new unused number
-  - [ ] **And** all other rivals keep their numbers
-  - [ ] **And** no two cars on the grid share a number
+  - [x] **Given** one rival has number 42 and the others have other numbers
+  - [x] **When** the player changes their number to 42 and the next grid is built
+  - [x] **Then** that rival gets a new unused number
+  - [x] **And** all other rivals keep their numbers
+  - [x] **And** no two cars on the grid share a number
 
 - **Scenario: Old save without numbers loads cleanly**
-  - [ ] **Given** a saved career or championship whose rival entries have no `race_number`
-  - [ ] **When** the game loads it and builds a grid
-  - [ ] **Then** the save loads without error
-  - [ ] **And** the rivals get unique numbers that differ from the player's
+  - [x] **Given** a saved career or championship whose rival entries have no `race_number`
+  - [x] **When** the game loads it and builds a grid
+  - [x] **Then** the save loads without error
+  - [x] **And** the rivals get unique numbers that differ from the player's
 
 - **Scenario: Allocator is deterministic and does not overflow**
-  - [ ] **Given** the same player number, stored numbers and seed
-  - [ ] **When** the allocator runs twice
-  - [ ] **Then** both runs return identical numbers
-  - [ ] **And** a roster of 99 rivals returns `RosterTooLarge` with no duplicate numbers and no panic
+  - [x] **Given** the same player number, stored numbers and seed
+  - [x] **When** the allocator runs twice
+  - [x] **Then** both runs return identical numbers
+  - [x] **And** a roster of 99 rivals returns `RosterTooLarge` with no duplicate numbers and no panic
 
 - **Scenario: Number plate is legible and anchored to the car**
-  - [ ] **Given** a Classic kart, an Autocross car and a Rallycross car (Steam v1 categories)
-  - [ ] **When** the race is drawn at the default camera zoom
-  - [ ] **Then** the number is centred on the cabin or roof, rotated with the car, and inside the body outline
-  - [ ] **And** the glyph colours follow the body luminance rule (unit tests of the anchor and contrast functions, plus one screenshot per category)
+  - [x] **Given** a Classic kart, an Autocross car and a Rallycross car (Steam v1 categories)
+  - [x] **When** the race is drawn at the default camera zoom
+  - [x] **Then** the number is centred on the cabin or roof, rotated with the car, and inside the body outline
+  - [x] **And** the glyph colours follow the body luminance rule (unit tests of the anchor and contrast functions, plus one screenshot per category)
 
 ---
 
@@ -207,17 +207,17 @@ Call site: `Game::rebuild_roster_participants`, the one place that builds every 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Modified Files
-- `[ ]` [`crates/tdrace-app/src/profile/mod.rs`](../crates/tdrace-app/src/profile/mod.rs) -> `PlayerProfile.race_number` and default.
-- `[ ]` [`crates/tdrace-app/src/db/mod.rs`](../crates/tdrace-app/src/db/mod.rs) -> `race_number` column migration, insert and update.
-- `[ ]` [`crates/tdrace-app/src/ai/career.rs`](../crates/tdrace-app/src/ai/career.rs) -> `CareerRivalEntry.race_number`.
-- `[ ]` [`crates/tdrace-app/src/series/mod.rs`](../crates/tdrace-app/src/series/mod.rs) -> `SeriesStandingEntry.race_number`.
-- `[ ]` `crates/tdrace-app/src/ai/racing_number.rs` (new) -> `allocate_rival_numbers`.
-- `[ ]` [`crates/tdrace-app/src/game/mod.rs`](../crates/tdrace-app/src/game/mod.rs) -> `GridParticipant.race_number`, allocator call in `rebuild_roster_participants`, profile editor input, plate draw call, nameplate items.
-- `[ ]` [`crates/tdrace-app/src/ui/profile_ui.rs`](../crates/tdrace-app/src/ui/profile_ui.rs) -> number field in the create and modify screens.
-- `[ ]` [`crates/tdrace-app/src/render/car.rs`](../crates/tdrace-app/src/render/car.rs) -> plate anchor, contrast and draw.
-- `[ ]` [`crates/tdrace-app/src/render/marker.rs`](../crates/tdrace-app/src/render/marker.rs) -> number on `VehicleNameplateItem`.
-- `[ ]` [`crates/tdrace-app/src/ui/starting_grid.rs`](../crates/tdrace-app/src/ui/starting_grid.rs) and [`crates/tdrace-app/src/ui/driver_card.rs`](../crates/tdrace-app/src/ui/driver_card.rs) -> number badge.
-- `[ ]` `crates/tdrace-app/tests/racing_number_tests.rs` (new) -> allocator, persistence, grid and tournament tests.
+- `[x]` [`crates/tdrace-app/src/profile/mod.rs`](../crates/tdrace-app/src/profile/mod.rs) -> `PlayerProfile.race_number` and default.
+- `[x]` [`crates/tdrace-app/src/db/mod.rs`](../crates/tdrace-app/src/db/mod.rs) -> `race_number` column migration, insert and update.
+- `[x]` [`crates/tdrace-app/src/ai/career.rs`](../crates/tdrace-app/src/ai/career.rs) -> `CareerRivalEntry.race_number`.
+- `[x]` [`crates/tdrace-app/src/series/mod.rs`](../crates/tdrace-app/src/series/mod.rs) -> `SeriesStandingEntry.race_number`.
+- `[x]` `crates/tdrace-app/src/ai/racing_number.rs` (new) -> `allocate_rival_numbers`.
+- `[x]` [`crates/tdrace-app/src/game/mod.rs`](../crates/tdrace-app/src/game/mod.rs) -> `GridParticipant.race_number`, allocator call in `rebuild_roster_participants`, profile editor input, plate draw call, nameplate items.
+- `[x]` [`crates/tdrace-app/src/ui/profile_ui.rs`](../crates/tdrace-app/src/ui/profile_ui.rs) -> number field in the create and modify screens.
+- `[x]` [`crates/tdrace-app/src/render/car.rs`](../crates/tdrace-app/src/render/car.rs) -> plate anchor, contrast and draw.
+- `[x]` [`crates/tdrace-app/src/render/marker.rs`](../crates/tdrace-app/src/render/marker.rs) -> number on `VehicleNameplateItem`.
+- `[x]` [`crates/tdrace-app/src/ui/starting_grid.rs`](../crates/tdrace-app/src/ui/starting_grid.rs) and [`crates/tdrace-app/src/ui/driver_card.rs`](../crates/tdrace-app/src/ui/driver_card.rs) -> number badge.
+- `[x]` `crates/tdrace-app/tests/racing_number_tests.rs` (new) -> allocator, persistence, grid and tournament tests.
 
 ### Verification Assertions
 - Verification receipts will be recorded via `keel receipt 092 --cmd "cargo test -p tdrace-app --test racing_number_tests"`.
