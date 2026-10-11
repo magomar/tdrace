@@ -107,6 +107,7 @@ impl GtWorldChallengeModule {
             suspension: SuspensionConfig::double_wishbone(),
             engine_placement: EnginePlacement::RearEngine,
             damage_enabled: true,
+            wear_rate_scale: 1.0,
         }
         .finalized()
     }

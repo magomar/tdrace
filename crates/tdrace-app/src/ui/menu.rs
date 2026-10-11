@@ -175,13 +175,51 @@ static MENU_TRACK_CACHE: std::sync::Mutex<
     Option<std::collections::HashMap<String, tdrace_core::track::Track>>,
 > = std::sync::Mutex::new(None);
 
+/// Bumped on every cache clear, so a background prewarm never stores a track loaded before the clear.
+static MENU_TRACK_CACHE_GENERATION: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
 /// Clears the cached resolved menu tracks (e.g. after track edit or save).
 pub fn clear_menu_track_cache() {
     if let Ok(mut guard) = MENU_TRACK_CACHE.lock() {
+        MENU_TRACK_CACHE_GENERATION.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         if let Some(cache) = guard.as_mut() {
             cache.clear();
         }
     }
+}
+
+/// Loads the given circuits into the menu cache on a background thread.
+/// Without this, the first visit to a circuit category loads every visible card on the
+/// UI thread and the menu freezes for up to half a second.
+pub fn prewarm_menu_track_cache(choices: Vec<TrackChoice>) -> Option<std::thread::JoinHandle<()>> {
+    let dir = crate::storage::resolve_user_tracks_dir();
+    std::thread::Builder::new()
+        .name("menu-track-prewarm".into())
+        .spawn(move || {
+            for choice in &choices {
+                let cache_key = format!("{}:{}", choice.track_id(), dir.display());
+                let generation = MENU_TRACK_CACHE_GENERATION.load(std::sync::atomic::Ordering::SeqCst);
+                let cached = MENU_TRACK_CACHE
+                    .lock()
+                    .map(|guard| guard.as_ref().is_some_and(|c| c.contains_key(&cache_key)))
+                    .unwrap_or(true);
+                if cached {
+                    continue;
+                }
+                let Some(track) = resolve_track_for_menu_with_dir_uncached(choice, &dir) else {
+                    continue;
+                };
+                if let Ok(mut guard) = MENU_TRACK_CACHE.lock() {
+                    if MENU_TRACK_CACHE_GENERATION.load(std::sync::atomic::Ordering::SeqCst) == generation {
+                        guard
+                            .get_or_insert_with(std::collections::HashMap::new)
+                            .entry(cache_key)
+                            .or_insert(track);
+                    }
+                }
+            }
+        })
+        .ok()
 }
 
 /// Resolves a TrackChoice to a concrete Track instance for UI preview rendering.
@@ -1324,7 +1362,6 @@ pub fn render_track_select_menu(
     active_module_id: &str,
     module_title: &str,
     module_subtitle: &str,
-    module_accent: Color,
     category_filter: MenuCategoryFilter,
     available_tracks: &[TrackChoice],
     selected_track_idx: usize,
@@ -1346,6 +1383,8 @@ pub fn render_track_select_menu(
     let sw = screen_width();
     let sh = screen_height();
     let scaler = UiScaler::new(sw, sh);
+    // One neutral accent for every category: colour marks locked circuits (red), not the category.
+    let accent = Palette::NEON_CYAN;
 
     // Deep modern motorsport gradient backdrop
     draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.05, 0.06, 0.09, 0.98));
@@ -1356,7 +1395,7 @@ pub fn render_track_select_menu(
         sw * 0.5,
         scaler.s(32.0),
         scaler.font_s(32.0),
-        module_accent,
+        accent,
         Color::new(0.0, 0.0, 0.0, 0.6),
         scaler.s(2.0),
     );
@@ -1526,7 +1565,7 @@ pub fn render_track_select_menu(
         .with_style(FilterBarStyle::Pills)
         .with_active(cat_active_idx)
         .with_focus(is_cat_focused);
-    category_bar.draw(&scaler, fonts, badge_x, cat_y, badge_w, cat_h, module_accent);
+    category_bar.draw(&scaler, fonts, badge_x, cat_y, badge_w, cat_h, accent);
 
     // Spacing between Category Bar and Catalog columns
     let menu_content_y = cat_y + cat_h + scaler.s(10.0);
@@ -1539,7 +1578,7 @@ pub fn render_track_select_menu(
         col1_x,
         curr_y + scaler.s(13.0),
         scaler.font_s(15.0),
-        module_accent,
+        accent,
     );
 
     curr_y += scaler.s(20.0);
@@ -1559,7 +1598,7 @@ pub fn render_track_select_menu(
     .with_gap(6.0)
     .with_active(tab_active_idx)
     .with_focus(is_tab_focused);
-    tab_bar.draw(&scaler, fonts, col1_x, curr_y, col_w, tab_h, module_accent);
+    tab_bar.draw(&scaler, fonts, col1_x, curr_y, col_w, tab_h, accent);
     curr_y += tab_h + scaler.s(8.0);
 
     let total_tracks = available_tracks.len();
@@ -1637,9 +1676,11 @@ pub fn render_track_select_menu(
                 };
                 let border_col = if is_active_track {
                     Palette::NEON_GOLD
+                } else if is_locked || is_career_mode {
+                    Palette::RED
                 } else if is_sel {
                     if is_tracks_focused {
-                        module_accent
+                        accent
                     } else {
                         Color::new(0.35, 0.45, 0.55, 0.90)
                     }
@@ -1704,7 +1745,7 @@ pub fn render_track_select_menu(
                     } else {
                         "🔒 CAREER LOCKED • OTHER CIRCUIT".to_string()
                     };
-                    (lbl, Palette::UI_TEXT_MUTED)
+                    (lbl, Palette::RED)
                 } else if is_locked {
                     let lbl = if let Some(ref tr) = loaded_track {
                         format!(
@@ -1715,7 +1756,7 @@ pub fn render_track_select_menu(
                     } else {
                         "LOCKED".to_string()
                     };
-                    (lbl, Palette::UI_TEXT_MUTED)
+                    (lbl, Palette::RED)
                 } else if is_custom {
                     let lbl = if let Some(ref tr) = loaded_track {
                         format!(
@@ -1742,7 +1783,7 @@ pub fn render_track_select_menu(
                     (
                         lbl,
                         if is_sel {
-                            module_accent
+                            accent
                         } else {
                             Palette::UI_TEXT_MUTED
                         },
@@ -1937,7 +1978,7 @@ pub fn render_track_select_menu(
             if is_sel_locked {
                 Palette::RED
             } else {
-                module_accent
+                accent
             },
         );
         c2_y += scaler.s(22.0);
@@ -2118,7 +2159,7 @@ pub fn render_track_select_menu(
         let right_tag_col = if track_opt.is_user_custom() {
             Palette::NEON_GOLD
         } else {
-            module_accent
+            accent
         };
         let right_tag_w = fonts.measure_ui_bold(right_tag, scaler.font_s(10.0)).width;
         fonts.draw_ui_bold(
@@ -2434,14 +2475,14 @@ pub fn render_track_select_menu(
         if let Some(net) = net_opt {
             if net.layouts.len() > 1 {
                 let layout_card_h = scaler.s(48.0);
-                scaler.draw_glass_card(col2_x, c2_y, col_w, layout_card_h, Palette::UI_CARD_BG, module_accent, 1.3);
+                scaler.draw_glass_card(col2_x, c2_y, col_w, layout_card_h, Palette::UI_CARD_BG, accent, 1.3);
 
                 fonts.draw_ui_bold(
                     "CIRCUIT LAYOUT [L to Select / Cycle]",
                     col2_x + scaler.s(14.0),
                     c2_y + scaler.s(14.0),
                     scaler.font_s(10.0),
-                    module_accent,
+                    accent,
                 );
 
                 let cur_layout_id = selected_layout_id.unwrap_or(&net.default_layout_id);
@@ -2756,7 +2797,7 @@ pub fn render_track_select_menu(
             if let Some(mut tr) = resolve_track_for_menu(track_opt) {
                 let net = tr.ensure_network();
                 if !net.layouts.is_empty() {
-                    render_layout_select_modal(fonts, &net.layouts, layout_modal_idx, module_accent);
+                    render_layout_select_modal(fonts, &net.layouts, layout_modal_idx, accent);
                 }
             }
         }

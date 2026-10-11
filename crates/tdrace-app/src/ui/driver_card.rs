@@ -8,8 +8,18 @@ use crate::ai::DriverCharacter;
 use crate::render::color::Palette;
 use cabinet::ui::{LayoutRect, MetricBar, ScreenFooter, SplitPane};
 
-/// Renders the full-screen Driver Cards Dossier and Roster Browser.
-pub fn render_driver_cards_screen(fonts: &Fonts, drivers: &[DriverCharacter], selected_idx: usize) {
+/// Text of a racing number badge (`#17`), empty for `0` and anything else that is not a valid number (spec 092).
+pub fn race_number_label(race_number: u8) -> String {
+    if crate::ai::is_valid_race_number(race_number) {
+        format!("#{}", race_number)
+    } else {
+        String::new()
+    }
+}
+
+/// Renders the full-screen Driver Cards Dossier and Roster Browser. `race_numbers[i]` is the racing number of
+/// `drivers[i]` (`0` or missing for none).
+pub fn render_driver_cards_screen(fonts: &Fonts, drivers: &[DriverCharacter], race_numbers: &[u8], selected_idx: usize) {
     let sw = screen_width();
     let sh = screen_height();
     let scaler = UiScaler::new(sw, sh);
@@ -63,6 +73,18 @@ pub fn render_driver_cards_screen(fonts: &Fonts, drivers: &[DriverCharacter], se
     // Driver Alias / Full Name
     let name_str = format!("{} — \"{}\"", driver.name, driver.alias);
     fonts.draw_ui_bold(&name_str, x + scaler.s(120.0), y + scaler.s(53.0), scaler.font_s(22.0), Palette::WHITE);
+
+    // Racing number badge at the right end of the banner
+    let number_label = race_numbers.get(selected_idx % roster.len()).map(|&n| race_number_label(n)).unwrap_or_default();
+    if !number_label.is_empty() {
+        let badge_w = scaler.s(86.0);
+        let badge_h = banner_h - scaler.s(14.0);
+        let badge_x = x + box_w - scaler.s(16.0) - badge_w - scaler.s(8.0);
+        let badge_y = y + scaler.s(16.0) + scaler.s(7.0);
+        draw_rectangle(badge_x, badge_y, badge_w, badge_h, Palette::NEON_GOLD);
+        draw_rectangle_lines(badge_x, badge_y, badge_w, badge_h, 1.5, Palette::WHITE);
+        fonts.draw_display_centered(&number_label, badge_x + badge_w * 0.5, badge_y + badge_h * 0.5 + scaler.s(9.0), scaler.font_s(28.0), Palette::BLACK);
+    }
 
     // Two-Column Layout inside Card (platform SplitPane)
     let content_y = y + scaler.s(88.0);

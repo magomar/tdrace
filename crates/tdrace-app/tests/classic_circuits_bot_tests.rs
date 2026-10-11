@@ -134,6 +134,37 @@ fn test_every_car_turns_the_way_it_steers_on_every_surface_of_its_circuits() {
     assert!(failures.is_empty(), "{:#?}", failures);
 }
 
+/// Scenario: a bot with its nose on a wall backs off it (tdrace-sw708)
+///
+/// Given the Classic rally car on rx_hilltop_leap just after it slid sideways into the joker wall at the merge,
+/// with its nose on the wall at 1.8 m/s (the pose of a seeded harness race)
+/// When its bot drives on for 1.5 s
+/// Then the bot reverses (before the fix it ground along the wall at full lock for 3 s, until the no-progress
+/// watchdog reversed it, and the car went 10-11 s without progress)
+#[test]
+fn test_a_bot_with_its_nose_on_a_wall_reverses_off_it() {
+    use race_kit::{RaceFormat, RaceRules, RaceWorld};
+    use tdrace_core::physics::car::Car;
+    use tdrace_core::track::checkpoint::TrackProgressTracker;
+    let track = tdrace_core::catalog::official_track("classic", "rx_hilltop_leap");
+    let mut car = Car::new(ClassicGameModule::car_classic_rally()).with_pose(glam::Vec2::new(-103.83, -0.12), 1.512);
+    car.state.velocity = glam::Vec2::new(1.58, 0.79);
+    car.state.speed = car.state.velocity.length();
+    car.state.angular_velocity = 0.71;
+    let mut world: RaceWorld<Car> = RaceWorld::new(RaceRules { format: RaceFormat::TimeAttack, ..RaceRules::default() });
+    world.spawn(car, TrackProgressTracker::new(track.checkpoints.len(), 3));
+    let mut bot = sample_bot(DrivingStyle::Smooth, DriverTier::Rookie, 261);
+    bot.total_distance_travelled = 100.0; // racing, past the grid run-up
+    let dt = 1.0 / 120.0;
+    let mut reversed = false;
+    for _ in 0..(1.5 / dt) as usize {
+        let c = bot.compute_controls(&world.vehicles[0], &track, &[], dt);
+        reversed |= c.reverse;
+        world.step(&track, &[c], dt);
+    }
+    assert!(reversed, "the bot kept driving into the wall for 1.5 s");
+}
+
 /// Scenario: a car under a bridge is hidden, its markers are not
 ///
 /// Given Hangar Sprint and the point where its bridge crosses the lower road

@@ -22,8 +22,8 @@ pub mod academy_ui;
 pub mod tournament_bracket;
 
 pub use academy_ui::{
-    academy_card_rect, graduation_showroom_button_rect, render_academy_curriculum_screen,
-    render_academy_hud, render_graduation_ceremony_modal,
+    academy_card_rect, academy_tab_rect, graduation_showroom_button_rect, render_academy_curriculum_screen,
+    render_academy_hud, render_academy_result_banner, render_graduation_ceremony_modal,
 };
 pub use lan_ui::render_lan_hub_screen;
 pub use settings::{cycle_surface_texture_quality, SurfaceTextureSettings};
@@ -49,12 +49,13 @@ pub use curve_indicator::{
     compute_curve_colors, compute_indicator_alpha, curve_indicator_lookahead,
     render_bifurcation_pacenote, render_curve_pacenote, upcoming_bifurcation, CurveColorScheme,
 };
-pub use driver_card::render_driver_cards_screen;
+pub use driver_card::{race_number_label, render_driver_cards_screen};
 pub use font::Fonts;
 pub use garage::{
     garage_car_card_rect, garage_gallery_card_rect, garage_gallery_tab_rect,
-    garage_select_button_rect, gallery_filter_to_module, module_to_gallery_filter,
-    render_garage_screen, GALLERY_MODULES, GarageViewMode,
+    garage_next_compound, garage_select_button_rect, garage_tyre_pill_rect, garage_tyres,
+    gallery_filter_to_module, module_to_gallery_filter,
+    render_garage_screen, GALLERY_MODULES, GarageTyres, GarageViewMode,
 };
 pub use hall_of_fame::{render_hall_of_fame_screen, render_name_input_modal, PlayerCongrats};
 pub use hud::{format_lap_time, pit_stop_recommended, render_hud, PersonalBestNotification};

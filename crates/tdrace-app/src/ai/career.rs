@@ -8,6 +8,9 @@ pub struct CareerRivalEntry {
     pub driver_name: String,
     pub style: DrivingStyle,
     pub tier: DriverTier,
+    /// Racing number kept across rounds (spec 092). `None` until the first grid is built.
+    #[serde(default, deserialize_with = "crate::ai::racing_number::deserialize_stored_race_number")]
+    pub race_number: Option<u8>,
 }
 
 impl CareerRivalEntry {
@@ -18,6 +21,7 @@ impl CareerRivalEntry {
             driver_name: character.name.to_string(),
             style: character.style,
             tier,
+            race_number: None,
         }
     }
 

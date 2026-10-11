@@ -5,9 +5,10 @@ use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_rectangl
 use super::font::Fonts;
 use super::scaler::UiScaler;
 use crate::catalog::{get_models_for_module, get_models_for_module_and_tier, RealCarModel};
-use crate::profile::ModuleCareerProgress;
+use crate::profile::{is_gt_garage_module, ModuleCareerProgress, PlayerProfile, GT_GARAGE_COMPOUNDS};
 use crate::render::color::{CarColorScheme, Palette};
 use crate::render::lateral::render_real_car_lateral_by_id;
+use tdrace_core::physics::surface::CompoundId;
 use cabinet::ui::{
     CardGrid, CardGridItem, FilterBar, FilterBarStyle, HeroActionButton, LayoutRect, MetricBar,
     ScreenFooter, SwatchPicker,
@@ -44,6 +45,77 @@ pub fn garage_car_card_rect(sw: f32, sh: f32, idx: usize, total: usize) -> (f32,
     (card_x, card_y, card_w, card_h)
 }
 
+/// What the TYRES row of the garage shows for the car in focus (spec 098).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum GarageTyres {
+    /// No TYRES row: karts, rally, autocross, extreme off-road and the Classic module.
+    Hidden,
+    /// A GT car: the player picks one of the garage slicks; this is the one fitted.
+    Select(CompoundId),
+    /// The compound is shown but cannot be changed (the series rule of a stock car, or a locked car).
+    ReadOnly { compound: CompoundId, note: &'static str },
+}
+
+/// Decides the TYRES row for the car in focus. A GT car shows the profile's choice, or its preset
+/// compound when it has none. A stock car shows its preset compound read-only. While the vehicle is
+/// locked for the race (`car_change_allowed == false`) a GT car shows its compound read-only too,
+/// because a confirmed change would not reach the race that is already built.
+pub fn garage_tyres(model: Option<&RealCarModel>, profile: &PlayerProfile, car_change_allowed: bool) -> GarageTyres {
+    let Some(model) = model else {
+        return GarageTyres::Hidden;
+    };
+    let preset = model.to_car_config().wheels[0].compound.id;
+    if is_gt_garage_module(model.module_id) {
+        let compound = profile.garage_compound(model.module_id, model.id).unwrap_or(preset);
+        if car_change_allowed {
+            GarageTyres::Select(compound)
+        } else {
+            GarageTyres::ReadOnly { compound, note: "vehicle locked" }
+        }
+    } else if model.module_id == "nascar" {
+        GarageTyres::ReadOnly { compound: preset, note: "series rule" }
+    } else {
+        GarageTyres::Hidden
+    }
+}
+
+/// The next (or previous) garage slick, wrapping around. An unknown compound starts at Medium.
+pub fn garage_next_compound(current: CompoundId, forward: bool) -> CompoundId {
+    let n = GT_GARAGE_COMPOUNDS.len();
+    let idx = GT_GARAGE_COMPOUNDS.iter().position(|c| *c == current).unwrap_or(1);
+    GT_GARAGE_COMPOUNDS[if forward { (idx + 1) % n } else { (idx + n - 1) % n }]
+}
+
+/// Short upper-case label of a compound for the TYRES row: SOFT, MEDIUM, HARD.
+pub fn garage_compound_label(id: CompoundId) -> String {
+    id.name().split(' ').next().unwrap_or("").to_uppercase()
+}
+
+/// One line on what a compound trades off, shown under the TYRES row.
+pub fn garage_compound_tradeoff(id: CompoundId) -> &'static str {
+    match id {
+        CompoundId::SoftSlick => "More grip, wears faster when you slide.",
+        CompoundId::HardSlick => "Less grip, forgiving and slow to wear.",
+        _ => "Balanced grip and wear.",
+    }
+}
+
+/// Returns the rectangle (x, y, w, h) of the SOFT / MEDIUM / HARD option `idx` (0..3) in the garage
+/// TYRES row. The row is anchored to the bottom of the specification card, below the stat bars.
+pub fn garage_tyre_pill_rect(sw: f32, sh: f32, idx: usize) -> (f32, f32, f32, f32) {
+    let scaler = UiScaler::new(sw, sh);
+    let right_w = (sw * 0.38).clamp(scaler.s(320.0), scaler.s(450.0));
+    let right_x = sw - right_w - scaler.safe_pad_x;
+    let card_bottom = scaler.s(64.0) + sh * 0.68;
+    let pad = scaler.s(14.0);
+    let gap = scaler.s(8.0);
+    let n = GT_GARAGE_COMPOUNDS.len();
+    let pill_w = (right_w - 2.0 * pad - gap * (n - 1) as f32) / n as f32;
+    let x = right_x + pad + (pill_w + gap) * idx as f32;
+    let y = card_bottom - scaler.s(58.0);
+    (x, y, pill_w, scaler.s(24.0))
+}
+
 /// Renders the Interactive Garage & Showroom screen (`GameState::Garage`).
 #[allow(clippy::too_many_arguments)]
 pub fn render_garage_screen(
@@ -65,6 +137,7 @@ pub fn render_garage_screen(
     available_credits: u64,
     module_locked: bool,
     car_change_allowed: bool,
+    tyres: GarageTyres,
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -506,6 +579,59 @@ pub fn render_garage_screen(
         cur_ry += bar_h;
         MetricBar::stat("AERO", aero, format!("{:.0}%", aero * 100.0), Palette::WHITE)
             .draw(&scaler, fonts, LayoutRect::new(bar_base_x, cur_ry, bar_w, bar_h));
+    }
+
+    // TYRES row (spec 098): GT cars pick a slick, stock cars show their series compound.
+    if tyres != GarageTyres::Hidden {
+        let (first_x, pill_y, _, pill_h) = garage_tyre_pill_rect(sw, sh, 0);
+        match tyres {
+            GarageTyres::Select(current) => {
+                let label_y = pill_y - scaler.s(7.0);
+                fonts.draw_ui_bold("TYRES", first_x, label_y, scaler.font_s(10.0), Palette::NEON_GOLD);
+                let hint = "[T] CHANGE";
+                let hint_w = fonts.measure_ui_regular(hint, scaler.font_s(9.0)).width;
+                fonts.draw_ui_regular(
+                    hint,
+                    right_x + right_w - scaler.s(14.0) - hint_w,
+                    label_y,
+                    scaler.font_s(9.0),
+                    Palette::UI_TEXT_MUTED,
+                );
+                for (i, id) in GT_GARAGE_COMPOUNDS.iter().enumerate() {
+                    let (px, py, pw, ph) = garage_tyre_pill_rect(sw, sh, i);
+                    let [r, g, b, _] = id.accent_rgba();
+                    let selected = *id == current;
+                    let fill = if selected { Color::new(r, g, b, 0.28) } else { Palette::UI_CARD_BG };
+                    let border = if selected { Color::new(r, g, b, 1.0) } else { Palette::UI_CARD_BORDER };
+                    scaler.draw_glass_card(px, py, pw, ph, fill, border, if selected { 2.2 } else { 1.0 });
+                    fonts.draw_ui_bold_centered(
+                        &garage_compound_label(*id),
+                        px + pw * 0.5,
+                        py + ph * 0.5 + scaler.s(4.0),
+                        scaler.font_s(10.5),
+                        if selected { Palette::WHITE } else { Palette::UI_TEXT_MUTED },
+                    );
+                }
+                fonts.draw_ui_regular(
+                    garage_compound_tradeoff(current),
+                    first_x,
+                    pill_y + pill_h + scaler.s(15.0),
+                    scaler.font_s(9.5),
+                    Palette::UI_TEXT_MUTED,
+                );
+            }
+            GarageTyres::ReadOnly { compound, note } => {
+                let [r, g, b, _] = compound.accent_rgba();
+                fonts.draw_ui_bold(
+                    &format!("TYRES: {} ({})", garage_compound_label(compound), note),
+                    first_x,
+                    pill_y + pill_h * 0.5 + scaler.s(4.0),
+                    scaler.font_s(11.0),
+                    Color::new(r, g, b, 1.0),
+                );
+            }
+            GarageTyres::Hidden => {}
+        }
     }
 
     // Action Button: Select Vehicle for Race / Purchase with XP / Locked Notice

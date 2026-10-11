@@ -369,6 +369,9 @@ pub struct CarState {
     /// Duration of the most recent aerial jump in seconds (captured upon touchdown).
     #[serde(default)]
     pub last_air_time: f32,
+    /// Vertical speed in m/s of the most recent touchdown after a jump.
+    #[serde(default)]
+    pub last_touchdown_speed: f32,
     /// Cumulative count of jumps completed.
     pub jump_count: u32,
     /// Flag indicating the vehicle touched down on the ground during this physics tick.
@@ -434,6 +437,7 @@ impl Default for CarState {
             is_airborne: false,
             air_time: 0.0,
             last_air_time: 0.0,
+            last_touchdown_speed: 0.0,
             jump_count: 0,
             just_landed: false,
             draft_intensity: 0.0,
@@ -1071,6 +1075,7 @@ fn couple_axle(
                 self.state.vertical_velocity = 0.0;
                 self.state.is_airborne = false;
                 self.state.last_air_time = self.state.air_time;
+                self.state.last_touchdown_speed = touchdown_vz;
                 self.state.air_time = 0.0;
                 self.state.just_landed = true;
             } else {
@@ -2203,6 +2208,7 @@ fn couple_axle(
                 slip_angle,
                 wheel_v_world.length(),
                 surf,
+                self.config.wear_rate_scale,
                 dt,
             );
 

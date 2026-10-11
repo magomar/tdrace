@@ -539,6 +539,10 @@ const TURN_REVERSE_DONE_RAD: f32 = 1.0;
 const TURN_RECHOOSE_RAD: f32 = 2.8;
 /// Below this speed a bot that should be moving is stuck (m/s).
 const STUCK_SPEED: f32 = 0.4;
+/// Below this speed a bot with a front corner on a wall is stuck: it grinds along the wall (m/s).
+const WALL_GRIND_SPEED: f32 = 2.0;
+/// A front hull corner this close to a wall is on it (m).
+const NOSE_ON_WALL_M: f32 = 0.3;
 /// Slowest speed at which a bot starts a turn by itself (m/s).
 const TURN_START_SPEED: f32 = 3.0;
 /// How far past the front (or rear) bumper a turn looks for the edge of the drivable ground (m).
@@ -1249,8 +1253,19 @@ impl BotAiDriver {
         let is_stuck_situation = (!proj.is_on_track && car_speed < 1.2)
             || (car_alignment < -0.35 && car_speed < 1.5)
             || (car_alignment < 0.5 && car_speed < 1.2);
+        // A slow car with its nose on a wall is not pulling away either: it grinds along the wall. A rally car that slid
+        // sideways into the rx_hilltop_leap joker wall crawled along it at 0.7 m/s and full lock for 3 s, until the
+        // no-progress watchdog reversed it (tdrace-sw708).
+        let nose_on_wall = || {
+            let hull = car.hull();
+            let front = car_pos + car_fwd * hull.front;
+            [front + car_right * hull.half_width, front - car_right * hull.half_width].iter().any(|&corner| {
+                track.geometry.all_walls().any(|w| w.is_physical() && w.segment.distance_to_point(corner) < NOSE_ON_WALL_M)
+            })
+        };
         // Only a car that hardly moves is stuck: a slow car on low-grip run-off is still pulling away.
-        if self.turn.is_none() && racing && car_speed < STUCK_SPEED && is_stuck_situation {
+        let stuck = || (car_speed < STUCK_SPEED && is_stuck_situation) || (car_speed < WALL_GRIND_SPEED && nose_on_wall());
+        if self.turn.is_none() && racing && stuck() {
             self.stuck_timer += dt;
             if self.stuck_timer > 0.8 {
                 self.stuck_timer = 0.0;

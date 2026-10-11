@@ -1,7 +1,8 @@
-use std::collections::BTreeMap;
-use serde::{Deserialize, Serialize};
+use std::collections::{BTreeMap, HashMap};
+use serde::{Deserialize, Deserializer, Serialize};
+use tdrace_core::physics::surface::CompoundId;
 
-use crate::ai::{CareerRivalEntry, DriverTier, RosterEvolutionEngine, RosterEvolutionReport};
+use crate::ai::{is_valid_race_number, CareerRivalEntry, DriverTier, RosterEvolutionEngine, RosterEvolutionReport};
 use crate::render::color::CarColorScheme;
 pub use tdrace_core::physics::config::AssistProfile;
 pub use cabinet::profile::country::{draw_country_banner, CountryInfo, CountryRegistry};
@@ -38,6 +39,62 @@ pub struct PlayerProfile {
     pub academy_progress: ClassicAcademyProgress,
     #[serde(default)]
     pub owned_cars: Vec<String>,
+    /// Slick compound chosen in the garage per GT car model id (spec 098). A car with no entry
+    /// uses its preset compound.
+    #[serde(default, deserialize_with = "lenient_car_compounds")]
+    pub car_compounds: HashMap<String, CompoundId>,
+    /// Racing number the player chose, `1..=99` (spec 092). Anything outside that range loads as
+    /// `DEFAULT_RACE_NUMBER`.
+    #[serde(default = "PlayerProfile::default_race_number", deserialize_with = "lenient_race_number")]
+    pub race_number: u8,
+}
+
+/// Slicks the garage offers for a GT car, softest first (spec 098).
+pub const GT_GARAGE_COMPOUNDS: [CompoundId; 3] = [CompoundId::SoftSlick, CompoundId::MediumSlick, CompoundId::HardSlick];
+
+/// True for the modules whose cars get a tyre choice in the garage (spec 098).
+pub fn is_gt_garage_module(module_id: &str) -> bool {
+    matches!(module_id, "gt" | "gt_challenge")
+}
+
+impl PlayerProfile {
+    /// The slick chosen in the garage for a car, or `None` when the car keeps its preset compound.
+    /// Only GT module cars have a choice, and only the three garage slicks count; anything else in
+    /// the stored map is ignored (fail closed to the preset).
+    pub fn garage_compound(&self, module_id: &str, car_id: &str) -> Option<CompoundId> {
+        if !is_gt_garage_module(module_id) {
+            return None;
+        }
+        self.car_compounds.get(car_id).copied().filter(|id| GT_GARAGE_COMPOUNDS.contains(id))
+    }
+}
+
+/// Reads the per-car compound map and drops entries whose compound is unknown, so one bad value
+/// never loses the other choices (spec 098: fail closed to the preset compound, never panic).
+fn lenient_car_compounds<'de, D>(deserializer: D) -> Result<HashMap<String, CompoundId>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let raw = HashMap::<String, serde_json::Value>::deserialize(deserializer)?;
+    Ok(raw
+        .into_iter()
+        .filter_map(|(car, value)| serde_json::from_value(value).ok().map(|id| (car, id)))
+        .collect())
+}
+
+/// Reads the racing number and replaces an invalid one with the default (spec 092: fail closed,
+/// never reject the whole profile for one bad number).
+fn lenient_race_number<'de, D>(deserializer: D) -> Result<u8, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let raw = i64::deserialize(deserializer)?;
+    Ok(PlayerProfile::race_number_from_i64(raw))
+}
+
+/// Parses the JSON stored in the `car_compounds` column; invalid JSON gives an empty map.
+pub fn parse_car_compounds(json: &str) -> HashMap<String, CompoundId> {
+    lenient_car_compounds(&mut serde_json::Deserializer::from_str(json)).unwrap_or_default()
 }
 
 impl Default for PlayerProfile {
@@ -58,12 +115,25 @@ impl Default for PlayerProfile {
             license_grade: LicenseGrade::None,
             academy_progress: ClassicAcademyProgress::default(),
             owned_cars: Vec::new(),
+            car_compounds: Default::default(),
+            race_number: Self::DEFAULT_RACE_NUMBER,
         }
     }
 }
 
 impl PlayerProfile {
     pub const STARTING_CREDITS: u64 = 10_000;
+    /// Racing number of a new profile and the fallback for an invalid stored number.
+    pub const DEFAULT_RACE_NUMBER: u8 = 7;
+
+    pub fn default_race_number() -> u8 {
+        Self::DEFAULT_RACE_NUMBER
+    }
+
+    /// A stored or typed racing number, or `DEFAULT_RACE_NUMBER` when it is outside `1..=99`.
+    pub fn race_number_from_i64(value: i64) -> u8 {
+        u8::try_from(value).ok().filter(|&n| is_valid_race_number(n)).unwrap_or(Self::DEFAULT_RACE_NUMBER)
+    }
 
     pub fn default_starting_credits() -> u64 {
         Self::STARTING_CREDITS
@@ -87,6 +157,8 @@ impl PlayerProfile {
             license_grade: LicenseGrade::None,
             academy_progress: ClassicAcademyProgress::default(),
             owned_cars: Vec::new(),
+            car_compounds: Default::default(),
+            race_number: Self::DEFAULT_RACE_NUMBER,
         }
     }
 
@@ -128,6 +200,8 @@ impl PlayerProfile {
             license_grade: LicenseGrade::None,
             academy_progress: ClassicAcademyProgress::default(),
             owned_cars: Vec::new(),
+            car_compounds: Default::default(),
+            race_number: Self::DEFAULT_RACE_NUMBER,
         }
     }
 

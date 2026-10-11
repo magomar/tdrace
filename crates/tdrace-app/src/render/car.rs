@@ -115,6 +115,20 @@ pub fn render_car_lights(
     }
 }
 
+/// On-screen size and rotation of a top-down chassis sprite: `(dest_w, dest_h, draw_angle)`.
+///
+/// The sprite spans 1.06x the body length. Portrait textures (nose up) are rotated a quarter turn.
+pub fn topdown_sprite_dest(tex_w: f32, tex_h: f32, body_half_len: f32, angle: f32) -> (f32, f32, f32) {
+    let w = body_half_len * 2.0 * 1.06;
+    if tex_h > tex_w {
+        let h = w * (tex_w / tex_h);
+        (h, w, angle + std::f32::consts::FRAC_PI_2)
+    } else {
+        let h = w * (tex_h / tex_w);
+        (w, h, angle)
+    }
+}
+
 /// Renders a vehicle topdown textured sprite with modality-governed lighting.
 pub fn render_vehicle_topdown_sprite(
     texture: &Texture2D,
@@ -127,15 +141,7 @@ pub fn render_vehicle_topdown_sprite(
     is_braking: bool,
     lighting_cfg: &VehicleLightingConfig,
 ) {
-    let (dest_w, dest_h, draw_angle) = if texture.height() > texture.width() {
-        let w = body_half_len * 2.0 * 1.06;
-        let h = w * (texture.width() / texture.height());
-        (h, w, angle + std::f32::consts::FRAC_PI_2)
-    } else {
-        let w = body_half_len * 2.0 * 1.06;
-        let h = w * (texture.height() / texture.width());
-        (w, h, angle)
-    };
+    let (dest_w, dest_h, draw_angle) = topdown_sprite_dest(texture.width(), texture.height(), body_half_len, angle);
 
     draw_texture_ex(
         texture,
@@ -347,21 +353,32 @@ pub fn render_car_with_visual_type_model_and_shadows(
     let body_half_len = car.config.chassis.half_length(car.config.wheelbase) * air_scale;
     let body_half_w = car.config.chassis.half_width() * air_scale;
 
-    // 1. --- 2.5D Drop Shadow ---
-    if shadows_enabled {
-        let shadow_offset = Vec2::new(0.06 + z_lift * 0.30, 0.08 + z_lift * 0.40);
-        let shadow_pos = pos + shadow_offset + fwd * geom_offset;
-        let shadow_scale = 1.0 + (z_lift * 0.08).min(0.40);
-        let shadow_alpha = (1.0 / (1.0 + z_lift * 0.55)).clamp(0.25, 1.0);
+    let sprite = model_id.and_then(|m_id| {
+        crate::render::vehicle_assets::get_vehicle_topdown_chassis_texture(m_id, color_scheme.primary, color_scheme.secondary)
+            .map(|texture| (m_id, texture))
+    });
 
-        render_chassis_shadow(
-            shadow_pos,
-            fwd,
-            right,
-            body_half_len * shadow_scale,
-            body_half_w * shadow_scale,
-            shadow_alpha,
-        );
+    // 1. --- 2.5D Chassis-Conforming Ground Shadow (spec 096) ---
+    let lift = shadow_lift(z_lift);
+    let shadow_pos = pos + lift.offset + fwd * geom_offset;
+    match select_shadow_path(shadows_enabled, sprite.is_some()) {
+        ShadowPath::Off => {}
+        ShadowPath::Sprite => {
+            if let Some((_, texture)) = &sprite {
+                render_sprite_chassis_shadow(texture, shadow_pos, angle, body_half_len * lift.scale, lift.alpha);
+            }
+        }
+        ShadowPath::Archetype => {
+            render_archetype_chassis_shadow(
+                visual_type,
+                shadow_pos,
+                fwd,
+                right,
+                body_half_len * lift.scale,
+                body_half_w * lift.scale,
+                lift.alpha,
+            );
+        }
     }
 
     // Resolve modality-governed vehicle lighting profile
@@ -380,62 +397,37 @@ pub fn render_car_with_visual_type_model_and_shadows(
     }
 
     // 2. If model-specific high-detail top-down sprite is available, render sprite directly
-    if let Some(m_id) = model_id {
-        if let Some(texture) = crate::render::vehicle_assets::get_vehicle_topdown_chassis_texture(m_id, color_scheme.primary, color_scheme.secondary) {
-            let steered_cfg = crate::render::vehicle_assets::derive_steered_wheel_config(m_id, &car.config);
-            let wheel_tex = steered_cfg.and_then(|cfg| crate::render::vehicle_assets::get_wheel_texture(cfg.wheel_texture_id));
+    if let Some((m_id, texture)) = sprite {
+        let steered_cfg = crate::render::vehicle_assets::derive_steered_wheel_config(m_id, &car.config);
+        let wheel_tex = steered_cfg.and_then(|cfg| crate::render::vehicle_assets::get_wheel_texture(cfg.wheel_texture_id));
 
-            if let (Some(cfg), Some(ref w_tex)) = (steered_cfg, wheel_tex) {
-                let (steer_fl, steer_fr) = car.compute_ackermann_angles(car.state.steer_angle);
-                let lf = cfg.front_axle_offset * air_scale;
-                let half_w = cfg.half_track_width * air_scale;
-                let p_fl = visual_center + fwd * lf - right * half_w;
-                let p_fr = visual_center + fwd * lf + right * half_w;
-                let ang_fl = angle + steer_fl;
-                let ang_fr = angle + steer_fr;
-                let wheel_size = cfg.wheel_size * air_scale;
-                let quad_size = glam::Vec2::new(
-                    wheel_size.x * cfg.texture_padding_factor.x,
-                    wheel_size.y * cfg.texture_padding_factor.y,
-                );
+        if let (Some(cfg), Some(ref w_tex)) = (steered_cfg, wheel_tex) {
+            let (steer_fl, steer_fr) = car.compute_ackermann_angles(car.state.steer_angle);
+            let lf = cfg.front_axle_offset * air_scale;
+            let half_w = cfg.half_track_width * air_scale;
+            let p_fl = visual_center + fwd * lf - right * half_w;
+            let p_fr = visual_center + fwd * lf + right * half_w;
+            let ang_fl = angle + steer_fl;
+            let ang_fr = angle + steer_fr;
+            let wheel_size = cfg.wheel_size * air_scale;
+            let quad_size = glam::Vec2::new(
+                wheel_size.x * cfg.texture_padding_factor.x,
+                wheel_size.y * cfg.texture_padding_factor.y,
+            );
 
-                // 1. Wheel ground shadows
-                if shadows_enabled {
-                    let shadow_offset = Vec2::new(0.06 + z_lift * 0.30, 0.08 + z_lift * 0.40);
-                    let shadow_scale = 1.0 + (z_lift * 0.08).min(0.40);
-                    let shadow_alpha = (1.0 / (1.0 + z_lift * 0.55)).clamp(0.25, 1.0);
-                    render_wheel_shadow(p_fl + shadow_offset, ang_fl, wheel_size * shadow_scale, shadow_alpha);
-                    render_wheel_shadow(p_fr + shadow_offset, ang_fr, wheel_size * shadow_scale, shadow_alpha);
-                }
-
-                // 2. UnderChassis wheels
-                if cfg.layering == crate::render::vehicle_assets::WheelLayerMode::UnderChassis {
-                    draw_steered_wheel(w_tex, p_fl, ang_fl, quad_size);
-                    draw_steered_wheel(w_tex, p_fr, ang_fr, quad_size);
-                }
-
-                // 3. Chassis bodywork
-                render_vehicle_topdown_sprite(
-                    &texture,
-                    visual_center,
-                    angle,
-                    fwd,
-                    right,
-                    body_half_len,
-                    body_half_w,
-                    is_braking,
-                    &lighting_cfg,
-                );
-
-                // 4. OverChassis wheels
-                if cfg.layering == crate::render::vehicle_assets::WheelLayerMode::OverChassis {
-                    draw_steered_wheel(w_tex, p_fl, ang_fl, quad_size);
-                    draw_steered_wheel(w_tex, p_fr, ang_fr, quad_size);
-                }
-
-                return;
+            // 1. Wheel ground shadows
+            if shadows_enabled {
+                render_wheel_shadow(p_fl + lift.offset, ang_fl, wheel_size * lift.scale, lift.alpha);
+                render_wheel_shadow(p_fr + lift.offset, ang_fr, wheel_size * lift.scale, lift.alpha);
             }
 
+            // 2. UnderChassis wheels
+            if cfg.layering == crate::render::vehicle_assets::WheelLayerMode::UnderChassis {
+                draw_steered_wheel(w_tex, p_fl, ang_fl, quad_size);
+                draw_steered_wheel(w_tex, p_fr, ang_fr, quad_size);
+            }
+
+            // 3. Chassis bodywork
             render_vehicle_topdown_sprite(
                 &texture,
                 visual_center,
@@ -447,8 +439,28 @@ pub fn render_car_with_visual_type_model_and_shadows(
                 is_braking,
                 &lighting_cfg,
             );
+
+            // 4. OverChassis wheels
+            if cfg.layering == crate::render::vehicle_assets::WheelLayerMode::OverChassis {
+                draw_steered_wheel(w_tex, p_fl, ang_fl, quad_size);
+                draw_steered_wheel(w_tex, p_fr, ang_fr, quad_size);
+            }
+
             return;
         }
+
+        render_vehicle_topdown_sprite(
+            &texture,
+            visual_center,
+            angle,
+            fwd,
+            right,
+            body_half_len,
+            body_half_w,
+            is_braking,
+            &lighting_cfg,
+        );
+        return;
     }
 
     // 3. Procedural Archetype Rendering
@@ -555,112 +567,225 @@ pub fn render_car_with_visual_type_model_and_shadows(
     }
 }
 
-/// Draws a smooth convex rounded hull (capsule / rounded oriented box) centered at `center`.
-fn draw_rounded_oriented_chassis(
-    center: Vec2,
-    fwd: Vec2,
-    right: Vec2,
-    half_len: f32,
-    half_w: f32,
-    corner_radius: f32,
-    color: Color,
-) {
-    let r = corner_radius.min(half_len * 0.45).min(half_w * 0.90);
-    let lx = (half_len - r).max(0.01);
-    let wy = (half_w - r).max(0.01);
+/// Ground-shadow placement for a vehicle lifted `z_lift` metres off the track (spec 096).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct ShadowLift {
+    /// Ground-plane offset along the ambient light vector (+X, +Y).
+    pub offset: Vec2,
+    /// Outward scale of the shadow footprint.
+    pub scale: f32,
+    /// Opacity multiplier, floored at 0.25.
+    pub alpha: f32,
+}
 
-    // 16-point perimeter (4 points per rounded corner)
-    const SEGMENTS: usize = 4;
-    let mut points: [Vec2; 16] = [Vec2::ZERO; 16];
-    let mut idx = 0;
+/// Shadow offset, scale and opacity for a vehicle at elevation `z_lift` (jump + ramp, metres).
+pub fn shadow_lift(z_lift: f32) -> ShadowLift {
+    ShadowLift {
+        offset: Vec2::new(0.06 + z_lift * 0.30, 0.08 + z_lift * 0.40),
+        scale: 1.0 + (z_lift * 0.08).min(0.40),
+        alpha: (1.0 / (1.0 + z_lift * 0.55)).clamp(0.25, 1.0),
+    }
+}
 
-    // Corner centers in local coordinates (x = along fwd, y = along right):
-    // 1. Front-Right corner (+lx, +wy): angle 0 to pi/2 (from +right to +fwd)
-    for s in 0..SEGMENTS {
-        let frac = s as f32 / (SEGMENTS - 1) as f32;
-        let angle = frac * std::f32::consts::FRAC_PI_2;
-        let local_x = lx + r * angle.sin();
-        let local_y = wy + r * angle.cos();
-        points[idx] = center + fwd * local_x + right * local_y;
-        idx += 1;
-    }
-    // 2. Front-Left corner (+lx, -wy): angle 0 to pi/2 (from +fwd to -right)
-    for s in 0..SEGMENTS {
-        let frac = s as f32 / (SEGMENTS - 1) as f32;
-        let angle = frac * std::f32::consts::FRAC_PI_2;
-        let local_x = lx + r * angle.cos();
-        let local_y = -wy - r * angle.sin();
-        points[idx] = center + fwd * local_x + right * local_y;
-        idx += 1;
-    }
-    // 3. Rear-Left corner (-lx, -wy): angle 0 to pi/2 (from -right to -fwd)
-    for s in 0..SEGMENTS {
-        let frac = s as f32 / (SEGMENTS - 1) as f32;
-        let angle = frac * std::f32::consts::FRAC_PI_2;
-        let local_x = -lx - r * angle.sin();
-        let local_y = -wy - r * angle.cos();
-        points[idx] = center + fwd * local_x + right * local_y;
-        idx += 1;
-    }
-    // 4. Rear-Right corner (-lx, +wy): angle 0 to pi/2 (from -fwd to +right)
-    for s in 0..SEGMENTS {
-        let frac = s as f32 / (SEGMENTS - 1) as f32;
-        let angle = frac * std::f32::consts::FRAC_PI_2;
-        let local_x = -lx - r * angle.cos();
-        let local_y = wy + r * angle.sin();
-        points[idx] = center + fwd * local_x + right * local_y;
-        idx += 1;
-    }
+/// Which chassis shadow pass a vehicle gets.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ShadowPath {
+    /// Shadows disabled: no shadow draw calls at all.
+    Off,
+    /// Top-down sprite: the sprite's alpha silhouette, tinted black.
+    Sprite,
+    /// Procedural archetype: the archetype's body polygons.
+    Archetype,
+}
 
-    let c = macroquad::math::Vec2::new(center.x, center.y);
-    for i in 0..16 {
-        let next = (i + 1) % 16;
-        draw_triangle(
-            c,
-            macroquad::math::Vec2::new(points[i].x, points[i].y),
-            macroquad::math::Vec2::new(points[next].x, points[next].y),
-            color,
+/// Picks the chassis shadow pass from the `vehicle_shadows` setting and sprite availability.
+pub fn select_shadow_path(shadows_enabled: bool, has_topdown_sprite: bool) -> ShadowPath {
+    match (shadows_enabled, has_topdown_sprite) {
+        (false, _) => ShadowPath::Off,
+        (true, true) => ShadowPath::Sprite,
+        (true, false) => ShadowPath::Archetype,
+    }
+}
+
+/// Opacity of the outer feathered penumbra layer (before the lift alpha).
+pub const SHADOW_PENUMBRA_ALPHA: f32 = 0.12;
+/// Opacity of the inner umbra core layer (before the lift alpha).
+pub const SHADOW_CORE_ALPHA: f32 = 0.28;
+/// Size of the sprite penumbra layer relative to the sprite.
+pub const SPRITE_SHADOW_PENUMBRA_SCALE: f32 = 1.04;
+/// Outward growth of each archetype polygon for the penumbra layer, in metres.
+const ARCHETYPE_SHADOW_PENUMBRA_MARGIN: f32 = 0.06;
+
+/// Sprite shadow layers, outer penumbra first: `(size scale, tint)`.
+///
+/// The tint is pure black, so only the sprite's alpha channel survives: the shadow is the
+/// exact silhouette of the bodywork, wings and splitters included.
+pub fn sprite_shadow_layers(alpha_scale: f32) -> [(f32, Color); 2] {
+    [
+        (SPRITE_SHADOW_PENUMBRA_SCALE, Color::new(0.0, 0.0, 0.0, SHADOW_PENUMBRA_ALPHA * alpha_scale)),
+        (1.0, Color::new(0.0, 0.0, 0.0, SHADOW_CORE_ALPHA * alpha_scale)),
+    ]
+}
+
+/// Draws the ground shadow of a top-down sprite vehicle from the sprite texture itself.
+pub fn render_sprite_chassis_shadow(texture: &Texture2D, center: Vec2, angle: f32, body_half_len: f32, alpha_scale: f32) {
+    let (dest_w, dest_h, draw_angle) = topdown_sprite_dest(texture.width(), texture.height(), body_half_len, angle);
+    for (scale, tint) in sprite_shadow_layers(alpha_scale) {
+        let (w, h) = (dest_w * scale, dest_h * scale);
+        draw_texture_ex(
+            texture,
+            center.x - w * 0.5,
+            center.y - h * 0.5,
+            tint,
+            DrawTextureParams {
+                dest_size: Some(macroquad::math::Vec2::new(w, h)),
+                rotation: draw_angle,
+                pivot: Some(macroquad::math::Vec2::new(center.x, center.y)),
+                ..Default::default()
+            },
         );
     }
 }
 
-/// Draws a multi-layered, realistic soft ground shadow for the vehicle.
+/// Local trapezoid from `x_front` (half width `hw_front`) back to `x_rear` (half width `hw_rear`).
+fn shadow_trapezoid(x_front: f32, hw_front: f32, x_rear: f32, hw_rear: f32) -> Vec<Vec2> {
+    vec![
+        Vec2::new(x_front, -hw_front),
+        Vec2::new(x_front, hw_front),
+        Vec2::new(x_rear, hw_rear),
+        Vec2::new(x_rear, -hw_rear),
+    ]
+}
+
+/// Local box centred at (`cx`, `cy`) with half length `hl` and half width `hw`.
+fn shadow_box(cx: f32, cy: f32, hl: f32, hw: f32) -> Vec<Vec2> {
+    vec![
+        Vec2::new(cx + hl, cy - hw),
+        Vec2::new(cx + hl, cy + hw),
+        Vec2::new(cx - hl, cy + hw),
+        Vec2::new(cx - hl, cy - hw),
+    ]
+}
+
+/// Convex polygons that make up the ground silhouette of a procedural archetype.
 ///
-/// Combines:
-/// 1. An outer feathered penumbra layer (soft diffused edge)
-/// 2. A mid ambient silhouette layer (vehicle body projection)
-/// 3. An inner contact ambient occlusion core (deepest under the chassis floorpan)
-fn render_chassis_shadow(
-    pos: Vec2,
+/// Coordinates are local: x along forward, y along right, in metres from the body centre.
+/// The pieces follow the shapes the archetype body renderers draw, so the space around
+/// exposed wheels stays open.
+pub fn archetype_shadow_polygons(visual_type: VehicleVisualType, half_len: f32, half_w: f32) -> Vec<Vec<Vec2>> {
+    let (l, w) = (half_len, half_w);
+    match visual_type {
+        VehicleVisualType::OpenWheel { front_wing_span, .. } => vec![
+            shadow_box(l + 0.35, 0.0, 0.22, front_wing_span * 0.5),     // front wing
+            shadow_trapezoid(l + 0.13, 0.13, l * 0.3, w * 0.35),        // nosecone and cockpit cell
+            shadow_trapezoid(l * 0.3, w * 0.75, -l * 0.6, w * 0.65),    // sidepods
+            shadow_trapezoid(-l * 0.6, 0.12, -(l - 0.05), 0.12),        // engine cover and gearbox
+            shadow_box(-(l + 0.15), 0.0, 0.20, w * 0.85),               // rear wing
+        ],
+        VehicleVisualType::GoKart { side_bumpers, .. } => {
+            let mut polys = vec![
+                shadow_box(l * 0.65, 0.0, 0.25, 0.35),                  // nose fairing
+                shadow_trapezoid(l * 0.65 - 0.25, 0.12, -l * 0.8, 0.12), // floorpan rail
+                shadow_box(0.0, -w * 0.70, l * 0.40, 0.16),             // left side pod
+                shadow_box(0.0, w * 0.70, l * 0.40, 0.16),              // right side pod
+            ];
+            if side_bumpers {
+                // Nerf bars between the axles and a rear bar at the tail, clear of the tyres.
+                polys.push(shadow_box(0.0, -w * 0.95, l * 0.40, 0.04)); // left nerf bar
+                polys.push(shadow_box(0.0, w * 0.95, l * 0.40, 0.04));  // right nerf bar
+                polys.push(shadow_box(-(l - 0.04), 0.0, 0.04, w * 0.95)); // rear bumper bar
+            }
+            polys
+        }
+        VehicleVisualType::TouringGT { .. } | VehicleVisualType::RallyHatch { .. } => {
+            let mut polys = vec![
+                vec![
+                    Vec2::new(l, -w * 0.70),
+                    Vec2::new(l, w * 0.70),
+                    Vec2::new(l * 0.5, w),
+                    Vec2::new(-l * 0.5, w),
+                    Vec2::new(-l, w * 0.85),
+                    Vec2::new(-l, -w * 0.85),
+                    Vec2::new(-l * 0.5, -w),
+                    Vec2::new(l * 0.5, -w),
+                ],
+                shadow_trapezoid(-l, w * 0.95, -(l + 0.17), w * 0.95), // carbon aero wing
+            ];
+            if let VehicleVisualType::RallyHatch { large_wing: true, .. } = visual_type {
+                polys.push(shadow_trapezoid(-(l + 0.17), w * 0.90, -(l + 0.28), w * 0.90)); // rally spoiler
+            }
+            polys
+        }
+        VehicleVisualType::StockCar { .. } => vec![
+            shadow_trapezoid(l + 0.18, w * 0.88 + 0.08, l, w * 0.88 + 0.08), // chin splitter
+            vec![
+                Vec2::new(l, -w * 0.88),
+                Vec2::new(l, w * 0.88),
+                Vec2::new(l * 0.55, w * 1.02),
+                Vec2::new(0.0, w * 0.96),
+                Vec2::new(0.0, -w * 0.96),
+                Vec2::new(l * 0.55, -w * 1.02),
+            ],
+            vec![
+                Vec2::new(0.0, -w * 0.96),
+                Vec2::new(0.0, w * 0.96),
+                Vec2::new(-l * 0.55, w * 1.02),
+                Vec2::new(-l, w * 0.90),
+                Vec2::new(-l, -w * 0.90),
+                Vec2::new(-l * 0.55, -w * 1.02),
+            ],
+        ],
+        VehicleVisualType::SandRail { .. } => vec![
+            shadow_trapezoid(l * 0.95, w * 0.19, l * 0.40, w * 0.49),   // skid plate and prerunner bumper
+            shadow_trapezoid(l * 0.40, w * 0.49, -l * 0.45, w * 0.58),  // belly pan and roll cage
+            shadow_trapezoid(-l * 0.45, w * 0.50, -l * 0.88, w * 0.42), // rear engine cradle
+        ],
+    }
+}
+
+/// Centroid (vertex average) of a convex polygon.
+fn polygon_centroid(poly: &[Vec2]) -> Vec2 {
+    poly.iter().copied().sum::<Vec2>() / poly.len() as f32
+}
+
+/// Fills a convex local-space polygon placed at `center` in the (`fwd`, `right`) frame.
+fn fill_local_polygon(poly: &[Vec2], center: Vec2, fwd: Vec2, right: Vec2, color: Color) {
+    let to_world = |p: Vec2| {
+        let q = center + fwd * p.x + right * p.y;
+        macroquad::math::Vec2::new(q.x, q.y)
+    };
+    let c = to_world(polygon_centroid(poly));
+    for i in 0..poly.len() {
+        draw_triangle(c, to_world(poly[i]), to_world(poly[(i + 1) % poly.len()]), color);
+    }
+}
+
+/// Draws the ground shadow of a procedural archetype from its body polygons:
+/// a dilated faint penumbra under a full-opacity core.
+pub fn render_archetype_chassis_shadow(
+    visual_type: VehicleVisualType,
+    center: Vec2,
     fwd: Vec2,
     right: Vec2,
     half_len: f32,
     half_w: f32,
     alpha_scale: f32,
 ) {
-    if alpha_scale <= 0.02 {
-        return;
+    let polys = archetype_shadow_polygons(visual_type, half_len, half_w);
+    let penumbra = Color::new(0.0, 0.0, 0.0, SHADOW_PENUMBRA_ALPHA * alpha_scale);
+    let core = Color::new(0.0, 0.0, 0.0, SHADOW_CORE_ALPHA * alpha_scale);
+
+    for poly in &polys {
+        let c = polygon_centroid(poly);
+        let dilated: Vec<Vec2> = poly
+            .iter()
+            .map(|&p| p + (p - c).normalize_or_zero() * ARCHETYPE_SHADOW_PENUMBRA_MARGIN)
+            .collect();
+        fill_local_polygon(&dilated, center, fwd, right, penumbra);
     }
-
-    let corner_r = (half_w * 0.40).clamp(0.20, 0.40);
-
-    // 1. Outer Soft Penumbra: slightly expanded perimeter with faint opacity
-    let penumbra_len = half_len + 0.10;
-    let penumbra_w = half_w + 0.08;
-    let penumbra_r = corner_r + 0.08;
-    let col_outer = Color::new(0.0, 0.0, 0.0, 0.12 * alpha_scale);
-    draw_rounded_oriented_chassis(pos, fwd, right, penumbra_len, penumbra_w, penumbra_r, col_outer);
-
-    // 2. Mid Silhouette Ground Shadow: matches the vehicle footprint
-    let col_mid = Color::new(0.0, 0.0, 0.0, 0.22 * alpha_scale);
-    draw_rounded_oriented_chassis(pos, fwd, right, half_len, half_w, corner_r, col_mid);
-
-    // 3. Inner Contact Occlusion Core: compact, darkest under the central chassis floorpan
-    let core_len = half_len * 0.78;
-    let core_w = half_w * 0.72;
-    let core_r = corner_r * 0.70;
-    let col_core = Color::new(0.0, 0.0, 0.0, 0.24 * alpha_scale);
-    draw_rounded_oriented_chassis(pos, fwd, right, core_len, core_w, core_r, col_core);
+    for poly in &polys {
+        fill_local_polygon(poly, center, fwd, right, core);
+    }
 }
 
 /// Draws an individual wheel with rubber tread and center alloy hub.
@@ -1776,4 +1901,169 @@ fn render_sand_rail_body(
             Palette::NEON_ORANGE,
         );
     }
+}
+
+// ---------------------------------------------------------------------------
+// Racing number plate (spec 092)
+// ---------------------------------------------------------------------------
+
+/// Advance width of one Rajdhani-Bold digit, in em.
+pub const NUMBER_DIGIT_ADVANCE_EM: f32 = 0.56;
+/// Height of a Rajdhani-Bold digit, in em.
+pub const NUMBER_DIGIT_HEIGHT_EM: f32 = 0.70;
+/// The number never fills more than this fraction of the plate, so the digits keep a margin to the body edge.
+const NUMBER_PLATE_FILL: f32 = 0.9;
+/// The plate is this fraction of the body width: the roof is narrower than the fenders.
+const NUMBER_PLATE_WIDTH_FRACTION: f32 = 0.7;
+/// Smallest digit height, in screen pixels, that is still drawn.
+const NUMBER_MIN_PIXEL_HEIGHT: f32 = 5.0;
+
+/// Where the racing number sits on a car and how much room it has, in the car's own frame (metres).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct NumberPlate {
+    /// Centre of the plate, measured forward from the geometric centre of the body.
+    pub forward_offset: f32,
+    /// Half of the plate along the heading: bounded by the cabin length.
+    pub half_len: f32,
+    /// Half of the plate across the car: bounded by the body width.
+    pub half_width: f32,
+}
+
+/// The number plate for a chassis: the centre of the cabin (roof, or the driver seat of a kart or open-wheeler),
+/// as long as the cabin and as wide as the roof. Pure: only the `ChassisSkeleton` and the axle positions are read.
+pub fn number_plate(chassis: &tdrace_core::physics::config::ChassisSkeleton, wheelbase: f32, cg_to_front: f32, cg_to_rear: f32) -> NumberPlate {
+    let geom_offset = chassis.geometric_center_offset_from_cg(cg_to_front, cg_to_rear);
+    let cabin_front = cg_to_front + chassis.cabin_start_offset;
+    let cabin_rear = -cg_to_rear + chassis.cabin_end_offset;
+    let body_half_len = chassis.half_length(wheelbase);
+    // A skeleton whose cabin edges cross has no cabin; fall back to the middle third of the body.
+    let (centre, cabin_len) = if cabin_front - cabin_rear > 0.1 {
+        ((cabin_front + cabin_rear) * 0.5, cabin_front - cabin_rear)
+    } else {
+        (geom_offset, body_half_len * 2.0 / 3.0)
+    };
+    let forward_offset = centre - geom_offset;
+    // The plate stays on the body: no longer than twice the room from its own centre to the nearest end.
+    let room_to_end = (body_half_len - forward_offset.abs()).max(0.0);
+    NumberPlate {
+        forward_offset,
+        half_len: (cabin_len * 0.5).min(room_to_end),
+        half_width: chassis.half_width() * NUMBER_PLATE_WIDTH_FRACTION,
+    }
+}
+
+/// Size of the digits, in em (metres of font size), so `digits` characters fit inside `plate` with a margin.
+pub fn number_em_size(plate: &NumberPlate, digits: usize) -> f32 {
+    let digits = digits.max(1) as f32;
+    let by_length = 2.0 * plate.half_len * NUMBER_PLATE_FILL / (digits * NUMBER_DIGIT_ADVANCE_EM);
+    let by_width = 2.0 * plate.half_width * NUMBER_PLATE_FILL / NUMBER_DIGIT_HEIGHT_EM;
+    by_length.min(by_width).max(0.0)
+}
+
+/// Brightness of a colour, 0.0 (black) to 1.0 (white): Rec. 709 weights on the colour values.
+pub fn color_luminance(c: Color) -> f32 {
+    0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b
+}
+
+/// Glyph and outline colours for a number drawn on a body of colour `body`: white on a dark body with a black
+/// outline, black on a light body with a white outline (luminance 0.5 counts as light).
+pub fn number_glyph_colors(body: Color) -> (Color, Color) {
+    if color_luminance(body) < 0.5 {
+        (Palette::WHITE, Color::new(0.0, 0.0, 0.0, 1.0))
+    } else {
+        (Color::new(0.0, 0.0, 0.0, 1.0), Palette::WHITE)
+    }
+}
+
+/// A racing number to draw on one car: where, how big and in what colours, in world space.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct CarNumberItem {
+    pub number: u8,
+    /// World position of the plate centre.
+    pub center: Vec2,
+    /// World heading of the car, radians.
+    pub angle: f32,
+    /// Size of the digits, in em (world metres).
+    pub em: f32,
+    /// Effective primary colour of the body under the number.
+    pub body_color: Color,
+}
+
+impl CarNumberItem {
+    /// The number plate of `car`, placed on the body as `render_car_with_visual_type_model_and_shadows` places it
+    /// (roll, pitch and jump lift included). `None` when `number` is not a valid racing number.
+    pub fn for_car(car: &Car, number: u8, body_color: Color) -> Option<Self> {
+        if !crate::ai::is_valid_race_number(number) {
+            return None;
+        }
+        let fwd = car.forward_vector();
+        let right = car.right_vector();
+        let z_lift = car.state.elevation.max(0.0) + car.state.ramp_elevation.max(0.0);
+        let roll_offset_lat = (-car.state.acceleration_local.y * 0.015).clamp(-0.18, 0.18);
+        let grade_pitch_vis = (-car.state.road_grade_slope * 0.20).clamp(-0.12, 0.12);
+        let pitch_offset_long = (car.state.acceleration_local.x * 0.012 + grade_pitch_vis).clamp(-0.18, 0.18);
+        let air_scale = 1.0 + (z_lift * 0.07).min(0.35);
+        let plate = number_plate(&car.config.chassis, car.config.wheelbase, car.config.cg_to_front, car.config.cg_to_rear);
+        let geom_offset = car.config.chassis.geometric_center_offset_from_cg(car.config.cg_to_front, car.config.cg_to_rear);
+        let center = car.state.position
+            + right * roll_offset_lat
+            + fwd * pitch_offset_long
+            + Vec2::new(0.0, -z_lift * 1.6)
+            + fwd * ((geom_offset + plate.forward_offset) * air_scale);
+        let digits = if number >= 10 { 2 } else { 1 };
+        Some(Self { number, center, angle: car.state.angle, em: number_em_size(&plate, digits) * air_scale, body_color })
+    }
+}
+
+/// Draws racing numbers on cars in screen space: projected through `camera`, rotated with the car, glyphs by
+/// the contrast rule. Numbers whose digits would be under 5 px high are skipped, as are cars outside the viewport.
+pub fn render_car_numbers(
+    fonts: &crate::ui::font::Fonts,
+    camera: &crate::camera::RaceCamera,
+    viewport_rect: Option<(f32, f32, f32, f32)>,
+    items: &[CarNumberItem],
+) {
+    let Some(font) = fonts.display.as_ref() else {
+        return;
+    };
+    let (sw, sh) = crate::camera::RaceCamera::get_screen_dimensions_safe();
+    let (vp_x, vp_y, vp_w, vp_h) = viewport_rect.unwrap_or((0.0, 0.0, sw, sh));
+    for item in items {
+        let em_px = item.em * camera.current_zoom;
+        if em_px * NUMBER_DIGIT_HEIGHT_EM < NUMBER_MIN_PIXEL_HEIGHT {
+            continue;
+        }
+        let center = camera.world_to_screen_with_viewport(item.center, sw, sh);
+        let reach = em_px * 1.5;
+        if center.x - reach < vp_x || center.x + reach > vp_x + vp_w || center.y - reach < vp_y || center.y + reach > vp_y + vp_h {
+            continue;
+        }
+        let (glyph, outline) = number_glyph_colors(item.body_color);
+        let text = item.number.to_string();
+        let _ = std::panic::catch_unwind(|| draw_rotated_number(font, &text, center, -item.angle, em_px, glyph, outline));
+    }
+}
+
+/// Draws `text` centred on `center`, its baseline running along the screen angle `rotation` (clockwise, radians).
+fn draw_rotated_number(font: &macroquad::text::Font, text: &str, center: Vec2, rotation: f32, em_px: f32, glyph: Color, outline: Color) {
+    let raster = em_px.round().clamp(8.0, 512.0);
+    let scale = em_px / raster;
+    let params = |color: Color| macroquad::text::TextParams {
+        font: Some(font),
+        font_size: raster as u16,
+        font_scale: scale,
+        color,
+        rotation,
+        ..Default::default()
+    };
+    let size = macroquad::text::measure_text(text, Some(font), raster as u16, scale);
+    // The text box is `size.width` along the baseline and `size.offset_y` above it; centre it on `center`.
+    let (sin, cos) = rotation.sin_cos();
+    let local = Vec2::new(-size.width * 0.5, size.offset_y * 0.5);
+    let origin = center + Vec2::new(local.x * cos - local.y * sin, local.x * sin + local.y * cos);
+    let reach = (em_px * 0.06).max(1.0);
+    for (dx, dy) in [(-1.0, 0.0), (1.0, 0.0), (0.0, -1.0), (0.0, 1.0), (-0.7, -0.7), (0.7, -0.7), (-0.7, 0.7), (0.7, 0.7)] {
+        macroquad::text::draw_text_ex(text, origin.x + dx * reach, origin.y + dy * reach, params(outline));
+    }
+    macroquad::text::draw_text_ex(text, origin.x, origin.y, params(glyph));
 }

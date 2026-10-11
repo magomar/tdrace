@@ -42,6 +42,10 @@ pub struct PlayerVisibilityOptions {
     pub bot_nameplates: bool,
     /// Option 7: Expanding sonar / radar ping ripples when switching cameras or spinning out.
     pub sonar_ping: bool,
+    /// Option 8: Mathematically ideal racing line visual aid display mode.
+    pub racing_line_mode: tdrace_core::track::RacingLineMode,
+    /// Opacity multiplier for the racing line ribbon overlay (0.20 to 1.00).
+    pub racing_line_opacity: f32,
 }
 
 impl Default for PlayerVisibilityOptions {
@@ -62,6 +66,8 @@ impl Default for PlayerVisibilityOptions {
             curve_color_scheme: CurveColorScheme::Traffic,
             bot_nameplates: true,
             sonar_ping: true,
+            racing_line_mode: tdrace_core::track::RacingLineMode::Full,
+            racing_line_opacity: 0.70,
         }
     }
 }
@@ -90,6 +96,8 @@ impl From<&crate::config::PlayerHelpersConfig> for PlayerVisibilityOptions {
             curve_color_scheme,
             bot_nameplates: cfg.bot_nameplates,
             sonar_ping: cfg.radar_sonar_ping,
+            racing_line_mode: cfg.racing_line_mode,
+            racing_line_opacity: cfg.racing_line_opacity,
         }
     }
 }
@@ -118,6 +126,8 @@ impl From<&PlayerVisibilityOptions> for crate::config::PlayerHelpersConfig {
             adaptive_visibility: opts.adaptive_visibility,
             radar_sonar_ping: opts.sonar_ping,
             bot_nameplates: opts.bot_nameplates,
+            racing_line_mode: opts.racing_line_mode,
+            racing_line_opacity: opts.racing_line_opacity,
         }
     }
 }
@@ -418,6 +428,19 @@ pub struct VehicleNameplateItem<'a> {
     pub elevation: f32,
     /// Distance from the focus player car.
     pub distance_to_player: f32,
+    /// Racing number (spec 092), `0` for none. The plate reads `#NN NAME`.
+    pub race_number: u8,
+}
+
+impl VehicleNameplateItem<'_> {
+    /// Text of the plate: the racing number before the name when the car has one.
+    pub fn label(&self) -> String {
+        if crate::ai::is_valid_race_number(self.race_number) {
+            format!("#{} {}", self.race_number, self.name)
+        } else {
+            self.name.to_string()
+        }
+    }
 }
 
 /// Deconflicted layout position for a projected nameplate on screen.
@@ -480,7 +503,7 @@ pub fn deconflict_nameplates<'a>(
         }
 
         // Measure text dimensions for pill layout
-        let text_dim = fonts.measure_ui_bold(item.name, 12.0);
+        let text_dim = fonts.measure_ui_bold(&item.label(), 12.0);
         let tier_w = if item.tier_label.is_some() { 24.0 } else { 0.0 };
         let badge_w = (text_dim.width + tier_w + 16.0).max(48.0);
         let badge_h = 20.0;
@@ -596,7 +619,7 @@ pub fn render_floating_bot_nameplates(
             ry,
             name_w,
             badge.height,
-            badge.item.name,
+            &badge.item.label(),
             Color::new(0.95, 0.96, 0.98, alpha),
         );
     }

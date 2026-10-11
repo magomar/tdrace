@@ -18,6 +18,7 @@ use tdrace_core::track::junction_kit::{build_junction, JunctionComponent, Juncti
 use tdrace_core::track::network::{RoadSegment, SegmentId, TrackNetwork};
 use tdrace_core::track::spline::{TrackSpline, TrackWaypoint};
 use tdrace_core::track::{validate_track, Track, ValidationSeverity};
+use tdrace_core::SurfaceType;
 
 /// Largest deviation of the compiled branch centreline from the old joker (spec 102 Pillar VII, m).
 pub const MAX_DEVIATION_M: f32 = 2.0;
@@ -62,7 +63,193 @@ pub enum Outcome {
     Kept { reason: String },
 }
 
-fn shape_name(kind: JunctionShape) -> String {
+/// Convenience helper to construct a Taper junction component.
+#[allow(dead_code)]
+pub fn taper(s: f32, length: f32, divider_gap: f32) -> JunctionComponent {
+    JunctionComponent { s, kind: JunctionShape::Taper, length, divider_gap }
+}
+
+/// Convenience helper to construct a TurnOff junction component.
+#[allow(dead_code)]
+pub fn turn_off(s: f32, angle_deg: f32, length: f32, divider_gap: f32) -> JunctionComponent {
+    JunctionComponent { s, kind: JunctionShape::TurnOff { angle_deg }, length, divider_gap }
+}
+
+/// Progress distance along `main` of waypoint `idx`.
+pub fn waypoint_station(main: &TrackSpline, idx: usize) -> f32 {
+    main.project_point(main.waypoints[idx].point).progress_distance
+}
+
+/// Helper to create a waypoint for a redrawn branch.
+#[allow(dead_code)]
+pub fn wp(x: f32, y: f32, width: f32, surface: SurfaceType, elevation: f32) -> TrackWaypoint {
+    TrackWaypoint::new(Vec2::new(x, y), width).with_surface(surface).with_elevation(elevation)
+}
+
+/// An explicit redraw for a circuit that cannot be fitted automatically (Spec 105).
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+pub enum Redraw {
+    /// A fully explicit BranchLayout ready to compile.
+    Layout(BranchLayout),
+    /// Explicit junction components with interior waypoints or automatic waypoint slicing from `old`.
+    Config {
+        split_idx: Option<usize>,
+        merge_idx: Option<usize>,
+        side: Option<Side>,
+        road_width: Option<f32>,
+        split: JunctionComponent,
+        merge: JunctionComponent,
+        road_waypoints: Option<Vec<TrackWaypoint>>,
+        leads: Option<(f32, f32)>,
+        nose_barrier: Option<BarrierType>,
+    },
+}
+
+#[allow(dead_code)]
+impl Redraw {
+    pub fn new_config(split: JunctionComponent, merge: JunctionComponent) -> Self {
+        Self::Config {
+            split_idx: None,
+            merge_idx: None,
+            side: None,
+            road_width: None,
+            split,
+            merge,
+            road_waypoints: None,
+            leads: None,
+            nose_barrier: None,
+        }
+    }
+
+    pub fn with_anchors(mut self, split_idx: usize, merge_idx: usize) -> Self {
+        if let Self::Config { split_idx: ref mut s, merge_idx: ref mut m, .. } = self {
+            *s = Some(split_idx);
+            *m = Some(merge_idx);
+        }
+        self
+    }
+
+    pub fn with_split_idx(mut self, split_idx: usize) -> Self {
+        if let Self::Config { split_idx: ref mut s, .. } = self {
+            *s = Some(split_idx);
+        }
+        self
+    }
+
+    pub fn with_merge_idx(mut self, merge_idx: usize) -> Self {
+        if let Self::Config { merge_idx: ref mut m, .. } = self {
+            *m = Some(merge_idx);
+        }
+        self
+    }
+
+    pub fn with_side(mut self, s: Side) -> Self {
+        if let Self::Config { side: ref mut opt_side, .. } = self {
+            *opt_side = Some(s);
+        }
+        self
+    }
+
+    pub fn with_road_width(mut self, w: f32) -> Self {
+        if let Self::Config { road_width: ref mut opt_width, .. } = self {
+            *opt_width = Some(w);
+        }
+        self
+    }
+
+    pub fn with_waypoints(mut self, wps: Vec<TrackWaypoint>) -> Self {
+        if let Self::Config { road_waypoints: ref mut opt_wps, .. } = self {
+            *opt_wps = Some(wps);
+        }
+        self
+    }
+
+    pub fn with_leads(mut self, lead_in: f32, lead_out: f32) -> Self {
+        if let Self::Config { leads: ref mut opt_leads, .. } = self {
+            *opt_leads = Some((lead_in, lead_out));
+        }
+        self
+    }
+
+    pub fn with_nose_barrier(mut self, b: BarrierType) -> Self {
+        if let Self::Config { nose_barrier: ref mut opt_barrier, .. } = self {
+            *opt_barrier = Some(b);
+        }
+        self
+    }
+
+    pub fn to_layout(
+        &self,
+        main: &TrackSpline,
+        name: &str,
+        default_side: Side,
+        default_width: f32,
+        default_split_idx: usize,
+        default_merge_idx: usize,
+        old: &[TrackWaypoint],
+    ) -> Result<BranchLayout, String> {
+        match self {
+            Redraw::Layout(layout) => Ok(layout.clone()),
+            Redraw::Config {
+                split_idx,
+                merge_idx,
+                side,
+                road_width,
+                split,
+                merge,
+                road_waypoints,
+                leads,
+                nose_barrier,
+            } => {
+                let side = side.unwrap_or(default_side);
+                let road_width = road_width.unwrap_or(default_width);
+                let mut split = split.clone();
+                let effective_split_idx = split_idx.unwrap_or(default_split_idx);
+                if split.s == 0.0 || split_idx.is_some() {
+                    split.s = waypoint_station(main, effective_split_idx);
+                }
+                let effective_merge_idx = merge_idx.unwrap_or(default_merge_idx);
+                let mut merge = merge.clone();
+                if merge.s == 0.0 || merge_idx.is_some() {
+                    merge.s = waypoint_station(main, effective_merge_idx);
+                }
+                let split_geom = build_junction(main, &split, JunctionRole::Entry, side, road_width)
+                    .map_err(|e| format!("split junction: {:?}", e))?;
+                let merge_geom = build_junction(main, &merge, JunctionRole::Exit, side, road_width)
+                    .map_err(|e| format!("merge junction: {:?}", e))?;
+                let (free_in, free_out) = (split_geom.free_end, merge_geom.free_end);
+                let waypoints = if let Some(wps) = road_waypoints {
+                    wps.clone()
+                } else {
+                    let reference = Reference::new(main, old, name);
+                    let (arc_in, arc_out) = (reference.arc_of(free_in), reference.arc_of(free_out));
+                    let (lead_in, lead_out) = leads.unwrap_or((10.0, 10.0));
+                    old[1..old.len() - 1]
+                        .iter()
+                        .filter(|w| {
+                            let a = reference.arc_of(w.point);
+                            a >= arc_in + lead_in && a <= arc_out - lead_out
+                        })
+                        .cloned()
+                        .collect()
+                };
+                Ok(BranchLayout {
+                    layout_id: "joker".to_string(),
+                    name: name.to_string(),
+                    side,
+                    split,
+                    merge,
+                    road_waypoints: waypoints,
+                    road_width,
+                    nose_barrier: nose_barrier.unwrap_or(BarrierType::TireWall),
+                })
+            }
+        }
+    }
+}
+
+pub fn shape_name(kind: JunctionShape) -> String {
     match kind {
         JunctionShape::Taper => "Taper".to_string(),
         JunctionShape::TurnOff { angle_deg } => format!("TurnOff {:.0}\u{b0}", angle_deg),
@@ -70,19 +257,19 @@ fn shape_name(kind: JunctionShape) -> String {
 }
 
 /// The old joker as a dense polyline with, for every point, its main station and signed lateral offset.
-struct Reference {
-    points: Vec<Vec2>,
-    arcs: Vec<f32>,
+pub struct Reference {
+    pub points: Vec<Vec2>,
+    pub arcs: Vec<f32>,
     /// Main-spline arc length of each point's projection.
-    station: Vec<f32>,
+    pub station: Vec<f32>,
     /// Offset from the main centreline along the left normal (m).
-    lateral: Vec<f32>,
+    pub lateral: Vec<f32>,
     /// Angle between the joker direction and the main direction (degrees).
-    divergence: Vec<f32>,
+    pub divergence: Vec<f32>,
 }
 
 impl Reference {
-    fn new(main: &TrackSpline, waypoints: &[TrackWaypoint], name: &str) -> Self {
+    pub fn new(main: &TrackSpline, waypoints: &[TrackWaypoint], name: &str) -> Self {
         let segment = RoadSegment::new(SegmentId(2), name, waypoints.to_vec());
         let points: Vec<Vec2> = segment.samples.iter().map(|s| s.point).collect();
         let mut arcs = Vec::with_capacity(points.len());
@@ -99,12 +286,12 @@ impl Reference {
     }
 
     /// Distance from `p` to the old joker.
-    fn distance(&self, p: Vec2) -> f32 {
+    pub fn distance(&self, p: Vec2) -> f32 {
         self.points.windows(2).map(|w| LineSegment::new(w[0], w[1]).distance_to_point(p)).fold(f32::MAX, f32::min)
     }
 
     /// Joker arc length of the point nearest to `p`.
-    fn arc_of(&self, p: Vec2) -> f32 {
+    pub fn arc_of(&self, p: Vec2) -> f32 {
         let mut best = (f32::MAX, 0.0);
         for (i, w) in self.points.windows(2).enumerate() {
             let seg = LineSegment::new(w[0], w[1]);
@@ -119,7 +306,7 @@ impl Reference {
 
     /// Lateral offset (outward positive for `sigma`) and divergence at main station `target`, searching from the
     /// split end (`forward`) or from the merge end.
-    fn at_station(&self, target: f32, forward: bool, sigma: f32) -> Option<(f32, f32)> {
+    pub fn at_station(&self, target: f32, forward: bool, sigma: f32) -> Option<(f32, f32)> {
         let n = self.points.len();
         let order: Vec<usize> = if forward { (0..n).collect() } else { (0..n).rev().collect() };
         for pair in order.windows(2) {
@@ -282,7 +469,7 @@ fn check_converted(track: &Track) -> Result<f32, String> {
     let errors: Vec<String> = validate_track(track)
         .into_iter()
         .filter(|d| d.severity == ValidationSeverity::Error)
-        .map(|d| d.code.to_string())
+        .map(|d| format!("{}: {}", d.code, d.message))
         .collect();
     if !errors.is_empty() {
         let mut unique = errors;
@@ -299,7 +486,22 @@ fn check_converted(track: &Track) -> Result<f32, String> {
 
 /// Fits and applies a layout for the old joker `old` (first and last waypoint are the main waypoints `split_idx` and
 /// `merge_idx`). On success `track` is converted and baked; otherwise it is left as it was.
+#[allow(dead_code)]
 pub fn convert(track: &mut Track, id: &str, name: &str, split_idx: usize, merge_idx: usize, old: &[TrackWaypoint]) -> Outcome {
+    convert_with_redraw(track, id, name, split_idx, merge_idx, old, None)
+}
+
+/// Applies an explicit redraw if provided, otherwise fits and applies a layout for the old joker `old`.
+/// On success `track` is converted and baked; otherwise it is left as it was.
+pub fn convert_with_redraw(
+    track: &mut Track,
+    id: &str,
+    name: &str,
+    split_idx: usize,
+    merge_idx: usize,
+    old: &[TrackWaypoint],
+    redraw: Option<&Redraw>,
+) -> Outcome {
     let kept = |reason: String| {
         println!("  {} keeps its legacy joker network: {}", id, reason);
         Outcome::Kept { reason }
@@ -321,6 +523,35 @@ pub fn convert(track: &mut Track, id: &str, name: &str, split_idx: usize, merge_
     let mut widths: Vec<f32> = old[1..old.len() - 1].iter().map(|w| w.width).collect();
     widths.sort_by(f32::total_cmp);
     let joker_width = widths[widths.len() / 2].round().max(8.0);
+
+    if let Some(r) = redraw {
+        let layout = match r.to_layout(main, name, side, joker_width, split_idx, merge_idx, old) {
+            Ok(l) => l,
+            Err(e) => return kept(format!("redraw layout error: {}", e)),
+        };
+        let geometry = match layout.compile_geometry(track) {
+            Ok(g) => g,
+            Err(e) => return kept(format!("redraw compile guards failed: {:?}", e)),
+        };
+        let deviation = if layout.road_waypoints.is_empty() {
+            geometry.road.points.iter().step_by(2).map(|p| reference.distance(*p)).fold(0.0f32, f32::max)
+        } else {
+            let i_start = geometry.road.control_index[2];
+            let i_end = geometry.road.control_index[2 + layout.road_waypoints.len() - 1];
+            geometry.road.points[i_start..=i_end].iter().step_by(2).map(|p| reference.distance(*p)).fold(0.0f32, f32::max)
+        };
+        if deviation > max_deviation() {
+            return kept(format!("redraw free road deviation {:.2} m > {:.1} m", deviation, max_deviation()));
+        }
+        let mut trial = track.clone();
+        match install_layout(&mut trial, &layout).and_then(|_| check_converted(&trial)) {
+            Ok(cost_s) => {
+                *track = trial;
+                return Outcome::Converted(Fit { layout, deviation, cost_s });
+            }
+            Err(e) => return kept(format!("redraw validation failed: {}", e)),
+        }
+    }
 
     let mut first_failure: Option<String> = None;
     let mut best_deviation: Option<f32> = None;

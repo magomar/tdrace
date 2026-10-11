@@ -41,6 +41,8 @@ fn test_profile_schema_and_crud() {
         last_mode: AssistProfile::Arcade,
         academy_progress: Default::default(),
         owned_cars: Vec::new(),
+        car_compounds: Default::default(),
+        race_number: PlayerProfile::DEFAULT_RACE_NUMBER,
     };
     let p2_id = db.create_profile(&p2).expect("Insert profile 2");
 
@@ -244,6 +246,8 @@ fn test_race_session_profile_integration_and_race_finish_logging() {
         last_mode: AssistProfile::Arcade,
         academy_progress: Default::default(),
         owned_cars: Vec::new(),
+        car_compounds: Default::default(),
+        race_number: PlayerProfile::DEFAULT_RACE_NUMBER,
     };
 
     if let Some(db) = &session.hof_db {
@@ -318,6 +322,7 @@ fn test_profile_editing_workflow() {
         input_alias: default_prof.alias.clone(),
         country_idx,
         livery_idx: 2,
+        race_number: default_prof.race_number,
         cursor_timer: 0.0,
     };
 
@@ -376,6 +381,8 @@ fn test_clear_profile_history_and_hall_of_fame() {
         last_mode: AssistProfile::Arcade,
         academy_progress: Default::default(),
         owned_cars: Vec::new(),
+        car_compounds: Default::default(),
+        race_number: PlayerProfile::DEFAULT_RACE_NUMBER,
     };
     let p2_id = db.create_profile(&p2).expect("Insert profile 2");
 
@@ -1082,6 +1089,8 @@ fn test_player_card_focus_and_roster_manager_navigation() {
         last_mode: AssistProfile::Sport,
         academy_progress: Default::default(),
         owned_cars: Vec::new(),
+        car_compounds: Default::default(),
+        race_number: PlayerProfile::DEFAULT_RACE_NUMBER,
     };
     let p2_id = db.create_profile(&p2).expect("Insert driver 2");
 
@@ -2610,3 +2619,105 @@ fn test_kart_career_6_tier_progression_and_20_track_unlocks() {
 
 
 
+
+// ---------------------------------------------------------------------------
+// Spec 098: per-car tyre compound choice kept in the profile
+// ---------------------------------------------------------------------------
+
+fn compound_test_db_path(tag: &str) -> std::path::PathBuf {
+    let dir = std::env::temp_dir().join(format!("tdrace_spec098_{}_{}", tag, std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).expect("temp dir");
+    dir.join("records.db")
+}
+
+#[test]
+fn car_compounds_survive_a_restart_per_car() {
+    use std::collections::HashMap;
+    use tdrace_core::physics::surface::CompoundId;
+
+    let path = compound_test_db_path("restart");
+    {
+        let db = HallOfFameDb::open(&path).expect("open db");
+        let mut profile = db.get_active_profile().expect("active profile");
+        assert!(profile.car_compounds.is_empty(), "a new profile has no compound choices");
+        profile.car_compounds.insert("gt_first".to_string(), CompoundId::HardSlick);
+        db.update_profile(&profile).expect("save profile");
+    }
+    // Restart: a new connection on the same file.
+    let db = HallOfFameDb::open(&path).expect("reopen db");
+    let profile = db.get_active_profile().expect("active profile");
+    let expected: HashMap<String, CompoundId> =
+        HashMap::from([("gt_first".to_string(), CompoundId::HardSlick)]);
+    assert_eq!(profile.car_compounds, expected);
+    assert_eq!(profile.car_compounds.get("gt_second"), None, "an untouched car has no entry");
+
+    let by_id = db.get_profile_by_id(profile.id.unwrap()).unwrap().unwrap();
+    assert_eq!(by_id.car_compounds, expected);
+    let all = db.get_all_profiles().unwrap();
+    assert_eq!(all[0].car_compounds, expected);
+    let _ = std::fs::remove_dir_all(path.parent().unwrap());
+}
+
+#[test]
+fn a_profile_database_written_before_spec_098_loads_with_no_compound_choices() {
+    let path = compound_test_db_path("old_db");
+    {
+        let conn = rusqlite::Connection::open(&path).expect("raw open");
+        conn.execute_batch(
+            "CREATE TABLE player_profiles (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                alias TEXT NOT NULL,
+                country TEXT,
+                primary_color TEXT NOT NULL,
+                secondary_color TEXT NOT NULL,
+                helmet_color TEXT NOT NULL,
+                is_active INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL,
+                last_mode TEXT NOT NULL DEFAULT 'arcade',
+                credits INTEGER NOT NULL DEFAULT 0,
+                lifetime_credits INTEGER NOT NULL DEFAULT 0,
+                driver_xp INTEGER NOT NULL DEFAULT 0,
+                lifetime_driver_xp INTEGER NOT NULL DEFAULT 0,
+                license_grade INTEGER NOT NULL DEFAULT 0,
+                academy_progress TEXT NOT NULL DEFAULT '{}',
+                owned_cars TEXT NOT NULL DEFAULT '[]'
+            );
+            INSERT INTO player_profiles (name, alias, country, primary_color, secondary_color, helmet_color, is_active, created_at, owned_cars)
+            VALUES ('Old Timer', 'Vintage', 'ESP', '#ff0000', '#00ff00', '#0000ff', 1, '2026-01-01 00:00', '[\"gt_old_car\"]');",
+        )
+        .expect("old schema");
+    }
+    let db = HallOfFameDb::open(&path).expect("an old database must open without error");
+    let profile = db.get_active_profile().expect("old profile loads");
+    assert_eq!(profile.name, "Old Timer");
+    assert_eq!(profile.owned_cars, vec!["gt_old_car".to_string()]);
+    assert!(profile.car_compounds.is_empty(), "every car uses its preset compound");
+    let _ = std::fs::remove_dir_all(path.parent().unwrap());
+}
+
+#[test]
+fn an_unknown_stored_compound_is_dropped_and_the_other_choices_stay() {
+    use tdrace_core::physics::surface::CompoundId;
+
+    let parsed = tdrace_app::profile::parse_car_compounds(
+        r#"{"gt_a": "SoftSlick", "gt_b": "NotACompound", "gt_c": 7, "gt_d": "HardSlick"}"#,
+    );
+    assert_eq!(parsed.len(), 2);
+    assert_eq!(parsed.get("gt_a"), Some(&CompoundId::SoftSlick));
+    assert_eq!(parsed.get("gt_d"), Some(&CompoundId::HardSlick));
+
+    assert!(tdrace_app::profile::parse_car_compounds("not json at all").is_empty());
+    assert!(tdrace_app::profile::parse_car_compounds("[1,2]").is_empty());
+
+    // The same leniency applies when a whole profile is read from JSON, and a profile
+    // serialised before this spec (no field) still loads.
+    let mut value = serde_json::to_value(PlayerProfile::default()).unwrap();
+    value["car_compounds"] = serde_json::json!({"gt_a": "SoftSlick", "gt_b": "Bogus"});
+    let profile: PlayerProfile = serde_json::from_value(value.clone()).unwrap();
+    assert_eq!(profile.car_compounds.len(), 1);
+    value.as_object_mut().unwrap().remove("car_compounds");
+    let legacy: PlayerProfile = serde_json::from_value(value).unwrap();
+    assert!(legacy.car_compounds.is_empty());
+}

@@ -58,6 +58,8 @@ pub struct SettingsSnapshot {
     pub chevron_brightness: f32,
     pub adaptive_idx: usize,
     pub radar_sonar_ping_idx: usize,
+    pub racing_line_idx: usize,
+    pub racing_line_opacity_pct: f32,
 }
 
 impl Default for SettingsSnapshot {
@@ -99,11 +101,13 @@ impl Default for SettingsSnapshot {
             chevron_brightness: 1.0,
             adaptive_idx: 0,
             radar_sonar_ping_idx: 0,
+            racing_line_idx: 0,
+            racing_line_opacity_pct: 70.0,
         }
     }
 }
 
-/// Serializable / translatable state for the 10 player helpers settings widgets.
+/// Serializable / translatable state for the 12 player helpers settings widgets.
 #[derive(Debug, Clone, PartialEq)]
 pub struct HelpersSettingsState {
     pub aura_enabled: bool,
@@ -116,6 +120,8 @@ pub struct HelpersSettingsState {
     pub chevron_brightness: f32,
     pub adaptive_enabled: bool,
     pub radar_sonar_ping: bool,
+    pub racing_line_mode: usize,
+    pub racing_line_opacity: f32,
 }
 
 impl Default for HelpersSettingsState {
@@ -131,6 +137,8 @@ impl Default for HelpersSettingsState {
             chevron_brightness: 1.0,
             adaptive_enabled: true,
             radar_sonar_ping: true,
+            racing_line_mode: 0,
+            racing_line_opacity: 0.70,
         }
     }
 }
@@ -434,6 +442,8 @@ pub struct ArcadeSettingsModal {
     pub chevron_brightness_slider: SliderWidget,
     pub adaptive_dropdown: DropdownWidget,
     pub radar_ping_dropdown: DropdownWidget,
+    pub racing_line_dropdown: DropdownWidget,
+    pub racing_line_opacity_slider: SliderWidget,
 
     pub is_tab_focused: bool,
     pub is_subtab_focused: bool,
@@ -470,7 +480,7 @@ impl ArcadeSettingsModal {
         // Tab 2 (Display): 6 widgets + 1 bottom row = 7 rows
         // Tab 3 (Gameplay):
         //   Sub-tab 0 (General): 5 widgets (assist, speed, ghost, damage, preset) + 1 customize button + 1 bottom row = 7 rows
-        //   Sub-tab 1 (Visual Aids): 1 preset + 10 helper widgets + 1 bottom row = 12 rows
+        //   Sub-tab 1 (Visual Aids): 1 preset + 12 helper widgets + 1 bottom row = 14 rows
         let nav = NavGrid2D::new(vec![6, 7, 7, 7]);
 
         let mute_options = vec!["ACTIVE (UNMUTED)".to_string(), "MUTED".to_string()];
@@ -518,6 +528,12 @@ impl ArcadeSettingsModal {
         ];
         let enabled_options = vec!["Enabled".to_string(), "Disabled".to_string()];
         let ribbon_options = vec!["Rally Pacenote".to_string(), "Disabled".to_string()];
+        let racing_line_options = vec![
+            "Full (Line & Dynamic Braking)".to_string(),
+            "Line Only (Constant Guidance)".to_string(),
+            "Braking Only (Dynamic Zones)".to_string(),
+            "Disabled".to_string(),
+        ];
         let steering_profile_options: Vec<String> = SteeringProfile::PRESETS
             .iter()
             .chain(std::iter::once(&SteeringProfile::Custom))
@@ -665,6 +681,19 @@ impl ArcadeSettingsModal {
                 0,
             ),
             radar_ping_dropdown: DropdownWidget::new("RADAR / SONAR PING", enabled_options, 0),
+            racing_line_dropdown: DropdownWidget::new(
+                "RACING LINE",
+                racing_line_options,
+                0,
+            ),
+            racing_line_opacity_slider: SliderWidget::new(
+                "RACING LINE OPACITY",
+                20.0,
+                100.0,
+                5.0,
+                70.0,
+            )
+            .with_suffix(" %"),
 
             is_tab_focused: true,
             is_subtab_focused: false,
@@ -710,6 +739,8 @@ impl ArcadeSettingsModal {
         self.ghost_car_dropdown.set_selected(0);
         self.car_damage_dropdown.set_selected(0);
         self.visual_aids_preset_dropdown.set_selected(0);
+        self.racing_line_dropdown.set_selected(0);
+        self.racing_line_opacity_slider.set_value(70.0);
 
         self.set_helpers_state(&HelpersSettingsState::default());
         self.switch_controls_subtab(0);
@@ -735,7 +766,7 @@ impl ArcadeSettingsModal {
     pub fn switch_gameplay_subtab(&mut self, subtab: usize) {
         self.gameplay_sub_tab = subtab;
         if subtab == 1 {
-            self.nav.set_column_len(3, 12);
+            self.nav.set_column_len(3, 14);
             self.nav.set_focus(3, 0);
         } else {
             self.nav.set_column_len(3, 7);
@@ -758,6 +789,8 @@ impl ArcadeSettingsModal {
                 self.chevron_brightness_slider.set_value(1.00);
                 self.adaptive_dropdown.set_selected(0);
                 self.radar_ping_dropdown.set_selected(0);
+                self.racing_line_dropdown.set_selected(0);
+                self.racing_line_opacity_slider.set_value(70.0);
                 self.visual_aids_preset_dropdown.set_selected(0);
             }
             1 => {
@@ -772,6 +805,8 @@ impl ArcadeSettingsModal {
                 self.chevron_brightness_slider.set_value(0.80);
                 self.adaptive_dropdown.set_selected(0); // Enabled
                 self.radar_ping_dropdown.set_selected(1); // Disabled
+                self.racing_line_dropdown.set_selected(2); // Braking Only (clean HUD)
+                self.racing_line_opacity_slider.set_value(70.0);
                 self.visual_aids_preset_dropdown.set_selected(1);
             }
             2 => {
@@ -786,6 +821,7 @@ impl ArcadeSettingsModal {
                 self.chevron_brightness_slider.set_value(1.00);
                 self.adaptive_dropdown.set_selected(1);
                 self.radar_ping_dropdown.set_selected(1);
+                self.racing_line_dropdown.set_selected(3); // Disabled
                 self.visual_aids_preset_dropdown.set_selected(2);
             }
             _ => {
@@ -807,6 +843,8 @@ impl ArcadeSettingsModal {
             && (self.chevron_brightness_slider.value - 1.00).abs() < 1e-3
             && self.adaptive_dropdown.selected_index == 0
             && self.radar_ping_dropdown.selected_index == 0
+            && self.racing_line_dropdown.selected_index == 0
+            && (self.racing_line_opacity_slider.value - 70.0).abs() < 1e-3
         {
             return 0;
         }
@@ -822,6 +860,8 @@ impl ArcadeSettingsModal {
             && (self.chevron_brightness_slider.value - 0.80).abs() < 1e-3
             && self.adaptive_dropdown.selected_index == 0
             && self.radar_ping_dropdown.selected_index == 1
+            && self.racing_line_dropdown.selected_index == 2
+            && (self.racing_line_opacity_slider.value - 70.0).abs() < 1e-3
         {
             return 1;
         }
@@ -832,6 +872,7 @@ impl ArcadeSettingsModal {
             && self.chevron_dropdown.selected_index == 1
             && self.adaptive_dropdown.selected_index == 1
             && self.radar_ping_dropdown.selected_index == 1
+            && self.racing_line_dropdown.selected_index == 3
         {
             return 2;
         }
@@ -858,6 +899,8 @@ impl ArcadeSettingsModal {
             chevron_brightness: self.chevron_brightness_slider.value,
             adaptive_enabled: self.adaptive_dropdown.selected_index == 0,
             radar_sonar_ping: self.radar_ping_dropdown.selected_index == 0,
+            racing_line_mode: self.racing_line_dropdown.selected_index,
+            racing_line_opacity: self.racing_line_opacity_slider.value / 100.0,
         }
     }
 
@@ -880,6 +923,9 @@ impl ArcadeSettingsModal {
             .set_selected(if state.adaptive_enabled { 0 } else { 1 });
         self.radar_ping_dropdown
             .set_selected(if state.radar_sonar_ping { 0 } else { 1 });
+        self.racing_line_dropdown.set_selected(state.racing_line_mode);
+        self.racing_line_opacity_slider
+            .set_value(state.racing_line_opacity * 100.0);
         self.sync_preset_from_helpers();
     }
 
@@ -1060,6 +1106,8 @@ impl ArcadeSettingsModal {
             chevron_brightness: self.chevron_brightness_slider.value,
             adaptive_idx: self.adaptive_dropdown.selected_index,
             radar_sonar_ping_idx: self.radar_ping_dropdown.selected_index,
+            racing_line_idx: self.racing_line_dropdown.selected_index,
+            racing_line_opacity_pct: self.racing_line_opacity_slider.value,
         }
     }
 
@@ -1123,6 +1171,9 @@ impl ArcadeSettingsModal {
         self.adaptive_dropdown.set_selected(snap.adaptive_idx);
         self.radar_ping_dropdown
             .set_selected(snap.radar_sonar_ping_idx);
+        self.racing_line_dropdown.set_selected(snap.racing_line_idx);
+        self.racing_line_opacity_slider
+            .set_value(snap.racing_line_opacity_pct);
     }
 
     /// Returns true if any setting differs from the initial baseline snapshot.
@@ -1221,7 +1272,8 @@ impl CabinetScreen for ArcadeSettingsModal {
             || self.ribbon_dropdown.is_open
             || self.chevron_dropdown.is_open
             || self.adaptive_dropdown.is_open
-            || self.radar_ping_dropdown.is_open;
+            || self.radar_ping_dropdown.is_open
+            || self.racing_line_dropdown.is_open;
 
         // Cancel / Back closes modal or prompts confirmation if settings have changed
         if self.nav.is_cancelled(
@@ -1249,6 +1301,7 @@ impl CabinetScreen for ArcadeSettingsModal {
                 self.chevron_dropdown.is_open = false;
                 self.adaptive_dropdown.is_open = false;
                 self.radar_ping_dropdown.is_open = false;
+                self.racing_line_dropdown.is_open = false;
                 ctx.play_ui_cancel();
                 return ScreenAction::None;
             }
@@ -1328,7 +1381,8 @@ impl CabinetScreen for ArcadeSettingsModal {
             || self.ribbon_dropdown.is_open
             || self.chevron_dropdown.is_open
             || self.adaptive_dropdown.is_open
-            || self.radar_ping_dropdown.is_open;
+            || self.radar_ping_dropdown.is_open
+            || self.racing_line_dropdown.is_open;
 
         let mut was_header_focused = false;
         if !is_any_dropdown_open {
@@ -2050,9 +2104,9 @@ impl CabinetScreen for ArcadeSettingsModal {
                 } else {
                     // VISUAL AIDS SUB-TAB:
                     // 0: Preset, 1: Aura, 2: Aura Ratio, 3: Aura Brightness, 4: Ribbon, 5: Ribbon Brightness, 6: Ribbon Scale
-                    // 7: Chevron, 8: Chevron Brightness, 9: Adaptive, 10: Radar Ping, 11: Bottom Buttons
+                    // 7: Chevron, 8: Chevron Brightness, 9: Adaptive, 10: Radar Ping, 11: Racing Line, 12: Racing Line Opacity, 13: Bottom Buttons
                     let (aid_row_h, aid_row_gap, aid_content_y) =
-                        (scaler.s(23.5), scaler.s(3.0), box_y + scaler.s(122.0));
+                        (scaler.s(21.0), scaler.s(2.5), box_y + scaler.s(118.0));
                     let mut y = aid_content_y;
                     let r0 = (content_x, y, content_w, aid_row_h);
                     y += aid_row_h + aid_row_gap;
@@ -2075,6 +2129,10 @@ impl CabinetScreen for ArcadeSettingsModal {
                     let r9 = (content_x, y, content_w, aid_row_h);
                     y += aid_row_h + aid_row_gap;
                     let r10 = (content_x, y, content_w, aid_row_h);
+                    y += aid_row_h + aid_row_gap;
+                    let r11 = (content_x, y, content_w, aid_row_h);
+                    y += aid_row_h + aid_row_gap;
+                    let r12 = (content_x, y, content_w, aid_row_h);
 
                     let prev_preset = self.visual_aids_preset_dropdown.selected_index;
                     if self.visual_aids_preset_dropdown.handle_input(
@@ -2209,6 +2267,29 @@ impl CabinetScreen for ArcadeSettingsModal {
                     ) {
                         self.sync_preset_from_helpers();
                         ctx.play_ui_select();
+                    }
+                    if self.racing_line_dropdown.handle_input(
+                        active_row == 11,
+                        ctx.gamepad.nav_left,
+                        ctx.gamepad.nav_right,
+                        ctx.gamepad.nav_up,
+                        ctx.gamepad.nav_down,
+                        ctx.gamepad.btn_confirm_pressed,
+                        ctx.gamepad.btn_cancel_pressed,
+                        r11,
+                        scaler,
+                    ) {
+                        self.sync_preset_from_helpers();
+                        ctx.play_ui_select();
+                    }
+                    if self.racing_line_opacity_slider.handle_input(
+                        active_row == 12,
+                        ctx.gamepad.nav_left,
+                        ctx.gamepad.nav_right,
+                        r12,
+                    ) {
+                        self.sync_preset_from_helpers();
+                        ctx.play_ui_move();
                     }
                 }
             }
@@ -3247,7 +3328,7 @@ impl CabinetScreen for ArcadeSettingsModal {
                 } else {
                     // VISUAL AIDS SUB-TAB (Tab 3, Sub-tab 1):
                     let (aid_row_h, aid_row_gap, aid_content_y) =
-                        (scaler.s(23.5), scaler.s(3.0), box_y + scaler.s(122.0));
+                        (scaler.s(21.0), scaler.s(2.5), box_y + scaler.s(118.0));
                     let mut y = aid_content_y;
                     let r0 = (content_x, y, content_w, aid_row_h);
                     draw_dropdown(
@@ -3431,6 +3512,40 @@ impl CabinetScreen for ArcadeSettingsModal {
                         false,
                         accent,
                     );
+                    y += aid_row_h + aid_row_gap;
+                    let r11 = (content_x, y, content_w, aid_row_h);
+                    draw_dropdown(
+                        scaler,
+                        fonts,
+                        content_x,
+                        y,
+                        content_w,
+                        aid_row_h,
+                        &self.racing_line_dropdown.label,
+                        &self.racing_line_dropdown.options,
+                        self.racing_line_dropdown.selected_index,
+                        false,
+                        self.racing_line_dropdown.popup_hovered_index,
+                        active_row == 11,
+                        false,
+                        accent,
+                    );
+                    y += aid_row_h + aid_row_gap;
+                    let _r12 = (content_x, y, content_w, aid_row_h);
+                    draw_slider(
+                        scaler,
+                        fonts,
+                        content_x,
+                        y,
+                        content_w,
+                        aid_row_h,
+                        &self.racing_line_opacity_slider.label,
+                        &self.racing_line_opacity_slider.formatted_value(),
+                        self.racing_line_opacity_slider.normalized(),
+                        active_row == 12,
+                        false,
+                        accent,
+                    );
 
                     // Popups
                     if self.visual_aids_preset_dropdown.is_open {
@@ -3509,6 +3624,19 @@ impl CabinetScreen for ArcadeSettingsModal {
                             &self.radar_ping_dropdown.options,
                             self.radar_ping_dropdown.selected_index,
                             self.radar_ping_dropdown.popup_hovered_index,
+                            accent,
+                        );
+                    } else if self.racing_line_dropdown.is_open {
+                        draw_dropdown_popup(
+                            scaler,
+                            fonts,
+                            r11.0,
+                            r11.1,
+                            r11.2,
+                            r11.3,
+                            &self.racing_line_dropdown.options,
+                            self.racing_line_dropdown.selected_index,
+                            self.racing_line_dropdown.popup_hovered_index,
                             accent,
                         );
                     }

@@ -1,7 +1,7 @@
 use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
-use super::surface::CompoundId;
+use super::surface::{CompoundId, SurfaceType};
 use super::tire::TireCompoundConfig;
 
 /// Configuration for an individual wheel corner or axle assembly.
@@ -643,6 +643,10 @@ pub fn default_damage_enabled() -> bool {
     true
 }
 
+pub fn default_wear_rate_scale() -> f32 {
+    1.0
+}
+
 /// Physical exterior chassis dimensions and anchor points (Spec 075).
 ///
 /// Decouples visual geometry and collision bounds from dynamic mass distribution.
@@ -1116,6 +1120,10 @@ pub struct CarConfig {
     /// Whether mechanical damage simulation (collisions, kerb strikes, jump landings) is enabled.
     #[serde(default = "default_damage_enabled")]
     pub damage_enabled: bool,
+    /// Multiplies the tread wear of all four tyres, on top of the compound's own wear rate (1.0 = normal,
+    /// 0.0 = tyres do not wear). An Academy session sets it per mission (Spec 064).
+    #[serde(default = "default_wear_rate_scale")]
+    pub wear_rate_scale: f32,
     /// Total vehicle mass in kilograms.
     pub mass: f32,
     /// Yaw moment of inertia around the vertical axis in kg*m^2.
@@ -1274,6 +1282,8 @@ struct CarConfigRaw {
     pub engine_placement: Option<EnginePlacement>,
     #[serde(default)]
     pub damage_enabled: Option<bool>,
+    #[serde(default)]
+    pub wear_rate_scale: Option<f32>,
 }
 
 impl From<CarConfigRaw> for CarConfig {
@@ -1316,6 +1326,7 @@ impl From<CarConfigRaw> for CarConfig {
         let mut cfg = Self {
             engine_placement,
             damage_enabled: raw.damage_enabled.unwrap_or(true),
+            wear_rate_scale: raw.wear_rate_scale.unwrap_or(1.0),
             mass: raw.mass,
             inertia: raw.inertia,
             wheelbase: raw.wheelbase,
@@ -1463,6 +1474,30 @@ impl CarConfig {
         }
     }
 
+    /// Swaps the slick fitted to the car and moves the tire model by the ratio between the new and
+    /// the current compound (spec 098).
+    ///
+    /// [`set_compound`](Self::set_compound) alone keeps the car's own tire model, so a compound only
+    /// changes surface affinity, thermal window and wear. This also gives the tire the compound's
+    /// peak slip angle, peak slip ratio and slide grip, so a Soft tire turns in sharply and slides
+    /// past its peak sooner, and a Hard tire is forgiving. The asphalt affinity already carries the
+    /// compound's dry grip, so only the part of `base_grip` that the affinity lacks goes into the
+    /// tire (Soft 1.20 and Medium 1.00 are fully in the affinity; Hard 0.95 is not). A ratio of 1
+    /// leaves the tire untouched, so fitting the compound the car already wears changes nothing.
+    pub fn set_slick_compound(&mut self, compound_id: CompoundId) {
+        // Table values of both compounds. The wheel's own `base_grip` mirrors the tire after
+        // `finalize`, so the old compound is read from its id.
+        let from = TireCompoundConfig::from_id(self.wheels[0].compound.id);
+        let to = TireCompoundConfig::from_id(compound_id);
+        let dry_grip = |c: &TireCompoundConfig| c.base_grip / c.surface_affinity.get(SurfaceType::Asphalt).max(1e-3);
+        self.tire.grip *= dry_grip(&to) / dry_grip(&from);
+        self.tire.peak_slip_angle_deg *= to.peak_slip_angle_deg / from.peak_slip_angle_deg;
+        self.tire.peak_slip_ratio *= to.peak_slip_ratio / from.peak_slip_ratio;
+        self.tire.slide_grip = (self.tire.slide_grip * to.slide_grip / from.slide_grip).min(1.0);
+        self.set_compound(compound_id);
+        self.finalize();
+    }
+
     /// Builder method to equip all four wheels with the specified tire compound.
     #[must_use]
     pub fn with_compound(mut self, compound_id: CompoundId) -> Self {
@@ -1529,6 +1564,7 @@ impl CarConfig {
             suspension: SuspensionConfig::for_archetype(SuspensionArchetype::DoubleWishbone),
             engine_placement: EnginePlacement::FrontEngine,
             damage_enabled: true,
+            wear_rate_scale: 1.0,
         }
         .finalized()
     }
@@ -1684,6 +1720,7 @@ impl CarConfig {
             suspension: SuspensionConfig::for_archetype(SuspensionArchetype::RigidKart),
             engine_placement: EnginePlacement::MidEngine,
             damage_enabled: true,
+            wear_rate_scale: 1.0,
         }
         .finalized()
     }
@@ -1856,6 +1893,7 @@ impl CarConfig {
             suspension: SuspensionConfig::for_archetype(SuspensionArchetype::SolidLiveAxle),
             engine_placement: EnginePlacement::FrontEngine,
             damage_enabled: true,
+            wear_rate_scale: 1.0,
         }
         .finalized()
     }
@@ -1967,6 +2005,7 @@ impl CarConfig {
             suspension: SuspensionConfig::for_archetype(SuspensionArchetype::LongTravelOffRoad),
             engine_placement: EnginePlacement::RearEngine,
             damage_enabled: true,
+            wear_rate_scale: 1.0,
         }
         .finalized()
     }
@@ -2636,5 +2675,45 @@ mod tests {
         assert_eq!(assembly.tire_width, w);
         assert_eq!(assembly.brake_bias_factor, 0.30);
         assert_eq!(assembly.drive_torque_factor, 0.50);
+    }
+
+    #[test]
+    fn test_set_slick_compound_gives_the_tire_the_compound_character() {
+        let medium = CarConfig::sports_car().with_compound(CompoundId::MediumSlick);
+
+        // Fitting the compound the car already wears changes nothing.
+        let mut same = medium;
+        same.set_slick_compound(CompoundId::MediumSlick);
+        assert_eq!(same.tire, medium.tire);
+        assert_eq!(same.wheels, medium.wheels);
+
+        let mut soft = medium;
+        soft.set_slick_compound(CompoundId::SoftSlick);
+        let mut hard = medium;
+        hard.set_slick_compound(CompoundId::HardSlick);
+
+        for w in &soft.wheels {
+            assert_eq!(w.compound.id, CompoundId::SoftSlick);
+        }
+        for w in &hard.wheels {
+            assert_eq!(w.compound.id, CompoundId::HardSlick);
+        }
+        // Peak slip angle: Soft turns in sharply, Hard is forgiving (8.0 / 10.0 / 11.5 degrees).
+        assert!(soft.tire.peak_slip_angle_deg < medium.tire.peak_slip_angle_deg);
+        assert!(hard.tire.peak_slip_angle_deg > medium.tire.peak_slip_angle_deg);
+        assert!((soft.tire.peak_slip_angle_deg / medium.tire.peak_slip_angle_deg - 0.8).abs() < 1e-4);
+        assert!((hard.tire.peak_slip_angle_deg / medium.tire.peak_slip_angle_deg - 1.15).abs() < 1e-4);
+        // Asphalt grip is already in the Soft affinity; only Hard loses grip in the tire model.
+        assert_eq!(soft.tire.grip, medium.tire.grip);
+        assert!((hard.tire.grip / medium.tire.grip - 0.95).abs() < 1e-4);
+        // The change reaches both axles through `finalize`.
+        assert!(soft.wheels[2].tire_model.peak_slip_angle_deg < medium.wheels[2].tire_model.peak_slip_angle_deg);
+        assert_eq!(hard.wheels[0].compound.base_grip, hard.tire.grip);
+
+        // Swapping back restores the original tire.
+        let mut back = hard;
+        back.set_slick_compound(CompoundId::MediumSlick);
+        assert!((back.tire.grip - medium.tire.grip).abs() < 1e-5);
+        assert!((back.tire.peak_slip_angle_deg - medium.tire.peak_slip_angle_deg).abs() < 1e-4);
     }
 }

@@ -3,7 +3,9 @@ type: Feature Spec
 template: feature
 title: "Chassis-Conforming Dynamic Vehicle Ground Shadows"
 description: "Replaces generic rounded rectangular drop shadows with dynamic ground shadows taking the exact contour of the vehicle chassis, utilizing sprite alpha mask projections for texture-based vehicles and multi-polygon body silhouettes for procedural archetypes."
-status: draft
+status: implemented
+receipt: "docs/receipts/spec-096-receipt.md"
+verified: { by: "human:mario", at: "2026-10-10T22:52:15Z", hash: "7f81e01701e0" }
 created: 2026-10-06
 generated: { by: agent/antigravity, at: 2026-10-06T17:14:19Z }
 depends_on:
@@ -139,44 +141,44 @@ Ground shadows react dynamically to suspension compression and airborne ballisti
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Vehicle shadows disabled by default on clean installation**
-  - [ ] **Given** a default game configuration without user overrides
-  - [ ] **When** the game starts or `DisplayConfig::default()` is evaluated
-  - [ ] **Then** `vehicle_shadows` must be `false`
-  - [ ] **And** no ground shadows are drawn underneath vehicles during a race
+  - [x] **Given** a default game configuration without user overrides
+  - [x] **When** the game starts or `DisplayConfig::default()` is evaluated
+  - [x] **Then** `vehicle_shadows` must be `false`
+  - [x] **And** no ground shadows are drawn underneath vehicles during a race
 
 - **Scenario: Toggling vehicle shadows in display settings**
-  - [ ] **Given** the player is in the Options menu under the DISPLAY tab
-  - [ ] **When** the player changes `VEHICLE SHADOWS` from `Disabled` to `Enabled` and saves
-  - [ ] **Then** `vehicle_shadows` must be set to `true`
-  - [ ] **And** dynamic chassis ground shadows immediately appear under all race vehicles
+  - [x] **Given** the player is in the Options menu under the DISPLAY tab
+  - [x] **When** the player changes `VEHICLE SHADOWS` from `Disabled` to `Enabled` and saves
+  - [x] **Then** `vehicle_shadows` must be set to `true`
+  - [x] **And** dynamic chassis ground shadows immediately appear under all race vehicles
 
 - **Scenario: Sprite-based car shadow mirrors top-down chassis silhouette**
-  - [ ] **Given** a vehicle rendered with a top-down sprite texture (e.g. GT3 or Rally car)
-  - [ ] **And** vehicle shadows are enabled in game settings
-  - [ ] **When** the vehicle ground shadow is rendered
-  - [ ] **Then** the shadow boundary must match the alpha contour of the car bodywork including wings and splitters
-  - [ ] **And** the shadow must not project as a generic rectangular box
+  - [x] **Given** a vehicle rendered with a top-down sprite texture (e.g. GT3 or Rally car)
+  - [x] **And** vehicle shadows are enabled in game settings
+  - [x] **When** the vehicle ground shadow is rendered
+  - [x] **Then** the shadow boundary must match the alpha contour of the car bodywork including wings and splitters
+  - [x] **And** the shadow must not project as a generic rectangular box
 
 - **Scenario: Procedural archetype shadow conforms to archetype geometry**
-  - [ ] **Given** a vehicle rendered with procedural archetype geometry (e.g. OpenWheel or Kart)
-  - [ ] **And** vehicle shadows are enabled in game settings
-  - [ ] **When** the chassis ground shadow is rendered
-  - [ ] **Then** the open-wheel shadow must follow the tapered monocoque and wing spans without filling the empty space around exposed wheels
-  - [ ] **And** the kart shadow must follow the compact bumper and side pod profile
+  - [x] **Given** a vehicle rendered with procedural archetype geometry (e.g. OpenWheel or Kart)
+  - [x] **And** vehicle shadows are enabled in game settings
+  - [x] **When** the chassis ground shadow is rendered
+  - [x] **Then** the open-wheel shadow must follow the tapered monocoque and wing spans without filling the empty space around exposed wheels
+  - [x] **And** the kart shadow must follow the compact bumper and side pod profile
 
 - **Scenario: Jump elevation lift scales and softens chassis-conforming shadow**
-  - [ ] **Given** a vehicle traversing a jump ramp or becoming airborne ($z_{\text{lift}} > 0$)
-  - [ ] **And** vehicle shadows are enabled
-  - [ ] **When** vehicle elevation increases up to $2.5\,\text{m}$
-  - [ ] **Then** the chassis-conforming shadow must scale outward by up to $1.20\times$
-  - [ ] **And** the shadow alpha opacity must smoothly fade down to a minimum floor of $0.25$
-  - [ ] **And** the shadow projection offset must separate from the vehicle along $(+X, +Y)$
+  - [x] **Given** a vehicle traversing a jump ramp or becoming airborne ($z_{\text{lift}} > 0$)
+  - [x] **And** vehicle shadows are enabled
+  - [x] **When** vehicle elevation increases up to $2.5\,\text{m}$
+  - [x] **Then** the chassis-conforming shadow must scale outward by up to $1.20\times$
+  - [x] **And** the shadow alpha opacity must smoothly fade down to a minimum floor of $0.25$
+  - [x] **And** the shadow projection offset must separate from the vehicle along $(+X, +Y)$
 
 - **Scenario: Restoring settings defaults disables vehicle shadows**
-  - [ ] **Given** vehicle shadows are currently enabled by the player
-  - [ ] **When** the player clicks "Restore Defaults" in Settings
-  - [ ] **Then** `VEHICLE SHADOWS` must revert to `Disabled`
-  - [ ] **And** the dropdown selected index must be 1
+  - [x] **Given** vehicle shadows are currently enabled by the player
+  - [x] **When** the player clicks "Restore Defaults" in Settings
+  - [x] **Then** `VEHICLE SHADOWS` must revert to `Disabled`
+  - [x] **And** the dropdown selected index must be 1
 
 ---
 
@@ -189,6 +191,7 @@ Ground shadows react dynamically to suspension compression and airborne ballisti
 | [`crates/cabinet/src/state/settings.rs`](../crates/cabinet/src/state/settings.rs) | Configures `ArcadeSettingsModal` `VEHICLE SHADOWS` dropdown widget with default index 1 (`Disabled`). |
 | [`config.toml`](../config.toml) | Declares default game display configuration with `vehicle_shadows = false`. |
 | [`crates/tdrace-app/tests/render_tests.rs`](../crates/tdrace-app/tests/render_tests.rs) | Validates silhouette shadow geometry, Ackermann wheel synchronization, and elevation scaling. |
+| [`crates/tdrace-app/examples/vehicle_shadow_preview.rs`](../crates/tdrace-app/examples/vehicle_shadow_preview.rs) | Native visual smoke test: saves screenshots of sprite and archetype shadows on the ground and at 2.5 m lift. |
 | [`crates/tdrace-app/tests/config_tests.rs`](../crates/tdrace-app/tests/config_tests.rs) | Verifies TOML roundtrip and default deserialization of `vehicle_shadows`. |
 | [`crates/cabinet/tests/cabinet_integration_tests.rs`](../crates/cabinet/tests/cabinet_integration_tests.rs) | Verifies UI dropdown state, defaults restoration, and toggle interaction in the Display tab. |
 | [`specs/constitution/ROADMAP.md`](constitution/ROADMAP.md) | Links Spec 096 under Phase 6: Next-Gen Vehicle Dynamics & Pre-Baked Visual Kinematics. |
