@@ -77,42 +77,42 @@ No new screen. The Academy screen (`ui/academy_ui.rs`) and the in-race HUD read 
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Every Tier 1 Bronze is reachable cleanly**
-  - [ ] **Given** each Tier 1 lesson with its circuit, car and rules
-  - [ ] **When** the headless reference driver runs it
-  - [ ] **Then** the reference finishes, the attempt is clean, and it earns Gold
-  - [ ] **And** the Bronze time is about 25% over the reference time
+  - [x] **Given** each Tier 1 lesson with its circuit, car and rules
+  - [x] **When** the headless reference driver runs it
+  - [x] **Then** the reference finishes, the attempt is clean, and it earns Gold
+  - [x] **And** the Bronze time is about 25% over the reference time
 
 - **Scenario: A player can graduate**
-  - [ ] **Given** a rookie profile and the four Tier 1 lessons run in order at the reference pace
-  - [ ] **When** Lesson 4 ends at Bronze or better
-  - [ ] **Then** the profile holds Class D and Tier 2 is unlocked
+  - [x] **Given** a rookie profile and the four Tier 1 lessons run in order at the reference pace
+  - [x] **When** Lesson 4 ends at Bronze or better
+  - [x] **Then** the profile holds Class D and Tier 2 is unlocked
 
 - **Scenario: Bounties and unlocks do not change**
-  - [ ] **Given** the Tier 1 curriculum after this spec
-  - [ ] **When** the player earns all Bronze, all Silver, or all Gold
-  - [ ] **Then** the purse is 7,000, 10,750 or 14,500 Cr
-  - [ ] **And** each lesson still needs Bronze on the one before it
+  - [x] **Given** the Tier 1 curriculum after this spec
+  - [x] **When** the player earns all Bronze, all Silver, or all Gold
+  - [x] **Then** the purse is 7,000, 10,750 or 14,500 Cr
+  - [x] **And** each lesson still needs Bronze on the one before it
 
 - **Scenario: Old saves keep their Tier 1 progress**
-  - [ ] **Given** a profile saved before this spec with a Tier 1 medal and its claimed bounties
-  - [ ] **When** the profile loads
-  - [ ] **Then** the medal and the claimed flags are the same, and no bounty is paid again
+  - [x] **Given** a profile saved before this spec with a Tier 1 medal and its claimed bounties
+  - [x] **When** the profile loads
+  - [x] **Then** the medal and the claimed flags are the same, and no bounty is paid again
 
 - **Scenario: The Academy screen shows the new targets**
-  - [ ] **Given** the Academy screen on the Tier 1 tab
-  - [ ] **When** the player looks at Lesson 1
-  - [ ] **Then** the card shows Gold 61.2 s, Silver 66.5 s and Bronze 74.2 s (or the final calibrated times)
+  - [x] **Given** the Academy screen on the Tier 1 tab
+  - [x] **When** the player looks at Lesson 1
+  - [x] **Then** the card shows Gold 61.2 s, Silver 66.5 s and Bronze 74.2 s (or the final calibrated times)
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Modified Files
-- `[ ]` `crates/arcade-race-core/src/profile.rs` -> the Tier 1 medal times.
-- `[ ]` `crates/tdrace-app/tests/academy_calibration_tests.rs` -> the reference run covers Tier 1.
-- `[ ]` `crates/arcade-race-core/tests/profile_tests.rs`, `crates/tdrace-app/tests/career_onboarding_tests.rs`, `crates/tdrace-app/tests/codex_export_tests.rs` -> the expected Tier 1 times, and the graduation scenario.
-- `[ ]` `portals/shared/data/codex/racing.json` -> re-exported Codex data.
-- `[ ]` `specs/constitution/ROADMAP.md` -> roadmap entry.
+- `[x]` `crates/arcade-race-core/src/profile.rs` -> the Tier 1 medal times.
+- `[x]` `crates/tdrace-app/tests/academy_calibration_tests.rs` -> the reference run covers Tier 1.
+- `[x]` `crates/arcade-race-core/tests/profile_tests.rs`, `crates/tdrace-app/tests/career_onboarding_tests.rs`, `crates/tdrace-app/tests/codex_export_tests.rs` -> the expected Tier 1 times, and the graduation scenario.
+- `[x]` `portals/shared/data/codex/racing.json` -> re-exported Codex data.
+- `[x]` `specs/constitution/ROADMAP.md` -> roadmap entry.
 
 ### Verification Assertions
 - Bug `tdrace-tb8vi` is closed by this spec.
