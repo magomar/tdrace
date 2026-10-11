@@ -5,6 +5,7 @@ use macroquad::shapes::{
 };
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::geometry::SurfaceShape;
+use tdrace_core::track::spline::SplineSample;
 use tdrace_core::track::Track;
 
 use super::font::Fonts;
@@ -33,7 +34,37 @@ pub fn surface_preview_color(surface: SurfaceType) -> Color {
     }
 }
 
-/// Computes the 2D bounding box of a track spline.
+/// A road off the default layout that the previews draw next to the main loop.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BranchRoad {
+    /// A segment only a non-default layout drives (the joker detour).
+    Joker,
+    /// The launch chute segment the grid starts on.
+    LaunchChute,
+}
+
+/// The joker detours and the launch chute of a track network, with their samples.
+pub fn branch_roads(track: &Track) -> Vec<(BranchRoad, &[SplineSample])> {
+    let Some(net) = &track.network else {
+        return Vec::new();
+    };
+    let main = net.get_layout(&net.default_layout_id).map(|l| l.segment_sequence.as_slice()).unwrap_or(&[]);
+    let chute = net.launch_chute.as_ref().map(|c| c.segment_id);
+    net.segments
+        .iter()
+        .filter_map(|seg| {
+            if Some(seg.id) == chute {
+                Some((BranchRoad::LaunchChute, seg.samples.as_slice()))
+            } else if !main.contains(&seg.id) && net.layouts.iter().any(|l| l.segment_sequence.contains(&seg.id)) {
+                Some((BranchRoad::Joker, seg.samples.as_slice()))
+            } else {
+                None
+            }
+        })
+        .collect()
+}
+
+/// Computes the 2D bounding box of a track spline, its joker detours and its launch chute.
 pub fn compute_track_bounds(track: &Track) -> (Vec2, Vec2) {
     if track.spline.samples.is_empty() {
         if track.spline.waypoints.is_empty() {
@@ -50,7 +81,8 @@ pub fn compute_track_bounds(track: &Track) -> (Vec2, Vec2) {
 
     let mut min = Vec2::splat(f32::INFINITY);
     let mut max = Vec2::splat(f32::NEG_INFINITY);
-    for s in &track.spline.samples {
+    let branches = branch_roads(track);
+    for s in track.spline.samples.iter().chain(branches.iter().flat_map(|(_, samples)| samples.iter())) {
         min = min.min(s.point);
         max = max.max(s.point);
     }
@@ -112,6 +144,15 @@ pub fn render_track_thumbnail(
     if samples.len() >= 2 {
         let n = samples.len();
         let seg_count = if track.spline.closed { n } else { n - 1 };
+
+        // Pass 0: Joker detours and launch chute, under the main loop
+        for (_, branch) in branch_roads(track) {
+            for pair in branch.windows(2) {
+                let p0 = to_screen(pair[0].point);
+                let p1 = to_screen(pair[1].point);
+                draw_line(p0.x, p0.y, p1.x, p1.y, scaler.s(1.2), surface_preview_color(pair[0].surface));
+            }
+        }
 
         // Pass 1: Outer subtle glow
         for i in 0..seg_count {
@@ -300,6 +341,18 @@ pub fn render_track_detailed_preview(
     if samples.len() >= 2 {
         let n = samples.len();
         let seg_count = if track.spline.closed { n } else { n - 1 };
+        let branches = branch_roads(track);
+
+        // Pass 0: Joker detours and launch chute, under the main loop so junctions stay clean
+        for (_, branch) in &branches {
+            for pair in branch.windows(2) {
+                let p0 = to_screen(pair[0].point);
+                let p1 = to_screen(pair[1].point);
+                let road_thickness = (pair[0].width * scale * 0.9).clamp(scaler.s(3.5), scaler.s(9.0));
+                draw_line(p0.x, p0.y, p1.x, p1.y, road_thickness + scaler.s(1.5), Color::new(0.08, 0.12, 0.18, 0.90));
+                draw_line(p0.x, p0.y, p1.x, p1.y, road_thickness, surface_preview_color(pair[0].surface));
+            }
+        }
 
         // Pass 1: Curbs (rumble strips on apexes)
         for i in 0..seg_count {
@@ -380,6 +433,20 @@ pub fn render_track_detailed_preview(
         // Start point badge circle
         draw_circle(f_mid.x, f_mid.y, scaler.s(3.5), Palette::NEON_GREEN);
         draw_circle_lines(f_mid.x, f_mid.y, scaler.s(3.5), 1.2, Palette::BLACK);
+
+        // Pass 5: "J" badge at the middle of each joker detour
+        for (kind, branch) in &branches {
+            if *kind != BranchRoad::Joker || branch.is_empty() {
+                continue;
+            }
+            let mid = to_screen(branch[branch.len() / 2].point);
+            let r = scaler.s(6.0);
+            draw_circle(mid.x, mid.y, r, Palette::NEON_GOLD);
+            draw_circle_lines(mid.x, mid.y, r, 1.2, Palette::BLACK);
+            let fs = scaler.font_s(9.0);
+            let tw = fonts.measure_ui_bold("J", fs).width;
+            fonts.draw_ui_bold("J", mid.x - tw * 0.5, mid.y + fs * 0.35, fs, Palette::BLACK);
+        }
     }
     cabinet::ui::scaler::end_clip_rect();
 

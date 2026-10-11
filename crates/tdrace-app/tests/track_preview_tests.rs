@@ -1,5 +1,5 @@
 use tdrace_app::ui::menu::{resolve_track_for_menu, TrackChoice};
-use tdrace_app::ui::track_preview::{compute_track_bounds, surface_preview_color};
+use tdrace_app::ui::track_preview::{branch_roads, compute_track_bounds, surface_preview_color, BranchRoad};
 use tdrace_core::physics::surface::SurfaceType;
 
 #[test]
@@ -403,3 +403,21 @@ fn test_thumbnail_refresh_when_overwriting_preset_in_dev_mode() {
 
 
 
+
+#[test]
+fn test_preview_branch_roads_are_the_joker_and_the_chute() {
+    let track = tdrace_core::catalog::official_track("classic", "rx_canyon_flyer");
+    let kinds: Vec<BranchRoad> = branch_roads(&track).iter().map(|(k, _)| *k).collect();
+    assert_eq!(kinds, vec![BranchRoad::Joker, BranchRoad::LaunchChute]);
+
+    // The bounds hold every joker and chute sample, so the preview does not clip them.
+    let (min, max) = compute_track_bounds(&track);
+    for (_, samples) in branch_roads(&track) {
+        for s in samples {
+            assert!(s.point.cmpge(min).all() && s.point.cmple(max).all(), "{:?} outside the preview bounds", s.point);
+        }
+    }
+
+    let monza = tdrace_core::catalog::official_track("gt", "monza");
+    assert!(branch_roads(&monza).is_empty(), "a circuit without a network has no branch roads");
+}
