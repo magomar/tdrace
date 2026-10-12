@@ -1210,6 +1210,20 @@ impl RaceSession {
                 }
                 if let Ok(all_prog) = db.get_all_module_progress(pid) {
                     self.profile_module_progress = all_prog;
+                    if let Some(p) = self.profile_module_progress.get("rally").cloned() {
+                        self.profile_module_progress.entry("rallycross".to_string()).or_insert_with(|| {
+                            let mut cp = p;
+                            cp.module_id = "rallycross".to_string();
+                            cp
+                        });
+                    }
+                    if let Some(p) = self.profile_module_progress.get("rallycross").cloned() {
+                        self.profile_module_progress.entry("rally".to_string()).or_insert_with(|| {
+                            let mut cp = p;
+                            cp.module_id = "rally".to_string();
+                            cp
+                        });
+                    }
                 }
                 if let Ok(awards) = db.get_championship_awards(pid) {
                     self.profile_awards = awards;
@@ -1730,7 +1744,9 @@ impl RaceSession {
         if let Some(existing) = self.profile_module_progress.get(self.active_module_id)
             .or_else(|| alias.and_then(|a| self.profile_module_progress.get(a)))
         {
-            self.active_career_progress = existing.clone();
+            let mut prog = existing.clone();
+            prog.module_id = self.active_module_id.to_string();
+            self.active_career_progress = prog;
             return;
         }
         if let Some(db) = &self.hof_db {

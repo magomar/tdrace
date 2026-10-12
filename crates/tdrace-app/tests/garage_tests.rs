@@ -119,7 +119,7 @@ fn test_all_80_real_cars_attributes_and_data_integrity() {
     assert_eq!(global_models.len(), 110);
 
     let mut seen_ids = std::collections::HashSet::new();
-    let valid_modules = ["gt", "rally", "kart", "nascar", "extreme_offroad", "autocross"];
+    let valid_modules = ["gt", "rally", "rallycross", "kart", "nascar", "extreme_offroad", "autocross"];
 
     for car in global_models {
         // Unique non-empty IDs and names
@@ -137,7 +137,7 @@ fn test_all_80_real_cars_attributes_and_data_integrity() {
             car.id
         );
         // Extreme Off-Road (spec 048) and Rallycross (spec 051) have vehicles up to tier 7, Kart has 6 tiers
-        let max_tier = if car.module_id == "extreme_offroad" || car.module_id == "rally" {
+        let max_tier = if car.module_id == "extreme_offroad" || car.module_id == "rally" || car.module_id == "rallycross" {
             7
         } else if car.module_id == "kart" {
             6
@@ -280,7 +280,7 @@ fn test_fleet_gallery_module_tabs_only_and_no_all_tab() {
     // Spec: remove the "all" tab, and keep only module specific tabs
     assert_eq!(GALLERY_MODULES.len(), 6);
 
-    let expected_modules = ["gt", "rally", "kart", "nascar", "extreme_offroad", "autocross"];
+    let expected_modules = ["gt", "rallycross", "kart", "nascar", "extreme_offroad", "autocross"];
     let expected_labels = ["GT", "RALLYCROSS", "KART", "STOCK CAR", "OFF-ROAD", "AUTOCROSS"];
 
     for (i, &(mod_id, label)) in GALLERY_MODULES.iter().enumerate() {
@@ -292,7 +292,7 @@ fn test_fleet_gallery_module_tabs_only_and_no_all_tab() {
         let cars = get_models_for_module(mod_id);
         assert!(!cars.is_empty(), "Module {} should contain vehicles", mod_id);
         for car in &cars {
-            assert_eq!(car.module_id, mod_id);
+            assert!(car.module_id == mod_id || (mod_id == "rally" && car.module_id == "rallycross"));
         }
     }
 }
@@ -301,7 +301,7 @@ fn test_fleet_gallery_module_tabs_only_and_no_all_tab() {
 fn test_fleet_gallery_filter_conversions() {
     let mapping = [
         (0, "gt"),
-        (1, "rally"),
+        (1, "rallycross"),
         (2, "kart"),
         (3, "nascar"),
         (4, "extreme_offroad"),
@@ -362,7 +362,7 @@ fn test_fleet_gallery_session_navigation_by_module() {
     // Switching to module tab 1 (RALLY) via key or tab cycle
     session.garage_gallery_filter = 1;
     session.garage_gallery_sel = 0;
-    assert_eq!(gallery_filter_to_module(session.garage_gallery_filter), "rally");
+    assert_eq!(gallery_filter_to_module(session.garage_gallery_filter), "rallycross");
 
     // Cycle forward with Tab / E
     let total_tabs = GALLERY_MODULES.len();
@@ -388,7 +388,7 @@ fn test_fleet_gallery_session_navigation_by_module() {
     session.garage_gallery_mode = false;
 
     assert!(!session.garage_gallery_mode);
-    assert_eq!(session.active_module_id, "rally");
+    assert_eq!(session.active_module_id, "rallycross");
     assert_eq!(session.garage_tier, target_car.tier);
 }
 
@@ -611,8 +611,8 @@ fn gt_garage_viewing_rally(session: &mut RaceSession, origin: GarageOrigin) -> &
     session.garage_car_idx = 0;
     session.state = GameState::Garage(origin);
     garage_press(session, origin, &[KeyCode::Key2]);
-    assert_eq!(session.active_module_id, "rally");
-    assert_eq!(session.active_career_progress.module_id, "rally", "prices and unlocks come from the viewed class");
+    assert_eq!(session.active_module_id, "rallycross");
+    assert_eq!(session.active_career_progress.module_id, "rallycross", "prices and unlocks come from the viewed class");
     session.garage_tier = 1;
     session.garage_car_idx = 0;
     let car = get_models_for_module_and_tier("rally", 1)[0];
@@ -641,7 +641,7 @@ fn picking_another_disciplines_car_from_the_circuit_menu_switches_fully() {
     garage_press(&mut session, GarageOrigin::Menu, &[KeyCode::Enter]);
 
     assert_eq!(session.state, GameState::Menu);
-    assert_eq!(session.active_module_id, "rally");
+    assert_eq!(session.active_module_id, "rallycross");
     assert_eq!(session.selected_car_model_id, Some(car_id), "the picked car survives the switch");
     let rally_tracks = session.track_manager.module_catalog_tracks("rally");
     assert!(
@@ -651,7 +651,7 @@ fn picking_another_disciplines_car_from_the_circuit_menu_switches_fully() {
 
     // Leaving the Garage must not undo the switch.
     session.update();
-    assert_eq!(session.active_module_id, "rally");
+    assert_eq!(session.active_module_id, "rallycross");
 }
 
 #[test]

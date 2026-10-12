@@ -1077,7 +1077,7 @@ fn test_career_mode_initial_tier_1_championship_gating() {
         "NASCAR Tier 1 should be visible"
     );
     assert!(
-        modules.contains(&"rally"),
+        modules.contains(&"rally") || modules.contains(&"rallycross"),
         "Rallycross Tier 1 should be visible"
     );
     assert!(

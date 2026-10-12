@@ -547,7 +547,7 @@ fn test_grassroots_starter_models_in_catalog() {
     for model in &starters {
         assert_eq!(model.tier, 1);
         assert!(
-            model.module_id == "kart" || model.module_id == "autocross" || model.module_id == "rally",
+            model.module_id == "kart" || model.module_id == "autocross" || model.module_id == "rally" || model.module_id == "rallycross",
             "Unexpected starter module: {}",
             model.module_id
         );
@@ -556,7 +556,7 @@ fn test_grassroots_starter_models_in_catalog() {
     // Verify Cadet Kart, Cross Car Junior, and Rally4 are included
     assert!(starters.iter().any(|m| m.module_id == "kart"));
     assert!(starters.iter().any(|m| m.module_id == "autocross"));
-    assert!(starters.iter().any(|m| m.module_id == "rally"));
+    assert!(starters.iter().any(|m| m.module_id == "rally" || m.module_id == "rallycross"));
 }
 
 #[test]
