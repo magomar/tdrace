@@ -211,6 +211,55 @@ fn test_classic_drift_chassis_calibration_is_applied() {
     assert!((rally.drive_bias - 0.30).abs() < 1e-6);
     assert!((rally.wheels[0].drive_torque_factor - 0.15).abs() < 1e-6);
     assert!((rally.wheels[2].drive_torque_factor - 0.35).abs() < 1e-6);
+    assert!((rally.tire.grip - 1.18).abs() < 1e-6);
+    assert!((rally.max_engine_force - 10500.0).abs() < 1e-6);
+    assert!((rally.brake_bias - 0.54).abs() < 1e-6);
+    assert!((rally.roll_balance - 0.46).abs() < 1e-6);
+    assert!(rally.assists.tcs_drift_bypass, "Rally car must have TCS drift bypass enabled for counter-steer slides");
+}
+
+#[test]
+fn test_classic_rally_package_dirt_and_asphalt_performance() {
+    use tdrace_app::module::ClassicGameModule;
+    use tdrace_core::physics::car::{Car, CarControls};
+    use tdrace_core::physics::surface::SurfaceType;
+    use tdrace_core::Vec2;
+
+    let dt = 1.0 / 60.0;
+    let cfg = ClassicGameModule::car_classic_rally();
+
+    // 1. Acceleration: 0-100 km/h in under 3.5 seconds on asphalt
+    let mut accel_car = Car::new(cfg);
+    let mut t_100 = None;
+    for step in 0..300 {
+        accel_car.step(&CarControls::new(1.0, 0.0, 0.0, false), SurfaceType::Asphalt, dt);
+        if accel_car.state.speed >= 100.0 / 3.6 && t_100.is_none() {
+            t_100 = Some(step as f32 * dt);
+            break;
+        }
+    }
+    let t_100 = t_100.expect("Rally car should reach 100 km/h within 5 seconds");
+    assert!(t_100 <= 3.7, "0-100 km/h took {t_100:.2}s, expected <= 3.7s");
+
+    // 2. Cornering rotation on dirt: nose rotates and slides progressively under throttle
+    let mut corner_car = Car::new(cfg).with_pose(Vec2::ZERO, 0.0);
+    corner_car.set_velocity(Vec2::new(20.0, 0.0)); // 72 km/h
+    for _ in 0..120 {
+        corner_car.step(&CarControls::new(0.60, 0.80, 0.0, false), SurfaceType::Dirt, dt);
+    }
+    let yaw_rate = corner_car.state.angular_velocity.abs();
+    let slip_deg = corner_car.state.sideslip_angle.abs().to_degrees();
+    assert!(yaw_rate >= 0.40, "Dirt corner yaw rate was only {yaw_rate:.2} rad/s, expected >= 0.40");
+    assert!(slip_deg >= 10.0, "Dirt corner body slip was only {slip_deg:.1} deg, expected >= 10.0 deg");
+
+    // 3. Trail-braking on dirt into hairpin: brakes slow car without locking front into a plow
+    let mut brake_car = Car::new(cfg).with_pose(Vec2::ZERO, 0.0);
+    brake_car.set_velocity(Vec2::new(22.0, 0.0)); // ~80 km/h
+    for _ in 0..90 {
+        brake_car.step(&CarControls::new(0.0, 0.70, 0.70, false), SurfaceType::Dirt, dt);
+    }
+    assert!(brake_car.state.speed < 13.0, "Brakes should effectively decelerate car on dirt (speed: {:.2} m/s)", brake_car.state.speed);
+    assert!(brake_car.state.angular_velocity.abs() >= 0.30, "Trail-braking should rotate nose into hairpin");
 }
 
 #[test]
