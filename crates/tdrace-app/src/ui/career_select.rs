@@ -140,7 +140,7 @@ pub fn module_meta_for(module_id: &str) -> (&'static str, Color) {
     match module_id {
         "gt" | "gt_challenge" => ("GRAND TOURING CHALLENGE", Palette::RED),
         "nascar" => ("STOCK CAR CUP SERIES", Palette::YELLOW),
-        "rally" => ("RALLYCROSS WORLD CUP", Palette::NEON_GOLD),
+        "rallycross" | "rally" | "rx" => ("RALLYCROSS WORLD CUP", Palette::NEON_GOLD),
         "kart" => ("KARTING WORLD CUP", Palette::NEON_GREEN),
         "extreme_offroad" | "offroad" => ("EXTREME OFF-ROAD", Color::new(1.0, 0.40, 0.05, 1.0)),
         "classic" => ("CLASSIC MOTORSPORT", Palette::NEON_CYAN),
@@ -162,6 +162,7 @@ pub fn tier_name(tier: u32) -> String {
 /// Short discipline label that fits row badges.
 pub fn module_badge_label(module_id: &str) -> String {
     match module_id {
+        "rallycross" | "rally" | "rx" => "RALLYCROSS".to_string(),
         "extreme_offroad" | "offroad" => "OFF-ROAD".to_string(),
         "autocross" => "AUTOCROSS".to_string(),
         other => other.to_uppercase(),
@@ -187,7 +188,14 @@ pub fn build_tiered_career_championship_cards(
         let dummy_prog;
         let mod_progress = if let Some(p) = module_progress_map.get(mod_id) {
             p
-        } else if active_progress.module_id == *mod_id {
+        } else if mod_id == "rallycross" && module_progress_map.contains_key("rally") {
+            module_progress_map.get("rally").unwrap()
+        } else if mod_id == "rally" && module_progress_map.contains_key("rallycross") {
+            module_progress_map.get("rallycross").unwrap()
+        } else if active_progress.module_id == *mod_id
+            || (active_progress.module_id == "rallycross" && *mod_id == "rally")
+            || (active_progress.module_id == "rally" && *mod_id == "rallycross")
+        {
             active_progress
         } else {
             dummy_prog = ModuleCareerProgress::default_for_module(1, mod_id);
@@ -215,7 +223,9 @@ pub fn build_tiered_career_championship_cards(
                 && (s.name.eq_ignore_ascii_case(&def.series.name)
                     || s.name.eq_ignore_ascii_case(&def.series.id)
                     || (s.tier == def.series.tier
-                        && s.name.to_lowercase().contains(&def.series.module_id))
+                        && (s.name.to_lowercase().contains(&def.series.module_id)
+                            || (def.series.module_id == "rallycross" && s.name.to_lowercase().contains("rally"))
+                            || (def.series.module_id == "rally" && s.name.to_lowercase().contains("rallycross"))))
                     || (s.tier == def.series.tier
                         && def
                             .series
@@ -404,7 +414,7 @@ const MODALITY_CATALOG: &[ModalityMeta] = &[
         default_series_name: "Premier Stock Car Cup Championship 2026",
     },
     ModalityMeta {
-        id: "rally",
+        id: "rallycross",
         title: "RALLYCROSS WORLD CUP",
         subtitle: "World & Continental Rallycross Mixed Surface Stages & Jump Arenas",
         accent: Palette::NEON_GOLD,
@@ -448,7 +458,11 @@ pub fn build_career_select_cards(
         let dummy_prog;
         let prog = if let Some(p) = module_progress_map.get(meta.id) {
             p
-        } else if active_progress.module_id == meta.id {
+        } else if meta.id == "rallycross" && module_progress_map.contains_key("rally") {
+            module_progress_map.get("rally").unwrap()
+        } else if active_progress.module_id == meta.id
+            || (meta.id == "rallycross" && active_progress.module_id == "rally")
+        {
             active_progress
         } else {
             dummy_prog = ModuleCareerProgress::default_for_module(1, meta.id);
@@ -465,11 +479,13 @@ pub fn build_career_select_cards(
                 current_session.filter(|s| {
                     !s.is_completed
                         && (champ_manager.series.values().any(|def| {
-                            def.series.module_id == meta.id
+                            (def.series.module_id == meta.id
+                                || (meta.id == "rallycross" && def.series.module_id == "rally"))
                                 && (def.series.name.eq_ignore_ascii_case(&s.name)
                                     || def.series.id.eq_ignore_ascii_case(&s.name))
                         }) || s.name.to_lowercase().contains(meta.id)
                             || meta.id.contains(&s.name.to_lowercase())
+                            || (meta.id == "rallycross" && s.name.to_lowercase().contains("rally"))
                             || s.name.eq_ignore_ascii_case(meta.default_series_name))
                 })
             });
@@ -477,12 +493,15 @@ pub fn build_career_select_cards(
         let series_def: Option<&SeriesDefinition> = champ_manager
             .series
             .values()
-            .find(|s| s.series.module_id == meta.id && s.series.tier == tier)
+            .find(|s| {
+                (s.series.module_id == meta.id || (meta.id == "rallycross" && s.series.module_id == "rally"))
+                    && s.series.tier == tier
+            })
             .or_else(|| {
                 champ_manager
                     .series
                     .values()
-                    .find(|s| s.series.module_id == meta.id)
+                    .find(|s| s.series.module_id == meta.id || (meta.id == "rallycross" && s.series.module_id == "rally"))
             });
 
         if let Some(champ) = session_opt {
