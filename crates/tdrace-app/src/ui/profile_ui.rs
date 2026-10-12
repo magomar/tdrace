@@ -22,7 +22,7 @@ use cabinet::ui::{HStack, KpiTile, SwatchPicker};
 pub const CABINET_DISCIPLINES: &[(&str, &str)] = &[
     ("gt", "GT Challenge"),
     ("kart", "Karting Cup"),
-    ("rally", "Rallycross"),
+    ("rallycross", "Rallycross"),
     ("nascar", "Stock Car Series"),
     ("extreme_offroad", "Extreme Off-Road"),
 ];
@@ -141,7 +141,7 @@ pub const TELEMETRY_CATEGORY_FILTERS: &[(&str, Option<&str>)] = &[
     ("ALL", None),
     ("GT", Some("gt")),
     ("STOCK CAR", Some("nascar")),
-    ("RALLYCROSS", Some("rally")),
+    ("RALLYCROSS", Some("rallycross")),
     ("AUTOCROSS", Some("autocross")),
     ("OFF-ROAD", Some("extreme_offroad")),
     ("KART", Some("kart")),
@@ -150,9 +150,13 @@ pub const TELEMETRY_CATEGORY_FILTERS: &[(&str, Option<&str>)] = &[
 
 /// Short display label for a module id, from the telemetry filter names ("extreme_offroad" -> "OFF-ROAD").
 fn module_short_label(module_id: &str) -> String {
+    let norm = match module_id {
+        "rally" => "rallycross",
+        other => other,
+    };
     TELEMETRY_CATEGORY_FILTERS
         .iter()
-        .find(|(_, id)| *id == Some(module_id))
+        .find(|(_, id)| *id == Some(norm))
         .map(|(label, _)| label.to_string())
         .unwrap_or_else(|| module_id.replace('_', " ").to_uppercase())
 }
@@ -727,7 +731,7 @@ fn render_disciplines_tab(
     let categories = [
         ("gt", "GT & ENDURANCE RACING", "Grand Touring / Sports Cars", Palette::NEON_CYAN, 5),
         ("nascar", "STOCK CAR CUP SERIES", "Stock Cars / Oval & High-Speed Speedway", Palette::NEON_GOLD, 4),
-        ("rally", "WORLD RALLYCROSS", "Multi-Surface Asphalt, Gravel & Stage Rally", Palette::NEON_GREEN, 4),
+        ("rallycross", "WORLD RALLYCROSS", "World & Continental Rallycross Mixed Surface Circuits", Palette::NEON_GREEN, 4),
         ("extreme_offroad", "EXTREME OFF-ROAD", "Sand Rail Buggies / Desert Stunt Arena", Color::new(0.95, 0.55, 0.20, 1.0), 4),
         ("autocross", "CONTINENTAL AUTOCROSS", "Natural Unpaved Dirt & Buggy Racing", Color::new(1.0, 0.45, 0.05, 1.0), 5),
         ("kart", "SUPERKART PRO SERIES", "Benchmark Sprint Kart Circuits", Palette::NEON_MAGENTA, 4),
@@ -756,7 +760,15 @@ fn render_disciplines_tab(
         fonts.draw_ui_regular(cat_subtitle, cx + scaler.s(12.0), cy + scaler.s(36.0), scaler.font_s(10.0), Palette::UI_TEXT_MUTED);
 
         // Fetch category stats
-        let cat_stat = stats.category_stats.get(*cat_key);
+        let cat_stat = stats.category_stats.get(*cat_key).or_else(|| {
+            if *cat_key == "rallycross" {
+                stats.category_stats.get("rally")
+            } else if *cat_key == "rally" {
+                stats.category_stats.get("rallycross")
+            } else {
+                None
+            }
+        });
         let races = cat_stat.map(|s| s.total_races).unwrap_or(0);
         let wins = cat_stat.map(|s| s.wins).unwrap_or(0);
         let win_pct = cat_stat.map(|s| s.win_rate).unwrap_or(0.0);
@@ -764,7 +776,15 @@ fn render_disciplines_tab(
         let clean_pct = cat_stat.map(|s| s.clean_rate).unwrap_or(0.0);
 
         // Tier Level & Progress
-        let mod_prog = module_progress_map.get(*cat_key);
+        let mod_prog = module_progress_map.get(*cat_key).or_else(|| {
+            if *cat_key == "rallycross" {
+                module_progress_map.get("rally")
+            } else if *cat_key == "rally" {
+                module_progress_map.get("rallycross")
+            } else {
+                None
+            }
+        });
         let tier = mod_prog.map(|p| p.level.clamp(1, 5)).unwrap_or(1);
         let tier_str = format!("TIER {}", tier);
         fonts.draw_ui_bold(&tier_str, cx + card_w - scaler.s(60.0), cy + scaler.s(22.0), scaler.font_s(11.5), *accent_col);
@@ -851,7 +871,7 @@ pub fn find_car_model_by_identifier(ident: &str) -> Option<&'static crate::catal
         crate::catalog::find_model_by_id("gt_valente_imperatore_t5")
     } else if lower.contains("nascar") || lower.contains("stock car") {
         crate::catalog::find_model_by_id("nascar_crossbow_montego_t1")
-    } else if lower.contains("rally") {
+    } else if lower.contains("rally") || lower.contains("rallycross") {
         crate::catalog::find_model_by_id("rally_volkskraft_strassen_t3")
             .or_else(|| crate::catalog::find_model_by_id("rally_gallia_200_t1"))
     } else if lower.contains("kart") {

@@ -7,9 +7,13 @@ use crate::render::color::CarColorScheme;
 use crate::tournament::{PointSystem, TournamentFormat};
 
 /// Rallycross World Cup Game Module
-pub struct RallyGameModule;
+pub struct RallycrossGameModule;
 
-impl RallyGameModule {
+pub type RallyGameModule = RallycrossGameModule;
+#[allow(non_upper_case_globals)]
+pub const RallyGameModule: RallycrossGameModule = RallycrossGameModule;
+
+impl RallycrossGameModule {
     pub fn new() -> Self {
         Self
     }
@@ -63,15 +67,15 @@ impl RallyGameModule {
     }
 }
 
-impl Default for RallyGameModule {
+impl Default for RallycrossGameModule {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl GameModule for RallyGameModule {
+impl GameModule for RallycrossGameModule {
     fn id(&self) -> &'static str {
-        "rally"
+        "rallycross"
     }
 
     fn title(&self) -> &'static str {
@@ -142,7 +146,7 @@ impl GameModule for RallyGameModule {
     }
 
     fn tracks(&self) -> Vec<TrackDefinition> {
-        crate::module::catalog_tracks("rally")
+        crate::module::catalog_tracks("rallycross")
     }
 
     fn default_track_id(&self) -> &'static str {

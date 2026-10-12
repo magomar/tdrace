@@ -568,7 +568,8 @@ pub use extreme_offroad::ExtremeOffRoadModule;
 pub use gt::GtWorldChallengeModule;
 pub use kart::KartGameModule;
 pub use nascar::NascarGameModule;
-pub use rally::RallyGameModule;
+pub use rally::{RallyGameModule, RallycrossGameModule};
+pub use rally as rallycross;
 pub use vault::VaultGameModule;
 
 pub mod nascar;
@@ -637,8 +638,8 @@ mod tests {
 
     #[test]
     fn test_rally_game_module() {
-        let rally = RallyGameModule::new();
-        assert_eq!(rally.id(), "rally");
+        let rally = RallycrossGameModule::new();
+        assert_eq!(rally.id(), "rallycross");
         assert!(!rally.title().is_empty());
         assert!(!rally.vehicles().is_empty());
         assert!(rally.vehicles().len() >= 2);
@@ -647,7 +648,7 @@ mod tests {
         assert_eq!(rally.default_vehicle_id(), "wrc_turbo_rally");
         assert_eq!(rally.default_off_track_surface(), tdrace_core::physics::surface::SurfaceType::Dirt);
 
-        let rally_car = RallyGameModule::car_wrc_rally();
+        let rally_car = RallycrossGameModule::car_wrc_rally();
         assert_eq!(rally_car.drive_bias, 0.5);
     }
 

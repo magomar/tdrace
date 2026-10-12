@@ -6,7 +6,7 @@ use std::collections::HashSet;
 use cabinet::ui::FieldDropdown;
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::geometry::{BarrierType, JumpRamp, ObstacleShape, SurfaceLayer, SurfaceShape};
-use tdrace_core::track::junction_kit::{JunctionComponent, JunctionShape};
+use tdrace_core::track::junction_kit::{JunctionComponent, JunctionShape, Side};
 use tdrace_core::track::launch_chute::PAD_WIDTH_RANGE;
 use tdrace_core::track::PackedGridPattern;
 use tdrace_core::CarCategory;
@@ -476,6 +476,8 @@ pub enum Row {
     Info(String),
     /// A red message, e.g. a failed pit layout guard.
     Error(String),
+    /// A diagnostic warning badge with optional tooltip (Spec 112).
+    Warning { text: String, tooltip: Option<String> },
 }
 
 /// A collapsible group of rows.
@@ -541,7 +543,7 @@ pub const BODY_PAD: f32 = 8.0;
 /// Reference-pixel height of one row, including its gap.
 pub fn row_height(row: &Row) -> f32 {
     match row {
-        Row::Info(_) | Row::Error(_) => INFO_H,
+        Row::Info(_) | Row::Error(_) | Row::Warning { .. } => INFO_H,
         Row::RampProfile(_) => RAMP_PROFILE_H + ROW_GAP,
         _ => ROW_H + ROW_GAP,
     }
@@ -686,14 +688,52 @@ fn build_waypoints(state: &EditorState) -> Option<InspectorModel> {
                 Row::Stepper { prop: Prop::WpBanking, label: "Angle", value: banking, anchor: wps[first].bank_angle, min: BANKING_RANGE.0, max: BANKING_RANGE.1, step: 1.0, unit: "°", signed: true },
                 banking_chips(Prop::WpBanking, banking, Edit::Do(Action::InvertBanking)),
             ]),
-            Section::new("wp.edges", "EDGES", vec![
-                Row::Sides { label: "Curb", left: (Prop::WpLeftCurb, common_value(sel().map(|w| w.left_curb))), right: (Prop::WpRightCurb, common_value(sel().map(|w| w.right_curb))) },
-                Row::Sides { label: "Wall", left: (Prop::WpLeftWall, common_value(sel().map(|w| w.left_wall))), right: (Prop::WpRightWall, common_value(sel().map(|w| w.right_wall))) },
-                stepper(Prop::WpWallDistL, "Dist L", common_value(sel().map(|w| w.left_wall_distance.unwrap_or(offset))), wps[first].left_wall_distance.unwrap_or(offset), WALL_DISTANCE_RANGE, 0.5, "m"),
-                stepper(Prop::WpWallDistR, "Dist R", common_value(sel().map(|w| w.right_wall_distance.unwrap_or(offset))), wps[first].right_wall_distance.unwrap_or(offset), WALL_DISTANCE_RANGE, 0.5, "m"),
-                Row::Segmented { prop: Prop::WpWallType, label: "Wall type", labels: &WALL_TYPE_LABELS, value: common_value(sel().map(|w| wall_type_index(w.wall_type.unwrap_or(state.barrier_type)))) },
-            ])
-            .with_side_columns(),
+            {
+                let mut edge_rows = vec![
+                    Row::Sides { label: "Curb", left: (Prop::WpLeftCurb, common_value(sel().map(|w| w.left_curb))), right: (Prop::WpRightCurb, common_value(sel().map(|w| w.right_curb))) },
+                    Row::Sides { label: "Wall", left: (Prop::WpLeftWall, common_value(sel().map(|w| w.left_wall))), right: (Prop::WpRightWall, common_value(sel().map(|w| w.right_wall))) },
+                    stepper(Prop::WpWallDistL, "Dist L", common_value(sel().map(|w| w.left_wall_distance.unwrap_or(offset))), wps[first].left_wall_distance.unwrap_or(offset), WALL_DISTANCE_RANGE, 0.5, "m"),
+                    stepper(Prop::WpWallDistR, "Dist R", common_value(sel().map(|w| w.right_wall_distance.unwrap_or(offset))), wps[first].right_wall_distance.unwrap_or(offset), WALL_DISTANCE_RANGE, 0.5, "m"),
+                    Row::Segmented { prop: Prop::WpWallType, label: "Wall type", labels: &WALL_TYPE_LABELS, value: common_value(sel().map(|w| wall_type_index(w.wall_type.unwrap_or(state.barrier_type)))) },
+                ];
+
+                let mut suppressed_warnings = Vec::new();
+                for &i in &indices {
+                    let wp = &wps[i];
+                    let s_dist = state.track.spline.project_point(wp.point).progress_distance;
+                    if wp.left_wall {
+                        if let Some(rec) = state.track.geometry.wall_suppressions.iter().find(|r| {
+                            r.side == Side::Left
+                                && (r.contains_station(s_dist, 2.0)
+                                    || r.distance_to_point(wp.point) <= wp.width * 0.5 + wp.left_wall_distance.unwrap_or(offset) + 2.0)
+                        }) {
+                            let text = format!("⚠️ Left wall suppressed (conflict with segment {})", rec.conflicting_segment.0);
+                            let tooltip = format!("Wall suppressed due to clearance conflict with segment {}", rec.conflicting_segment.0);
+                            if !suppressed_warnings.iter().any(|(t, _)| t == &text) {
+                                suppressed_warnings.push((text, tooltip));
+                            }
+                        }
+                    }
+                    if wp.right_wall {
+                        if let Some(rec) = state.track.geometry.wall_suppressions.iter().find(|r| {
+                            r.side == Side::Right
+                                && (r.contains_station(s_dist, 2.0)
+                                    || r.distance_to_point(wp.point) <= wp.width * 0.5 + wp.right_wall_distance.unwrap_or(offset) + 2.0)
+                        }) {
+                            let text = format!("⚠️ Right wall suppressed (conflict with segment {})", rec.conflicting_segment.0);
+                            let tooltip = format!("Wall suppressed due to clearance conflict with segment {}", rec.conflicting_segment.0);
+                            if !suppressed_warnings.iter().any(|(t, _)| t == &text) {
+                                suppressed_warnings.push((text, tooltip));
+                            }
+                        }
+                    }
+                }
+                for (text, tooltip) in suppressed_warnings {
+                    edge_rows.push(Row::Warning { text, tooltip: Some(tooltip) });
+                }
+
+                Section::new("wp.edges", "EDGES", edge_rows).with_side_columns()
+            },
             Section::new("wp.info", "INFO", vec![info]).collapsed(),
         ],
     })
@@ -1018,6 +1058,7 @@ pub fn row_tooltip(row: &Row) -> Option<String> {
             Some(format!("{label}: B cycles 0/10/18/22°, Shift+B inverts"))
         }
         Row::Segmented { prop: Prop::ZoneLayer, label, .. } => Some(format!("{label}: Ctrl+F front, Ctrl+B back")),
+        Row::Warning { tooltip: Some(tip), .. } => Some(tip.clone()),
         _ => None,
     }
 }

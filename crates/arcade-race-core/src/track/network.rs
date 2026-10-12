@@ -342,6 +342,11 @@ impl RoadSegment {
         }
     }
 
+    /// Computes lateral clearance gap G to another road segment at distance `s` along this segment (Spec 112).
+    pub fn clearance_gap_to(&self, other: &RoadSegment, s: f32) -> Option<f32> {
+        clearance_gap(self, other, s)
+    }
+
     /// Recomputes dense spline samples with optional socket boundary constraints.
     ///
     /// When `entry_socket` is provided:
@@ -1086,6 +1091,29 @@ impl TrackNetwork {
         }
     }
 
+    /// Returns the segment for the launch chute if configured (Spec 103).
+    pub fn launch_chute_segment(&self) -> Option<&RoadSegment> {
+        let chute_id = self.launch_chute.as_ref()?.segment_id;
+        self.get_segment(chute_id)
+    }
+
+    /// Returns the network segments that belong to a joker / alternate branch layout (Spec 081 / 102).
+    pub fn joker_segments(&self) -> Vec<&RoadSegment> {
+        let default_seq = self
+            .active_or_default_layout(None)
+            .map(|l| &l.segment_sequence[..])
+            .unwrap_or(&[]);
+        let chute = self.launch_chute.as_ref().map(|c| c.segment_id);
+        self.segments
+            .iter()
+            .filter(|seg| {
+                Some(seg.id) != chute
+                    && !default_seq.contains(&seg.id)
+                    && self.layouts.iter().any(|l| l.segment_sequence.contains(&seg.id))
+            })
+            .collect()
+    }
+
     /// Synthesizes a composite, continuous `TrackSpline` from an ordered sequence of segments in a layout.
     /// Enables transparent backwards compatibility with systems requiring a flat `TrackSpline`.
     pub fn build_composite_spline_for_layout(&self, layout_id: &str) -> Option<TrackSpline> {
@@ -1301,6 +1329,104 @@ impl Default for TrackNetwork {
     }
 }
 
+/// Computes the lateral clearance gap G between two diverging road segments at distance `s1` along `seg1` (Spec 112).
+///
+/// Returns the distance between the facing road edges:
+/// G = distance(centerlines) - (w1/2 + w2/2).
+/// When G >= 0, it represents the physical ground clearance between the two drivable road surfaces.
+/// Returns None if either segment has no samples.
+pub fn clearance_gap(seg1: &RoadSegment, seg2: &RoadSegment, s1: f32) -> Option<f32> {
+    if seg1.samples.len() < 2 || seg2.samples.len() < 2 {
+        return None;
+    }
+    let s1_clamped = s1.clamp(0.0, seg1.length);
+    let spline1 = seg1.to_spline();
+    let c1 = spline1.sample_at_distance(s1_clamped);
+    let spline2 = seg2.to_spline();
+    let proj2 = spline2.project_point(c1.point);
+
+    let to_seg2 = proj2.closest_point - c1.point;
+    let sign = if to_seg2.dot(c1.normal) >= 0.0 { 1.0 } else { -1.0 };
+    let edge1 = c1.point + c1.normal * (sign * c1.width * 0.5);
+
+    let proj_edge = spline2.project_point(edge1);
+    let gap = proj_edge.distance_to_spline - proj_edge.track_width * 0.5;
+    Some(gap)
+}
+
+/// Dynamically generates adaptive median barriers centered in the gore wedge between two diverging road segments (Spec 112).
+///
+/// Starting where lateral clearance G(t) >= 2.2 m, barriers are placed along the centerline of the gore wedge,
+/// maintaining at least 0.3 m clearance from both road edges.
+/// Bypassed if divergence angle exceeds 60 degrees.
+pub fn generate_adaptive_median_barriers(
+    seg1: &RoadSegment,
+    seg2: &RoadSegment,
+    barrier_type: BarrierType,
+) -> Vec<WallBarrier> {
+    if seg1.samples.len() < 2 || seg2.samples.len() < 2 {
+        return Vec::new();
+    }
+
+    // Divergence angle check at entrance (first sample tangents)
+    let t1 = seg1.samples[0].tangent;
+    let t2 = seg2.samples[0].tangent;
+    let cos_angle = t1.dot(t2).clamp(-1.0, 1.0);
+    // cos(60 deg) = 0.5. If angle > 60 deg, cos_angle < 0.5
+    if cos_angle < 0.5 {
+        return Vec::new();
+    }
+
+    let spline1 = seg1.to_spline();
+    let spline2 = seg2.to_spline();
+
+    let mut points: Vec<Vec2> = Vec::new();
+    let step_m = 1.0;
+    let max_s = seg1.length.min(seg2.length).min(100.0);
+    let mut s = 0.0;
+
+    while s <= max_s {
+        let c1 = spline1.sample_at_distance(s);
+        let proj2 = spline2.project_point(c1.point);
+
+        let to_seg2 = proj2.closest_point - c1.point;
+        let sign = if to_seg2.dot(c1.normal) >= 0.0 { 1.0 } else { -1.0 };
+        let edge1 = c1.point + c1.normal * (sign * c1.width * 0.5);
+
+        let proj_edge = spline2.project_point(edge1);
+        let gap = proj_edge.distance_to_spline - proj_edge.track_width * 0.5;
+
+        // Adaptive median barrier triggers when gap G(t) >= 2.2 m
+        // Upper bound around 10.0 m when independent parallel walls can exist
+        if gap >= 2.2 && gap <= 10.0 {
+            let to_edge2 = (proj_edge.closest_point - edge1).normalize_or_zero();
+            let p_median = edge1 + to_edge2 * (gap * 0.5);
+
+            // Verify physical clearance >= 0.3 m from both road edges
+            let clr1 = spline1.project_point(p_median).distance_to_spline - c1.width * 0.5;
+            let clr2 = spline2.project_point(p_median).distance_to_spline - proj_edge.track_width * 0.5;
+
+            if clr1 >= 0.3 && clr2 >= 0.3 {
+                // Ensure monotonically spaced points (avoid clustering)
+                if points.last().map_or(true, |last| last.distance(p_median) >= 0.8) {
+                    points.push(p_median);
+                }
+            }
+        }
+
+        s += step_m;
+    }
+
+    if points.len() < 2 {
+        return Vec::new();
+    }
+
+    points
+        .windows(2)
+        .map(|w| WallBarrier::new(w[0], w[1], barrier_type))
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1487,5 +1613,51 @@ mod tests {
         assert_eq!(branches.len(), 2);
         assert_eq!(branches[0].id, SegmentId(2));
         assert_eq!(branches[1].id, SegmentId(3));
+
+        // When segment 3 is designated as launch chute
+        net.launch_chute = Some(LaunchChuteConfig {
+            segment_id: SegmentId(3),
+            merge_junction_id: JunctionId(0),
+            pad_width: 16.0,
+            grid_slots: vec![],
+            side_barriers: vec![],
+            terminal_barrier: crate::track::geometry::WallBarrier::new(
+                Vec2::ZERO,
+                Vec2::ZERO,
+                crate::track::geometry::BarrierType::Concrete,
+            ),
+            surface: SurfaceType::Asphalt,
+        });
+
+        assert_eq!(net.launch_chute_segment().map(|s| s.id), Some(SegmentId(3)));
+
+        // Joker segments should only include segment 2 (not chute, not default layout)
+        let jokers = net.joker_segments();
+        assert_eq!(jokers.len(), 1);
+        assert_eq!(jokers[0].id, SegmentId(2));
+    }
+
+    #[test]
+    fn test_clearance_gap_parallel_and_diverging() {
+        // Road 1 along y = 0, width 8.0 (edges at y = -4.0 and +4.0)
+        let wps1 = vec![
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 8.0),
+            TrackWaypoint::new(Vec2::new(50.0, 0.0), 8.0),
+            TrackWaypoint::new(Vec2::new(100.0, 0.0), 8.0),
+        ];
+        let seg1 = RoadSegment::new(SegmentId(1), "Road 1", wps1);
+
+        // Road 2 along y = 10.2, width 8.0 (edges at y = +6.2 and +14.2)
+        // Distance between facing edges (y = 4.0 and y = 6.2) is exactly 2.2 m
+        let wps2 = vec![
+            TrackWaypoint::new(Vec2::new(0.0, 10.2), 8.0),
+            TrackWaypoint::new(Vec2::new(50.0, 10.2), 8.0),
+            TrackWaypoint::new(Vec2::new(100.0, 10.2), 8.0),
+        ];
+        let seg2 = RoadSegment::new(SegmentId(2), "Road 2", wps2);
+
+        let gap = clearance_gap(&seg1, &seg2, 50.0).expect("clearance gap computed");
+        assert!((gap - 2.2).abs() < 1e-3, "Expected 2.2 m gap, got {}", gap);
+        assert_eq!(seg1.clearance_gap_to(&seg2, 50.0), Some(gap));
     }
 }

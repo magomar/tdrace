@@ -149,7 +149,7 @@ pub fn render_garage_screen(
     // Module branding
     let (mod_title, mod_accent) = match active_module_id {
         "gt" | "gt_challenge" | "f1" => ("GRAND TOURING CHALLENGE", Palette::NEON_CYAN),
-        "rally" => ("RALLYCROSS", Palette::NEON_GOLD),
+        "rallycross" | "rally" | "rx" => ("RALLYCROSS", Palette::NEON_GOLD),
         "kart" => ("KARTING & MICRO-RACERS", Palette::NEON_GREEN),
         "nascar" => ("STOCK CAR RACING", Palette::YELLOW),
         "extreme_offroad" => ("EXTREME OFF-ROAD & STUNT ARENAS", Palette::NEON_ORANGE),
@@ -191,8 +191,9 @@ pub fn render_garage_screen(
 
     // In LAN the module is fixed to the host discipline, so its key hint is hidden.
     let module_keys = if module_locked { "" } else { "  [◄ 1..5 ►]" };
-    let max_ranked_tier: u8 = if active_module_id == "rally" { 6 } else { 5 };
-    let is_heritage_tier = active_module_id == "rally" && garage_tier == 7;
+    let is_rx_module = active_module_id == "rallycross" || active_module_id == "rally" || active_module_id == "rx";
+    let max_ranked_tier: u8 = if is_rx_module { 6 } else { 5 };
+    let is_heritage_tier = is_rx_module && garage_tier == 7;
     let tier_label = if is_heritage_tier {
         "HERITAGE".to_string()
     } else if garage_tier > max_ranked_tier {
@@ -409,9 +410,10 @@ pub fn render_garage_screen(
         let num_str = format!("#{}", i + 1);
         fonts.draw_ui_bold(&num_str, cx + scaler.s(8.0), cy + scaler.s(15.0), scaler.font_s(9.5), Palette::NEON_CYAN);
 
-        if active_module_id == "classic" || (active_module_id == "rally" && model.tier == 7) {
+        let is_rx_tier7 = (active_module_id == "rallycross" || active_module_id == "rally" || active_module_id == "rx") && model.tier == 7;
+        if active_module_id == "classic" || is_rx_tier7 {
             fonts.draw_ui_bold(
-                if active_module_id == "rally" && model.tier == 7 { "HERITAGE" } else { "OWNED" },
+                if is_rx_tier7 { "HERITAGE" } else { "OWNED" },
                 cx + cw - scaler.s(58.0),
                 cy + scaler.s(15.0),
                 scaler.font_s(8.5),
@@ -425,7 +427,7 @@ pub fn render_garage_screen(
                 let cost = ModuleCareerProgress::car_credit_cost_for_car(model.id, active_module_id, model.tier);
                 let is_affordable = available_credits >= cost;
                 let is_recommended = active_module_id == "kart" && model.tier == 1;
-                let is_grassroots_starter = (active_module_id == "kart" || active_module_id == "autocross" || active_module_id == "rally") && model.tier == 1;
+                let is_grassroots_starter = (active_module_id == "kart" || active_module_id == "autocross" || active_module_id == "rallycross" || active_module_id == "rally") && model.tier == 1;
                 let tag = if is_recommended && is_affordable {
                     format!("${} CR (RECOMMENDED)", cost)
                 } else if is_grassroots_starter && is_affordable {
@@ -639,7 +641,7 @@ pub fn render_garage_screen(
 
     let active_car_id = active_model.map(|m| m.id).unwrap_or("");
     let active_car_tier = active_model.map(|m| m.tier).unwrap_or(garage_tier);
-    let is_car_heritage = active_module_id == "rally" && active_car_tier == 7;
+    let is_car_heritage = (active_module_id == "rallycross" || active_module_id == "rally" || active_module_id == "rx") && active_car_tier == 7;
     let is_car_unlocked = active_module_id == "classic"
         || is_dev_mode
         || is_car_heritage
@@ -736,7 +738,7 @@ pub fn render_garage_screen(
         );
     } else if can_afford {
         let is_recommended = active_module_id == "kart" && active_car_tier == 1;
-        let is_starter = (active_module_id == "kart" || active_module_id == "autocross" || active_module_id == "rally") && active_car_tier == 1;
+        let is_starter = (active_module_id == "kart" || active_module_id == "autocross" || active_module_id == "rallycross" || active_module_id == "rally") && active_car_tier == 1;
         let buy_title = if is_recommended {
             format!("🛒 BUY STARTER CAR: ${} CR  [B / ENTER]  ★ AFFORDABLE (RECOMMENDED ENTRY)", cost)
         } else if is_starter {
@@ -765,7 +767,7 @@ pub fn render_garage_screen(
             Palette::WHITE,
         );
     } else {
-        let is_grassroots_starter = (active_module_id == "kart" || active_module_id == "autocross" || active_module_id == "rally") && active_car_tier == 1;
+        let is_grassroots_starter = (active_module_id == "kart" || active_module_id == "autocross" || active_module_id == "rallycross" || active_module_id == "rally") && active_car_tier == 1;
         let lock_title = if is_grassroots_starter {
             format!("🛒 VEHICLE PRICE: ${} CR (WALLET: ${} CR) — CURRENTLY UNAFFORDABLE", cost, available_credits)
         } else {
@@ -814,7 +816,7 @@ pub fn render_garage_screen(
 /// The 6 motorsport modules supported in the Fleet Gallery.
 pub const GALLERY_MODULES: &[(&str, &str)] = &[
     ("gt", "GT"),
-    ("rally", "RALLYCROSS"),
+    ("rallycross", "RALLYCROSS"),
     ("kart", "KART"),
     ("nascar", "STOCK CAR"),
     ("extreme_offroad", "OFF-ROAD"),
@@ -825,7 +827,7 @@ pub const GALLERY_MODULES: &[(&str, &str)] = &[
 pub fn gallery_filter_to_module(idx: usize) -> &'static str {
     match idx {
         0 => "gt",
-        1 => "rally",
+        1 => "rallycross",
         2 => "kart",
         3 => "nascar",
         4 => "extreme_offroad",
@@ -838,7 +840,7 @@ pub fn gallery_filter_to_module(idx: usize) -> &'static str {
 pub fn module_to_gallery_filter(module_id: &str) -> usize {
     match module_id {
         "gt" | "gt_challenge" => 0,
-        "rally" => 1,
+        "rallycross" | "rally" | "rx" => 1,
         "kart" => 2,
         "nascar" => 3,
         "extreme_offroad" => 4,
@@ -939,7 +941,7 @@ fn render_fleet_gallery(
         let rect = grid.item_rect(i);
         let model = &grid.items[i].data;
         let is_sel = i == sel_idx;
-        let is_heritage = model.module_id == "rally" && model.tier == 7;
+        let is_heritage = (model.module_id == "rallycross" || model.module_id == "rally") && model.tier == 7;
         let is_unlocked = is_dev_mode || is_heritage || (model.tier as u32) <= unlocked_tier;
 
         grid.render_card_frame(&rect, is_sel, false);

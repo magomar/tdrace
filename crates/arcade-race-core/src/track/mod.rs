@@ -20,15 +20,16 @@ pub use curve::{
     CurveApproachStatus, CurveDirection, TrackCurve,
 };
 pub use network::{
-    compute_split_width_envelope, GoreConfig, JunctionId, JunctionKind, LaunchChuteConfig, MergeConfig,
-    RoadJunction, RoadSegment, SegmentId, SocketId, SplineSocket, TrackLayout, TrackNetwork,
+    clearance_gap, compute_split_width_envelope, generate_adaptive_median_barriers, GoreConfig, JunctionId,
+    JunctionKind, LaunchChuteConfig, MergeConfig, RoadJunction, RoadSegment, SegmentId, SocketId, SplineSocket,
+    TrackLayout, TrackNetwork,
 };
 pub use launch_chute::{ChuteSide, LaunchChuteError, LaunchChuteSpec};
 pub use geometry::{
     point_in_polygon, point_in_quad_2d, point_in_triangle_2d, BarrierType, JumpRamp,
     JumpRampCarExt, LineSegment, Obstacle, ObstacleShape, PitBox, PitLane, PitLaneChevron,
     PitLaneExitQuad, PitLaneJunctionData, SpawnPose, SurfaceLayer, SurfaceShape, SurfaceZone,
-    TrackGeometry, WallBarrier,
+    TrackGeometry, WallBarrier, WallSuppressionRecord,
 };
 pub use scenery::{
     Building, BuildingStyle, Grandstand, GrandstandStyle, Rock, RockType, Tree, TreeType,
@@ -925,12 +926,13 @@ impl Track {
     /// (`branch_kit::trim_main_walls`), so no wall is searched against the branch. The main road still clears the
     /// walls of other parts of the lap that lie on it.
     pub fn trim_walls_for_network(&mut self) {
+        self.geometry.wall_suppressions.clear();
         let compiled = self.branch_layout.is_some();
         if compiled && self.network.is_some() {
             branch_kit::trim_main_walls(self);
         }
         let Some(net) = &self.network else { return; };
-        if net.segments.is_empty() { return; }
+        if net.segments.is_empty() { return; };
         let branches = if compiled { Vec::new() } else { branch_segments(net) };
         let main_roads: Vec<&RoadSegment> = if compiled {
             let default = net.active_or_default_layout(None).map(|l| l.segment_sequence.as_slice()).unwrap_or(&[]);
@@ -947,34 +949,60 @@ impl Track {
             .and_then(|c| c.waypoints.first()?.left_wall_distance)
             .unwrap_or_else(|| self.effective_barrier_offset())
             - 0.5;
-        let keep = |w: &WallBarrier| {
-            wall_clear_of_roads(main_roads.iter().copied(), w, 2.0, -0.2)
-                && wall_clear_of_roads(branches.iter().copied(), w, f32::INFINITY, -0.2)
-                && chute.map_or(true, |c| wall_clear_of_ribbon(c, w, corridor))
+
+        let find_conflict = |w: &WallBarrier| -> Option<SegmentId> {
+            for seg in &branches {
+                if !wall_clear_of_roads(std::slice::from_ref(*seg), w, f32::INFINITY, -0.2) {
+                    return Some(seg.id);
+                }
+            }
+            for seg in &main_roads {
+                if !wall_clear_of_roads(std::slice::from_ref(*seg), w, 2.0, -0.2) {
+                    return Some(seg.id);
+                }
+            }
+            if let Some(c) = chute {
+                if !wall_clear_of_ribbon(c, w, corridor) {
+                    return Some(c.id);
+                }
+            }
+            None
         };
-        // A wall that runs onto a road loses only the part on it. A merged straight wall used to go whole: on
-        // rx_canyon_flyer that left an 11 m gap beside the joker split, and a bot slid out through it behind the
-        // joker wall and stayed there (tdrace-0joa, tdrace-74s5).
-        let trim = |walls: &[WallBarrier]| {
+
+        let mut suppressions = Vec::new();
+        let trim = |walls: &[WallBarrier], side: junction_kit::Side, suppressions: &mut Vec<WallSuppressionRecord>, spline: &TrackSpline| {
             let mut out = Vec::with_capacity(walls.len());
             for w in walls {
-                if keep(w) {
+                if find_conflict(w).is_none() {
                     out.push(*w);
                     continue;
                 }
                 let n = (w.segment.length() / WALL_TRIM_STEP_M).ceil().max(1.0) as usize;
                 let points: Vec<Vec2> = (0..=n).map(|k| w.segment.start.lerp(w.segment.end, k as f32 / n as f32)).collect();
-                let pieces = points
-                    .windows(2)
-                    .map(|p| WallBarrier { segment: LineSegment::new(p[0], p[1]), ..*w })
-                    .filter(|piece| keep(piece))
-                    .collect();
-                out.extend(merge_collinear_walls(pieces));
+                let mut kept_pieces = Vec::new();
+                for win in points.windows(2) {
+                    let piece = WallBarrier { segment: LineSegment::new(win[0], win[1]), ..*w };
+                    if let Some(conflict_id) = find_conflict(&piece) {
+                        let s0 = spline.project_point(piece.segment.start).progress_distance;
+                        let s1 = spline.project_point(piece.segment.end).progress_distance;
+                        suppressions.push(WallSuppressionRecord::new(
+                            side,
+                            piece.segment,
+                            conflict_id,
+                            s0.min(s1),
+                            s0.max(s1),
+                        ));
+                    } else {
+                        kept_pieces.push(piece);
+                    }
+                }
+                out.extend(merge_collinear_walls(kept_pieces));
             }
             out
         };
-        self.geometry.inner_walls = trim(&self.geometry.inner_walls);
-        self.geometry.outer_walls = trim(&self.geometry.outer_walls);
+        self.geometry.inner_walls = trim(&self.geometry.inner_walls, junction_kit::Side::Left, &mut suppressions, &self.spline);
+        self.geometry.outer_walls = trim(&self.geometry.outer_walls, junction_kit::Side::Right, &mut suppressions, &self.spline);
+        self.geometry.wall_suppressions = merge_suppression_records(suppressions);
     }
 
     /// Builds `geometry.network_walls` along the network segments that are not on the default
@@ -1108,12 +1136,37 @@ impl Track {
             walls.extend(&bridges);
             chute_walls.extend(bridges);
         }
+
+        // Spec 112: Adaptive median barriers in diverging gore wedges
+        for j in &net.junctions {
+            if let JunctionKind::Split { egress_sockets, .. } = &j.kind {
+                if egress_sockets.len() >= 2 {
+                    let seg0 = net.segments.iter().find(|s| s.entry_junction == Some(SocketId::new(j.id, 0)));
+                    let seg1 = net.segments.iter().find(|s| s.entry_junction == Some(SocketId::new(j.id, 1)));
+                    if let (Some(s0), Some(s1)) = (seg0, seg1) {
+                        let medians = generate_adaptive_median_barriers(s0, s1, barrier_type);
+                        for m in medians {
+                            walls.push(at_road_height(m));
+                        }
+                    }
+                }
+            }
+        }
+
+        // Spec 112: Branch throat funnel bridges closing outer corner gaps
+        let main_walls_iter = self.geometry.inner_walls.iter().chain(&self.geometry.outer_walls);
+        let throat_bridges = branch_throat_bridges(&walls, main_walls_iter, &net.segments, barrier_type);
+        for b in throat_bridges {
+            walls.push(at_road_height(b));
+        }
+
         if let Some(chute) = self.network.as_mut().and_then(|n| n.launch_chute.as_mut()) {
             if let Some(wall) = rear_wall {
                 chute.terminal_barrier = wall;
             }
             chute.side_barriers = chute_walls;
         }
+
         self.geometry.network_walls = walls;
     }
 
@@ -1180,6 +1233,79 @@ fn chute_funnel_bridges<'a>(
             (p.distance(q) > JOINED_M && p.distance(q) < REACH_M).then(|| WallBarrier::new(p, q, barrier_type))
         })
         .collect()
+}
+
+/// Merges adjacent collinear wall suppression records along the same side and conflicting segment (Spec 112).
+fn merge_suppression_records(records: Vec<WallSuppressionRecord>) -> Vec<WallSuppressionRecord> {
+    let mut merged: Vec<WallSuppressionRecord> = Vec::new();
+    for rec in records {
+        if let Some(last) = merged.last_mut() {
+            if last.side == rec.side
+                && last.conflicting_segment == rec.conflicting_segment
+                && last.span.end.distance(rec.span.start) < 0.1
+                && (last.span.direction().dot(rec.span.direction()) - 1.0).abs() < 0.05
+            {
+                last.span.end = rec.span.end;
+                last.end_station = last.end_station.max(rec.end_station);
+                continue;
+            }
+        }
+        merged.push(rec);
+    }
+    merged
+}
+
+/// Outer corner throat bridges (Spec 112): joins loose ends of branch outer walls to loose ends of main outer walls.
+fn branch_throat_bridges<'a>(
+    branch_walls: &[WallBarrier],
+    main_walls: impl Iterator<Item = &'a WallBarrier> + Clone,
+    segments: &[RoadSegment],
+    barrier_type: BarrierType,
+) -> Vec<WallBarrier> {
+    const JOINED_M: f32 = 0.05;
+    const REACH_M: f32 = 12.0;
+
+    let ends = |walls: &[&WallBarrier]| -> Vec<Vec2> {
+        walls.iter().flat_map(|w| [w.segment.start, w.segment.end]).collect()
+    };
+    let loose = |own: &[Vec2], all: &[Vec2]| -> Vec<Vec2> {
+        own.iter().copied().filter(|p| all.iter().filter(|q| q.distance(*p) < JOINED_M).count() == 1).collect()
+    };
+
+    let b_refs: Vec<&WallBarrier> = branch_walls.iter().collect();
+    let b_ends = ends(&b_refs);
+    let m_refs: Vec<&WallBarrier> = main_walls.collect();
+    let m_ends = ends(&m_refs);
+
+    let b_loose = loose(&b_ends, &b_ends);
+    let m_loose = loose(&m_ends, &m_ends);
+
+    let mut bridges = Vec::new();
+    let mut used_m: Vec<Vec2> = Vec::new();
+    for p in b_loose {
+        if let Some(&q) = m_loose
+            .iter()
+            .filter(|&&q| !used_m.iter().any(|u| u.distance(q) < JOINED_M))
+            .min_by(|a, b| a.distance(p).total_cmp(&b.distance(p)))
+        {
+            let dist = p.distance(q);
+            if dist > JOINED_M && dist < REACH_M {
+                let candidate = WallBarrier::new(p, q, barrier_type);
+                if wall_clear_of_roads(segments.iter(), &candidate, 2.0, 0.0) {
+                    let crosses = b_refs.iter().chain(m_refs.iter()).any(|w| {
+                        w.segment.intersect_segment(&candidate.segment).is_some_and(|hit| {
+                            hit.distance(p) > JOINED_M && hit.distance(q) > JOINED_M
+                        })
+                    });
+                    if !crosses {
+                        used_m.push(q);
+                        bridges.push(candidate);
+                    }
+                }
+            }
+        }
+    }
+    bridges
 }
 
 /// True when no point of `wall` (ends and middle) lies within `margin` of the drivable ribbon of `segment`,

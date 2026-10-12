@@ -3100,6 +3100,24 @@ fn draw_polygon_lines(vertices: &[Vec2], thickness: f32, col: Color) {
     }
 }
 
+fn draw_dashed_line(p0: Vec2, p1: Vec2, thickness: f32, col: Color, dash_len: f32, gap_len: f32) {
+    let delta = p1 - p0;
+    let total_len = delta.length();
+    if total_len < 1e-4 {
+        return;
+    }
+    let dir = delta / total_len;
+    let step = dash_len + gap_len;
+    let mut t = 0.0;
+    while t < total_len {
+        let t_end = (t + dash_len).min(total_len);
+        let start = p0 + dir * t;
+        let end = p0 + dir * t_end;
+        draw_line(start.x, start.y, end.x, end.y, thickness, col);
+        t += step;
+    }
+}
+
 /// Renders gizmos, selection indicators, handles, and drag previews in world space.
 /// Radius (m) of the apex pivot dot at a split junction in the editor.
 const EDITOR_APEX_DOT_RADIUS_M: f32 = 0.4;
@@ -3215,7 +3233,49 @@ pub fn render_editor_gizmos(state: &EditorState, tools: &ToolSettings, _camera: 
         }
     }
 
-    // 1b. Render Road Junctions (Split & Merge) & Branch Segments
+    // 1b. Render Suppressed Wall Ghost Wireframes (Spec 112)
+    for record in &state.track.geometry.wall_suppressions {
+        let is_selected_conflict = state.selection.selected_waypoint_indices().into_iter().any(|idx| {
+            if idx < state.track.spline.waypoints.len() {
+                let wp = &state.track.spline.waypoints[idx];
+                let s_dist = state.track.spline.project_point(wp.point).progress_distance;
+                record.contains_station(s_dist, 2.0)
+                    || record.distance_to_point(wp.point) <= wp.width * 0.5 + 5.0
+            } else {
+                false
+            }
+        });
+
+        let ghost_col = if is_selected_conflict {
+            Color::new(1.0, 0.80, 0.20, 0.90) // Vibrant amber-gold for selected suppressed wall
+        } else {
+            Color::new(1.0, 0.60, 0.20, 0.50) // Translucent ghost amber for unselected
+        };
+        let thickness = if is_selected_conflict { 0.55 } else { 0.35 };
+
+        draw_dashed_line(record.span.start, record.span.end, thickness, ghost_col, 1.2, 0.6);
+
+        // Draw endpoint ticks
+        let normal = record.span.normal() * 0.6;
+        draw_line(
+            record.span.start.x - normal.x,
+            record.span.start.y - normal.y,
+            record.span.start.x + normal.x,
+            record.span.start.y + normal.y,
+            thickness,
+            ghost_col,
+        );
+        draw_line(
+            record.span.end.x - normal.x,
+            record.span.end.y - normal.y,
+            record.span.end.x + normal.x,
+            record.span.end.y + normal.y,
+            thickness,
+            ghost_col,
+        );
+    }
+
+    // 1c. Render Road Junctions (Split & Merge) & Branch Segments
     let network = state.track.active_network();
     for junction in &network.junctions {
         match &junction.kind {

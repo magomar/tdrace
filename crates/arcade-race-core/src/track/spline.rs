@@ -173,6 +173,33 @@ pub struct SplineSample {
     pub right_runoff_surface: Option<SurfaceType>,
 }
 
+impl Default for SplineSample {
+    fn default() -> Self {
+        Self {
+            point: Vec2::ZERO,
+            tangent: Vec2::X,
+            normal: Vec2::Y,
+            distance: 0.0,
+            width: 10.0,
+            left_curb: false,
+            right_curb: false,
+            surface: SurfaceType::Asphalt,
+            elevation: 0.0,
+            bank_angle: 0.0,
+            is_bridge: false,
+            grade_slope: 0.0,
+            vertical_curvature: 0.0,
+            left_wall: true,
+            right_wall: true,
+            left_wall_distance: None,
+            right_wall_distance: None,
+            wall_type: None,
+            left_runoff_surface: None,
+            right_runoff_surface: None,
+        }
+    }
+}
+
 /// Result of projecting a 2D world coordinate onto the track spline.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct SplineProjection {

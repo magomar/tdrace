@@ -9,7 +9,8 @@ pub enum CarCategory {
     /// Stock car superspeedway pack racing.
     Nascar,
     /// Mixed-surface rallycross and all-terrain rally.
-    Rally,
+    #[serde(rename = "rallycross", alias = "rally", alias = "rx")]
+    Rallycross,
     /// Agile sprint and shifter go-karts.
     Kart,
     /// Sand rail, dune buggy, and extreme off-road stunt racing.
@@ -21,21 +22,24 @@ pub enum CarCategory {
 }
 
 impl CarCategory {
+    #[allow(non_upper_case_globals)]
+    pub const Rally: Self = Self::Rallycross;
+
     pub const ALL: [Self; 6] = [
         Self::Gt,
         Self::Nascar,
-        Self::Rally,
+        Self::Rallycross,
         Self::Kart,
         Self::OffRoad,
         Self::Autocross,
     ];
 
-    /// Canonical identifier string (e.g. "gt", "nascar", "rally", "kart", "off_road", "autocross").
+    /// Canonical identifier string (e.g. "gt", "nascar", "rallycross", "kart", "off_road", "autocross").
     pub fn id(&self) -> &'static str {
         match self {
             Self::Gt => "gt",
             Self::Nascar => "nascar",
-            Self::Rally => "rally",
+            Self::Rallycross => "rallycross",
             Self::Kart => "kart",
             Self::OffRoad => "off_road",
             Self::Autocross => "autocross",
@@ -47,7 +51,7 @@ impl CarCategory {
         match self {
             Self::Gt => "GT",
             Self::Nascar => "STOCK CAR",
-            Self::Rally => "RALLYCROSS",
+            Self::Rallycross => "RALLYCROSS",
             Self::Kart => "KART",
             Self::OffRoad => "OFF-ROAD",
             Self::Autocross => "AUTOCROSS",
@@ -59,7 +63,7 @@ impl CarCategory {
         match self {
             Self::Gt => "Grand Touring Challenge",
             Self::Nascar => "Stock Car Racing",
-            Self::Rally => "Rallycross",
+            Self::Rallycross => "Rallycross",
             Self::Kart => "Karting",
             Self::OffRoad => "Extreme Off-Road",
             Self::Autocross => "Continental Autocross",
@@ -74,7 +78,7 @@ impl CarCategory {
                 Some(Self::Gt)
             }
             "nascar" | "classic_nascar" | "stock_car" => Some(Self::Nascar),
-            "rally" | "classic_rally" | "rally_car" => Some(Self::Rally),
+            "rallycross" | "rally" | "rx" | "classic_rally" | "rally_car" => Some(Self::Rallycross),
             "kart" | "classic_kart" | "shifter_kart_125" => Some(Self::Kart),
             "off_road" | "offroad" | "off-road" | "extreme_offroad" | "classic_offroad"
             | "sand_rail_buggy" | "sand_rail" => Some(Self::OffRoad),

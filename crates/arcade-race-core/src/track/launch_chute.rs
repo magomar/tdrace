@@ -135,6 +135,21 @@ impl Track {
         self.network.as_ref()?.launch_chute.as_ref()
     }
 
+    /// The launch chute segment of this circuit, if it has one.
+    pub fn launch_chute_segment(&self) -> Option<&RoadSegment> {
+        self.network.as_ref()?.launch_chute_segment()
+    }
+
+    /// The joker detour segments of this circuit, if it has a network with alternate detour layouts (Spec 081 / 102).
+    pub fn joker_segments(&self) -> Vec<&RoadSegment> {
+        self.network.as_ref().map(|n| n.joker_segments()).unwrap_or_default()
+    }
+
+    /// Returns the network segments that are not on the default layout (Spec 081 / 102 / 103).
+    pub fn branch_segments(&self) -> Vec<&RoadSegment> {
+        self.network.as_ref().map(|n| n.branch_segments()).unwrap_or_default()
+    }
+
     /// The spec this circuit's chute was stamped with, read back from its geometry: the merge waypoint, the side,
     /// the pad width and surface, and the grid pattern. The pad length is not stored, so it is the default one.
     /// `None` without a chute, or when the geometry no longer matches a stamp (the merge is not on a waypoint).

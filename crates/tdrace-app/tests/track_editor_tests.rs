@@ -2880,3 +2880,123 @@ fn test_editor_network_branch_filtering_preserves_main_layout_segments() {
     let branch_ids: Vec<SegmentId> = branches.iter().map(|s| s.id).collect();
     assert_eq!(branch_ids, vec![SegmentId(2), SegmentId(5)]);
 }
+
+#[test]
+fn test_wall_suppression_diagnostics_on_road_conflict() {
+    use tdrace_app::editor::inspector::{build_inspector, Row};
+    use tdrace_core::track::junction_kit::Side;
+    use tdrace_core::track::network::{RoadSegment, SegmentId, TrackNetwork, TrackLayout};
+
+    // 1. Test with official Kouvola RX track:
+    // At WP 25 (the joker split), the left wall conflicts with the joker branch segment.
+    let mut kouvola = tdrace_core::catalog::official_track("rally", "kouvola_rx");
+    kouvola.rebuild_geometry(4.0, BarrierType::TireWall);
+
+    assert!(
+        !kouvola.geometry.wall_suppressions.is_empty(),
+        "Kouvola RX geometry must record wall suppressions where main walls conflict with road clearance corridors"
+    );
+
+    // Kouvola has branch segment 2 (Joker)
+    let has_conflict_with_joker = kouvola
+        .geometry
+        .wall_suppressions
+        .iter()
+        .any(|r| r.conflicting_segment == SegmentId(2));
+    assert!(
+        has_conflict_with_joker,
+        "Kouvola RX must have at least one wall suppression record conflicting with SegmentId(2) (the Joker branch)"
+    );
+
+    // 2. Test inspector diagnostic warning badge and tooltip
+    let mut state = EditorState::new(kouvola);
+    let record = state.track.geometry.wall_suppressions.iter().find(|r| r.conflicting_segment == SegmentId(2)).unwrap();
+    let wp_idx = state
+        .track
+        .spline
+        .waypoints
+        .iter()
+        .enumerate()
+        .min_by(|(_, a), (_, b)| {
+            record
+                .distance_to_point(a.point)
+                .partial_cmp(&record.distance_to_point(b.point))
+                .unwrap()
+        })
+        .map(|(i, _)| i)
+        .expect("must find waypoint near suppressed wall");
+
+    // Ensure the waypoint has left_wall: true so the warning is triggered
+    state.track.spline.waypoints[wp_idx].left_wall = true;
+
+    // Select the waypoint
+    state.selection = Selection::Waypoint(wp_idx);
+    let tools = ToolSettings::default();
+    let model = build_inspector(&state, &tools).expect("inspector model must exist for selected waypoint");
+
+    let edges_section = model
+        .sections
+        .iter()
+        .find(|s| s.id == "wp.edges")
+        .expect("wp.edges section must exist");
+
+    let warning_row = edges_section.rows.iter().find(|r| matches!(r, Row::Warning { .. }));
+    assert!(
+        warning_row.is_some(),
+        "Waypoint near suppressed wall must display a Warning badge in wp.edges section"
+    );
+
+    if let Some(Row::Warning { text, tooltip }) = warning_row {
+        assert!(text.contains("suppressed"), "Warning text must mention suppression: {text}");
+        assert!(
+            tooltip.as_ref().is_some_and(|t| t.contains("clearance conflict")),
+            "Warning tooltip must explain clearance conflict: {:?}",
+            tooltip
+        );
+    }
+
+    // 3. Synthetic test: straight road with a branching road slicing through its left wall corridor
+    let wps_main = vec![
+        TrackWaypoint::new(Vec2::new(0.0, 0.0), 10.0),
+        TrackWaypoint::new(Vec2::new(50.0, 0.0), 10.0),
+        TrackWaypoint::new(Vec2::new(100.0, 0.0), 10.0),
+        TrackWaypoint::new(Vec2::new(150.0, 0.0), 10.0),
+    ];
+    let mut synthetic = Track::default();
+    synthetic.spline = TrackSpline::new(wps_main.clone(), false);
+
+    let seg_main = RoadSegment::new(SegmentId(0), "Main", wps_main);
+    // Branch slices through left side at x=50, y=0..40
+    let wps_branch = vec![
+        TrackWaypoint::new(Vec2::new(50.0, 0.0), 10.0),
+        TrackWaypoint::new(Vec2::new(50.0, 40.0), 10.0),
+    ];
+    let seg_branch = RoadSegment::new(SegmentId(1), "CrossBranch", wps_branch);
+
+    let mut net = TrackNetwork::new();
+    net.segments = vec![seg_main, seg_branch];
+    net.layouts = vec![
+        TrackLayout {
+            id: "main".into(),
+            display_name: "Main".into(),
+            entry_segment: None,
+            segment_sequence: vec![SegmentId(0)],
+            is_closed: false,
+            total_lap_length: 150.0,
+            start_finish_segment: SegmentId(0),
+            checkpoint_ids: Vec::new(),
+        },
+    ];
+    net.default_layout_id = "main".into();
+    synthetic.network = Some(net);
+
+    synthetic.rebuild_geometry(4.0, BarrierType::TireWall);
+    assert!(
+        synthetic
+            .geometry
+            .wall_suppressions
+            .iter()
+            .any(|r| r.conflicting_segment == SegmentId(1) && r.side == Side::Left),
+        "Synthetic track compilation must record left wall suppression with SegmentId(1)"
+    );
+}

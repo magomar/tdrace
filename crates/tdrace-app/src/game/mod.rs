@@ -1085,7 +1085,7 @@ impl RaceSession {
     /// Whether acrobatic stunt scoring and floating HUD stunt alerts are active.
     ///
     /// Enabled for the Classic Arcade module (`"classic"`), and disabled for
-    /// realistic motorsport disciplines (`"gt"`, `"nascar"`, `"rally"`, `"kart"`, etc.),
+    /// realistic motorsport disciplines (`"gt"`, `"nascar"`, `"rallycross"`, `"kart"`, etc.),
     /// unless an explicit manual override has been set.
     #[inline]
     pub fn is_stunt_scoring_enabled(&self) -> bool {
@@ -1720,7 +1720,16 @@ impl RaceSession {
 
     /// Synchronizes active_career_progress with the current active_module_id from the database or default fallback.
     pub fn sync_career_progress_for_active_module(&mut self) {
-        if let Some(existing) = self.profile_module_progress.get(self.active_module_id) {
+        let alias = if self.active_module_id == "rallycross" {
+            Some("rally")
+        } else if self.active_module_id == "rally" {
+            Some("rallycross")
+        } else {
+            None
+        };
+        if let Some(existing) = self.profile_module_progress.get(self.active_module_id)
+            .or_else(|| alias.and_then(|a| self.profile_module_progress.get(a)))
+        {
             self.active_career_progress = existing.clone();
             return;
         }
@@ -1808,7 +1817,7 @@ impl RaceSession {
     pub fn current_race_required_tier(&self) -> u8 {
         let max_tier = if self.active_module_id == "extreme_offroad" {
             7
-        } else if self.active_module_id == "rally" || self.active_module_id == "kart" {
+        } else if self.active_module_id == "rally" || self.active_module_id == "rallycross" || self.active_module_id == "kart" {
             6
         } else {
             5
@@ -1843,7 +1852,7 @@ impl RaceSession {
             ],
             "nascar" => vec![CarChoice::StockCar],
             "extreme_offroad" => vec![CarChoice::SandRail],
-            "rally" => vec![CarChoice::RallyCar],
+            "rally" | "rallycross" | "rx" => vec![CarChoice::RallyCar],
             "kart" => vec![CarChoice::Kart],
             "classic" => vec![
                 CarChoice::SportsCar,
@@ -1919,7 +1928,7 @@ impl RaceSession {
         match effective_module {
             "gt" | "gt_challenge" => EngineSoundType::Gt4Clubsport,
             "nascar" => EngineSoundType::LateModelV8,
-            "rally" => EngineSoundType::CrossCarMotorcycle,
+            "rally" | "rallycross" | "rx" => EngineSoundType::CrossCarMotorcycle,
             "kart" => EngineSoundType::KartCadet60,
             "extreme_offroad" => EngineSoundType::SandRailBoxer,
             _ => self.active_player_car_choice().sound_type(),
@@ -1985,7 +1994,7 @@ impl RaceSession {
                 "nascar" => vec![CarChoice::StockCar],
                 "extreme_offroad" => vec![CarChoice::SandRail],
                 "autocross" => vec![CarChoice::CrossCar],
-                "rally" => vec![CarChoice::RallyCar],
+                "rally" | "rallycross" | "rx" => vec![CarChoice::RallyCar],
                 "kart" => vec![CarChoice::Kart],
                 _ => vec![CarChoice::classic_car_for_category(cat)],
             }
@@ -2138,7 +2147,7 @@ impl RaceSession {
         let effective_mod = self.track.module_id.as_deref().unwrap_or(self.active_module_id);
         match effective_mod {
             "gt" | "gt_challenge" => GtWorldChallengeModule::new().drivers(),
-            "rally" => RallyGameModule::new().drivers(),
+            "rally" | "rallycross" | "rx" => RallyGameModule::new().drivers(),
             "kart" => KartGameModule::new().drivers(),
             "nascar" => NascarGameModule::new().drivers(),
             "extreme_offroad" => ExtremeOffRoadModule::new().drivers(),
@@ -2157,7 +2166,7 @@ impl RaceSession {
                 (CarChoice::GT1Legend.title(), CarChoice::GT1Legend.tag(), CarChoice::GT1Legend.description(), CarChoice::GT1Legend.stats()),
                 (CarChoice::HypercarPrototype.title(), CarChoice::HypercarPrototype.tag(), CarChoice::HypercarPrototype.description(), CarChoice::HypercarPrototype.stats()),
             ],
-            "rally" => vec![
+            "rally" | "rallycross" | "rx" => vec![
                 (CarChoice::RallyCar.title(), CarChoice::RallyCar.tag(), CarChoice::RallyCar.description(), CarChoice::RallyCar.stats()),
                 ("Group B Turbo Monster", "GROUP B LEGEND", "520 BHP 1980s twin-charge monster with flame-spitting anti-lag.", (0.95, 0.98, 0.75, 0.98)),
             ],
@@ -2253,7 +2262,7 @@ impl RaceSession {
         match mod_id {
             "nascar" => self.switch_to_nascar(),
             "gt" | "gt_challenge" => self.switch_to_gt(),
-            "rally" => self.switch_to_rally(),
+            "rally" | "rallycross" | "rx" => self.switch_to_rallycross(),
             "kart" => self.switch_to_kart(),
             "extreme_offroad" | "offroad" => self.switch_to_extreme_offroad(),
             "autocross" => self.switch_to_autocross(),
@@ -2658,9 +2667,9 @@ impl RaceSession {
     }
 
     /// Activates the Rallycross World Cup module.
-    pub fn switch_to_rally(&mut self) {
-        self.apply_module_config("rally");
-        self.active_module_id = "rally";
+    pub fn switch_to_rallycross(&mut self) {
+        self.apply_module_config("rallycross");
+        self.active_module_id = "rallycross";
         self.sync_career_progress_for_active_module();
         self.menu_track_idx = 0;
         self.menu_car_idx = 0;
@@ -3086,8 +3095,13 @@ impl RaceSession {
         self.init_race();
     }
 
+    /// Activates the Rallycross World Cup module (legacy alias for `switch_to_rallycross`).
+    pub fn switch_to_rally(&mut self) {
+        self.switch_to_rallycross();
+    }
+
     /// Launches a Rallycross Career Championship Cup for the given tier (1..=6).
-    pub fn start_rally_career_tier(&mut self, tier: u32) {
+    pub fn start_rallycross_career_tier(&mut self, tier: u32) {
         let (cup_name, track_ids) = match tier {
             1 => (
                 "Rallycross Grassroots Cup (Tier 1)",
@@ -3219,19 +3233,19 @@ impl RaceSession {
             c
         };
         let prev_selected = self.selected_car_model_id;
-        self.switch_to_rally();
+        self.switch_to_rallycross();
         self.game_mode = GameMode::Career;
 
         let selected_model = prev_selected
             .and_then(crate::catalog::find_model_by_id)
-            .filter(|m| m.module_id == "rally" && m.tier == tier as u8 && self.active_career_progress.is_car_unlocked(m.id, self.is_dev_mode()))
+            .filter(|m| (m.module_id == "rallycross" || m.module_id == "rally") && m.tier == tier as u8 && self.active_career_progress.is_car_unlocked(m.id, self.is_dev_mode()))
             .or_else(|| {
-                crate::catalog::get_models_for_module_and_tier("rally", tier as u8)
+                crate::catalog::get_models_for_module_and_tier("rallycross", tier as u8)
                     .into_iter()
                     .find(|m| self.active_career_progress.is_car_unlocked(m.id, self.is_dev_mode()))
             })
             .or_else(|| {
-                crate::catalog::get_models_for_module_and_tier("rally", tier as u8)
+                crate::catalog::get_models_for_module_and_tier("rallycross", tier as u8)
                     .into_iter()
                     .next()
             });
@@ -3253,6 +3267,7 @@ impl RaceSession {
         if let Some(db) = &self.hof_db {
             let _ = db.save_module_progress(&self.active_career_progress);
         }
+        self.profile_module_progress.insert("rallycross".to_string(), self.active_career_progress.clone());
         self.profile_module_progress.insert("rally".to_string(), self.active_career_progress.clone());
 
         if let Some(track_id) = self.championship_session.as_ref().and_then(|c| c.current_track_id()) {
@@ -3262,6 +3277,11 @@ impl RaceSession {
             }
         }
         self.init_race();
+    }
+
+    /// Launches a Rallycross Career Championship Cup (legacy alias for `start_rallycross_career_tier`).
+    pub fn start_rally_career_tier(&mut self, tier: u32) {
+        self.start_rallycross_career_tier(tier);
     }
 
     /// Launches a Karting Career Championship Cup for the given tier (1..=6).
@@ -4149,7 +4169,7 @@ impl RaceSession {
             let module_opponents: Vec<DriverCharacter> = match effective_module {
                 "classic" => ClassicGameModule::new().drivers(),
                 "gt" | "gt_challenge" => GtWorldChallengeModule::new().drivers(),
-                "rally" => RallyGameModule::new().drivers(),
+                "rally" | "rallycross" | "rx" => RallyGameModule::new().drivers(),
                 "kart" => KartGameModule::new().drivers(),
                 "nascar" => NascarGameModule::new().drivers(),
                 "extreme_offroad" => ExtremeOffRoadModule::new().drivers(),
@@ -4396,7 +4416,7 @@ impl RaceSession {
 
         let max_tier = if effective_module == "extreme_offroad" {
             7
-        } else if effective_module == "rally" || effective_module == "kart" {
+        } else if effective_module == "rally" || effective_module == "rallycross" || effective_module == "kart" {
             6
         } else {
             5
@@ -4889,7 +4909,7 @@ impl RaceSession {
             let mut fallback_pool = match effective_module {
                 "classic" => ClassicGameModule::new().drivers(),
                 "gt" | "gt_challenge" => GtWorldChallengeModule::new().drivers(),
-                "rally" => RallyGameModule::new().drivers(),
+                "rally" | "rallycross" | "rx" => RallyGameModule::new().drivers(),
                 "kart" => KartGameModule::new().drivers(),
                 "nascar" => NascarGameModule::new().drivers(),
                 "extreme_offroad" => ExtremeOffRoadModule::new().drivers(),
@@ -5223,7 +5243,7 @@ impl RaceSession {
                 if let GameState::ModuleSelect { selected_idx } = self.state {
                     match selected_idx {
                         1 => self.switch_to_classic(),
-                        2 => self.switch_to_rally(),
+                        2 => self.switch_to_rallycross(),
                         3 => self.switch_to_kart(),
                         4 => self.switch_to_gt(),
                         5 => self.switch_to_nascar(),
@@ -5238,7 +5258,7 @@ impl RaceSession {
                 if let GameState::ModuleSelect { selected_idx } = self.state {
                     match selected_idx {
                         1 => self.switch_to_classic(),
-                        2 => self.switch_to_rally(),
+                        2 => self.switch_to_rallycross(),
                         3 => self.switch_to_kart(),
                         4 => self.switch_to_gt(),
                         5 => self.switch_to_nascar(),
@@ -7360,7 +7380,7 @@ impl RaceSession {
             // Feeder Ladder Promotion Invariant (Spec 053, 060)
             let promo_grade = match award.module_id.as_str() {
                 "kart" => Some(LicenseGrade::ClassC),
-                "autocross" | "ax" | "rally" | "rx" => Some(LicenseGrade::ClassB),
+                "autocross" | "ax" | "rally" | "rallycross" | "rx" => Some(LicenseGrade::ClassB),
                 "nascar" | "stock" | "extreme_offroad" | "offroad" => Some(LicenseGrade::ClassA),
                 _ => None,
             };
@@ -10426,6 +10446,13 @@ impl RaceSession {
     fn stash_active_career_progress(&mut self) {
         self.profile_module_progress
             .insert(self.active_career_progress.module_id.clone(), self.active_career_progress.clone());
+        if self.active_career_progress.module_id == "rallycross" {
+            self.profile_module_progress
+                .insert("rally".to_string(), self.active_career_progress.clone());
+        } else if self.active_career_progress.module_id == "rally" {
+            self.profile_module_progress
+                .insert("rallycross".to_string(), self.active_career_progress.clone());
+        }
     }
 
     /// Shows another discipline's cars in the Garage with that discipline's own XP, unlocks and
@@ -10713,7 +10740,7 @@ impl RaceSession {
             let key_module = if is_key_pressed(KeyCode::Key1) {
                 Some("gt")
             } else if is_key_pressed(KeyCode::Key2) {
-                Some("rally")
+                Some("rallycross")
             } else if is_key_pressed(KeyCode::Key3) {
                 Some("kart")
             } else if is_key_pressed(KeyCode::Key4) {
@@ -11553,7 +11580,7 @@ impl RaceSession {
                     self.start_extreme_offroad_championship();
                     return;
                 }
-                "rally" => {
+                "rally" | "rallycross" | "rx" => {
                     self.init_race();
                     return;
                 }
@@ -11726,7 +11753,7 @@ impl RaceSession {
                     .unwrap_or(self.active_module_id);
                 let target_mod = match effective_module {
                     "gt" | "gt_challenge" => "gt",
-                    "rally" => "rally",
+                    "rally" | "rallycross" | "rx" => "rallycross",
                     "kart" => "kart",
                     "nascar" => "nascar",
                     "extreme_offroad" => "extreme_offroad",
@@ -14160,7 +14187,7 @@ impl RaceSession {
             } => {
                 let (mod_title, mod_accent) = match self.active_module_id {
                     "gt" | "gt_challenge" => ("GRAND TOURING CHALLENGE", Palette::RED),
-                    "rally" => ("RALLYCROSS WORLD CUP", Palette::NEON_GOLD),
+                    "rally" | "rallycross" | "rx" => ("RALLYCROSS WORLD CUP", Palette::NEON_GOLD),
                     "kart" => ("KARTING WORLD CUP", Palette::NEON_GREEN),
                     "nascar" => ("STOCK CAR RACING", Palette::YELLOW),
                     "extreme_offroad" => ("EXTREME OFF-ROAD & STUNT ARENAS", Color::new(1.0, 0.40, 0.05, 1.0)),
@@ -14258,7 +14285,7 @@ impl RaceSession {
                     MenuCategoryFilter::Custom => ("CUSTOM CIRCUITS CATALOG", "Community & User Authored Circuits"),
                     _ => match display_module {
                         "gt" | "gt_challenge" => ("GRAND TOURING CHALLENGE", "Continental GT3 & Biturbo World Tour"),
-                        "rally" => ("RALLYCROSS WORLD CUP", "World & Continental Rallycross Mixed Surface Stages"),
+                        "rally" | "rallycross" | "rx" => ("RALLYCROSS WORLD CUP", "World & Continental Rallycross Mixed Surface Stages"),
                         "kart" => ("KARTING WORLD CUP", "125cc Direct Steering Shifter Karts"),
                         "nascar" => ("STOCK CAR RACING", "850 BHP Pushrod V8 High-Banked Superspeedways"),
                         "extreme_offroad" => ("EXTREME OFF-ROAD & STUNT ARENAS", "Sonora Deserts, Ice Lakes, Supercross Triples & Stunt Arenas"),
@@ -14321,7 +14348,7 @@ impl RaceSession {
             GameState::ModuleSelect { selected_idx } => {
                 let mut modules_data = vec![
                     ("classic", "Classic Arcade Motorsport", "All-in-one arcade racing, time trials & CAD circuit studio workshop", Palette::NEON_CYAN),
-                    ("rally", "Rallycross World Cup", "Mixed-surface sprint heats, jumps & high-sliding dirt circuits", Palette::NEON_GOLD),
+                    ("rallycross", "Rallycross World Cup", "Mixed-surface sprint heats, jumps & high-sliding dirt circuits", Palette::NEON_GOLD),
                     ("kart", "Karting World Cup", "Direct 1:1 steering, tight chicanes & elimination tournament heats", Palette::NEON_GREEN),
                     ("gt", "Grand Touring Challenge", "High-downforce endurance & sprint racing on world grand prix circuits", Palette::RED),
                     ("nascar", "Stock Car Racing & Trans-National TA1", "High-speed pack drafting, banked tri-ovals & iconic road courses", Color::new(1.0, 0.82, 0.08, 1.0)),
@@ -15135,7 +15162,7 @@ impl RaceSession {
                 } else {
                     match mod_id.as_str() {
                         "nascar" => self.start_nascar_career_tier(card.tier),
-                        "rally" => self.start_rally_career_tier(card.tier),
+                        "rally" | "rallycross" | "rx" => self.start_rallycross_career_tier(card.tier),
                         "kart" => self.start_kart_career_tier(card.tier),
                         "extreme_offroad" => self.start_extreme_offroad_career_tier(card.tier),
                         "autocross" => self.start_autocross_career_tier(card.tier),
