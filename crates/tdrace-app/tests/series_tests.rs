@@ -412,7 +412,7 @@ fn test_all_motorsport_modules_tiers_1_to_5_specifications() {
             ],
         ),
         (
-            "rally",
+            "rallycross",
             vec![
                 (1, "rally_grassroots_cup", 5, "rally_gallia_200_t1"),
                 (2, "rally_supercar_lites_trophy", 6, "rally_nordic_rx_lites_t2"),
@@ -462,7 +462,7 @@ fn test_all_motorsport_modules_tiers_1_to_5_specifications() {
             .filter(|c| c.series.module_id == module_id)
             .collect();
 
-        let expected_count = if module_id == "rally" {
+        let expected_count = if module_id == "rally" || module_id == "rallycross" {
             expected_tiers.len() + 1
         } else {
             expected_tiers.len()
@@ -475,7 +475,7 @@ fn test_all_motorsport_modules_tiers_1_to_5_specifications() {
             expected_count
         );
 
-        if module_id == "rally" {
+        if module_id == "rally" || module_id == "rallycross" {
             let heritage = mgr.get("rally_group_b_masters").expect("Heritage championship must exist");
             assert_eq!(heritage.series.tier, 0);
             assert_eq!(heritage.rounds.len(), 9);

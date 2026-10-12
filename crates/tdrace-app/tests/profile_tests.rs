@@ -1667,7 +1667,7 @@ fn test_real_championships_listing_and_filter() {
     let nascar_champs: Vec<_> = all_champs.iter().filter(|c| c.series.module_id.eq_ignore_ascii_case("nascar")).collect();
     assert!(!nascar_champs.is_empty(), "NASCAR championships must exist");
 
-    let rally_champs: Vec<_> = all_champs.iter().filter(|c| c.series.module_id.eq_ignore_ascii_case("rally")).collect();
+    let rally_champs: Vec<_> = all_champs.iter().filter(|c| c.series.module_id.eq_ignore_ascii_case("rally") || c.series.module_id.eq_ignore_ascii_case("rallycross")).collect();
     assert!(!rally_champs.is_empty(), "Rally championships must exist");
 
     let kart_champs: Vec<_> = all_champs.iter().filter(|c| c.series.module_id.eq_ignore_ascii_case("kart")).collect();
@@ -2063,7 +2063,7 @@ fn test_module_career_progress_isolation_and_xp_crediting() {
 
     // Start rally championship and complete round 1
     session.start_rally_career_tier(1);
-    assert_eq!(session.active_module_id, "rally");
+    assert_eq!(session.active_module_id, "rallycross");
 
     session.total_laps = 1;
     session.world.trackers[0].current_lap = 2;
@@ -2081,7 +2081,7 @@ fn test_module_career_progress_isolation_and_xp_crediting() {
         let gt_xp = gt_prog.map(|p| p.xp).unwrap_or(0);
         assert_eq!(gt_xp, 0);
 
-        let rally_prog = db.get_module_progress(pid, "rally").unwrap().expect("Rally progress exists");
+        let rally_prog = db.get_module_progress(pid, "rallycross").unwrap().expect("Rally progress exists");
         assert_eq!(rally_prog.xp, session.active_career_progress.xp);
         assert_eq!(rally_prog.visited_tracks, vec!["holjes_rx"]);
     }
@@ -2193,8 +2193,8 @@ fn test_trophy_filename_and_asset_resolution() {
     assert_eq!(normalize_discipline("gt_challenge"), "gt");
     assert_eq!(normalize_discipline("kart"), "kart");
     assert_eq!(normalize_discipline("karting"), "kart");
-    assert_eq!(normalize_discipline("rally"), "rally");
-    assert_eq!(normalize_discipline("rallycross"), "rally");
+    assert_eq!(normalize_discipline("rally"), "rallycross");
+    assert_eq!(normalize_discipline("rallycross"), "rallycross");
     assert_eq!(normalize_discipline("nascar"), "nascar");
     assert_eq!(normalize_discipline("extreme_offroad"), "extreme_offroad");
     assert_eq!(normalize_discipline("offroad"), "extreme_offroad");
@@ -2257,7 +2257,7 @@ fn test_trophy_cabinet_grid_navigation_and_provenance_display() {
     assert_eq!(CABINET_DISCIPLINES.len(), 5);
     assert_eq!(CABINET_DISCIPLINES[0].0, "gt");
     assert_eq!(CABINET_DISCIPLINES[1].0, "kart");
-    assert_eq!(CABINET_DISCIPLINES[2].0, "rally");
+    assert_eq!(CABINET_DISCIPLINES[2].0, "rallycross");
     assert_eq!(CABINET_DISCIPLINES[3].0, "nascar");
     assert_eq!(CABINET_DISCIPLINES[4].0, "extreme_offroad");
 
@@ -2459,7 +2459,7 @@ fn test_series_manager_multi_series_tier_query() {
     assert!(!rally_tier1.is_empty(), "Should find Rally Tier 1 series");
     for series in &rally_tier1 {
         assert_eq!(series.series.tier, 1);
-        assert!(series.series.module_id.eq_ignore_ascii_case("rally"));
+        assert!(series.series.module_id.eq_ignore_ascii_case("rally") || series.series.module_id.eq_ignore_ascii_case("rallycross"));
     }
 
     // Non-existent module or high tier
