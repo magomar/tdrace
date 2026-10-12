@@ -126,6 +126,7 @@ impl TrackChoice {
                     && (crate::track_manager::TrackManager::is_preset_slug(id)
                         || path.starts_with("gt/")
                         || path.starts_with("rally/")
+                        || path.starts_with("rallycross/")
                         || path.starts_with("kart/")
                         || path.starts_with("nascar/")
                         || path.starts_with("extreme_offroad/")
@@ -148,7 +149,7 @@ fn official_circuit(id: &str) -> Option<&'static tdrace_core::catalog::EmbeddedC
 
 /// Module of a custom choice: from its `<module>/` path, else from the official catalog when the id is official.
 fn custom_module_of<'a>(id: &str, path: &'a str) -> Option<&'a str> {
-    ["rally", "gt", "kart", "nascar", "extreme_offroad", "autocross"]
+    ["rallycross", "rally", "gt", "kart", "nascar", "extreme_offroad", "autocross"]
         .into_iter()
         .find(|m| path.starts_with(&format!("{}/", m)) || path.contains(&format!("/{}/", m)))
         .or_else(|| {
@@ -162,7 +163,7 @@ fn custom_module_of<'a>(id: &str, path: &'a str) -> Option<&'a str> {
 fn module_label(module: &str) -> &'static str {
     match module {
         "gt" | "gt_challenge" => "GRAND TOURING CHALLENGE",
-        "rally" => "RALLYCROSS",
+        "rallycross" | "rally" | "rx" => "RALLYCROSS",
         "kart" => "KARTING",
         "nascar" => "STOCK CAR",
         "extreme_offroad" => "EXTREME OFF-ROAD",
@@ -263,8 +264,8 @@ fn resolve_track_for_menu_with_dir_uncached(
                 Some("gt")
             } else if path.starts_with("nascar/") {
                 Some("nascar")
-            } else if path.starts_with("rally/") {
-                Some("rally")
+            } else if path.starts_with("rally/") || path.starts_with("rallycross/") {
+                Some("rallycross")
             } else if path.starts_with("kart/") {
                 Some("kart")
             } else if path.starts_with("classic/") {
@@ -294,6 +295,7 @@ fn resolve_track_for_menu_with_dir_uncached(
         dir.join(&file_name),
         dir.join("classic").join(&file_name),
         dir.join("gt").join(&file_name),
+        dir.join("rallycross").join(&file_name),
         dir.join("rally").join(&file_name),
         dir.join("kart").join(&file_name),
         dir.join("nascar").join(&file_name),
@@ -377,6 +379,7 @@ fn resolve_track_for_menu_with_dir_uncached(
         let git_candidates = [
             git_tracks_dir.join("classic").join(&file_name),
             git_tracks_dir.join("gt").join(&file_name),
+            git_tracks_dir.join("rallycross").join(&file_name),
             git_tracks_dir.join("rally").join(&file_name),
             git_tracks_dir.join("kart").join(&file_name),
             git_tracks_dir.join("nascar").join(&file_name),
@@ -1045,7 +1048,7 @@ pub fn resolve_predefined_car_for_track(
     } else {
         match module_id {
             "gt" | "gt_challenge" => CarChoice::GT4Clubsport,
-            "rally" => CarChoice::RallyCar,
+            "rally" | "rallycross" | "rx" => CarChoice::RallyCar,
             "kart" => CarChoice::Kart,
             "nascar" => CarChoice::StockCar,
             "extreme_offroad" => CarChoice::SandRail,
@@ -1263,7 +1266,8 @@ pub enum MenuCategoryFilter {
     Classic,
     Kart,
     Autocross,
-    Rally,
+    #[serde(rename = "rallycross", alias = "rally", alias = "rx")]
+    Rallycross,
     Nascar,
     Gt,
     ExtremeOffroad,
@@ -1271,11 +1275,14 @@ pub enum MenuCategoryFilter {
 }
 
 impl MenuCategoryFilter {
+    #[allow(non_upper_case_globals)]
+    pub const Rally: Self = Self::Rallycross;
+
     pub const ALL: [Self; 8] = [
         Self::Classic,
         Self::Kart,
         Self::Autocross,
-        Self::Rally,
+        Self::Rallycross,
         Self::Nascar,
         Self::Gt,
         Self::ExtremeOffroad,
@@ -1287,7 +1294,7 @@ impl MenuCategoryFilter {
             Self::Classic => "CLASSIC",
             Self::Kart => "KART",
             Self::Autocross => "AUTOCROSS",
-            Self::Rally => "RALLY",
+            Self::Rallycross => "RALLYCROSS",
             Self::Nascar => "STOCK CAR",
             Self::Gt => "GT",
             Self::ExtremeOffroad => "OFF-ROAD",
@@ -1301,7 +1308,7 @@ impl MenuCategoryFilter {
             Self::Classic => Some("classic"),
             Self::Kart => Some("kart"),
             Self::Autocross => Some("autocross"),
-            Self::Rally => Some("rally"),
+            Self::Rallycross => Some("rallycross"),
             Self::Nascar => Some("nascar"),
             Self::Gt => Some("gt"),
             Self::ExtremeOffroad => Some("extreme_offroad"),
@@ -1327,7 +1334,7 @@ impl MenuCategoryFilter {
             "classic" => Self::Classic,
             "kart" => Self::Kart,
             "autocross" | "ax" => Self::Autocross,
-            "rally" => Self::Rally,
+            "rally" | "rallycross" | "rx" => Self::Rallycross,
             "nascar" => Self::Nascar,
             "gt" | "gt_challenge" => Self::Gt,
             "extreme_offroad" => Self::ExtremeOffroad,
@@ -3812,7 +3819,7 @@ pub fn render_module_select_menu(
             "classic" => {
                 draw_classic_arcade_icon(icon_cx, icon_cy, scaler.s(0.95), is_sel, *accent_col);
             }
-            "rally" => {
+            "rally" | "rallycross" | "rx" => {
                 let icon_scheme = CarColorScheme {
                     primary: *accent_col,
                     secondary: Palette::WHITE,
