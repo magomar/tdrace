@@ -531,10 +531,19 @@ pub fn install(track: &mut Track, compiled: CompiledBranch) {
 /// Stamps a launch chute (spec 103) again on a circuit whose branch network was just written. The stamp needs the
 /// circuit's walls, so it comes after the wall steps of the bake.
 pub fn restamp_chute(track: &mut Track, chute: Option<LaunchChuteSpec>) -> Result<(), String> {
-    match chute {
-        Some(spec) => track.stamp_launch_chute(&spec).map_err(|e| format!("launch chute: {e}")),
-        None => Ok(()),
+    let Some(mut spec) = chute else { return Ok(()) };
+    if track.stamp_launch_chute(&spec).is_ok() {
+        return Ok(());
     }
+    for pad_length in [50.0, 45.0, 40.0, 35.0] {
+        if (spec.pad_length - pad_length).abs() > 0.1 {
+            spec.pad_length = pad_length;
+            if track.stamp_launch_chute(&spec).is_ok() {
+                return Ok(());
+            }
+        }
+    }
+    track.place_launch_chute(&spec).map(|_| ()).map_err(|e| format!("launch chute: {e}"))
 }
 
 /// Installs a branch that the circuit does not have yet: drops the old network and joker checkpoints, writes the
@@ -728,7 +737,16 @@ pub fn build_walls(track: &Track, compiled: &CompiledBranch) -> Vec<WallBarrier>
     let merge_env = geom.merge.outer_envelope(main, layout.side, layout.road_width);
     let anchor_hit = |s: f32| {
         let c = main.sample_at_distance(s);
-        ray_wall_hit(c.point, c.normal * sigma, c.width * 0.5, ANCHOR_RAY_RANGE, main_walls)
+        let hit = ray_wall_hit(c.point, c.normal * sigma, c.width * 0.5, ANCHOR_RAY_RANGE, main_walls)?;
+        let proj = main.project_point(hit);
+        let mut diff = (proj.progress_distance - s).abs();
+        if main.closed {
+            diff = diff.min((main.total_length - diff).abs());
+        }
+        if diff > 25.0 {
+            return None;
+        }
+        Some(hit)
     };
     let mut split_chain = chain(&split_env, g_split, anchor_hit(layout.split.s), true);
     let mut merge_chain = chain(&merge_env, g_merge, anchor_hit(layout.merge.s), false);
