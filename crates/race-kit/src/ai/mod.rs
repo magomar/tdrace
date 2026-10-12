@@ -1399,7 +1399,7 @@ impl BotAiDriver {
                 let effective_grip = mu + bank_rad.tan().clamp(0.0, 0.75);
                 let m = self.human.corner_modifiers(scan_dist, spline.total_length());
                 let mut v_apex = (effective_grip * g * local_radius).sqrt() * self.profile.speed_factor * m.speed_mult;
-                let mut a_scan = a_brake;
+                let mut a_scan = a_brake * s0.surface.friction_coefficient().min(1.0);
                 // Spec 046 mistakes are set against the car's real grip, not the controller's
                 // conservative `mu`.
                 if m.over_limit > 0.0 {

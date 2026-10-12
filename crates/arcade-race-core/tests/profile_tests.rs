@@ -1,4 +1,4 @@
-//! # Classic Academy & Rookie Profile Unit Tests (Spec 060)
+//! # Classic Motor Academy & Rookie Profile Unit Tests (Spec 060)
 
 use arcade_race_core::profile::{
     AcademyAttemptResult, AcademyLessonDef, AcademyLessonId, AcademyMedal, AcademyObjective,
@@ -25,9 +25,9 @@ fn test_default_curriculum_structure() {
     let l4 = &curriculum[3];
     assert_eq!(l4.id, AcademyLessonId::Lesson4GraduationSprint);
     assert_eq!(l4.track_slug, "ax_meadow_sprint");
-    assert_eq!(l4.gold_time_sec, 104.8);
-    assert_eq!(l4.silver_time_sec, 114.0);
-    assert_eq!(l4.bronze_time_sec, 127.2);
+    assert_eq!(l4.gold_time_sec, 107.7);
+    assert_eq!(l4.silver_time_sec, 117.1);
+    assert_eq!(l4.bronze_time_sec, 130.7);
 }
 
 #[test]

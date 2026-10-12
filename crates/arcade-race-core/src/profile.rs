@@ -1,12 +1,12 @@
-//! # Driver Profile & Classic Academy Models
+//! # Driver Profile & Classic Motor Academy Models
 //!
-//! Provides the data models for the Classic Academy curriculum, lesson progress,
+//! Provides the data models for the Classic Motor Academy curriculum, lesson progress,
 //! medal achievements, and rookie racing license validation (Spec 060, Spec 064).
 
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
-/// Identifies the progressive lessons within the Classic Academy curriculum.
+/// Identifies the progressive lessons within the Classic Motor Academy curriculum.
 ///
 /// Tier 1 is the Class D course of Spec 060. Tier 2 (surface mastery) and Tier 3 (tyre discipline)
 /// are Spec 064. `index()` counts across all tiers, four lessons per tier.
@@ -282,9 +282,9 @@ impl AcademyLessonDef {
                 description: "Navigate asphalt-to-gravel transition, Scandinavian flick, and jump landings.".to_string(),
                 track_slug: "rx_quarry_sprint".to_string(),
                 car_slug: "classic_rally".to_string(),
-                gold_time_sec: 60.3,
-                silver_time_sec: 65.6,
-                bronze_time_sec: 73.2,
+                gold_time_sec: 59.4,
+                silver_time_sec: 64.6,
+                bronze_time_sec: 72.1,
                 bronze_credit_bounty: 2_000,
                 silver_credit_bounty: 1_000,
                 gold_credit_bounty: 1_000,
@@ -299,9 +299,9 @@ impl AcademyLessonDef {
                 description: "2-lap sprint race against the Academy Instructor pace car with clean overtaking.".to_string(),
                 track_slug: "ax_meadow_sprint".to_string(),
                 car_slug: "classic_ax_mudlark".to_string(),
-                gold_time_sec: 104.8,
-                silver_time_sec: 114.0,
-                bronze_time_sec: 127.2,
+                gold_time_sec: 107.7,
+                silver_time_sec: 117.1,
+                bronze_time_sec: 130.7,
                 bronze_credit_bounty: 2_500,
                 silver_credit_bounty: 1_500,
                 gold_credit_bounty: 1_500,
@@ -375,7 +375,7 @@ impl AcademyLessonDef {
                 "One lap with a clean landing off every big ramp.",
                 "at_dune_sea",
                 "classic_offroad",
-                (57.9, 62.9, 70.2),
+                (60.1, 65.4, 73.0),
                 350,
                 AcademySessionRules::basics(),
                 AcademyObjective::CleanLanding,
@@ -433,7 +433,7 @@ impl AcademyLessonDef {
                 "Five-lap oval stint. Keep the worst tyre under the cap.",
                 "stock_tri_oval_speedway",
                 "classic_nascar",
-                (193.4, 210.3, 234.7),
+                (190.4, 207.1, 231.1),
                 550,
                 AcademySessionRules::tyre_discipline(5),
                 AcademyObjective::WearCap { max_wear: 0.40 },
@@ -614,7 +614,7 @@ impl LicenseGrade {
     }
 }
 
-/// Global Classic Academy progress stored on the driver profile.
+/// Global Classic Motor Academy progress stored on the driver profile.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct ClassicAcademyProgress {
     pub lessons: HashMap<AcademyLessonId, AcademyLessonProgress>,

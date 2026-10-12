@@ -136,7 +136,7 @@ fn test_academy_all_bronze_progression_purse_and_unlocks() {
     assert_eq!(rookie.driver_xp, 450);
     assert!(rookie.academy_progress.is_lesson_unlocked(AcademyLessonId::Lesson3SurfaceTransition));
 
-    // Lesson 3: Bronze (target <= 73.2s)
+    // Lesson 3: Bronze (target <= 72.1s)
     let state3 = AcademyChallengeState::new(AcademyLessonId::Lesson3SurfaceTransition);
     let eval3 = academy::evaluate_academy_attempt(&mut rookie, AcademyLessonId::Lesson3SurfaceTransition, 66.9, &state3);
     assert_eq!(eval3.medal, AcademyMedal::Bronze);
@@ -337,7 +337,7 @@ fn test_classic_academy_selectable_in_modality_menu() {
 
     let items = ModalityCategory::SinglePlayer.items();
     assert_eq!(items[2], ModalityItem::CareerMode);
-    assert_eq!(ModalityItem::ClassicAcademy.title(), "Classic Academy");
+    assert_eq!(ModalityItem::ClassicAcademy.title(), "Classic Motor Academy");
     assert_eq!(ModalityItem::ClassicAcademy.tag(), "RACING LICENSE & SEED CASH");
 }
 
@@ -369,7 +369,7 @@ fn test_career_mode_locked_modal_when_unlicensed() {
         other => panic!("Expected ModalitySelect with LicenseRequired modal, got {:?}", other),
     }
 
-    // Confirming LicenseRequired modal enrolls player in Classic Academy
+    // Confirming LicenseRequired modal enrolls player in Classic Motor Academy
     tdrace_app::game::inject_key_presses_for_tests(&[macroquad::input::KeyCode::Enter]);
     session.update();
     tdrace_app::game::inject_key_presses_for_tests(&[]);
