@@ -2,6 +2,8 @@ use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
 use wheelbase::SurfaceType;
+use super::junction_kit::Side;
+use super::network::SegmentId;
 use super::scenery::{Building, Grandstand, Rock, Tree};
 use super::spline::TrackSpline;
 
@@ -350,6 +352,56 @@ impl WallBarrier {
             elevation: 0.0,
             is_bridge: false,
         }
+    }
+}
+
+/// Record of a wall segment pruned or suppressed due to clearance conflicts with adjacent roads (Spec 112).
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct WallSuppressionRecord {
+    /// Left or right wall relative to track spline.
+    pub side: Side,
+    /// Spatial span of the suppressed wall segment.
+    pub span: LineSegment,
+    /// ID of the adjacent road segment causing the clearance conflict.
+    pub conflicting_segment: SegmentId,
+    /// Arc-length progress distance on the track spline where suppression starts (m).
+    pub start_station: f32,
+    /// Arc-length progress distance on the track spline where suppression ends (m).
+    pub end_station: f32,
+}
+
+impl WallSuppressionRecord {
+    pub const fn new(
+        side: Side,
+        span: LineSegment,
+        conflicting_segment: SegmentId,
+        start_station: f32,
+        end_station: f32,
+    ) -> Self {
+        Self {
+            side,
+            span,
+            conflicting_segment,
+            start_station,
+            end_station,
+        }
+    }
+
+    /// Shortest distance from an arbitrary point to this suppressed wall span.
+    #[inline]
+    pub fn distance_to_point(&self, point: Vec2) -> f32 {
+        self.span.distance_to_point(point)
+    }
+
+    /// Whether this suppression covers or is within `margin` of a spline station `s`.
+    #[inline]
+    pub fn contains_station(&self, station: f32, margin: f32) -> bool {
+        let (lo, hi) = if self.start_station <= self.end_station {
+            (self.start_station, self.end_station)
+        } else {
+            (self.end_station, self.start_station)
+        };
+        station >= lo - margin && station <= hi + margin
     }
 }
 
@@ -1088,6 +1140,9 @@ pub struct TrackGeometry {
     /// `Track::generate_network_walls` and never saved.
     #[serde(default, skip_serializing)]
     pub network_walls: Vec<WallBarrier>,
+    /// Suppressed wall segments pruned by network clearance conflicts (Spec 112).
+    #[serde(default, skip_serializing)]
+    pub wall_suppressions: Vec<WallSuppressionRecord>,
 }
 
 impl TrackGeometry {
