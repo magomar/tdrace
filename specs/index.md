@@ -132,6 +132,7 @@ Table of contents providing progressive disclosure of project constitution and t
 | [109](109_classic_academy_tier_1_medal_target_recalibration.md) | Classic Academy Tier 1 Medal Target Recalibration | Feature Spec | `implemented` | `human:mario` | [060](060_classic_academy_and_grassroots_career_onboarding.md), [064](064_classic_module_multitier_academy_missions_and_degradation_curriculum.md) | Retargets the four Spec 060 Tier 1 lesson medal times from a headless reference run, because the shipped times (18.5 to 68 s) cannot be reached on the current circuits and nobody can graduate. Bounties, unlock rules and licences stay as they are. |
 | [110](110_mathematically_ideal_racing_line_visual_aid.md) | Mathematically Ideal Racing Line Visual Aid: Minimum-Curvature Trajectory, Dynamic Braking Zones, and Surface Ribbon Overlays | Feature Spec | `implemented` | `human:mario` | [037](037_player_car_visibility_aids_and_locator_mechanisms.md), [058](058_raceui_rendering_camera_effects_and_hud_primitives.md), [071](071_centripetal_catmullrom_and_variable_density_track_splines.md), [085](085_bifurcation_pacenote_hud_driving_aids_and_decluttered_track_junctions.md) | Formulates, solves, and renders a mathematically optimal racing line visual aid along the circuit ribbon using constrained minimum-curvature quadratic optimization and forward-backward velocity profiling, featuring dynamic vehicle-relative braking cues, in-race hotkey toggles, and Settings > Gameplay > Visual Aids configuration. |
 | [111](111_racing_number_placement_by_car_type.md) | Racing Number Placement by Car Type | Feature Spec | `implemented` | `human:mario` | [092](092_player_racing_number_customization_and_persistent_nonconflicting_bot_rosters.md) | Makes the racing number on the car smaller and puts it where each kind of car carries it: no number on karts, on the bonnet of buggies and GT cars, on the middle of the roof of stock cars and rally cars. |
+| [112](112_junction_throat_wall_diagnostics_adaptive_median_barriers_and_runoff_consistency.md) | Junction Throat Wall Diagnostics, Adaptive Median Barriers, and Runoff Consistency | Architecture Spec | `draft` | — | [081](081_rallycross_joker_lap_segments_for_classic_and_openstreetmap_circuits.md), [085](085_bifurcation_pacenote_hud_driving_aids_and_decluttered_track_junctions.md), [102](102_predefined_junction_components_for_road_splits_and_joker_loops.md) | Establishes track editor diagnostics and warnings for walls pruned by road clearance conflicts, harmonizes runoff shoulder geometry by eliminating phantom gravel corridors where walls are pruned, and introduces adaptive median barriers and throat bridge connectors to close outer corner wall gaps across road bifurcations. |
 
 ### 🗺️ Specification Dependency Graph
 
@@ -174,7 +175,7 @@ flowchart LR
     080["080: Curvature-Aware Track Boundary Geometry, Swallowtail Pinch Elimination, and Global Circuit Validation"]
     081["081: Rallycross Joker Lap Segments for Classic and OpenStreetMap Circuits"]
     082["082: Mandatory Rallycross Joker Lap Tracking and Penalty Enforcement"]
-    083["083: EvoRL Bot Driving Style, Performance, and Tactical Racecraft Optimization"]
+    083["083: EvoRL Bot Performance Calibration on the Launch Circuits"]
     085["085: Bifurcation Pacenote HUD Driving Aids and De-Cluttered Track Junctions"]
     086["086: Compact Track Studio Inspector with Unified Single and Multi-Selection Editing"]
     087["087: TDRace Codex: Unified Game Encyclopedia and Technical Reference Portal"]
@@ -201,6 +202,7 @@ flowchart LR
     109["109: Classic Academy Tier 1 Medal Target Recalibration"]
     110["110: Mathematically Ideal Racing Line Visual Aid: Minimum-Curvature Trajectory, Dynamic Braking Zones, and Surface Ribbon Overlays"]
     111["111: Racing Number Placement by Car Type"]
+    112["112: Junction Throat Wall Diagnostics, Adaptive Median Barriers, and Runoff Consistency"]
     055 --> 047
     062 --> 063
     055 --> 064
@@ -291,4 +293,7 @@ flowchart LR
     071 --> 110
     085 --> 110
     092 --> 111
+    081 --> 112
+    085 --> 112
+    102 --> 112
 ```
