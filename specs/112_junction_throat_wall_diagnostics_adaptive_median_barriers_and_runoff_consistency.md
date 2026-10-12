@@ -3,7 +3,8 @@ type: Architecture Spec
 template: architecture
 title: "Junction Throat Wall Diagnostics, Adaptive Median Barriers, and Runoff Consistency"
 description: "Establishes track editor diagnostics and warnings for walls pruned by road clearance conflicts, harmonizes runoff shoulder geometry by eliminating phantom gravel corridors where walls are pruned, and introduces adaptive median barriers and throat bridge connectors to close outer corner wall gaps across road bifurcations."
-status: in_progress
+status: implemented
+receipt: "docs/receipts/spec-112-receipt.md"
 created: 2026-10-12
 generated: { by: agent/antigravity, at: 2026-10-12T17:52:38Z }
 verified: { by: human:mario, at: 2026-10-12T18:59:21Z, hash: "16f0a92cc400" }
@@ -124,28 +125,28 @@ flowchart TD
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Track Studio displays inline warning for suppressed walls**
-  - [ ] **Given** a track network containing a split junction (e.g. Kouvola RX WP 25)
-  - [ ] **When** the author opens Track Studio and selects the junction waypoint with `left_wall: true`
-  - [ ] **Then** the Waypoint Inspector displays a warning badge indicating that the left wall was suppressed due to clearance conflict with the branch segment
-  - [ ] **And** the 2D viewport draws a dashed ghost wireframe indicating where the wall was pruned
+  - [x] **Given** a track network containing a split junction (e.g. Kouvola RX WP 25)
+  - [x] **When** the author opens Track Studio and selects the junction waypoint with `left_wall: true`
+  - [x] **Then** the Waypoint Inspector displays a warning badge indicating that the left wall was suppressed due to clearance conflict with the branch segment
+  - [x] **And** the 2D viewport draws a dashed ghost wireframe indicating where the wall was pruned
 
 - **Scenario: Runoff shoulder tapers smoothly without phantom dead-ends**
-  - [ ] **Given** a track where a wall is pruned at a junction throat
-  - [ ] **When** rendering the track runoff pass in `race-ui`
-  - [ ] **Then** the gravel runoff shoulder tapers smoothly to 0 m width at the junction edge
-  - [ ] **And** no detached gravel polygon extends into open grass beyond the pruned wall boundary
+  - [x] **Given** a track where a wall is pruned at a junction throat
+  - [x] **When** rendering the track runoff pass in `race-ui`
+  - [x] **Then** the gravel runoff shoulder tapers smoothly to 0 m width at the junction edge
+  - [x] **And** no detached gravel polygon extends into open grass beyond the pruned wall boundary
 
 - **Scenario: Adaptive median barrier closes the gore wedge**
-  - [ ] **Given** a split junction where two roads diverge at an angle $< 60^\circ$
-  - [ ] **When** track geometry is baked
-  - [ ] **Then** an adaptive median barrier is placed along the gore wedge starting as soon as clearance $G(t) \ge 2.2\text{ m}$
-  - [ ] **And** the barrier maintains at least $0.3\text{ m}$ clearance from both road edges
+  - [x] **Given** a split junction where two roads diverge at an angle $< 60^\circ$
+  - [x] **When** track geometry is baked
+  - [x] **Then** an adaptive median barrier is placed along the gore wedge starting as soon as clearance $G(t) \ge 2.2\text{ m}$
+  - [x] **And** the barrier maintains at least $0.3\text{ m}$ clearance from both road edges
 
 - **Scenario: Outer corner throat gap is bridged**
-  - [ ] **Given** an RX split or merge throat where the main outer wall stops at the branch edge
-  - [ ] **When** track geometry is baked
-  - [ ] **Then** a connecting throat bridge links the main wall end to the branch outer wall end
-  - [ ] **And** no car can slip through the outer throat corner into off-track voids
+  - [x] **Given** an RX split or merge throat where the main outer wall stops at the branch edge
+  - [x] **When** track geometry is baked
+  - [x] **Then** a connecting throat bridge links the main wall end to the branch outer wall end
+  - [x] **And** no car can slip through the outer throat corner into off-track voids
 
 ---
 
@@ -153,10 +154,10 @@ flowchart TD
 
 ### Created/Modified Files
 
-- `[ ]` `crates/arcade-race-core/src/track/mod.rs` $\to$ Adds `WallSuppressionRecord`, tracking in `trim_walls_for_network`, adaptive median barrier generation, and outer throat funnel bridges.
-- `[ ]` `crates/arcade-race-core/src/track/network.rs` $\to$ Exposes clearance gap calculation $G(t)$ across diverging roads.
-- `[ ]` `crates/race-ui/src/render/track.rs` $\to$ Updates `render_runoff_pass_filtered` to taper runoff width where walls are suppressed.
-- `[ ]` `crates/tdrace-app/src/editor/panels.rs` $\to$ Renders `WallSuppressionRecord` warning badge and tooltip in Waypoint Inspector.
-- `[ ]` `crates/tdrace-app/src/editor/tools.rs` $\to$ Renders dashed ghost wall wireframes and clearance exclusion buffer gizmos.
-- `[ ]` `crates/tdrace-app/tests/track_editor_tests.rs` $\to$ Unit tests for editor diagnostic warnings and ghost gizmos.
-- `[ ]` `crates/tdrace-app/tests/rally_tracks_tests.rs` $\to$ Integration tests verifying throat closure across all 23 RX circuits.
+- `[x]` `crates/arcade-race-core/src/track/mod.rs` $\to$ Adds `WallSuppressionRecord`, tracking in `trim_walls_for_network`, adaptive median barrier generation, and outer throat funnel bridges.
+- `[x]` `crates/arcade-race-core/src/track/network.rs` $\to$ Exposes clearance gap calculation $G(t)$ across diverging roads.
+- `[x]` `crates/race-ui/src/render/track.rs` $\to$ Updates `render_runoff_pass_filtered` to taper runoff width where walls are suppressed.
+- `[x]` `crates/tdrace-app/src/editor/inspector.rs` $\to$ Renders `WallSuppressionRecord` warning badge and tooltip in Waypoint Inspector.
+- `[x]` `crates/tdrace-app/src/editor/tools.rs` $\to$ Renders dashed ghost wall wireframes and clearance exclusion buffer gizmos.
+- `[x]` `crates/tdrace-app/tests/track_editor_tests.rs` $\to$ Unit tests for editor diagnostic warnings and ghost gizmos.
+- `[x]` `crates/tdrace-app/tests/rally_tracks_tests.rs` $\to$ Integration tests verifying throat closure across all 23 RX circuits.
