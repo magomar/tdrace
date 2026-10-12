@@ -226,7 +226,7 @@ use crate::render::ghost::{render_ghost_car, GhostRecorder};
 use crate::render::{
     compute_adaptive_alpha, render_elevated_barriers_and_obstacles,
     render_elevated_barriers_and_obstacles_culled, render_elevated_track,
-    render_elevated_track_culled, render_floating_bot_nameplates,
+    render_elevated_track_culled, render_floating_bot_nameplates_ext,
     render_building_shadows_culled, render_buildings_culled,
     render_grandstand_shadows_culled, render_grandstands_culled,
     render_ground_barriers_and_obstacles, render_ground_barriers_and_obstacles_culled,
@@ -1424,6 +1424,10 @@ impl RaceSession {
             radar_sonar_ping: self.config.player_helpers.radar_sonar_ping,
             racing_line_mode: self.config.player_helpers.racing_line_mode.to_index(),
             racing_line_opacity: self.config.player_helpers.racing_line_opacity,
+            bot_nameplates_enabled: self.config.player_helpers.bot_nameplates,
+            bot_nameplates_max_visible: self.config.player_helpers.bot_nameplates_max_visible,
+            bot_nameplates_opacity: self.config.player_helpers.bot_nameplates_opacity,
+            bot_nameplates_compact: self.config.player_helpers.bot_nameplates_compact,
         };
         modal.set_helpers_state(&helpers_state);
         modal.set_input_filter_state(&self.input.filter.config);
@@ -1560,10 +1564,12 @@ impl RaceSession {
                 self.config.player_helpers.racing_line_mode =
                     crate::config::RacingLineMode::from_index(h_state.racing_line_mode);
                 self.config.player_helpers.racing_line_opacity = h_state.racing_line_opacity;
+                self.config.player_helpers.bot_nameplates = h_state.bot_nameplates_enabled;
+                self.config.player_helpers.bot_nameplates_max_visible = h_state.bot_nameplates_max_visible;
+                self.config.player_helpers.bot_nameplates_opacity = h_state.bot_nameplates_opacity;
+                self.config.player_helpers.bot_nameplates_compact = h_state.bot_nameplates_compact;
 
-                let bot_nameplates = self.visibility_options.bot_nameplates;
                 self.visibility_options = PlayerVisibilityOptions::from(&self.config.player_helpers);
-                self.visibility_options.bot_nameplates = bot_nameplates;
 
                 let car_damage = modal.car_damage();
                 self.config.gameplay.car_damage = car_damage;
@@ -5664,6 +5670,8 @@ impl RaceSession {
             if is_key_pressed(KeyCode::LeftAlt) || is_key_pressed(KeyCode::RightAlt) {
                 self.visibility_options.bot_nameplates = !self.visibility_options.bot_nameplates;
                 self.config.display.bot_nameplates = self.visibility_options.bot_nameplates;
+                self.config.player_helpers.bot_nameplates = self.visibility_options.bot_nameplates;
+                self.base_config.player_helpers.bot_nameplates = self.visibility_options.bot_nameplates;
                 self.audio.play_sfx(SfxType::UiMove);
                 let state_str = if self.visibility_options.bot_nameplates { "ON" } else { "OFF" };
                 let col = if self.visibility_options.bot_nameplates { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
@@ -16417,9 +16425,25 @@ impl RaceSession {
             if self.visibility_options.bot_nameplates {
                 let [s_rect1, s_rect2] = self.split_layout.screen_rects(sw, sh);
                 let p1_nameplates = self.collect_bot_nameplates(0);
-                render_floating_bot_nameplates(&self.fonts, &self.camera, Some(s_rect1), &p1_nameplates, 1.0);
+                render_floating_bot_nameplates_ext(
+                    &self.fonts,
+                    &self.camera,
+                    Some(s_rect1),
+                    &p1_nameplates,
+                    self.visibility_options.bot_nameplates_opacity,
+                    self.visibility_options.bot_nameplates_max_visible,
+                    self.visibility_options.bot_nameplates_compact,
+                );
                 let p2_nameplates = self.collect_bot_nameplates(1);
-                render_floating_bot_nameplates(&self.fonts, &self.camera_p2, Some(s_rect2), &p2_nameplates, 1.0);
+                render_floating_bot_nameplates_ext(
+                    &self.fonts,
+                    &self.camera_p2,
+                    Some(s_rect2),
+                    &p2_nameplates,
+                    self.visibility_options.bot_nameplates_opacity,
+                    self.visibility_options.bot_nameplates_max_visible,
+                    self.visibility_options.bot_nameplates_compact,
+                );
             }
 
             // Racing numbers on the cars (spec 092)
@@ -16433,7 +16457,15 @@ impl RaceSession {
             // Floating Bot Nameplates (Spec 029)
             if self.visibility_options.bot_nameplates {
                 let nameplates = self.collect_bot_nameplates(focus_idx);
-                render_floating_bot_nameplates(&self.fonts, &self.camera, None, &nameplates, 1.0);
+                render_floating_bot_nameplates_ext(
+                    &self.fonts,
+                    &self.camera,
+                    None,
+                    &nameplates,
+                    self.visibility_options.bot_nameplates_opacity,
+                    self.visibility_options.bot_nameplates_max_visible,
+                    self.visibility_options.bot_nameplates_compact,
+                );
             }
 
             // Racing numbers on the cars (spec 092)

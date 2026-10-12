@@ -29,9 +29,10 @@ pub use lateral::{render_car_lateral, render_lateral_car, render_real_car_latera
 pub use color::{CarColorScheme, Palette};
 pub use ghost::{lerp_angle, render_ghost_car, GhostFrame, GhostLap, GhostRecorder};
 pub use marker::{
-    compute_adaptive_alpha, compute_proximity_alpha, deconflict_nameplates,
-    render_floating_bot_nameplates, render_pit_box_chevron, render_player_ground_aura, render_player_overhead_chevron,
-    render_player_roof_beacon, render_player_sonar_ping, DeconflictedNameplate, PlayerVisibilityOptions,
+    compute_adaptive_alpha, compute_proximity_alpha, deconflict_nameplates, deconflict_nameplates_with_limit,
+    render_floating_bot_nameplates, render_floating_bot_nameplates_ext, render_pit_box_chevron,
+    render_player_ground_aura, render_player_overhead_chevron, render_player_roof_beacon,
+    render_player_sonar_ping, DeconflictedNameplate, PlayerVisibilityOptions,
     VehicleNameplateItem, MAX_VISIBLE_NAMEPLATES, NAMEPLATE_DECONFLICT_H_THRESH,
     NAMEPLATE_DECONFLICT_W_THRESH, NAMEPLATE_HEIGHT_CLEARANCE, NAMEPLATE_INNER_RADIUS,
     NAMEPLATE_OUTER_RADIUS, NAMEPLATE_STACK_NUDGE,

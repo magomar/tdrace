@@ -5,7 +5,8 @@ use tdrace_app::camera::{CameraConfig, RaceCamera};
 use tdrace_app::config::{DisplayConfig, GameConfig};
 use tdrace_app::game::RaceSession;
 use tdrace_app::render::{
-    compute_proximity_alpha, deconflict_nameplates, render_floating_bot_nameplates,
+    compute_proximity_alpha, deconflict_nameplates, deconflict_nameplates_with_limit,
+    render_floating_bot_nameplates, render_floating_bot_nameplates_ext,
     PlayerVisibilityOptions, VehicleNameplateItem, MAX_VISIBLE_NAMEPLATES,
     NAMEPLATE_DECONFLICT_H_THRESH, NAMEPLATE_DECONFLICT_W_THRESH, NAMEPLATE_HEIGHT_CLEARANCE,
     NAMEPLATE_INNER_RADIUS, NAMEPLATE_OUTER_RADIUS, NAMEPLATE_STACK_NUDGE,
@@ -443,4 +444,119 @@ fn test_elevated_road_does_not_separate_nameplates_or_chevrons() {
         bot_plate_jumping.elevation, 1.2,
         "Nameplate when jumping on elevated bridge must track only jump altitude"
     );
+}
+
+#[test]
+fn test_deconflict_nameplates_with_custom_limit_and_all_racers() {
+    let fonts = Fonts::load_embedded();
+    let camera = RaceCamera::from_config_with_viewport(&CameraConfig::default(), 1280.0, 720.0);
+
+    // Create 10 racers all within viewport
+    let mut items = Vec::new();
+    for i in 1..=10 {
+        items.push(VehicleNameplateItem {
+            car_idx: i,
+            name: "Racer",
+            tier_label: Some("T1"),
+            accent_color: Color::new(1.0, 0.5, 0.0, 1.0),
+            position: Vec2::new(0.0, i as f32 * 0.5),
+            elevation: 0.0,
+            distance_to_player: i as f32 * 2.0,
+            race_number: i as u8,
+        });
+    }
+
+    // Default limit (5) via backward-compatible function
+    let def_limited = deconflict_nameplates(&items, &camera, None, &fonts, 1.0);
+    assert_eq!(def_limited.len(), 5);
+
+    // Custom limit of 8
+    let custom_8 = deconflict_nameplates_with_limit(&items, &camera, None, &fonts, 1.0, 8, false);
+    assert_eq!(custom_8.len(), 8);
+
+    // Custom limit of 24 (All Racers) - all 10 should be visible
+    let all_racers = deconflict_nameplates_with_limit(&items, &camera, None, &fonts, 1.0, 24, false);
+    assert_eq!(all_racers.len(), 10);
+
+    // Custom limit of 3 (minimum slider value)
+    let min_limit = deconflict_nameplates_with_limit(&items, &camera, None, &fonts, 1.0, 3, false);
+    assert_eq!(min_limit.len(), 3);
+}
+
+#[test]
+fn test_bot_nameplates_compact_mode() {
+    let fonts = Fonts::load_embedded();
+    let camera = RaceCamera::from_config_with_viewport(&CameraConfig::default(), 1280.0, 720.0);
+
+    let items = vec![VehicleNameplateItem {
+        car_idx: 1,
+        name: "Shadow",
+        tier_label: Some("T4"),
+        accent_color: Color::new(0.8, 0.2, 0.2, 1.0),
+        position: Vec2::new(0.0, 1.0),
+        elevation: 0.0,
+        distance_to_player: 10.0,
+        race_number: 42,
+    }];
+
+    assert_eq!(items[0].label(), "#42 Shadow");
+    assert_eq!(items[0].compact_label(), "Shadow");
+
+    // Full detail mode includes tier badge width
+    let full = deconflict_nameplates_with_limit(&items, &camera, None, &fonts, 1.0, 5, false);
+    // Compact detail mode omits tier badge width, resulting in smaller badge_w
+    let compact = deconflict_nameplates_with_limit(&items, &camera, None, &fonts, 1.0, 5, true);
+
+    assert_eq!(full.len(), 1);
+    assert_eq!(compact.len(), 1);
+    assert!(compact[0].width < full[0].width, "Compact mode badge width should be narrower than full mode");
+}
+
+#[test]
+fn test_render_floating_bot_nameplates_ext_opacity_and_limits() {
+    let fonts = Fonts::load_embedded();
+    let camera = RaceCamera::from_config_with_viewport(&CameraConfig::default(), 1280.0, 720.0);
+
+    let items = vec![
+        VehicleNameplateItem {
+            car_idx: 1,
+            name: "Apex",
+            tier_label: Some("T1"),
+            accent_color: Color::new(1.0, 0.5, 0.0, 1.0),
+            position: Vec2::new(10.0, 10.0),
+            elevation: 0.5,
+            distance_to_player: 12.0,
+            race_number: 7,
+        },
+    ];
+
+    // Headless execution with various opacities, limits, and compact modes
+    for &alpha in &[0.20f32, 0.45, 0.80, 1.0] {
+        for &limit in &[3, 12, 24] {
+            for &compact in &[false, true] {
+                let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                    render_floating_bot_nameplates_ext(&fonts, &camera, None, &items, alpha, limit, compact);
+                }));
+            }
+        }
+    }
+}
+
+#[test]
+fn test_player_helpers_config_bot_nameplates_customization() {
+    let mut cfg = tdrace_app::config::PlayerHelpersConfig::default();
+    assert_eq!(cfg.bot_nameplates_max_visible, 24);
+    assert!((cfg.bot_nameplates_opacity - 0.80).abs() < 1e-4);
+    assert!(!cfg.bot_nameplates_compact);
+
+    cfg.bot_nameplates_max_visible = 16;
+    cfg.bot_nameplates_opacity = 0.55;
+    cfg.bot_nameplates_compact = true;
+
+    let toml_str = toml::to_string(&cfg).expect("Serialization must succeed");
+    let loaded: tdrace_app::config::PlayerHelpersConfig = toml::from_str(&toml_str).expect("Deserialization must succeed");
+
+    assert_eq!(loaded.bot_nameplates_max_visible, 16);
+    assert!((loaded.bot_nameplates_opacity - 0.55).abs() < 1e-4);
+    assert!(loaded.bot_nameplates_compact);
 }

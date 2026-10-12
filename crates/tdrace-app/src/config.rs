@@ -295,10 +295,27 @@ pub struct PlayerHelpersConfig {
     pub radar_sonar_ping: bool,
     /// Floating bot nameplates toggle.
     pub bot_nameplates: bool,
+    /// Maximum number of visible floating pilot labels (3 to 24).
+    #[serde(default = "default_bot_nameplates_max_visible")]
+    pub bot_nameplates_max_visible: usize,
+    /// Opacity of floating pilot labels (0.20 to 1.00).
+    #[serde(default = "default_bot_nameplates_opacity")]
+    pub bot_nameplates_opacity: f32,
+    /// Compact pilot label mode (true = name only, false = full name + tier badge).
+    #[serde(default)]
+    pub bot_nameplates_compact: bool,
     /// Racing line trajectory and dynamic braking visual aid display mode.
     pub racing_line_mode: RacingLineMode,
     /// Opacity multiplier for the racing line ribbon overlay (0.20 to 1.00).
     pub racing_line_opacity: f32,
+}
+
+fn default_bot_nameplates_max_visible() -> usize {
+    24
+}
+
+fn default_bot_nameplates_opacity() -> f32 {
+    0.80
 }
 
 impl Default for PlayerHelpersConfig {
@@ -319,6 +336,9 @@ impl Default for PlayerHelpersConfig {
             adaptive_visibility: true,
             radar_sonar_ping: true,
             bot_nameplates: true,
+            bot_nameplates_max_visible: 24,
+            bot_nameplates_opacity: 0.80,
+            bot_nameplates_compact: false,
             racing_line_mode: RacingLineMode::Full,
             racing_line_opacity: 0.70,
         }

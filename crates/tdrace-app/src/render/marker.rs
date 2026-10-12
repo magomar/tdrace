@@ -40,6 +40,12 @@ pub struct PlayerVisibilityOptions {
     pub curve_color_scheme: CurveColorScheme,
     /// Option 6: In-race dynamic floating bot nameplates (toggled via Alt key).
     pub bot_nameplates: bool,
+    /// Maximum number of visible floating pilot labels (3 to 24).
+    pub bot_nameplates_max_visible: usize,
+    /// Opacity multiplier for floating pilot labels (0.20 to 1.00).
+    pub bot_nameplates_opacity: f32,
+    /// Compact pilot label mode (true = name only, false = full name + tier badge).
+    pub bot_nameplates_compact: bool,
     /// Option 7: Expanding sonar / radar ping ripples when switching cameras or spinning out.
     pub sonar_ping: bool,
     /// Option 8: Mathematically ideal racing line visual aid display mode.
@@ -65,6 +71,9 @@ impl Default for PlayerVisibilityOptions {
             curve_helper_brightness: 1.0,
             curve_color_scheme: CurveColorScheme::Traffic,
             bot_nameplates: true,
+            bot_nameplates_max_visible: 24,
+            bot_nameplates_opacity: 0.80,
+            bot_nameplates_compact: false,
             sonar_ping: true,
             racing_line_mode: tdrace_core::track::RacingLineMode::Full,
             racing_line_opacity: 0.70,
@@ -95,6 +104,9 @@ impl From<&crate::config::PlayerHelpersConfig> for PlayerVisibilityOptions {
             curve_helper_brightness: cfg.curve_helper_brightness,
             curve_color_scheme,
             bot_nameplates: cfg.bot_nameplates,
+            bot_nameplates_max_visible: cfg.bot_nameplates_max_visible,
+            bot_nameplates_opacity: cfg.bot_nameplates_opacity,
+            bot_nameplates_compact: cfg.bot_nameplates_compact,
             sonar_ping: cfg.radar_sonar_ping,
             racing_line_mode: cfg.racing_line_mode,
             racing_line_opacity: cfg.racing_line_opacity,
@@ -126,6 +138,9 @@ impl From<&PlayerVisibilityOptions> for crate::config::PlayerHelpersConfig {
             adaptive_visibility: opts.adaptive_visibility,
             radar_sonar_ping: opts.sonar_ping,
             bot_nameplates: opts.bot_nameplates,
+            bot_nameplates_max_visible: opts.bot_nameplates_max_visible,
+            bot_nameplates_opacity: opts.bot_nameplates_opacity,
+            bot_nameplates_compact: opts.bot_nameplates_compact,
             racing_line_mode: opts.racing_line_mode,
             racing_line_opacity: opts.racing_line_opacity,
         }
@@ -441,6 +456,11 @@ impl VehicleNameplateItem<'_> {
             self.name.to_string()
         }
     }
+
+    /// Compact label: name only without race number.
+    pub fn compact_label(&self) -> String {
+        self.name.to_string()
+    }
 }
 
 /// Deconflicted layout position for a projected nameplate on screen.
@@ -472,7 +492,28 @@ pub fn deconflict_nameplates<'a>(
     fonts: &Fonts,
     master_alpha: f32,
 ) -> Vec<DeconflictedNameplate<'a>> {
-    if master_alpha <= 0.005 || items.is_empty() {
+    deconflict_nameplates_with_limit(
+        items,
+        camera,
+        viewport_rect,
+        fonts,
+        master_alpha,
+        MAX_VISIBLE_NAMEPLATES,
+        false,
+    )
+}
+
+/// Computes deconflicted screen-space badge positions with customizable max_visible limit and compact formatting.
+pub fn deconflict_nameplates_with_limit<'a>(
+    items: &'a [VehicleNameplateItem<'a>],
+    camera: &RaceCamera,
+    viewport_rect: Option<(f32, f32, f32, f32)>,
+    fonts: &Fonts,
+    master_alpha: f32,
+    max_visible: usize,
+    compact: bool,
+) -> Vec<DeconflictedNameplate<'a>> {
+    if master_alpha <= 0.005 || items.is_empty() || max_visible == 0 {
         return Vec::new();
     }
 
@@ -503,8 +544,13 @@ pub fn deconflict_nameplates<'a>(
         }
 
         // Measure text dimensions for pill layout
-        let text_dim = fonts.measure_ui_bold(&item.label(), 12.0);
-        let tier_w = if item.tier_label.is_some() { 24.0 } else { 0.0 };
+        let label_str = if compact {
+            item.compact_label()
+        } else {
+            item.label()
+        };
+        let text_dim = fonts.measure_ui_bold(&label_str, 12.0);
+        let tier_w = if !compact && item.tier_label.is_some() { 24.0 } else { 0.0 };
         let badge_w = (text_dim.width + tier_w + 16.0).max(48.0);
         let badge_h = 20.0;
 
@@ -518,8 +564,8 @@ pub fn deconflict_nameplates<'a>(
             .unwrap_or(std::cmp::Ordering::Equal)
     });
 
-    // 3. Never show more than MAX_VISIBLE_NAMEPLATES (5) closest racers simultaneously
-    candidates.truncate(MAX_VISIBLE_NAMEPLATES);
+    // 3. Never show more than max_visible closest racers simultaneously
+    candidates.truncate(max_visible);
 
     // 4. Stagger / deconflict overlapping positions
     let mut placed: Vec<DeconflictedNameplate<'a>> = Vec::with_capacity(candidates.len());
@@ -567,7 +613,28 @@ pub fn render_floating_bot_nameplates(
     nameplates: &[VehicleNameplateItem],
     master_alpha: f32,
 ) {
-    if master_alpha <= 0.005 || nameplates.is_empty() {
+    render_floating_bot_nameplates_ext(
+        fonts,
+        camera,
+        viewport_rect,
+        nameplates,
+        master_alpha,
+        MAX_VISIBLE_NAMEPLATES,
+        false,
+    );
+}
+
+/// Renders floating bot nameplates with customizable max visible limit and compact detail mode.
+pub fn render_floating_bot_nameplates_ext(
+    fonts: &Fonts,
+    camera: &RaceCamera,
+    viewport_rect: Option<(f32, f32, f32, f32)>,
+    nameplates: &[VehicleNameplateItem],
+    master_alpha: f32,
+    max_visible: usize,
+    compact: bool,
+) {
+    if master_alpha <= 0.005 || nameplates.is_empty() || max_visible == 0 {
         return;
     }
 
@@ -575,7 +642,15 @@ pub fn render_floating_bot_nameplates(
     // chip with a reference-resolution scaler (scale == 1.0) so it renders 1:1.
     let scaler = crate::ui::scaler::UiScaler::new(1280.0, 720.0);
 
-    let deconflicted = deconflict_nameplates(nameplates, camera, viewport_rect, fonts, master_alpha);
+    let deconflicted = deconflict_nameplates_with_limit(
+        nameplates,
+        camera,
+        viewport_rect,
+        fonts,
+        master_alpha,
+        max_visible,
+        compact,
+    );
     for badge in deconflicted {
         let alpha = badge.alpha.clamp(0.0, 1.0);
         if alpha <= 0.01 {
@@ -589,29 +664,36 @@ pub fn render_floating_bot_nameplates(
 
         let mut text_start_x = rx + 6.0;
 
-        // Tier tag chip
-        if let Some(tier) = badge.item.tier_label {
-            let tier_dim = fonts.measure_ui_bold(tier, 10.0);
-            let tier_tag_w = tier_dim.width + 6.0;
-            let tier_tag_h = 13.0;
-            let tier_tag_y = ry + (badge.height - tier_tag_h) * 0.5;
+        // Tier tag chip (only in full/non-compact mode)
+        if !compact {
+            if let Some(tier) = badge.item.tier_label {
+                let tier_dim = fonts.measure_ui_bold(tier, 10.0);
+                let tier_tag_w = tier_dim.width + 6.0;
+                let tier_tag_h = 13.0;
+                let tier_tag_y = ry + (badge.height - tier_tag_h) * 0.5;
 
-            cabinet::ui::draw_chip(
-                &scaler,
-                fonts,
-                text_start_x,
-                tier_tag_y,
-                tier_tag_w,
-                tier_tag_h,
-                tier,
-                Color::new(1.0, 1.0, 1.0, alpha),
-            );
+                cabinet::ui::draw_chip(
+                    &scaler,
+                    fonts,
+                    text_start_x,
+                    tier_tag_y,
+                    tier_tag_w,
+                    tier_tag_h,
+                    tier,
+                    Color::new(1.0, 1.0, 1.0, alpha),
+                );
 
-            text_start_x += tier_tag_w + 5.0;
+                text_start_x += tier_tag_w + 5.0;
+            }
         }
 
         // Driver Name badge chip
         let name_w = (rx + badge.width - text_start_x).max(1.0);
+        let display_label = if compact {
+            badge.item.compact_label()
+        } else {
+            badge.item.label()
+        };
         cabinet::ui::draw_chip(
             &scaler,
             fonts,
@@ -619,7 +701,7 @@ pub fn render_floating_bot_nameplates(
             ry,
             name_w,
             badge.height,
-            &badge.item.label(),
+            &display_label,
             Color::new(0.95, 0.96, 0.98, alpha),
         );
     }
@@ -671,10 +753,16 @@ mod tests {
         assert!(!opts.roof_beacon);
         assert!(opts.curve_helper);
         assert!(opts.bot_nameplates);
+        assert_eq!(opts.bot_nameplates_max_visible, 24);
+        assert!((opts.bot_nameplates_opacity - 0.80).abs() < 1e-4);
+        assert!(!opts.bot_nameplates_compact);
         assert!(opts.sonar_ping);
 
         let cfg = crate::config::PlayerHelpersConfig::from(&opts);
         assert!(cfg.radar_sonar_ping);
+        assert_eq!(cfg.bot_nameplates_max_visible, 24);
+        assert!((cfg.bot_nameplates_opacity - 0.80).abs() < 1e-4);
+        assert!(!cfg.bot_nameplates_compact);
 
         let roundtrip = PlayerVisibilityOptions::from(&cfg);
         assert_eq!(roundtrip, opts);
