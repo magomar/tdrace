@@ -245,7 +245,7 @@ impl DriverQuality {
                 // Spec 046: 0.88 -> 0.82, so a keyboard driver on Balanced beats a Tier 1 grid. 0.80 since
                 // curbs no longer add grip (tdrace-le75): the keyboard driver lost 1.1 s on Ridge Ring.
                 pace_limit: 0.80,
-                brake_padding: 0.22,
+                brake_padding: 0.20,
                 avoidance_padding: 2.5,
                 consistency: 0.60,
                 composure: 0.48,
@@ -263,8 +263,8 @@ impl DriverQuality {
                 pace_limit: 0.96,
                 brake_padding: 0.06,
                 avoidance_padding: 0.7,
-                consistency: 0.83,
-                composure: 0.78,
+                consistency: 0.80,
+                composure: 0.76,
             },
             DriverTier::Pro => Self {
                 tier,
@@ -276,7 +276,7 @@ impl DriverQuality {
             },
             DriverTier::Legend => Self {
                 tier,
-                pace_limit: 1.04,
+                pace_limit: 1.035,
                 brake_padding: -0.03,
                 avoidance_padding: -0.5,
                 consistency: 0.99,
@@ -286,6 +286,33 @@ impl DriverQuality {
     }
 }
 
+/// Base settings of a driving style, before a `DriverQuality` is applied
+/// (see `BotProfile::from_tuning_and_quality`).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct StyleTuning {
+    pub lookahead_time: f32,
+    pub steering_kp: f32,
+    pub steering_kd: f32,
+    pub brake_margin: f32,
+    pub aggression: f32,
+    pub avoidance_distance: f32,
+    /// Multiplies `DriverQuality::pace_limit` into `BotProfile::speed_factor`.
+    pub speed_mult: f32,
+}
+
+impl StyleTuning {
+    pub const fn for_style(style: DrivingStyle) -> Self {
+        let (lookahead_time, steering_kp, steering_kd, brake_margin, aggression, avoidance_distance, speed_mult) = match style {
+            DrivingStyle::Smooth => (0.36, 2.20, 0.09, 1.05, 0.70, 6.5, 1.03),
+            DrivingStyle::Aggressive => (0.28, 2.40, 0.06, 0.93, 0.95, 5.0, 1.04),
+            DrivingStyle::Tenacious => (0.38, 2.10, 0.09, 1.08, 0.82, 6.0, 1.01),
+            DrivingStyle::Calculating => (0.35, 2.30, 0.08, 1.03, 0.75, 6.5, 1.02),
+            DrivingStyle::Bold => (0.27, 2.60, 0.05, 0.91, 0.92, 5.2, 1.03),
+            DrivingStyle::Balanced => (0.34, 2.00, 0.08, 1.08, 0.65, 7.0, 1.00),
+        };
+        Self { lookahead_time, steering_kp, steering_kd, brake_margin, aggression, avoidance_distance, speed_mult }
+    }
+}
 
 /// Personality and tuning settings for an AI bot driver.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -440,25 +467,22 @@ impl BotProfile {
     }
 
     pub fn from_style_and_quality(style: DrivingStyle, quality: &DriverQuality) -> Self {
-        let (base_lookahead, base_kp, base_kd, style_brake, style_aggression, style_avoidance, style_speed_mult) = match style {
-            DrivingStyle::Smooth => (0.40, 2.30, 0.08, 1.02, 0.70, 6.5, 1.01),
-            DrivingStyle::Aggressive => (0.32, 2.50, 0.05, 0.90, 0.95, 5.0, 1.02),
-            DrivingStyle::Tenacious => (0.42, 2.20, 0.08, 1.05, 0.82, 6.0, 0.99),
-            DrivingStyle::Calculating => (0.39, 2.40, 0.07, 1.00, 0.75, 6.5, 1.00),
-            DrivingStyle::Bold => (0.31, 2.70, 0.04, 0.88, 0.92, 5.2, 1.01),
-            DrivingStyle::Balanced => (0.38, 2.10, 0.07, 1.05, 0.65, 7.0, 0.98),
-        };
+        Self::from_tuning_and_quality(style, &StyleTuning::for_style(style), quality)
+    }
 
+    /// `from_style_and_quality` with an explicit style tuning, so offline calibration (spec 083) can
+    /// evaluate candidate tunings without changing the constants.
+    pub fn from_tuning_and_quality(style: DrivingStyle, tuning: &StyleTuning, quality: &DriverQuality) -> Self {
         Self {
             name: "Composite Bot",
-            lookahead_time: (base_lookahead * (0.80 + 0.20 * quality.consistency)).clamp(0.20, 0.55),
-            speed_factor: (quality.pace_limit * style_speed_mult).clamp(0.80, 1.15),
-            steering_kp: base_kp,
-            steering_kd: base_kd * (0.75 + 0.25 * quality.consistency),
-            brake_margin: (style_brake + quality.brake_padding).clamp(0.80, 1.45),
-            aggression: style_aggression,
-            avoidance_distance: (style_avoidance + quality.avoidance_padding).clamp(3.5, 12.0),
-            traits: HumanTraits::for_style_and_quality(style, quality, style_aggression),
+            lookahead_time: (tuning.lookahead_time * (0.80 + 0.20 * quality.consistency)).clamp(0.20, 0.55),
+            speed_factor: (quality.pace_limit * tuning.speed_mult).clamp(0.80, 1.15),
+            steering_kp: tuning.steering_kp,
+            steering_kd: tuning.steering_kd * (0.75 + 0.25 * quality.consistency),
+            brake_margin: (tuning.brake_margin + quality.brake_padding).clamp(0.80, 1.45),
+            aggression: tuning.aggression,
+            avoidance_distance: (tuning.avoidance_distance + quality.avoidance_padding).clamp(3.5, 12.0),
+            traits: HumanTraits::for_style_and_quality(style, quality, tuning.aggression),
         }
     }
 

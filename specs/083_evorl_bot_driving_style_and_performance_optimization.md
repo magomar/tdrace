@@ -1,545 +1,386 @@
 ---
 type: Architecture Spec
 template: architecture
-title: "EvoRL Bot Driving Style, Performance, and Tactical Racecraft Optimization"
-description: "Comprehensive computational architecture and evolutionary optimization pipeline leveraging the EvoRL framework to algorithmically calibrate TDRace bot control laws, amplify authentic driving style uniqueness, enforce monotonic tier progression, and evolve tactical Behavior Trees via high-throughput headless simulation."
-status: draft
+title: "EvoRL Bot Performance Calibration on the Launch Circuits"
+description: "Offline EvoRL calibration pipeline, run on the blaze compute box, that tunes the existing bot controller gains and the five driver-tier quality settings so bots drive cleanly and keep a monotonic tier pace ladder on every Steam-launch circuit (Classic, Karting, Autocross, Rallycross)."
+status: in_progress
+receipt: "docs/receipts/spec-083-receipt.md"
+verified: { by: human:mario, at: 2026-10-11T06:11:52Z, hash: "5303f6636105" }
 created: 2026-10-03
-generated: { by: agent/antigravity, at: 2026-10-04T19:20:00Z }
+generated: { by: agent/claude, at: 2026-10-11T00:00:00Z }
 depends_on:
   - "023"
   - "046"
   - "065"
 ---
 
-# Architecture Spec 083: EvoRL Bot Driving Style, Performance, and Tactical Racecraft Optimization 🧬🏁📐
+# Architecture Spec 083: EvoRL Bot Performance Calibration on the Launch Circuits 🧬🏁
 
-A comprehensive architectural blueprint establishing an automated evolutionary and reinforcement learning optimization pipeline for **TDRace** bot characters, driving styles, and performance tiers using our sibling **[EvoRL](../../../evorl/README.md)** framework.
+Spec 083 builds an **offline** tuning pipeline. The pipeline uses the sibling **EvoRL** framework
+([github.com/magomar/evorl](https://github.com/magomar/evorl)) on the **blaze** compute box to tune
+the bot settings that exist today. The results are baked back into Rust constants. Nothing in the shipped
+game depends on Python or EvoRL.
+
+> **Scope note (rewrite of 2026-10-11).** The first draft of this spec bundled six jobs. This version keeps
+> only the evaluation bridge, the throughput measurement and the calibration of existing settings. The rest
+> moved to follow-up specs:
+> - **Spec 107** — tactical racecraft (defend and draft states) and style-specific objectives.
+> - **Spec 108** — data validation of the 72 `DriverPersonalityOffsets`.
+>
+> The review that caused the rewrite found: wrong track and car ids, a false throughput figure
+> (4 M steps/s), 5 of 24 tuned parameters that do nothing in code, GT-only evaluation (GT is a post-launch
+> DLC), and dependencies that `TECH_STACK.md` does not approve.
 
 ---
 
 ## 🔍 Context & Motivation
 
-### 1. The Anatomy of Bot AI in TDRace
-In TDRace, non-player opponents are governed by a multi-layered architecture implemented across [`crates/race-kit/src/ai`](../crates/race-kit/src/ai) and [`crates/tdrace-app/src/ai`](../crates/tdrace-app/src/ai):
-- **Core Kinematic & Geometric Controller**: In `race_kit::ai::BotProfile`, 7 continuous control parameters govern the vehicle: lookahead time ($t_{\text{look}}$), steering proportional-derivative path-following gains ($k_p, k_d$), braking envelope safety margin ($m_{\text{brake}}$), overtaking lateral aggression ($A_{\text{overtake}}$), proximity avoidance safety radius ($d_{\text{avoid}}$), and target pace limit multiplier ($f_{\text{speed}}$).
-- **Analytical Braking Envelope**: The bot calculates its corner entry speed limit using local spline curvature $\kappa(s) = \frac{1}{R(s)}$ and tire planning grip $\mu_{\text{plan}}$:
-  $$v_{\text{apex}}(s) = \sqrt{\mu_{\text{plan}} \cdot g \cdot R(s)} \cdot f_{\text{speed}}$$
-  $$v_{\text{allowable}}(d) = \sqrt{v_{\text{apex}}^2 + 2 \cdot a_{\text{brake}} \cdot d}$$
-- **Humanization & Mistake Layer ([Spec 046](046_humanlike_bot_driving_with_tiered_mistakes_and_varied_lines.md))**: In `race_kit::ai::humanize`, bots simulate authentic human variance through continuous stochastic processes and discrete mistake events:
-  - *Line Wander*: Lateral position fluctuates via an Ornstein–Uhlenbeck (OU) random walk with time constant $\tau_w = 6.0\text{ s}$ and diffusion $\sigma_w = (0.3 + 3.5(1 - c)) \cdot \text{style\_factor}\text{ m}$ (where $c$ is driver consistency).
-  - *Corner Geometry Choice*: Corner entry and apex lateral positions vary around style-specific means ($\mu_{\text{entry}}, \mu_{\text{apex}}$) scaled by the track's free half-width.
-  - *Steering Reaction Lag*: Steering commands pass through a first-order low-pass filter with time constant $\tau_{\text{react}} = 40\text{ ms} + 250\text{ ms} \cdot (1 - c)$.
-  - *Discrete Mistakes*: Triggered per corner with probability $p = 0.30 \cdot (1 - k)^{1.5} \cdot \text{style\_rate} \cdot \text{pressure}$ (where $k$ is composure). Mistakes select from 5 archetypes: `LateBrake`, `Overdrive`, `PowerStab`, `OverCorrect`, and `Cautious`.
-- **Orthogonal Styles & Quality Tiers ([Spec 023](023_orthogonal_ai_driving_styles_and_quality_tiers.md))**: Tactical philosophy (`DrivingStyle`: `Smooth`, `Aggressive`, `Tenacious`, `Calculating`, `Bold`, `Balanced`) is decoupled from competence (`DriverTier`: `Rookie`, `Amateur`, `Contender`, `Pro`, `Legend`).
-- **Character Roster ([Spec 024](024_crossmodule_ai_character_rosters_and_dynamic_tier_assignment.md))**: 72 named driver characters across 6 motorsport disciplines possess individual `DriverPersonalityOffsets` applying minor additive perturbations to the base gains.
+### 1. What exists today (verified 2026-10-11)
+- **Controller**: `race_kit::ai::BotProfile` ([`crates/race-kit/src/ai/mod.rs`](../crates/race-kit/src/ai/mod.rs))
+  has 7 continuous fields: `lookahead_time`, `speed_factor`, `steering_kp`, `steering_kd`, `brake_margin`,
+  `aggression`, `avoidance_distance`, plus `traits: HumanTraits`.
+- **Style x tier composition**: `BotProfile::from_style_and_quality` combines a per-style base tuple
+  `(lookahead, kp, kd, brake, aggression, avoidance, speed_mult)` with `DriverQuality::for_tier`
+  (`pace_limit`, `brake_padding`, `avoidance_padding`, `consistency`, `composure`).
+- **Human layer**: `HumanTraits::for_style_and_quality` derives line wander, line choice, brake-point
+  shift, corner-speed variance, mistake rate and mistake weights from `consistency` and `composure`
+  ([`humanize.rs`](../crates/race-kit/src/ai/humanize.rs)). `reaction_tau_s` is computed but **not
+  applied**: `shape_steer` dropped the steering lag on purpose to stop straight-line oscillation.
+- **Harness**: `tdrace_app::ai::bot_harness::run_harness_race` runs a headless grid through
+  `race_kit::RaceWorld` at `HARNESS_DT = 1/120 s`. It returns lap times, spins, offs, mistakes,
+  `longest_no_progress_s`, `finished` and an FNV `controls_hash`.
+- **Benchmark**: `bot_behaviour_benchmark` runs 6 styles x 5 tiers on 4 Classic tracks
+  (`gt_coastal_grand_prix`, `stock_tri_oval_speedway`, `gt_ridge_ring`, `kart_pine_grove`).
+- **Measured throughput**: 1.86 M steps/s for one car and 120 k steps/s for the 8-car collision solver
+  ([`docs/receipts/spec-084-receipt.md`](../docs/receipts/spec-084-receipt.md)). Nobody has measured
+  full-race throughput with AI.
 
----
+### 2. The problem
+1. **Tuned on 4 tracks, all in the Classic module.** The 2026-09-29 report
+   ([`reports/bot_behaviour_report.md`](../reports/bot_behaviour_report.md)) shows a good tier ladder on
+   those 4 tracks. Nothing measures the other launch circuits: 20 Karting, 17 Autocross and
+   20 Rallycross circuits, plus 14 more Classic circuits.
+2. **Signs of trouble even on the sample.** On `kart_pine_grove`, T4 and T5 bots go 5.6–6.5 s without
+   progress, and the T1–T2 lap spread is 8.7–9.4 %. On `stock_tri_oval_speedway`, T1 and T2 go
+   15–16 s without progress.
+3. **Hand tuning does not scale.** Each physics, tyre or circuit change needs a manual re-check of all
+   tiers on all circuits.
 
-### 2. Identified Deficiencies in the Current AI
-Despite the solid decoupled design, the current bot AI suffers from fundamental operational and qualitative limitations:
-1. **Narrow Calibration Scope & Track Brittleness**: Current gains were hand-tuned on only 4 classic circuits (`classic_grand_prix`, `oval_speedway`, `drift_park`, `kart_arena`). When deployed across the full 90-circuit catalog (especially tight FIA karting tracks with 3-meter radius hairpins, mixed-surface rallycross tracks with jumps and joker splits, or high-speed banked ovals), bots exhibit erratic behaviors: braking too early on straights, scraping apex walls, or understeering off-track.
-2. **Superficial Style Distinction in Racecraft**: While mistake distributions vary numerically (e.g. *Aggressive* rolls more late-brake attempts, *Smooth* rolls more cautious lifts), their on-track driving lines in clear air are nearly indistinguishable. In multi-car pack racing, the distinction between a *Calculating* slipstream opportunist and a *Tenacious* inside-line defender is subtle because collision avoidance and overtaking logic are purely reactive distance-based repulsion vectors.
-3. **Subjective Character Offsets**: The scalar deltas in `DriverPersonalityOffsets` (e.g. $\Delta k_p, \Delta k_d, \Delta d_{\text{avoid}}$) were authored by intuition without empirical validation. Some combinations destabilize the steering PID, inducing high-frequency steering chatter.
-4. **Lack of Automated Regression Verification**: When vehicle dynamics ([Spec 043](043_vehicle_dynamics_rebuild_and_simplified_handling_settings.md)), tire compounds ([Spec 074](074_decoupled_wheel_geometry_and_data_driven_tire_compounds.md)), or track boundary geometry ([Spec 080](080_curvatureaware_track_boundary_geometry_swallowtail_pinch_elimination_and_global_circuit_validation.md)) are modified, bot tuning must be manually re-inspected across dozens of vehicles, creating severe maintenance drag.
-
----
-
-### 3. The EvoRL Solution
-The sibling repository **[EvoRL](../../../evorl/README.md)** is a high-performance framework engineered specifically for hybrid heuristic-evolutionary strategy optimization:
-- **Pure Genomes & Dynamic SQLite Ledger**: Parameter assignments carry no mutable fitness; scores are dynamically projected from an ACID SQLite `MatchLedger`.
-- **Pair-Atomic Common Random Numbers (CRN)**: Evaluates competitors in seat-swapped pairs (Seat 0 = Pole, Seat 1 = Outside Row) under identical seeds, algebraically cancelling track-luck and grid-order variance.
-- **Successive Halving Budgets**: Focuses simulation compute exponentially on surviving elite candidates.
-- **Wilson Lower Bound ($W_{0.95}$)**: Ranks candidates on the conservative 95% binomial confidence lower bound, eradicating the Winner's Curse.
-- **Behavior Tree ASTs & Memetic Leaf Tuning**: Evolving discrete tactical state machines with continuous threshold optimization.
-
-By coupling TDRace's headless simulation throughput (**> 4,000,000 steps/sec in pure Rust**) with EvoRL's continuous search and symbolic evolution, we transform bot development from manual guesswork into a **rigorous, automated, multi-objective optimization pipeline**.
+### 3. Goal
+1. Measure the bots on every closed-loop launch circuit with its own-category car.
+2. Tune the shared controller and the 5 tier quality rows so that bots drive cleanly and hold the tier
+   pace bands everywhere.
+3. Keep a fast regression test in `cargo test` that guards the ladder.
 
 ---
 
 ## 🗺️ Current vs. Proposed System Architecture
 
-### 1. Current Architecture: Manual Heuristic Tuning
+### 1. Current architecture
 ```mermaid
 flowchart TD
-    M1["Manual Heuristic Guesswork (4 Classic Tracks)"] --> P1["Hardcoded BotProfile::from_style_and_quality"]
-    P1 --> H1["Hand-tuned HumanTraits (line_sigma, mistake_rate, shares)"]
-    H1 --> D1["72 Unverified DriverPersonalityOffsets"]
-    D1 --> B1["BotAiDriver 60 Hz Loop"]
-    B1 --> T1["Fragile Tier Separation on Complex Tracks"]
-    B1 --> S1["Subtle Style Differentiation in Racecraft"]
+    H["Hand-tuned constants<br/>(style tuples + DriverQuality::for_tier)"] --> P["BotProfile::from_style_and_quality"]
+    P --> B["BotAiDriver"]
+    B --> R["bot_behaviour_benchmark<br/>(4 Classic tracks)"]
+    R -.->|manual reading| H
 ```
 
-### 2. Proposed Architecture: EvoRL Closed-Loop Optimization Pipeline
+### 2. Proposed architecture
 ```mermaid
 flowchart TD
-    subgraph EvoRL Optimization Framework [Workspace: ../../../evorl]
-        PS["ParameterSpace Definition<br/>(24 Tunable Parameters: Kinematic + Human + Tactical)"]
-        CMA["CMAESEmitter & BlockStagedCampaign"]
-        BT_EVO["BehaviorTree AST Evolution<br/>(Tactical Racecraft Decision Nodes)"]
-        EVAL["Evaluator (Pair-Atomic Common Random Numbers)"]
-        LEDGER["SQLiteMatchLedger (WAL Mode)<br/>Wilson Lower Bound W_0.95 & Generalization Tripwires"]
+    subgraph Mac ["Mac (development)"]
+        CODE["tdrace branch<br/>Rust + tools/bot_tuning"]
+        BAKE["Bake best genome into<br/>race-kit constants"]
+        GATE["cargo test: bot_tier_ladder_tests"]
     end
 
-    subgraph Simulation Acceleration Bridge [Crate: ../crates/tdrace-py]
-        FFI["PyO3 Native Extension (_tdrace)"]
-        HARNESS["Fast Headless Batch Rollout Harness<br/>(4,000,000+ steps/sec in pure Rust)"]
+    subgraph Blaze ["blaze (32 cores, 128 GB)"]
+        WT["tdrace worktree<br/>(fetched branch)"]
+        W["bot_eval_worker (Rust bin)<br/>JSON lines on stdin/stdout"]
+        EVO["EvoRL campaign<br/>CMA-ES + pair-atomic CRN<br/>ProcessPoolExecutor ~28 workers"]
+        LED["SQLite MatchLedger (WAL)"]
+        OUT["results/&lt;run&gt;/best.json + report.md"]
     end
 
-    subgraph Engine Simulation & AI Runtime [Crates: race-kit & wheelbase]
-        RW["RaceWorld<Car> (Fixed 60 Hz dt)"]
-        AI["BotAiDriver (compute_controls)"]
-        BT_RUN["Tactical Behavior Tree (Zero-Allocation Rust)"]
-        CAR["wheelbase::Car (Pacejka '96 + Dynamic Weight Transfer)"]
-    end
-
-    subgraph Production Game Deployment [Crates: tdrace-app & Presets]
-        CALIB["Mathematically Calibrated BotProfile Baseline"]
-        PRESET["Validated 72 DriverCharacter Presets"]
-        GATE["Automated CI/CD Monotonic Tier Regression Suite"]
-    end
-
-    PS --> CMA
-    CMA --> EVAL
-    BT_EVO --> EVAL
-    EVAL --> FFI
-    FFI --> HARNESS
-    HARNESS --> RW
-    RW --> AI
-    AI --> BT_RUN
-    AI --> CAR
-
-    HARNESS --> FFI
-    FFI --> EVAL
-    EVAL --> LEDGER
-    LEDGER --> CMA
-    LEDGER --> BT_EVO
-
-    CMA -.->|Export Best Genomes| CALIB
-    CMA -.->|Export Optimal Offsets| PRESET
-    LEDGER -.->|Statistical Non-Inferiority| GATE
+    CODE -->|git push branch / git fetch| WT
+    WT --> W
+    EVO -->|one persistent worker per process| W
+    W --> EVO
+    EVO --> LED
+    LED --> OUT
+    OUT -->|rsync back| BAKE
+    BAKE --> GATE
 ```
+
+### 3. Evaluation bridge: a Rust worker binary, not a PyO3 function
+The first draft added `run_bot_evaluation_race` to `crates/tdrace-py`. That needs the harness and the car
+catalog, which live in `tdrace-app` with `macroquad`, `kira` and `rusqlite`. `TECH_STACK.md` requires
+`tdrace-py` to stay free of display and audio dependencies. Moving the harness and the catalog out of
+`tdrace-app` is a large refactor.
+
+**Decision:** add a new binary `crates/tdrace-app/src/bin/bot_eval_worker.rs`.
+- It reads one JSON request per line on stdin and writes one JSON result per line on stdout.
+- It reuses `run_harness_race`, the catalog and `official_track` unchanged.
+- Each EvoRL worker process starts one `bot_eval_worker` child and keeps it for its whole life. The pipe
+  cost (< 1 ms) is small against a race (expected 0.1–0.5 s).
+- No new Rust crate and no `tdrace-py` change.
+
+**Request** (one line):
+```json
+{"circuit": "kart/lonato", "car": "<car id>", "laps": 3, "seed": 17,
+ "subject": {"style": "balanced", "tier": 4, "genome": {"lookahead_time": 0.38, "...": 0.0}},
+ "opponents": [{"style": "balanced", "tier": 4}], "subject_slot": 0, "max_time_s": 400.0}
+```
+
+**Result** (one line): `subject_rank`, `finished`, `dnf`, `lap_times`, `mean_flying_lap`,
+`best_lap`, `spins`, `offs`, `mistakes`, `longest_no_progress_s`, `controls_hash`, `steps`,
+`wall_time_ms`, and `error` (null on success). The worker never panics on bad input. It returns
+`error` and keeps reading.
+
+**Genome clamping:** the worker clamps every genome value to the search box in §4 before use. A NaN or
+infinite value, in the input or in any result field, makes the result an `error`. EvoRL scores an error
+as `Outcome.ERROR`.
 
 ---
 
-## 📐 Mathematical Formulation of Bot Optimization
+## 📐 What gets tuned
 
-### 1. The Tunable Parameter Vector ($\mathbf{\Theta}$)
-The complete bot behavior is parameterized by a 24-dimensional continuous vector $\mathbf{\Theta} = [\mathbf{\theta}_{\text{kinematic}}, \mathbf{\theta}_{\text{geometry}}, \mathbf{\theta}_{\text{racecraft}}, \mathbf{\theta}_{\text{human}}]$:
+### 1. Parameters that exist in code (the only ones in scope)
+| Stage | Parameter | Code location | Search box |
+| :--- | :--- | :--- | :--- |
+| **A: shared controller** | `lookahead_time` (Balanced base) | style tuple in `from_style_and_quality` | 0.25 – 0.55 s |
+| | `steering_kp` (Balanced base) | same | 1.50 – 3.50 |
+| | `steering_kd` (Balanced base) | same | 0.03 – 0.12 |
+| | `brake_margin` (Balanced base) | same | 0.85 – 1.30 |
+| | `speed_mult` (Balanced base) | same | 0.94 – 1.06 |
+| **B: tier ladder** (x 5 tiers) | `pace_limit` | `DriverQuality::for_tier` | 0.70 – 1.10 |
+| | `brake_padding` | same | -0.08 – 0.30 |
+| | `consistency` | same | 0.40 – 1.00 |
+| | `composure` | same | 0.30 – 1.00 |
 
-| Block | Parameter Name | Physical Meaning | Search Domain | Default Baseline |
-| :--- | :--- | :--- | :--- | :--- |
-| **Block 1: Kinematic Stability** | `lookahead_time` | Horizon for spline tangent projection ($s$) | $[0.20, 0.55]\text{ s}$ | $0.38\text{ s}$ |
-| | `steering_kp` | Path-following heading error proportional gain | $[1.50, 3.50]$ | $2.20$ |
-| | `steering_kd` | Heading error derivative damping gain | $[0.03, 0.12]$ | $0.06$ |
-| | `speed_factor` | Target pace limit multiplier | $[0.80, 1.15]$ | $1.00$ |
-| **Block 2: Corner Geometry** | `brake_margin` | Deceleration envelope safety buffer | $[0.80, 1.45]$ | $1.05$ |
-| | `entry_share` | Fraction of free lane used to open corner entry | $[0.10, 0.90]$ | $0.50$ |
-| | `apex_share` | Fraction of free lane used to clip corner apex | $[0.10, 0.90]$ | $0.50$ |
-| | `curb_cut_m` | Apex curb cutting distance allowance ($m$) | $[0.00, 1.20]\text{ m}$ | $0.00\text{ m}$ |
-| | `scan_lookahead_gain` | Curvature anticipation distance scaling | $[0.50, 1.50]$ | $1.00$ |
-| **Block 3: Pack Racecraft** | `avoidance_dist` | Proximity collision avoidance bubble ($m$) | $[3.50, 12.00]\text{ m}$ | $7.00\text{ m}$ |
-| | `aggression` | Lateral overtake divebomb assertiveness | $[0.20, 1.00]$ | $0.80$ |
-| | `max_pass_delay_s` | Overtake commit delay threshold ($s$) | $[0.00, 1.00]\text{ s}$ | $0.30\text{ s}$ |
-| | `wake_align_gain` | Slipstream cone attraction steering gain | $[0.00, 0.30]$ | $0.12$ |
-| | `defend_threshold_ttc` | Trailing threat Time-to-Collision trigger ($s$) | $[1.00, 4.00]\text{ s}$ | $2.50\text{ s}$ |
-| | `defend_corridor_bias`| Inside line defensive track bias share | $[0.00, 0.80]$ | $0.40$ |
-| **Block 4: Human Variance** | `line_sigma_m` | Ornstein–Uhlenbeck line wander diffusion ($m$) | $[0.10, 2.50]\text{ m}$ | $0.80\text{ m}$ |
-| | `line_choice_sigma` | Lap-to-lap corner line selection variance | $[0.02, 0.35]$ | $0.12$ |
-| | `brake_shift_sigma_m`| Braking point longitudinal variance ($m$) | $[0.50, 12.00]\text{ m}$ | $3.50\text{ m}$ |
-| | `corner_speed_sigma` | Corner apex speed selection variance | $[0.005, 0.050]$ | $0.015$ |
-| | `reaction_tau_s` | Steering low-pass lag time constant ($s$) | $[0.03, 0.35]\text{ s}$ | $0.10\text{ s}$ |
-| | `mistake_rate` | Discrete mistake probability per corner | $[0.001, 0.250]$ | $0.040$ |
-| | `w_late_brake` | Relative weight for LateBrake mistake | $[0.05, 0.60]$ | $0.25$ |
-| | `w_overdrive` | Relative weight for Overdrive mistake | $[0.05, 0.60]$ | $0.20$ |
-| | `w_power_stab` | Relative weight for PowerStab mistake | $[0.05, 0.60]$ | $0.15$ |
+- **Stage A** tunes the Balanced style tuple. The other 5 style tuples keep their current offsets from
+  Balanced, so styles move with the shared controller and stay distinct. Tuning the style offsets
+  themselves is spec 107.
+- **Stage B** tunes 4 values per tier (20 values, run tier by tier from T4 outward). `avoidance_padding`
+  stays fixed: it shapes pack behaviour, which is spec 107.
+- **Out of scope:** `reaction_tau_s` (not applied in code), the 4 parameters with no code
+  (`wake_align_gain`, `defend_threshold_ttc`, `defend_corridor_bias`, `scan_lookahead_gain`), and the
+  per-style `aggression` and `avoidance` values.
 
----
+### 2. Circuits and cars
+- **Launch modules only:** `classic`, `kart`, `autocross`, `rally` (Rallycross). Each circuit runs with
+  its own-category car from that module (same rule as `classic_circuits_bot_tests.rs`). One table,
+  `launch_circuit_cars()`, holds the pairs.
+- **Closed-loop circuits only.** A circuit that the harness cannot run as a lap race is excluded. The
+  report lists each exclusion and the reason.
+- **Training set (13):**
+  - classic: `gt_coastal_grand_prix`, `stock_tri_oval_speedway`, `gt_ridge_ring`, `kart_pine_grove`
+  - kart: `lonato`, `genk`, `whilton_mill`
+  - autocross: `maggiora_ax`, `nova_paka_ax`, `st_junien_ax`
+  - rally: `holjes_rx`, `mettet_rx`, `montalegre_rx`
+- **Held-out set:** every other closed-loop launch circuit (about 60). The campaign never sees them.
+- **Circuits with a known circuit bug** are left out of the held-out checks while that bug is open.
+  These are the Rallycross circuits listed in `tdrace-699t6`, `tdrace-xg1x`, `tdrace-bppc` and
+  `tdrace-4nmh3` (13 circuits at the baseline audit). Their bots fail to finish, stall for minutes, or
+  set impossible laps, so they cannot measure the bot. The report still shows them. They are
+  re-checked after spec 105 (Rallycross joker redraw) lands.
 
-### 2. Multi-Objective Cost Formulation
-Optimization evaluates candidates through a composite loss function aggregating racecraft, physical safety, and style-defining telemetry:
+> **Amendment (2026-10-11).** The baseline audit found these circuit bugs after approval.
+> `lydden_hill` (24 DNFs) was replaced in training by `mettet_rx` (no stalls, no DNFs).
 
-$$J(\mathbf{\Theta}) = J_{\text{race}}(\mathbf{\Theta}) + \lambda_{\text{safety}} \cdot J_{\text{safety}}(\mathbf{\Theta}) + \lambda_{\text{style}} \cdot \Phi_{\text{style}}(\mathbf{\Theta})$$
+### 3. Fitness
+**Stage A (shared controller).** This stage uses T4 Balanced head-to-head against the current baseline
+profile in 2-car races. Seats are swapped with the same seed (EvoRL pair-atomic common random numbers).
+- The outcome is WIN, DRAW or LOSS by finish order. A DNF, or more than 3 wall contacts, is a LOSS.
+  A wall contact is a wall impact after at least 0.25 s without one, so one scrape counts once.
+- The ranking uses the Wilson 95 % lower bound on the win rate (EvoRL default).
+- A match is *disqualified* if the subject spins or goes more than 10 s without progress (the
+  `classic_circuits_bot_tests` limit). The score is the Wilson bound minus the share of disqualified
+  matches. A hard reject is not used, because the T4 baseline already spins on Karting circuits
+  (`tdrace-4dyav`): every candidate would be rejected.
+- The baked candidate must not spin more, or stall more, than the baseline on the training circuits.
 
-#### A. Race Outcome & Flying Pace ($J_{\text{race}}$)
-$$J_{\text{race}}(\mathbf{\Theta}) = (1.0 - S_{\text{finish}}) + w_p \cdot \max\left(0, \frac{\bar{T}_{\text{flying}} - T_{\text{target}}}{T_{\text{target}}}\right)$$
-Where $S_{\text{finish}} \in \{0.0, 0.5, 1.0\}$ is the pair-atomic match score, and $\bar{T}_{\text{flying}}$ is the mean lap time across clean laps.
+**Stage B (tier ladder).** The fitness is the pace-band error, from the result metrics:
 
-#### B. Safety & Invariant Compliance ($J_{\text{safety}}$)
-$$J_{\text{safety}}(\mathbf{\Theta}) = w_c \cdot N_{\text{wall\_hits}} + w_s \cdot N_{\text{spins}} + w_o \cdot N_{\text{offs}} + w_d \cdot \mathbb{I}_{[\text{DNF}]}$$
-- $N_{\text{spins}}$: Instances where chassis heading deviates by $> 90^\circ$ from the track tangent.
-- $N_{\text{offs}}$: Time spent $> 1.5\text{ m}$ outside the track ribbon for $> 1.0\text{ s}$.
-- $\mathbb{I}_{[\text{DNF}]}$: Massive barrier penalty ($+100.0$) if the vehicle gets stuck or fails to progress.
+$$E_k = \max\left(0,\ |\Delta_k - c_k| - h_k\right)^2,\qquad \Delta_k = \frac{\bar T_{k}}{\bar T_{\text{T4}}} - 1$$
 
----
+| Tier | Target centre $c_k$ | Half-width $h_k$ |
+| :--- | :--- | :--- |
+| T1 Rookie | +13.0 % | 3.0 % |
+| T2 Amateur | +7.0 % | 2.0 % |
+| T3 Contender | +2.5 % | 1.0 % |
+| T4 Pro | 0 % (reference) | — |
+| T5 Legend | −2.25 % | 0.75 % |
 
-### 3. Style-Specific Objective Terms ($\Phi_{\text{style}}$)
-To ensure the 6 driving styles exhibit authentic, distinguishable signatures, each style evolves against an explicit behavioral divergence term:
+- The penalty for a DNF and for no-progress is the same as in Stage A.
+- **Tier composure ladder:** mistakes per lap must not rise from tier $k$ to tier $k+1$.
+- If EvoRL's emitters cannot rank by a scalar score, Stage B calls the `cma` package directly in the
+  same campaign script.
 
-#### 1. Smooth Style (Tire Conservation & Momentum Trajectories)
-Penalizes tire frictional energy dissipation while rewarding exit velocity:
-$$\Phi_{\text{smooth}} = \int_0^T \sum_{i=1}^4 \|\mathbf{F}_{\text{friction}, i} \cdot \mathbf{v}_{\text{slip}, i}\| \, dt - \lambda_v \cdot \bar{v}_{\text{exit}}$$
-- **Emergent Trajectory**: Minimizes tire scrub energy, avoids abrupt steering jerks, maximizes corner exit acceleration, carves wide geometric arcs.
-
-#### 2. Aggressive Style (Late-Braking & Inside Contesting)
-Rewards trail-braking overtakes and close proximity while penalizing at-fault collision impulse:
-$$\Phi_{\text{aggressive}} = -N_{\text{entry\_overtakes}} - \int_{\text{pack}} \frac{1}{\max(d_{\text{front}}, 0.5)} \, dt + \lambda_i \cdot \sum \text{Impulse}_{\text{collision}}$$
-- **Emergent Trajectory**: Dives deep into braking zones, contest inside apices, pressures leading cars with tight bumper-to-bumper following.
-
-#### 3. Tenacious Style (Defensive Bastion & Line Pinching)
-Rewards holding the inside defensive corridor under trailing pressure:
-$$\Phi_{\text{tenacious}} = -\int_{\text{pressure}} \mathbb{I}_{[\text{lane} \in \text{InsideDefensiveCorridor}]} \, dt - N_{\text{repelled\_passes}} + \lambda_c \cdot N_{\text{conceded}}$$
-- **Emergent Trajectory**: Proactively transitions to the inside line when an opponent is within $12\text{ m}$ behind, pinches corner exits to block undercut maneuvers.
-
-#### 4. Calculating Style (Slipstream Tow & High-Percentage Overtakes)
-Rewards aerodynamic draft lock and pass execution efficiency:
-$$\Phi_{\text{calculating}} = -\int_{\text{straight}} \mathbb{I}_{[\text{in\_wake}]} \, dt - \frac{N_{\text{successful\_passes}}}{N_{\text{pass\_attempts}} + 1} + \lambda_m \cdot N_{\text{unforced\_mistakes}}$$
-- **Emergent Trajectory**: Patiently tracks the leader's low-drag slipstream wake on straights, pulls out with superior momentum, executes textbook clean passes.
-
-#### 5. Bold Style (Yaw Rotation & Dynamic Slip Angle Exploitation)
-Rewards controlled body slip angle in the linear drift band while penalizing spinouts:
-$$\Phi_{\text{bold}} = -\int_0^T |\beta_{\text{body}}| \cdot \mathbb{I}_{[10^\circ \le |\beta_{\text{body}}| \le 28^\circ]} \, dt - N_{\text{curb\_launches}} + \lambda_s \cdot \mathbb{I}_{[|\beta| > 80^\circ]}$$
-- **Emergent Trajectory**: Scandinavian flicks on entry, power oversteer on exit, aggressive curb hopping, exciting arcade spectacle.
-
-#### 6. Balanced Style (Lap Consistency & Adaptive Racecraft)
-Minimizes inter-lap variance while maintaining high average finishing position:
-$$\Phi_{\text{balanced}} = \text{StdDev}(T_{\text{flying}}) - \text{Median}(S_{\text{finish}})$$
-- **Emergent Trajectory**: The solid, reliable benchmark for career mode opponents.
+### 4. Statistical acceptance (replaces "strict" ordering on single runs)
+Races are noisy. A tier order counts as *held* on a circuit when the mean flying lap of tier $k+1$ is
+below tier $k$ by more than 2 standard errors. The standard error comes from **8 seeds x 3 laps**.
 
 ---
 
-## 🌳 Tactical Behavior Tree Evolution
+## ⚡ Compute plan: blaze
 
-While continuous control laws handle 60 Hz trajectory tracking, tactical racecraft decisions are discrete states. We introduce an interpretable Behavior Tree evolved in EvoRL and compiled into **zero-allocation Rust**:
+### 1. Where things run
+| Work | Machine | Why |
+| :--- | :--- | :--- |
+| Rust code, unit tests, `bot_tier_ladder_tests` | Mac | Fast edit loop. |
+| Throughput benchmark | blaze (and Mac for comparison) | Sets the campaign budget. |
+| Baseline audit on all launch circuits | blaze | About 60 circuits x 5 tiers x 8 seeds. |
+| Stage A and Stage B campaigns | blaze | Many CPU hours. EvoRL and its `.venv` live only on blaze. |
+| Held-out validation | blaze | Full sweep. |
+| Baking constants, final benchmark report | Mac | Reviewed commit. |
 
-```rust
-/// Discrete tactical states evaluated per tick in BotAiDriver.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum BotTacticalState {
-    NominalLine,
-    DraftingWake { target_id: usize, pullout_dist: f32 },
-    DefendingInside { threat_id: usize, block_margin: f32 },
-    SlingshotPass { pass_side: f32, commit_timer: f32 },
-    DivebombEntry { apex_target_speed: f32 },
-    PittingExecution { stage: PitStage },
-}
-```
+### 2. blaze workflow
+1. On the Mac, commit and push the feature branch. The user's git policy pre-authorizes pushing working
+   branches.
+2. On blaze, use a **separate worktree**: `git -C /home/mario/workspace/games/tdrace worktree add
+   ../tdrace-083 <branch>`. The main blaze checkout stays on `main`.
+3. Initialize the `tracks` submodule in that worktree. It must match the pinned commit, because
+   `build.rs` embeds circuits.
+4. Build: `cargo build --release -p tdrace-app --bin bot_eval_worker`.
+5. Run the campaign from the EvoRL venv: `source ~/.local/bin/env` first (blaze puts `uv` on PATH only in
+   login shells). Start it with `setsid nohup ... & disown`. Logs and the pid go to
+   `.driver_jobs/<run>/`. Use the `run-blaze` helper with `BLAZE_DIR` set to the tdrace worktree.
+6. Pull back `results/<run>/best.json`, `results/<run>/report.md` and `results/<run>/campaign.json`
+   (the seed, the EvoRL commit and the tdrace commit). The SQLite ledger stays on blaze unless a
+   follow-up question needs it.
 
-```mermaid
-flowchart TD
-    Root["TacticalDirector (Selector)"]
-    Root --> S_Pit["Pit Stop Sequence (Sequence)"]
-    Root --> S_Defend["Defensive Block Sequence (Sequence)"]
-    Root --> S_Attack["Overtake Slingshot Sequence (Sequence)"]
-    Root --> S_Draft["Slipstream Follow Sequence (Sequence)"]
-    Root --> A_Nominal["Nominal Spline Line (Action)"]
-
-    S_Defend --> C_Threat["Condition: Trailing Opponent TTC < threshold_defend_ttc"]
-    S_Defend --> C_InsideOpen["Condition: Inside Track Margin > car_width * 1.2"]
-    S_Defend --> A_Block["Action: Bias Target to Inside Edge (offset = block_margin)"]
-
-    S_Attack --> C_SpeedDelta["Condition: Delta Speed > min_overtake_delta_v"]
-    S_Attack --> C_Clearance["Condition: Lateral Evade Corridor Clearance > safety_dist"]
-    S_Attack --> A_Slingshot["Action: Lateral Slingshot Burst & Delayed Braking Marker"]
-
-    S_Draft --> C_InWake["Condition: Front Car Distance in [3.5m, 28.0m]"]
-    S_Draft --> C_WakeAligned["Condition: Lateral Alignment Error < 2.5m"]
-    S_Draft --> A_AlignWake["Action: Steer Directly Toward Leader Slipstream Wake"]
-```
-
-- **EvoRL Evolution**: EvoRL optimizes the conditional leaf parameters (`threshold_defend_ttc`, `min_overtake_delta_v`, `safety_dist`, `block_margin`) per style.
-- **Zero-Allocation Rust Execution**: Once evolved, the Behavior Tree is compiled into an inlined Rust state match statement inside `BotAiDriver::compute_controls`, adding zero heap allocations.
+### 3. Budget
+The budget is set from the measured throughput (task 2), not guessed. Planning estimate: 0.1–0.5 s per
+3-lap 2-car race per core, so about 60–280 races/s on 28 workers. One Stage A generation is
+(population 14) x (13 circuits) x (4 seed pairs) x 2 seats = 1,456 races, about 5–25 s. A full
+Stage A + B campaign fits in an overnight run.
 
 ---
 
-## ⚡ High-Throughput Simulation Bridge (`crates/tdrace-py`)
+## 🧰 Tech Stack Amendment (part of this spec)
+`TECH_STACK.md` gets a new row group, **"Offline bot tuning (not shipped)"**:
+- **EvoRL**: git dependency `magomar/evorl`, pinned commit, installed only in the blaze tuning venv.
+- **`cma` >= 3.2.2**: an EvoRL dependency.
+- **Python >= 3.11**: only in the tuning venv (EvoRL needs 3.11). The game's `python/tdrace` package stays
+  at >= 3.10.
+- **SQLite via Python `sqlite3` (stdlib)**: EvoRL `MatchLedger`, a tuning artefact only.
 
-To allow EvoRL to evaluate hundreds of candidate bot profiles per second, we expand [`crates/tdrace-py`](../crates/tdrace-py) to expose a fast native batch rollout harness.
-
-### 1. Cargo Crate Dependency Update
-In [`crates/tdrace-py/Cargo.toml`](../crates/tdrace-py/Cargo.toml), add direct workspace dependencies:
-```toml
-[dependencies]
-tdrace-core = { path = "../tdrace-core" }
-race-kit = { path = "../race-kit" }
-wheelbase = { path = "../wheelbase" }
-arcade-race-core = { path = "../arcade-race-core" }
-pyo3 = { version = "0.23", features = ["extension-module"] }
-numpy = "0.23"
-glam = { version = "0.29", features = ["serde"] }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-rand = "0.8"
-```
-
-### 2. Native Rollout Extension Interface
-In [`crates/tdrace-py/src/engine.rs`](../crates/tdrace-py/src/engine.rs), implement `run_bot_evaluation_race`:
-
-```rust
-#[pyclass]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RaceHarnessResult {
-    #[pyo3(get)]
-    pub subject_rank: usize,
-    #[pyo3(get)]
-    pub opponent_rank: usize,
-    #[pyo3(get)]
-    pub total_steps: usize,
-    #[pyo3(get)]
-    pub subject_best_lap: f32,
-    #[pyo3(get)]
-    pub subject_mean_lap: f32,
-    #[pyo3(get)]
-    pub subject_mistakes: u32,
-    #[pyo3(get)]
-    pub subject_spins: u32,
-    #[pyo3(get)]
-    pub subject_offs: u32,
-    #[pyo3(get)]
-    pub tire_scrub_energy: f32,
-    #[pyo3(get)]
-    pub average_body_slip_deg: f32,
-    #[pyo3(get)]
-    pub time_defending_s: f32,
-    #[pyo3(get)]
-    pub time_drafting_s: f32,
-    #[pyo3(get)]
-    pub passes_completed: u32,
-    #[pyo3(get)]
-    pub passes_conceded: u32,
-    #[pyo3(get)]
-    pub wall_collisions: u32,
-    #[pyo3(get)]
-    pub dnf: bool,
-}
-
-#[pyfunction]
-#[pyo3(signature = (track_slug, car_model, subject_params_json, opponent_style, opponent_tier, laps, seed, grid_slot))]
-pub fn run_bot_evaluation_race(
-    track_slug: &str,
-    car_model: &str,
-    subject_params_json: &str,
-    opponent_style: &str,
-    opponent_tier: u8,
-    laps: u32,
-    seed: u64,
-    grid_slot: usize,
-) -> PyResult<RaceHarnessResult> {
-    // Deserializes candidate parameters directly into race_kit::ai::BotProfile & HumanTraits
-    // Executes headless 60 Hz RaceWorld<Car> on official catalog circuit
-    // Returns full kinematic metrics and match outcome in under 5 ms
-}
-```
-
-### 3. EvoRL Common Random Numbers (CRN) PlayFn Callback
-In `evorl/examples/tdrace_bot_tuning/harness.py`:
-```python
-from evorl.core.ledger import Outcome
-import tdrace._tdrace as tdrace_native
-
-def tdrace_bot_play_fn(
-    subject: str,
-    opponent: str,
-    seed: int,
-    seat: int,
-    params_str: str | None,
-) -> tuple[Outcome, int, str | None, float | None, dict[str, Any] | None]:
-    """Pair-atomic Common Random Number evaluation callback for EvoRL."""
-    try:
-        # Seat 0 = Inside Pole Position; Seat 1 = Outside Second Position
-        res = tdrace_native.run_bot_evaluation_race(
-            track_slug="gt_coastal_grand_prix",
-            car_model="gt_porsche_911_gt3r",
-            subject_params_json=params_str,
-            opponent_style=opponent.split("@")[0],
-            opponent_tier=int(opponent.split("@")[1]) if "@" in opponent else 4,
-            laps=6,
-            seed=seed,
-            grid_slot=seat,
-        )
-
-        if res.dnf or res.wall_collisions > 3:
-            outcome = Outcome.LOSS
-        elif res.subject_rank < res.opponent_rank:
-            outcome = Outcome.WIN
-        elif res.subject_rank == res.opponent_rank:
-            outcome = Outcome.DRAW
-        else:
-            outcome = Outcome.LOSS
-
-        metrics = {
-            "flying_lap": res.subject_best_lap,
-            "mean_lap": res.subject_mean_lap,
-            "mistakes": res.subject_mistakes,
-            "spins": res.subject_spins,
-            "offs": res.subject_offs,
-            "tire_scrub_energy": res.tire_scrub_energy,
-            "slip_angle_deg": res.average_body_slip_deg,
-            "time_defending_s": res.time_defending_s,
-            "time_drafting_s": res.time_drafting_s,
-        }
-
-        subject_score = 100.0 - res.subject_mean_lap
-        return outcome, res.total_steps, None, subject_score, metrics
-    except Exception as exc:
-        return Outcome.ERROR, 0, str(exc), None, {"error": str(exc)}
-```
-
----
-
-## 📈 Monotonic Tier Progression & Quality Gates
-
-To ensure career progression provides an authentic difficulty curve, bot performance across the 5 Driver Tiers (`T1 Rookie` through `T5 Legend`) must satisfy strict monotonic pacing across all circuits.
-
-### 1. Monotonic Pacing Invariant
-Under identical vehicle configurations and track conditions, average flying lap times must satisfy:
-$$\bar{T}_{\text{T5}} < \bar{T}_{\text{T4}} < \bar{T}_{\text{T3}} < \bar{T}_{\text{T2}} < \bar{T}_{\text{T1}}$$
-
-Calibrated pace targets relative to Tier 4 Pro baseline:
-- **T5 Legend**: $-2.0\% \pm 0.5\%$ (exploits physical tire friction limit; zero unforced errors).
-- **T4 Pro**: $0.0\%$ (benchmark factory pro driver).
-- **T3 Contender**: $+2.5\% \pm 0.8\%$ (assertive national-level racer).
-- **T2 Amateur**: $+7.0\% \pm 1.2\%$ (regional club racer; cautious braking margins).
-- **T1 Rookie**: $+13.0\% \pm 2.0\%$ (entry-level grassroots; frequent unforced mistakes and wide lines).
-
-### 2. Statistical Non-Inferiority Testing (`evorl.evo.promotion`)
-A higher tier $T_k$ candidate is only promoted if it statistically dominates tier $T_{k-1}$ under a one-sided z-test on head-to-head win rates:
-$$z = \frac{\hat{p}_{T_k \text{ vs } T_{k-1}} - 0.5}{\sqrt{\frac{0.25}{N_{\text{pairs}}}}} > 2.33 \quad (p < 0.01)$$
-
-### 3. Anti-Overfitting & Generalization Tripwires
-To eradicate the **Winner's Curse**:
-- **Wilson Lower Bound ($W_{0.95}$)**: Candidates are ranked on the conservative lower bound of their binomial confidence interval rather than raw sample win rate.
-- **Held-Out Circuit Validation**: Promoted candidates must maintain within $15\%$ of their training performance when evaluated on held-out test circuits (e.g. `catalunya_rx`, `spa_francorchamps`, `lonato_kart`).
-- **Terminal Crash Disqualification**: Any candidate causing a car-to-wall penetration, reverse driving lockup, or failure to progress is automatically disqualified.
+No new Rust crates. `pyproject.toml` runtime dependencies do not change.
 
 ---
 
 ## 🔑 Security, Compliance, & IAM Roles
-
-### 1. Memory Safety & Zero-Allocation Invariant
-- All evolved parameters and Behavior Tree structures compiled into `crates/race-kit` execute with strictly stack-allocated structures.
-- The 60 Hz physics update loop (`BotAiDriver::compute_controls`) retains zero dynamic heap allocation per tick.
-
-### 2. Numerical Clamping & Simulation Guardrails
-- Input parameters injected via JSON or FFI during training are bounded by strict clamping envelopes:
-  - `lookahead_time` $\in [0.15, 0.70]\text{ s}$
-  - `steering_kp` $\in [1.0, 4.5]$
-  - `steering_kd` $\in [0.01, 0.25]$
-  - `brake_margin` $\in [0.70, 1.60]$
-  - `speed_factor` $\in [0.70, 1.25]$
-  - `line_sigma_m` $\in [0.0, 3.5]\text{ m}$
-  - `reaction_tau_s` $\in [0.0, 0.50]\text{ s}$
-- Any candidate generating `NaN` or `inf` floating-point numbers triggers an immediate `Outcome::ERROR` and is discarded.
-
-### 3. Sandboxed Execution Isolation
-- Evolution runs in an isolated Python process communicating with the compiled Rust C-extension (`_tdrace`). No network sockets or external disk write permissions are required outside the SQLite match ledger.
-
----
-
-## 🛡️ Disaster Recovery, Monitoring, & Fallbacks
-
-### 1. Fallback to Hardcoded Presets
-If an evolved parameter file or custom profile fails checksum verification or encounters deserialization errors at game startup, `BotProfile::from_style_and_quality` automatically falls back to the battle-tested default constants from Spec 046.
-
-### 2. Anti-Stuck Watchdog & Reverse Recovery
-The engine watchdog monitors progress: if a bot fails to advance $5\text{ m}$ in $3.0\text{ s}$, it engages reverse gear with alternating steering lock for up to $3.0\text{ s}$, ensuring no bot remains permanently trapped against course barriers.
-
-### 3. Automated CI/CD Regression Tripwires
-A targeted headless benchmark runs during CI/CD (`cargo run -p tdrace-app --bin bot_behaviour_benchmark`). If any physics change degrades Tier 5 lap times by $> 1.0\%$ or causes a Tier 1 bot to fail recovery, the build fails.
+- No secrets, keys or new network services. blaze is reached over the existing Tailscale SSH setup.
+- The tuning tools run offline. Nothing in the shipped game reads their output at runtime.
 
 ---
 
 ## 🗄️ Database & Storage Migration Plan
+- **Ledger**: EvoRL `SQLiteMatchLedger` in WAL mode on blaze, under `results/<run>/ledger.sqlite`.
+  It is not committed.
+- **Committed artefacts**: the new constants in `crates/race-kit/src/ai/mod.rs`,
+  `reports/bot_calibration_report.md` (before/after tables for training and held-out circuits), and
+  `tools/bot_tuning/runs/<run>.json` (the seed, the commits and the best genome).
+- **No runtime override file.** The first draft's `assets/ai/calibrated_profiles.toml` and its checksum
+  fallback are dropped. The constants are plain Rust, and git keeps the history.
 
-### 1. EvoRL SQLite Match Ledger (`MatchLedger`)
-- Evolutionary match histories, telemetry metrics, and candidate ratings are persisted in SQLite databases using Write-Ahead Logging (`WAL` mode).
-- Standard schema:
-  - `matches`: Candidate hash, opponent identifier, seed, seat index, outcome, elapsed steps, score, and JSON telemetry dictionary.
-  - `lineage`: Generation number, parent hashes, mutation metadata, and parameter assignments.
+---
 
-### 2. Exported Engine Formats
-- Once an optimization campaign completes, winning parameters are exported into two formats:
-  1. Static Rust source code embedded directly into `crates/race-kit/src/ai/mod.rs` and `driver.rs`.
-  2. Optional declarative TOML override tables (`assets/ai/calibrated_profiles.toml`) loaded at runtime if developer tuning mode is enabled.
+## 🛡️ Disaster Recovery, Monitoring, & Fallbacks
+- **No bot-only rescue.** A stuck bot means a real bug in the bot, the circuit or the physics. The fix
+  goes there, not into a teleport or a reset. The existing driving recovery (`stuck_timer`,
+  `no_progress_timer`, `ThreePointTurn`) is not changed by this spec.
+- **A circuit that blocks a car of its own category** is reported as a circuit or physics bug in Beads.
+  The campaign does not tune around it.
+- **The per-tick bot loop** keeps the same allocation behaviour. This spec changes constants only, not
+  `compute_controls`.
+- **Rollback:** revert the bake commit. The old constants come back unchanged.
 
 ---
 
 ## 🧪 Verification & Acceptance Criteria
 
-### 1. Test Harness Execution Commands
-- **Rust Headless Bot Behaviour Benchmark**:
-  ```bash
-  cargo run -p tdrace-app --release --bin bot_behaviour_benchmark
-  ```
-- **Rust Workspace Unit & Multi-Car Collision Tests**:
-  ```bash
-  cargo test -p race-kit ai
-  cargo test -p tdrace-app --test orthogonal_ai_styles_and_tiers_tests
-  cargo test -p tdrace-app --test bot_humanlike_driving_tests
-  ```
-- **Python PyO3 Evaluation Bridge Tests**:
-  ```bash
-  uv run pytest tests/python/test_bot_harness_bridge.py
-  ```
-- **EvoRL Campaign Verification Run**:
-  ```bash
-  PYTHONPATH=/home/mario/workspace/games/tdrace/python /home/mario/workspace/evorl/.venv/bin/python examples/tdrace_bot_tuning/run_campaign.py --style smooth --tier 4 --generations 10
-  ```
-
----
+### Automated tests
+```bash
+cargo test -p race-kit ai
+cargo test -p tdrace-app --test bot_eval_worker_tests
+cargo test -p tdrace-app --release --test bot_tier_ladder_tests
+cargo test -p tdrace-app --test bot_humanlike_driving_tests
+cargo test -p tdrace-app --test classic_circuits_bot_tests
+cargo run -p tdrace-app --release --bin bot_behaviour_benchmark
+```
 
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
-#### Scenario: PyO3 Native Evaluation Bridge Execution
-- [ ] **Given** a valid JSON serialized `BotProfile` and `HumanTraits` payload
-- [ ] **When** `_tdrace.run_bot_evaluation_race` is called with track `gt_coastal_grand_prix` for 6 laps
-- [ ] **Then** the simulation executes deterministically in under $10\text{ ms}$
-- [ ] **And** returns a populated `RaceHarnessResult` with zero NaN values
-- [ ] **And** `subject_best_lap` matches the real elapsed simulation time.
+#### Scenario: Worker returns the same result as the Rust harness
+- [ ] **Given** a `bot_eval_worker` request for `gt_coastal_grand_prix`, 3 laps, seed 17, T4 Balanced against T4 Balanced
+- [ ] **When** the same race runs through `run_harness_race` directly in a Rust test
+- [ ] **Then** both give the same `controls_hash` and the same lap times
+- [ ] **And** two worker runs with the same request give the same `controls_hash`.
 
-#### Scenario: Monotonic Tier Pacing Verification Across Modalities
-- [ ] **Given** calibrated driver profiles for Tiers 1 through 5
-- [ ] **When** evaluated across 10-lap races on all 4 benchmark circuits (`classic_grand_prix`, `oval_speedway`, `drift_park`, `kart_arena`)
-- [ ] **Then** flying lap times strictly satisfy $\bar{T}_{\text{T5}} < \bar{T}_{\text{T4}} < \bar{T}_{\text{T3}} < \bar{T}_{\text{T2}} < \bar{T}_{\text{T1}}$
-- [ ] **And** Tier 1 lap times are between $+10\%$ and $+16\%$ slower than Tier 4
-- [ ] **And** Tier 5 lap times are between $-1.5\%$ and $-3.0\%$ faster than Tier 4.
+#### Scenario: Worker survives bad input
+- [ ] **Given** a running `bot_eval_worker`
+- [ ] **When** it receives malformed JSON, an unknown circuit, an unknown car, and a genome with a NaN value
+- [ ] **Then** it answers each line with a result whose `error` is set
+- [ ] **And** it answers the next valid request correctly.
 
-#### Scenario: Style Differentiation Verification on Telemetry
-- [ ] **Given** calibrated bot profiles for `Smooth`, `Aggressive`, `Tenacious`, `Calculating`, and `Bold` at Tier 4
-- [ ] **When** multi-car pack races are executed on `gt_coastal_grand_prix`
-- [ ] **Then** `Smooth` bots exhibit at least $25\%$ lower tire scrub energy than `Bold` bots
-- [ ] **And** `Bold` bots exhibit average cornering body slip angles between $10^\circ$ and $25^\circ$
-- [ ] **And** `Tenacious` bots spend at least $30\%$ more time on the inside defensive corridor when followed closely
-- [ ] **And** `Calculating` bots spend at least $40\%$ more time aligned in the slipstream wake before executing overtakes.
+#### Scenario: Throughput is measured and recorded
+- [ ] **Given** the release `bot_eval_worker` on blaze and on the Mac
+- [ ] **When** the throughput benchmark runs 3-lap 2-car races on the 13 training circuits
+- [ ] **Then** `reports/bot_calibration_report.md` records races/s and car-steps/s for 1 worker and for 28 workers on blaze, and for 1 worker on the Mac.
 
-#### Scenario: Zero-Allocation and Determinism Safety Net
-- [ ] **Given** any calibrated `BotProfile` and evolved Behavior Tree running in `crates/race-kit`
-- [ ] **When** `BotAiDriver::compute_controls` executes over 36,000 steps ($10\text{ minutes}$ of simulated racing)
-- [ ] **Then** zero dynamic heap allocations occur per tick
-- [ ] **And** two separate simulation runs with identical initial seeds produce bit-identical telemetry outputs (`controls_hash`).
+#### Scenario: Baseline audit covers every launch circuit
+- [ ] **Given** the current (pre-tuning) constants
+- [ ] **When** the audit runs all 5 tiers x 8 seeds on every closed-loop circuit of the classic, kart, autocross and rally modules
+- [ ] **Then** the report lists, per circuit, the tier pace deltas against T4, DNFs, spins and the longest no-progress time
+- [ ] **And** every excluded circuit is listed with a reason
+- [ ] **And** every circuit where an own-category car is stuck has a Beads issue.
 
-#### Scenario: Generalization Tripwire & Winner's Curse Defense
-- [ ] **Given** candidate bot parameters promoted by EvoRL CMA-ES search
-- [ ] **When** tested on 3 held-out circuits with different surface friction matrices
-- [ ] **Then** out-of-sample win rate does not degrade by more than $15\%$ relative to training
-- [ ] **And** the bot records zero unrecoverable wall-pins or terminal DNF events.
+#### Scenario: Calibrated tiers hold the pace ladder on training circuits
+- [ ] **Given** the baked Stage A and Stage B constants
+- [ ] **When** 8 seeds x 3 laps run per tier on each of the 13 training circuits
+- [ ] **Then** the tier order T5 < T4 < T3 < T2 < T1 holds (by the 2-standard-error rule) on all 13 circuits
+- [ ] **And** each tier's mean delta against T4 is inside its band in the Stage B table on at least 11 of 13 circuits
+- [ ] **And** no T3–T5 bot goes more than 10 s without progress.
+
+#### Scenario: Calibration generalizes to held-out circuits
+- [ ] **Given** the baked constants
+- [ ] **When** the same sweep runs on every held-out launch circuit without an open circuit bug (see "Circuits and cars")
+- [ ] **Then** the tier order holds on at least 90 % of those circuits
+- [ ] **And** the T4 DNF count is no higher than the baseline audit on every circuit
+- [ ] **And** the T4 Stage A win rate against the old baseline, over all held-out circuits, is at least 50 %.
+
+#### Scenario: Regression gate in cargo test
+- [ ] **Given** `bot_tier_ladder_tests` on the 4 `SAMPLE_TRACKS`
+- [ ] **When** `cargo test -p tdrace-app --release --test bot_tier_ladder_tests` runs
+- [ ] **Then** it fails if the tier order breaks, or if T5 is slower than T4, on any sample track
+- [ ] **And** it finishes in under 120 s on the Mac.
+
+#### Scenario: Existing bot behaviour stays intact
+- [ ] **Given** the baked constants
+- [ ] **When** `bot_humanlike_driving_tests`, `classic_circuits_bot_tests` and `bot_curb_cutting_tests` run
+- [ ] **Then** they all pass
+- [ ] **And** the 6 styles still show distinct mistake mixes in `bot_behaviour_benchmark` (each style's top mistake kind is unchanged).
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
-### Target Files to Create / Modify
+### Created/Modified Files
+- `[ ]` `crates/tdrace-app/src/bin/bot_eval_worker.rs` -> JSON-lines evaluation worker over `run_harness_race`.
+- `[ ]` `crates/tdrace-app/src/ai/bot_harness.rs` -> `launch_circuit_cars()` table and a genome-to-`BotProfile` helper with clamping.
+- `[ ]` `crates/tdrace-app/tests/bot_eval_worker_tests.rs` -> Determinism, parity and bad-input tests.
+- `[ ]` `crates/tdrace-app/tests/bot_tier_ladder_tests.rs` -> Fast tier-ladder regression gate.
+- `[ ]` `crates/race-kit/src/ai/mod.rs` -> Baked Stage A style tuple and Stage B `DriverQuality::for_tier` rows.
+- `[ ]` `tools/bot_tuning/harness.py` -> EvoRL `PlayFn` that drives a persistent `bot_eval_worker`.
+- `[ ]` `tools/bot_tuning/run_campaign.py` -> Throughput benchmark, baseline audit, Stage A, Stage B, held-out sweep.
+- `[ ]` `tools/bot_tuning/export.py` -> Prints the Rust constant table from `best.json` for review.
+- `[ ]` `tools/bot_tuning/runs/<run>.json` -> Seeds, commits and best genome of the baked run.
+- `[ ]` `reports/bot_calibration_report.md` -> Throughput, baseline audit, before/after and held-out results.
+- `[ ]` `specs/constitution/TECH_STACK.md` -> "Offline bot tuning (not shipped)" rows.
+- `[ ]` `specs/constitution/ROADMAP.md` -> Updated 083 entry; 107 and 108 entries.
 
-#### In `tdrace`:
-- `[ ]` `crates/tdrace-py/Cargo.toml` -> Adds `race-kit` dependency.
-- `[ ]` `crates/tdrace-py/src/engine.rs` -> Implements `run_bot_evaluation_race` and `RaceHarnessResult`.
-- `[ ]` `crates/race-kit/src/ai/mod.rs` -> Updates `BotProfile::from_style_and_quality` with EvoRL-calibrated parameters.
-- `[ ]` `crates/race-kit/src/ai/tactics.rs` -> Introduces zero-allocation Behavior Tree tactical evaluation module.
-- `[ ]` `crates/tdrace-app/src/ai/driver.rs` -> Harmonizes the 72 `DriverCharacter` presets with validated personality offsets.
-- `[ ]` `tests/python/test_bot_harness_bridge.py` -> PyTest suite verifying PyO3 bridge correctness and determinism.
-- `[ ]` `specs/constitution/ROADMAP.md` -> Registers Spec 083 under Phase 2 AI Driving Styles & Simulation.
-
-#### In `evorl`:
-- `[ ]` `examples/tdrace_bot_tuning/` -> Implementation of TDRace ParameterSpace, play_fn, and multi-stage campaign scripts.
-- `[ ]` `examples/tdrace_bot_tuning/fitness.py` -> Style-specific multi-objective reward implementations.
-- `[ ]` `examples/tdrace_bot_tuning/export.py` -> Transpiler generating pure Rust structs from winning genomes.
+### Verification Assertions
+- `bot_eval_worker.rs`, `bot_tier_ladder_tests.rs` and `tools/bot_tuning/*.py` reference
+  `specs/083_evorl_bot_driving_style_and_performance_optimization.md` in their header comments.

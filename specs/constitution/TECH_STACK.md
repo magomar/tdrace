@@ -67,6 +67,15 @@ The Rust codebase is organized as a Cargo workspace (resolver `2`, edition `2021
 | **`uv`** | `>= 0.11` | Ultra-fast Python package installer, environment manager, and virtualenv orchestrator (`.venv`). | Development workflow |
 | **`pytest`** | `>= 8.0` | Test suite runner for Gymnasium API compliance, adversarial action space boundaries, and multi-agent determinism tests (`tests/python`). | Quality assurance |
 
+**Offline bot tuning (not shipped)** — [Spec 083](../083_evorl_bot_driving_style_and_performance_optimization.md). These run only in a separate tuning venv on the blaze compute box. They are not runtime dependencies of the game or of `pyproject.toml`.
+
+| Technology | Approved Version | Purpose & Architectural Role | Target Scope |
+| :--- | :--- | :--- | :--- |
+| **EvoRL** | git `magomar/evorl`, pinned commit | Evolutionary search (CMA-ES, pair-atomic common random numbers, Wilson lower bound) over bot settings. Drives `bot_eval_worker` through `tools/bot_tuning`. | `tools/bot_tuning` |
+| **`cma`** | `>= 3.2.2` | CMA-ES implementation used by EvoRL. | `tools/bot_tuning` |
+| **Python (tuning venv)** | `>= 3.11` | EvoRL needs 3.11. The game's `python/tdrace` package stays at `>= 3.10`. | `tools/bot_tuning` |
+| **`sqlite3` (Python stdlib)** | stdlib | EvoRL `MatchLedger` (WAL mode). Tuning artefact on blaze; never committed. | `tools/bot_tuning` |
+
 ---
 
 ### 4. Web Portals & Documentation Stack

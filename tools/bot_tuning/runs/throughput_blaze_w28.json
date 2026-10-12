@@ -1,0 +1,25 @@
+{
+  "host": "BLAZE",
+  "cpus": 32,
+  "workers": 28,
+  "races": 416,
+  "errors": [],
+  "elapsed_s": 14.040664930995263,
+  "races_per_s": 29.628226444010163,
+  "car_steps_per_s": 1297050.9651432224,
+  "mean_race_ms": {
+    "classic/gt_coastal_grand_prix": 834.1693168125,
+    "classic/stock_tri_oval_speedway": 399.70980015625,
+    "classic/gt_ridge_ring": 580.481236625,
+    "classic/kart_pine_grove": 258.8132603125,
+    "kart/lonato": 850.63437609375,
+    "kart/genk": 1018.2102575937499,
+    "kart/whilton_mill": 798.98351265625,
+    "autocross/maggiora_ax": 1042.7109525625,
+    "autocross/nova_paka_ax": 906.6323311875,
+    "autocross/st_junien_ax": 809.16018840625,
+    "rally/holjes_rx": 1307.3718181875,
+    "rally/lydden_hill": 1248.52450034375,
+    "rally/montalegre_rx": 1597.98236109375
+  }
+}
