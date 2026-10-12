@@ -538,6 +538,115 @@ fn osm_cut(cfg: &TrackJokerConfig, track: &Track, joker: &OsmJoker) -> JokerCut 
     JokerCut { split_idx: s_idx, merge_idx: m_idx, joker: joker_wps }
 }
 
+fn redraw_for(_slug: &str) -> Option<rx_joker_fit::Redraw> {
+    None
+}
+
+fn explore_circuit(
+    cfg: &TrackJokerConfig,
+    track: &Track,
+    split_idx: usize,
+    merge_idx: usize,
+    old: &[TrackWaypoint],
+) {
+    println!("=== EXPLORING REDRAW FOR {} ===", cfg.slug);
+    let main = &track.spline;
+    let s_split = rx_joker_fit::waypoint_station(main, split_idx);
+    let s_merge = rx_joker_fit::waypoint_station(main, merge_idx);
+    let reference = rx_joker_fit::Reference::new(main, old, cfg.name);
+    let widest = reference.lateral.iter().copied().fold(0.0f32, |a, b| if b.abs() > a.abs() { b } else { a });
+    let side = if widest > 0.0 { tdrace_core::track::junction_kit::Side::Left } else { tdrace_core::track::junction_kit::Side::Right };
+    let mut widths: Vec<f32> = old[1..old.len() - 1].iter().map(|w| w.width).collect();
+    widths.sort_by(f32::total_cmp);
+    let joker_width = widths[widths.len() / 2].round().max(8.0);
+
+    println!("  side={:?}, joker_width={:.1}, s_split={:.1}, s_merge={:.1}", side, joker_width, s_split, s_merge);
+
+    // Generate candidate split components
+    let mut splits = Vec::new();
+    for len in [15.0, 20.0, 25.0, 30.0, 35.0, 40.0] {
+        for gap in [3.5, 4.0, 4.5, 5.0, 5.5, 6.0] {
+            let comp = rx_joker_fit::taper(s_split, len, gap);
+            if let Ok(j) = tdrace_core::track::junction_kit::build_junction(main, &comp, tdrace_core::track::junction_kit::JunctionRole::Entry, side, joker_width) {
+                if j.nose.is_some() {
+                    splits.push(comp);
+                }
+            }
+            for angle in [15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0, 50.0, 55.0] {
+                let comp = rx_joker_fit::turn_off(s_split, angle, len, gap);
+                if let Ok(j) = tdrace_core::track::junction_kit::build_junction(main, &comp, tdrace_core::track::junction_kit::JunctionRole::Entry, side, joker_width) {
+                    if j.nose.is_some() {
+                        splits.push(comp);
+                    }
+                }
+            }
+        }
+    }
+
+    // Generate candidate merge components
+    let mut merges = Vec::new();
+    for len in [15.0, 20.0, 25.0, 30.0, 35.0, 40.0] {
+        for gap in [3.5, 4.0, 4.5, 5.0, 5.5, 6.0] {
+            let comp = rx_joker_fit::taper(s_merge, len, gap);
+            if let Ok(j) = tdrace_core::track::junction_kit::build_junction(main, &comp, tdrace_core::track::junction_kit::JunctionRole::Exit, side, joker_width) {
+                if j.nose.is_some() {
+                    merges.push(comp);
+                }
+            }
+            for angle in [15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0, 50.0, 55.0] {
+                let comp = rx_joker_fit::turn_off(s_merge, angle, len, gap);
+                if let Ok(j) = tdrace_core::track::junction_kit::build_junction(main, &comp, tdrace_core::track::junction_kit::JunctionRole::Exit, side, joker_width) {
+                    if j.nose.is_some() {
+                        merges.push(comp);
+                    }
+                }
+            }
+        }
+    }
+
+    println!("  Candidate splits: {}, candidate merges: {}", splits.len(), merges.len());
+
+    let mut successes = Vec::new();
+    let leads_list = [
+        (0.0, 0.0), (5.0, 5.0), (10.0, 10.0), (15.0, 15.0), (20.0, 20.0),
+        (5.0, 10.0), (10.0, 5.0), (15.0, 20.0), (20.0, 15.0),
+        (25.0, 25.0), (30.0, 30.0), (35.0, 35.0),
+    ];
+
+    'outer: for split in &splits {
+        for merge in &merges {
+            for (lin, lout) in leads_list {
+                let redraw = rx_joker_fit::Redraw::new_config(split.clone(), merge.clone())
+                    .with_leads(lin, lout);
+                let mut trial = track.clone();
+                let outcome = rx_joker_fit::convert_with_redraw(
+                    &mut trial,
+                    cfg.slug,
+                    cfg.name,
+                    split_idx,
+                    merge_idx,
+                    old,
+                    Some(&redraw),
+                );
+                if let rx_joker_fit::Outcome::Converted(fit) = outcome {
+                    println!(
+                        "  SUCCESS! split={:?}, merge={:?}, leads=({:.1}, {:.1}) -> dev={:.2} m, cost={:.2} s",
+                        split.kind, merge.kind, lin, lout, fit.deviation, fit.cost_s
+                    );
+                    successes.push((split.clone(), merge.clone(), lin, lout, fit));
+                    if successes.len() >= 5 {
+                        break 'outer;
+                    }
+                }
+            }
+        }
+    }
+
+    if successes.is_empty() {
+        println!("  NO automatic lead combination succeeded.");
+    }
+}
+
 fn build_track_joker(cfg: &TrackJokerConfig, tracks_base_dir: &Path, osm_jokers: &HashMap<String, OsmJoker>) -> rx_joker_fit::Row {
     let path = tracks_base_dir.join(format!("{}.json", cfg.slug));
     println!("Processing {} ({:?})...", cfg.slug, path);
@@ -556,10 +665,25 @@ fn build_track_joker(cfg: &TrackJokerConfig, tracks_base_dir: &Path, osm_jokers:
         }
     };
 
+    if let Ok(explore) = std::env::var("EXPLORE_SLUG") {
+        if explore == "all" || explore == cfg.slug {
+            explore_circuit(cfg, &track, cut.split_idx, cut.merge_idx, &cut.joker);
+        }
+    }
+
     // Spec 102: build the branch from junction components when the old joker can be fitted. A circuit that cannot be
     // fitted keeps the legacy network already in its file, untouched.
     track.branch_layout = None;
-    let outcome = rx_joker_fit::convert(&mut track, cfg.slug, cfg.name, cut.split_idx, cut.merge_idx, &cut.joker);
+    let redraw = redraw_for(cfg.slug);
+    let outcome = rx_joker_fit::convert_with_redraw(
+        &mut track,
+        cfg.slug,
+        cfg.name,
+        cut.split_idx,
+        cut.merge_idx,
+        &cut.joker,
+        redraw.as_ref(),
+    );
     if let rx_joker_fit::Outcome::Converted(fit) = &outcome {
         println!("  {} -> converted: deviation {:.2} m, joker costs {:.2} s", cfg.slug, fit.deviation, fit.cost_s);
         track.save_to_file(&path).unwrap_or_else(|e| panic!("failed to save {}: {:?}", cfg.slug, e));

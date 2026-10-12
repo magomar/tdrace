@@ -150,13 +150,14 @@ impl Track {
         let rear = segment.samples.first()?.point;
         let beside = self.spline.project_point(rear);
         let side = if (rear - beside.closest_point).dot(beside.normal) > 0.0 { ChuteSide::Left } else { ChuteSide::Right };
+        let pad_length = (segment.length - RAMP_LENGTH_M).clamp(PAD_LENGTH_RANGE.0, PAD_LENGTH_RANGE.1);
         Some(LaunchChuteSpec {
             merge_waypoint,
             side,
             pad_width: chute.pad_width,
+            pad_length,
             pattern: PackedGridPattern::from_slots(&chute.grid_slots)?,
             surface: chute.surface,
-            ..LaunchChuteSpec::new(merge_waypoint, side)
         })
     }
 
