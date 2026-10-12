@@ -3,9 +3,10 @@ type: Architecture Spec
 template: architecture
 title: "Junction Throat Wall Diagnostics, Adaptive Median Barriers, and Runoff Consistency"
 description: "Establishes track editor diagnostics and warnings for walls pruned by road clearance conflicts, harmonizes runoff shoulder geometry by eliminating phantom gravel corridors where walls are pruned, and introduces adaptive median barriers and throat bridge connectors to close outer corner wall gaps across road bifurcations."
-status: draft
+status: in_progress
 created: 2026-10-12
 generated: { by: agent/antigravity, at: 2026-10-12T17:52:38Z }
+verified: { by: human:mario, at: 2026-10-12T18:59:21Z, hash: "16f0a92cc400" }
 depends_on:
   - "081"
   - "085"
