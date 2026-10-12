@@ -606,7 +606,7 @@ impl LicenseGrade {
     pub fn required_for_category(category: &str) -> Self {
         match category {
             "kart" => Self::ClassD,
-            "autocross" | "ax" | "rally" | "rx" => Self::ClassC,
+            "autocross" | "ax" | "rally" | "rallycross" | "rx" => Self::ClassC,
             "nascar" | "stock" | "extreme_offroad" | "offroad" => Self::ClassB,
             "gt" | "gt_challenge" => Self::ClassA,
             _ => Self::ClassD,
