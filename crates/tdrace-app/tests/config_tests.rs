@@ -325,7 +325,7 @@ default_num_bots = 7
 
     // Switch to Rally (loads config.rally.toml overrides)
     session.switch_to_rally();
-    assert_eq!(session.active_module_id, "rally");
+    assert_eq!(session.active_module_id, "rallycross");
     assert_eq!(session.assist_profile, AssistProfile::Sport, "Player's last used mode persists across module switch");
     assert!((session.camera.trauma_decay - 1.8).abs() < 1e-4, "Rally specific trauma decay configured");
     assert!((session.audio.settings.master_volume - 0.80).abs() < 1e-4, "Rally inherits general master volume");
