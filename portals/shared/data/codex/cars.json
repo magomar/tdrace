@@ -1489,27 +1489,27 @@
       "manufacturer": "Firebolt Competition",
       "year": 2026,
       "module": "classic",
-      "category": "rally",
+      "category": "rallycross",
       "category_name": "Arcade Rallycross Group B",
       "tier": 1,
       "tier_name": "Classic Arcade: Fantasy Roster",
-      "bhp": 450,
-      "torque_nm": 550,
+      "bhp": 550,
+      "torque_nm": 680,
       "weight_kg": 1050,
       "top_speed_kmh": 215,
-      "accel_0_100": 2.9,
+      "accel_0_100": 2.7,
       "drivetrain": "4WD",
-      "engine_desc": "2.1L Turbocharged Inline-5 20V",
+      "engine_desc": "2.1L Turbocharged Inline-5 20V Group B",
       "aero_downforce": "Cl 1.10 / Cd 0.44",
       "brakes_desc": "Gravel & Tarmac Dual-Bias Ventilated Discs",
       "history_bio": "Legendary fantasy Group B rally beast engineered for vicious 4WD acceleration, massive jump composure, and fearless slides across dirt, gravel, and asphalt.",
       "stats": {
         "speed": 0.88,
-        "acceleration": 0.94,
-        "grip": 0.92,
-        "agility": 0.88,
+        "acceleration": 0.96,
+        "grip": 0.95,
+        "agility": 0.92,
         "braking": 0.9,
-        "aero": 0.78
+        "aero": 0.85
       },
       "visual_type": {
         "RallyHatch": {
@@ -1531,13 +1531,13 @@
         "damage_enabled": true,
         "wear_rate_scale": 1.0,
         "mass": 1050.0,
-        "inertia": 1284.7,
+        "inertia": 1267.2999,
         "wheelbase": 2.4,
         "track_width": 1.4,
         "cg_to_front": 1.1,
         "cg_to_rear": 1.3,
         "cg_height": 0.42,
-        "max_engine_force": 7875.0,
+        "max_engine_force": 10505.0,
         "max_reverse_force": 4875.0,
         "max_brake_force": 13340.0,
         "handbrake_force": 7500.0,
@@ -1559,7 +1559,7 @@
         },
         "top_speed_mps": 59.722225,
         "max_steer_angle": 0.68,
-        "steer_speed": 6.3359995,
+        "steer_speed": 6.424,
         "steer_return_speed": 7.0,
         "counter_steer_assist": 1.3,
         "air_drag_coefficient": 0.44,
@@ -1573,7 +1573,7 @@
         "engine_brake_front_share": 0.5,
         "downforce_coefficient": 0.836,
         "tire": {
-          "grip": 1.126,
+          "grip": 1.135,
           "peak_slip_angle_deg": 12.7,
           "peak_slip_ratio": 0.1,
           "slide_grip": 0.9,
@@ -1623,7 +1623,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.126,
+              "base_grip": 1.135,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -1655,7 +1655,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.126,
+              "grip": 1.135,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -1675,7 +1675,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.126,
+              "base_grip": 1.135,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -1707,7 +1707,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.126,
+              "grip": 1.135,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -1727,7 +1727,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.03592,
+              "base_grip": 1.0442001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -1759,7 +1759,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.03592,
+              "grip": 1.0442001,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -1779,7 +1779,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.03592,
+              "base_grip": 1.0442001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -1811,7 +1811,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.03592,
+              "grip": 1.0442001,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -3732,7 +3732,7 @@
       "manufacturer": "Firebolt Competition",
       "year": 1975,
       "module": "classic",
-      "category": "rally",
+      "category": "rallycross",
       "category_name": "Vintage Rallycross RWD",
       "tier": 1,
       "tier_name": "Classic Arcade: Fantasy Roster",
@@ -16682,8 +16682,8 @@
       "name": "Gallia 200 Rally Junior T1",
       "manufacturer": "Gallia Sport",
       "year": 2021,
-      "module": "rally",
-      "category": "rally",
+      "module": "rallycross",
+      "category": "rallycross",
       "category_name": "Rally Junior FWD",
       "tier": 1,
       "tier_name": "Tier 1: Rally Junior FWD",
@@ -16716,9 +16716,9 @@
       "sound": "CrossCarMotorcycle",
       "images": {
         "reference": null,
-        "lateral": "/textures/vehicles/laterals/rally/rally_gallia_200_t1.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_gallia_200_t1_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_gallia_200_t1.png"
+        "lateral": null,
+        "thumb": null,
+        "topdown": null
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -17063,8 +17063,8 @@
       "name": "Forge Spark Rally Junior T1",
       "manufacturer": "Forge Motor Co",
       "year": 2022,
-      "module": "rally",
-      "category": "rally",
+      "module": "rallycross",
+      "category": "rallycross",
       "category_name": "Rally Junior FWD",
       "tier": 1,
       "tier_name": "Tier 1: Rally Junior FWD",
@@ -17097,9 +17097,9 @@
       "sound": "CrossCarMotorcycle",
       "images": {
         "reference": null,
-        "lateral": "/textures/vehicles/laterals/rally/rally_forge_spark_t1.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_forge_spark_t1_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_forge_spark_t1.png"
+        "lateral": null,
+        "thumb": null,
+        "topdown": null
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -17444,8 +17444,8 @@
       "name": "Rouen Dauphine Rally Junior T1",
       "manufacturer": "Rouen Motorsport",
       "year": 2021,
-      "module": "rally",
-      "category": "rally",
+      "module": "rallycross",
+      "category": "rallycross",
       "category_name": "Rally Junior FWD",
       "tier": 1,
       "tier_name": "Tier 1: Rally Junior FWD",
@@ -17478,9 +17478,9 @@
       "sound": "CrossCarMotorcycle",
       "images": {
         "reference": null,
-        "lateral": "/textures/vehicles/laterals/rally/rally_rouen_dauphine_t1.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_rouen_dauphine_t1_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_rouen_dauphine_t1.png"
+        "lateral": null,
+        "thumb": null,
+        "topdown": null
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -17825,8 +17825,8 @@
       "name": "Nordic RX Lites AWD T2",
       "manufacturer": "Nordic RX Engineering",
       "year": 2022,
-      "module": "rally",
-      "category": "rally",
+      "module": "rallycross",
+      "category": "rallycross",
       "category_name": "Supercar Lites / RX2",
       "tier": 2,
       "tier_name": "Tier 2: Supercar Lites AWD",
@@ -17859,9 +17859,9 @@
       "sound": "Super1600Atmo",
       "images": {
         "reference": null,
-        "lateral": "/textures/vehicles/laterals/rally/rally_nordic_rx_lites_t2.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_nordic_rx_lites_t2_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_nordic_rx_lites_t2.png"
+        "lateral": null,
+        "thumb": null,
+        "topdown": null
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -18206,8 +18206,8 @@
       "name": "AeroTech RX Lite Chassis T2",
       "manufacturer": "AeroTech RX",
       "year": 2022,
-      "module": "rally",
-      "category": "rally",
+      "module": "rallycross",
+      "category": "rallycross",
       "category_name": "Supercar Lites / RX2",
       "tier": 2,
       "tier_name": "Tier 2: Supercar Lites AWD",
@@ -18240,9 +18240,9 @@
       "sound": "Super1600Atmo",
       "images": {
         "reference": null,
-        "lateral": "/textures/vehicles/laterals/rally/rally_aerotech_rx_lites_t2.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_aerotech_rx_lites_t2_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_aerotech_rx_lites_t2.png"
+        "lateral": null,
+        "thumb": null,
+        "topdown": null
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -18587,8 +18587,8 @@
       "name": "VoltTech Electrocross T2",
       "manufacturer": "VoltTech Racing",
       "year": 2023,
-      "module": "rally",
-      "category": "rally",
+      "module": "rallycross",
+      "category": "rallycross",
       "category_name": "Supercar Lites / RX2",
       "tier": 2,
       "tier_name": "Tier 2: Supercar Lites AWD",
@@ -18621,9 +18621,9 @@
       "sound": "Super1600Atmo",
       "images": {
         "reference": null,
-        "lateral": "/textures/vehicles/laterals/rally/rally_volttech_electrocross_t2.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_volttech_electrocross_t2_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_volttech_electrocross_t2.png"
+        "lateral": null,
+        "thumb": null,
+        "topdown": null
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -18968,8 +18968,8 @@
       "name": "Hanguk Apex RX Supercar T3",
       "manufacturer": "Hanguk Motorsport",
       "year": 2022,
-      "module": "rally",
-      "category": "rally",
+      "module": "rallycross",
+      "category": "rallycross",
       "category_name": "Continental Rallycross Supercar",
       "tier": 3,
       "tier_name": "Tier 3: Continental RX Supercar",
@@ -19002,9 +19002,9 @@
       "sound": "Rally2Turbo",
       "images": {
         "reference": null,
-        "lateral": "/textures/vehicles/laterals/rally/rally_hanguk_apex_t3.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_hanguk_apex_t3_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_hanguk_apex_t3.png"
+        "lateral": null,
+        "thumb": null,
+        "topdown": null
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -19349,8 +19349,8 @@
       "name": "Volkskraft Strassen RX Supercar T3",
       "manufacturer": "Volkskraft",
       "year": 2021,
-      "module": "rally",
-      "category": "rally",
+      "module": "rallycross",
+      "category": "rallycross",
       "category_name": "Continental Rallycross Supercar",
       "tier": 3,
       "tier_name": "Tier 3: Continental RX Supercar",
@@ -19383,9 +19383,9 @@
       "sound": "Rally2Turbo",
       "images": {
         "reference": null,
-        "lateral": "/textures/vehicles/laterals/rally/rally_volkskraft_strassen_t3.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_volkskraft_strassen_t3_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_volkskraft_strassen_t3.png"
+        "lateral": null,
+        "thumb": null,
+        "topdown": null
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -19730,8 +19730,8 @@
       "name": "Vortek Quattro RX Supercar T3",
       "manufacturer": "Vortek Automobil",
       "year": 2020,
-      "module": "rally",
-      "category": "rally",
+      "module": "rallycross",
+      "category": "rallycross",
       "category_name": "Continental Rallycross Supercar",
       "tier": 3,
       "tier_name": "Tier 3: Continental RX Supercar",
@@ -19764,9 +19764,9 @@
       "sound": "Rally2Turbo",
       "images": {
         "reference": null,
-        "lateral": "/textures/vehicles/laterals/rally/rally_vortek_quattro_rx_t3.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_vortek_quattro_rx_t3_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_vortek_quattro_rx_t3.png"
+        "lateral": null,
+        "thumb": null,
+        "topdown": null
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -20111,8 +20111,8 @@
       "name": "Gallia Lyon WRX Supercar T4",
       "manufacturer": "Gallia Sport",
       "year": 2021,
-      "module": "rally",
-      "category": "rally",
+      "module": "rallycross",
+      "category": "rallycross",
       "category_name": "World Rallycross Supercar",
       "tier": 4,
       "tier_name": "Tier 4: World Rallycross Supercar",
@@ -20145,9 +20145,9 @@
       "sound": "SupercarRx1",
       "images": {
         "reference": null,
-        "lateral": "/textures/vehicles/laterals/rally/rally_gallia_lyon_t4.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_gallia_lyon_t4_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_gallia_lyon_t4.png"
+        "lateral": null,
+        "thumb": null,
+        "topdown": null
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -20492,8 +20492,8 @@
       "name": "Forge Comet WRX Supercar T4",
       "manufacturer": "Forge Motor Co",
       "year": 2020,
-      "module": "rally",
-      "category": "rally",
+      "module": "rallycross",
+      "category": "rallycross",
       "category_name": "World Rallycross Supercar",
       "tier": 4,
       "tier_name": "Tier 4: World Rallycross Supercar",
@@ -20526,9 +20526,9 @@
       "sound": "SupercarRx1",
       "images": {
         "reference": null,
-        "lateral": "/textures/vehicles/laterals/rally/rally_forge_comet_t4.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_forge_comet_t4_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_forge_comet_t4.png"
+        "lateral": null,
+        "thumb": null,
+        "topdown": null
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -20873,8 +20873,8 @@
       "name": "Sixstar Vortex WRX Supercar T4",
       "manufacturer": "Sixstar Rally",
       "year": 2021,
-      "module": "rally",
-      "category": "rally",
+      "module": "rallycross",
+      "category": "rallycross",
       "category_name": "World Rallycross Supercar",
       "tier": 4,
       "tier_name": "Tier 4: World Rallycross Supercar",
@@ -20907,9 +20907,9 @@
       "sound": "SupercarRx1",
       "images": {
         "reference": null,
-        "lateral": "/textures/vehicles/laterals/rally/rally_sixstar_vortex_t4.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_sixstar_vortex_t4_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_sixstar_vortex_t4.png"
+        "lateral": null,
+        "thumb": null,
+        "topdown": null
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -21254,8 +21254,8 @@
       "name": "Gallia Volt RX1e Supercar T5",
       "manufacturer": "Gallia Sport",
       "year": 2022,
-      "module": "rally",
-      "category": "rally",
+      "module": "rallycross",
+      "category": "rallycross",
       "category_name": "RX1e Electric Supercar",
       "tier": 5,
       "tier_name": "Tier 5: RX1e Electric Supercar",
@@ -21288,9 +21288,9 @@
       "sound": "GroupBInline5",
       "images": {
         "reference": null,
-        "lateral": "/textures/vehicles/laterals/rally/rally_gallia_volt_t5.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_gallia_volt_t5_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_gallia_volt_t5.png"
+        "lateral": null,
+        "thumb": null,
+        "topdown": null
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -21635,8 +21635,8 @@
       "name": "Volkskraft Electro RX1e T5",
       "manufacturer": "Volkskraft",
       "year": 2022,
-      "module": "rally",
-      "category": "rally",
+      "module": "rallycross",
+      "category": "rallycross",
       "category_name": "RX1e Electric Supercar",
       "tier": 5,
       "tier_name": "Tier 5: RX1e Electric Supercar",
@@ -21669,9 +21669,9 @@
       "sound": "GroupBInline5",
       "images": {
         "reference": null,
-        "lateral": "/textures/vehicles/laterals/rally/rally_volkskraft_electro_t5.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_volkskraft_electro_t5_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_volkskraft_electro_t5.png"
+        "lateral": null,
+        "thumb": null,
+        "topdown": null
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -22016,8 +22016,8 @@
       "name": "Torino Integrale Evo-e RX T5",
       "manufacturer": "Torino Corse",
       "year": 2023,
-      "module": "rally",
-      "category": "rally",
+      "module": "rallycross",
+      "category": "rallycross",
       "category_name": "RX1e Electric Supercar",
       "tier": 5,
       "tier_name": "Tier 5: RX1e Electric Supercar",
@@ -22050,9 +22050,9 @@
       "sound": "GroupBInline5",
       "images": {
         "reference": null,
-        "lateral": "/textures/vehicles/laterals/rally/rally_torino_integrale_e_t5.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_torino_integrale_e_t5_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_torino_integrale_e_t5.png"
+        "lateral": null,
+        "thumb": null,
+        "topdown": null
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -22397,8 +22397,8 @@
       "name": "Nordic RX Valkyrie Group E T6",
       "manufacturer": "Nordic RX Engineering",
       "year": 2022,
-      "module": "rally",
-      "category": "rally",
+      "module": "rallycross",
+      "category": "rallycross",
       "category_name": "Apex Group E Electric",
       "tier": 6,
       "tier_name": "Tier 6: Apex Group E Electric",
@@ -22431,9 +22431,9 @@
       "sound": "CrossCarMotorcycle",
       "images": {
         "reference": null,
-        "lateral": "/textures/vehicles/laterals/rally/rally_nordic_valkyrie_t6.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_nordic_valkyrie_t6_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_nordic_valkyrie_t6.png"
+        "lateral": null,
+        "thumb": null,
+        "topdown": null
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -22778,8 +22778,8 @@
       "name": "Green Mountain Titan Group E T6",
       "manufacturer": "Green Mountain Motorsport",
       "year": 2023,
-      "module": "rally",
-      "category": "rally",
+      "module": "rallycross",
+      "category": "rallycross",
       "category_name": "Apex Group E Electric",
       "tier": 6,
       "tier_name": "Tier 6: Apex Group E Electric",
@@ -22812,9 +22812,9 @@
       "sound": "CrossCarMotorcycle",
       "images": {
         "reference": null,
-        "lateral": "/textures/vehicles/laterals/rally/rally_green_mountain_titan_t6.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_green_mountain_titan_t6_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_green_mountain_titan_t6.png"
+        "lateral": null,
+        "thumb": null,
+        "topdown": null
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -23159,8 +23159,8 @@
       "name": "Rampart Wasp Group E T6",
       "manufacturer": "Rampart Performance",
       "year": 2024,
-      "module": "rally",
-      "category": "rally",
+      "module": "rallycross",
+      "category": "rallycross",
       "category_name": "Apex Group E Electric",
       "tier": 6,
       "tier_name": "Tier 6: Apex Group E Electric",
@@ -23193,9 +23193,9 @@
       "sound": "CrossCarMotorcycle",
       "images": {
         "reference": null,
-        "lateral": "/textures/vehicles/laterals/rally/rally_rampart_wasp_t6.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_rampart_wasp_t6_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_rampart_wasp_t6.png"
+        "lateral": null,
+        "thumb": null,
+        "topdown": null
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -23540,8 +23540,8 @@
       "name": "Vortek Turbo Quattro Legend T7",
       "manufacturer": "Vortek Automobil",
       "year": 1985,
-      "module": "rally",
-      "category": "rally",
+      "module": "rallycross",
+      "category": "rallycross",
       "category_name": "Heritage Group B",
       "tier": 7,
       "tier_name": "Tier 7: Heritage Group B",
@@ -23574,9 +23574,9 @@
       "sound": "CrossCarMotorcycle",
       "images": {
         "reference": null,
-        "lateral": "/textures/vehicles/laterals/rally/rally_vortek_turbo_quattro_t7.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_vortek_turbo_quattro_t7_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_vortek_turbo_quattro_t7.png"
+        "lateral": null,
+        "thumb": null,
+        "topdown": null
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -23921,8 +23921,8 @@
       "name": "Gallia Corsica Turbo Legend T7",
       "manufacturer": "Gallia Sport",
       "year": 1985,
-      "module": "rally",
-      "category": "rally",
+      "module": "rallycross",
+      "category": "rallycross",
       "category_name": "Heritage Group B",
       "tier": 7,
       "tier_name": "Tier 7: Heritage Group B",
@@ -23955,9 +23955,9 @@
       "sound": "CrossCarMotorcycle",
       "images": {
         "reference": null,
-        "lateral": "/textures/vehicles/laterals/rally/rally_gallia_corsica_t7.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_gallia_corsica_t7_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_gallia_corsica_t7.png"
+        "lateral": null,
+        "thumb": null,
+        "topdown": null
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -24302,8 +24302,8 @@
       "name": "Torino Stradale S4 Legend T7",
       "manufacturer": "Torino Corse",
       "year": 1986,
-      "module": "rally",
-      "category": "rally",
+      "module": "rallycross",
+      "category": "rallycross",
       "category_name": "Heritage Group B",
       "tier": 7,
       "tier_name": "Tier 7: Heritage Group B",
@@ -24336,9 +24336,9 @@
       "sound": "CrossCarMotorcycle",
       "images": {
         "reference": null,
-        "lateral": "/textures/vehicles/laterals/rally/rally_torino_stradale_t7.png",
-        "thumb": "/textures/vehicles/laterals/rally/rally_torino_stradale_t7_thumb.png",
-        "topdown": "/textures/vehicles/topdown/rally/rally_torino_stradale_t7.png"
+        "lateral": null,
+        "thumb": null,
+        "topdown": null
       },
       "physics": {
         "engine_placement": "mid_engine",

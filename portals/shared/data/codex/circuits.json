@@ -99,7 +99,7 @@
       "id": "rx_quarry_sprint",
       "name": "Quarry Sprint",
       "module": "classic",
-      "category": "rally",
+      "category": "rallycross",
       "tag": "QUARRY RX",
       "category_label": "Rallycross",
       "description": "Fast mixed-surface quarry circuit with sweeping dirt bends, asphalt straights and three tabletop jumps.",
@@ -134,7 +134,7 @@
       "id": "rx_hilltop_leap",
       "name": "Hilltop Leap",
       "module": "classic",
-      "category": "rally",
+      "category": "rallycross",
       "tag": "HILLTOP RX",
       "category_label": "Rallycross",
       "description": "Rolling rallycross track with a start straight crest, hilltop jumps and a dirt hairpin.",
@@ -169,7 +169,7 @@
       "id": "rx_canyon_flyer",
       "name": "Canyon Flyer",
       "module": "classic",
-      "category": "rally",
+      "category": "rallycross",
       "tag": "CANYON RX",
       "category_label": "Rallycross",
       "description": "Challenging canyon rallycross with a water gap jump, a whoops rhythm section and technical dirt esses.",
@@ -1750,706 +1750,6 @@
       "has_pit_lane": false,
       "has_junctions": false,
       "image": "/textures/circuits/autocross/castelo_branco_ax.svg"
-    },
-    {
-      "id": "holjes_rx",
-      "name": "Höljes Motorstadion",
-      "module": "rally",
-      "category": "rally",
-      "tag": "WORLD RX SWEDEN",
-      "category_label": "World RX",
-      "description": "The holy grail of Rallycross featuring the iconic Höljes jump crest, banked Velodrome & mixed gravel sliding.",
-      "kind": "circuit",
-      "country_code": "SE",
-      "country_name": "Sweden",
-      "scale": "1:1",
-      "wikipedia_url": "https://en.wikipedia.org/wiki/H%C3%B6ljes_Motorstadion",
-      "osm_url": "https://www.openstreetmap.org/way/599300791",
-      "is_inspired": false,
-      "default_laps": 5,
-      "length_m": 1194.5,
-      "min_width_m": 11.5,
-      "max_width_m": 14.5,
-      "surfaces": [
-        {
-          "surface": "Asphalt",
-          "share_pct": 63.2
-        },
-        {
-          "surface": "Dirt",
-          "share_pct": 36.8
-        }
-      ],
-      "has_jumps": true,
-      "has_joker": true,
-      "has_pit_lane": false,
-      "has_junctions": true,
-      "image": "/textures/circuits/rally/holjes_rx.svg"
-    },
-    {
-      "id": "lydden_hill",
-      "name": "Lydden Hill Race Circuit",
-      "module": "rally",
-      "category": "rally",
-      "tag": "WORLD RX GREAT BRITAIN",
-      "category_label": "World RX",
-      "description": "The historic birthplace of Rallycross featuring Chessons Drift dirt slide, North Bend & Devil's Elbow.",
-      "kind": "circuit",
-      "country_code": "GB",
-      "country_name": "United Kingdom",
-      "scale": "1:1",
-      "wikipedia_url": "https://en.wikipedia.org/wiki/Lydden_Hill_Race_Circuit",
-      "osm_url": "https://www.openstreetmap.org/way/234347787",
-      "is_inspired": false,
-      "default_laps": 5,
-      "length_m": 1158.8,
-      "min_width_m": 9.5,
-      "max_width_m": 13.0,
-      "surfaces": [
-        {
-          "surface": "Asphalt",
-          "share_pct": 64.0
-        },
-        {
-          "surface": "Dirt",
-          "share_pct": 36.0
-        }
-      ],
-      "has_jumps": false,
-      "has_joker": true,
-      "has_pit_lane": false,
-      "has_junctions": true,
-      "image": "/textures/circuits/rally/lydden_hill.svg"
-    },
-    {
-      "id": "hell_rx",
-      "name": "Lånkebanen / Hell RX",
-      "module": "rally",
-      "category": "rally",
-      "tag": "WORLD RX NORWAY",
-      "category_label": "World RX",
-      "description": "Welcome to Hell! Fast downhill asphalt sweep, loose gravel carousel, technical esses & high-flying crests.",
-      "kind": "circuit",
-      "country_code": "NO",
-      "country_name": "Norway",
-      "scale": "1:1",
-      "wikipedia_url": "https://en.wikipedia.org/wiki/L%C3%A5nkebanen",
-      "osm_url": "https://www.openstreetmap.org/way/1069390967",
-      "is_inspired": false,
-      "default_laps": 5,
-      "length_m": 1004.1,
-      "min_width_m": 11.5,
-      "max_width_m": 14.0,
-      "surfaces": [
-        {
-          "surface": "Asphalt",
-          "share_pct": 67.7
-        },
-        {
-          "surface": "Dirt",
-          "share_pct": 32.3
-        }
-      ],
-      "has_jumps": true,
-      "has_joker": true,
-      "has_pit_lane": false,
-      "has_junctions": true,
-      "image": "/textures/circuits/rally/hell_rx.svg"
-    },
-    {
-      "id": "loheac_rx",
-      "name": "Circuit de Lohéac",
-      "module": "rally",
-      "category": "rally",
-      "tag": "WORLD RX FRANCE",
-      "category_label": "World RX",
-      "description": "The French Rallycross classic with long asphalt drag straight, gravel tabletop jump & tight switchbacks.",
-      "kind": "circuit",
-      "country_code": "FR",
-      "country_name": "France",
-      "scale": "1:1",
-      "wikipedia_url": "https://en.wikipedia.org/wiki/Circuit_de_Loh%C3%A9ac",
-      "osm_url": "https://www.openstreetmap.org/way/787615501",
-      "is_inspired": false,
-      "default_laps": 5,
-      "length_m": 1078.8,
-      "min_width_m": 11.5,
-      "max_width_m": 14.5,
-      "surfaces": [
-        {
-          "surface": "Dirt",
-          "share_pct": 61.0
-        },
-        {
-          "surface": "Asphalt",
-          "share_pct": 39.0
-        }
-      ],
-      "has_jumps": true,
-      "has_joker": true,
-      "has_pit_lane": false,
-      "has_junctions": true,
-      "image": "/textures/circuits/rally/loheac_rx.svg"
-    },
-    {
-      "id": "estering_rx",
-      "name": "Estering Buxtehude",
-      "module": "rally",
-      "category": "rally",
-      "tag": "WORLD RX GERMANY",
-      "category_label": "World RX",
-      "description": "The cathedral of German Rallycross featuring the iconic Turn 1 hairpin dive, high-speed forest drag and technical gravel carousel.",
-      "kind": "circuit",
-      "country_code": "DE",
-      "country_name": "Germany",
-      "scale": "1:1",
-      "wikipedia_url": "https://en.wikipedia.org/wiki/Estering",
-      "osm_url": "https://www.openstreetmap.org/way/267094190",
-      "is_inspired": false,
-      "default_laps": 5,
-      "length_m": 936.6,
-      "min_width_m": 11.5,
-      "max_width_m": 14.5,
-      "surfaces": [
-        {
-          "surface": "Asphalt",
-          "share_pct": 69.2
-        },
-        {
-          "surface": "Dirt",
-          "share_pct": 30.8
-        }
-      ],
-      "has_jumps": false,
-      "has_joker": true,
-      "has_pit_lane": false,
-      "has_junctions": true,
-      "image": "/textures/circuits/rally/estering_rx.svg"
-    },
-    {
-      "id": "montalegre_rx",
-      "name": "Pista de Montalegre",
-      "module": "rally",
-      "category": "rally",
-      "tag": "WORLD RX PORTUGAL",
-      "category_label": "World RX",
-      "description": "High-altitude mountain thriller in Portugal featuring an undulating drag straight, gravel stadium section and fast table crest.",
-      "kind": "circuit",
-      "country_code": "PT",
-      "country_name": "Portugal",
-      "scale": "1:1",
-      "wikipedia_url": "https://en.wikipedia.org/wiki/Montalegre",
-      "osm_url": "https://www.openstreetmap.org/way/1096210264",
-      "is_inspired": false,
-      "default_laps": 5,
-      "length_m": 1024.2,
-      "min_width_m": 10.0,
-      "max_width_m": 14.0,
-      "surfaces": [
-        {
-          "surface": "Asphalt",
-          "share_pct": 64.5
-        },
-        {
-          "surface": "Dirt",
-          "share_pct": 35.5
-        }
-      ],
-      "has_jumps": true,
-      "has_joker": true,
-      "has_pit_lane": false,
-      "has_junctions": true,
-      "image": "/textures/circuits/rally/montalegre_rx.svg"
-    },
-    {
-      "id": "nyirad_rx",
-      "name": "Nyirád Racing Center",
-      "module": "rally",
-      "category": "rally",
-      "tag": "EURO RX HUNGARY",
-      "category_label": "Euro RX",
-      "description": "The infamous 'Red Cauldron' carved out of red bauxite quarries, featuring heavy gravel elevation changes and sweeping technical slides.",
-      "kind": "circuit",
-      "country_code": "HU",
-      "country_name": "Hungary",
-      "scale": "1:1",
-      "wikipedia_url": "https://en.wikipedia.org/wiki/Nyir%C3%A1d",
-      "osm_url": "https://www.openstreetmap.org/way/172413357",
-      "is_inspired": false,
-      "default_laps": 5,
-      "length_m": 1081.1,
-      "min_width_m": 9.0,
-      "max_width_m": 14.5,
-      "surfaces": [
-        {
-          "surface": "Dirt",
-          "share_pct": 60.0
-        },
-        {
-          "surface": "Asphalt",
-          "share_pct": 40.0
-        }
-      ],
-      "has_jumps": false,
-      "has_joker": true,
-      "has_pit_lane": false,
-      "has_junctions": true,
-      "image": "/textures/circuits/rally/nyirad_rx.svg"
-    },
-    {
-      "id": "kouvola_rx",
-      "name": "Tykkimäen Moottorirata",
-      "module": "rally",
-      "category": "rally",
-      "tag": "WORLD RX FINLAND",
-      "category_label": "World RX",
-      "description": "Finnish rallycross heartland featuring severe elevation rollercoasters, blind gravel drops and the flying Tykkimäki dirt crest.",
-      "kind": "circuit",
-      "country_code": "FI",
-      "country_name": "Finland",
-      "scale": "1:1",
-      "wikipedia_url": "https://en.wikipedia.org/wiki/Tykkim%C3%A4ki",
-      "osm_url": "https://www.openstreetmap.org/way/149713976",
-      "is_inspired": false,
-      "default_laps": 5,
-      "length_m": 965.8,
-      "min_width_m": 7.5,
-      "max_width_m": 13.0,
-      "surfaces": [
-        {
-          "surface": "Asphalt",
-          "share_pct": 50.4
-        },
-        {
-          "surface": "Dirt",
-          "share_pct": 49.6
-        }
-      ],
-      "has_jumps": true,
-      "has_joker": true,
-      "has_pit_lane": false,
-      "has_junctions": true,
-      "image": "/textures/circuits/rally/kouvola_rx.svg"
-    },
-    {
-      "id": "catalunya_rx",
-      "name": "Barcelona-Catalunya RX",
-      "module": "rally",
-      "category": "rally",
-      "tag": "WORLD RX SPAIN",
-      "category_label": "World RX",
-      "description": "World RX stadium circuit inside the iconic Spanish Grand Prix stadium, featuring downhill gravel hairpin slides and stadium jump.",
-      "kind": "circuit",
-      "country_code": "ES",
-      "country_name": "Spain",
-      "scale": "1:1",
-      "wikipedia_url": "https://en.wikipedia.org/wiki/Circuit_de_Barcelona-Catalunya",
-      "osm_url": "https://www.openstreetmap.org/relation/11362868",
-      "is_inspired": false,
-      "default_laps": 5,
-      "length_m": 1077.8,
-      "min_width_m": 8.5,
-      "max_width_m": 14.5,
-      "surfaces": [
-        {
-          "surface": "Asphalt",
-          "share_pct": 60.7
-        },
-        {
-          "surface": "Dirt",
-          "share_pct": 39.3
-        }
-      ],
-      "has_jumps": true,
-      "has_joker": true,
-      "has_pit_lane": false,
-      "has_junctions": true,
-      "image": "/textures/circuits/rally/catalunya_rx.svg"
-    },
-    {
-      "id": "mettet_rx",
-      "name": "Circuit Jules Tacheny Mettet",
-      "module": "rally",
-      "category": "rally",
-      "tag": "WORLD RX BELGIUM",
-      "category_label": "World RX",
-      "description": "Fast technical Belgian rallycross circuit featuring the iconic Mettet dirt jump, rapid asphalt sweeper and tight infield hairpin.",
-      "kind": "circuit",
-      "country_code": "BE",
-      "country_name": "Belgium",
-      "scale": "1:1",
-      "wikipedia_url": "https://en.wikipedia.org/wiki/Circuit_Jules_Tacheny_Mettet",
-      "osm_url": "https://www.openstreetmap.org/way/178240082",
-      "is_inspired": false,
-      "default_laps": 5,
-      "length_m": 1113.4,
-      "min_width_m": 10.0,
-      "max_width_m": 14.0,
-      "surfaces": [
-        {
-          "surface": "Asphalt",
-          "share_pct": 57.3
-        },
-        {
-          "surface": "Dirt",
-          "share_pct": 42.7
-        }
-      ],
-      "has_jumps": true,
-      "has_joker": true,
-      "has_pit_lane": false,
-      "has_junctions": true,
-      "image": "/textures/circuits/rally/mettet_rx.svg"
-    },
-    {
-      "id": "lavare_rx",
-      "name": "Circuit de Lavaré",
-      "module": "rally",
-      "category": "rally",
-      "tag": "EURO RX FRANCE",
-      "category_label": "Euro RX",
-      "description": "Sarthe rallycross venue of the French and European championships: a 260 m start straight, then four dirt and four asphalt sections, dirt-heavy.",
-      "kind": "circuit",
-      "country_code": "FR",
-      "country_name": "France",
-      "scale": "1:1",
-      "wikipedia_url": "https://en.wikipedia.org/wiki/Lavar%C3%A9",
-      "osm_url": "https://www.openstreetmap.org/relation/11752542",
-      "is_inspired": false,
-      "default_laps": 5,
-      "length_m": 1063.5,
-      "min_width_m": 10.5,
-      "max_width_m": 14.5,
-      "surfaces": [
-        {
-          "surface": "Dirt",
-          "share_pct": 56.6
-        },
-        {
-          "surface": "Asphalt",
-          "share_pct": 43.4
-        }
-      ],
-      "has_jumps": false,
-      "has_joker": true,
-      "has_pit_lane": false,
-      "has_junctions": true,
-      "image": "/textures/circuits/rally/lavare_rx.svg"
-    },
-    {
-      "id": "riga_rx",
-      "name": "Biķernieku Trase / Riga RX",
-      "module": "rally",
-      "category": "rally",
-      "tag": "WORLD RX LATVIA",
-      "category_label": "World RX",
-      "description": "Historic Riga forest arena featuring high-grip parallel asphalt drags, double jump crests and heavy-braking sandy gravel switchbacks.",
-      "kind": "circuit",
-      "country_code": "LV",
-      "country_name": "Latvia",
-      "scale": "1:1",
-      "wikipedia_url": "https://en.wikipedia.org/wiki/Bi%C4%B7ernieku_Kompleks%C4%81_Sporta_B%C4%81ze",
-      "osm_url": "https://www.openstreetmap.org/way/588947722",
-      "is_inspired": false,
-      "default_laps": 5,
-      "length_m": 1031.1,
-      "min_width_m": 7.5,
-      "max_width_m": 13.5,
-      "surfaces": [
-        {
-          "surface": "Asphalt",
-          "share_pct": 51.2
-        },
-        {
-          "surface": "Dirt",
-          "share_pct": 48.8
-        }
-      ],
-      "has_jumps": true,
-      "has_joker": true,
-      "has_pit_lane": false,
-      "has_junctions": true,
-      "image": "/textures/circuits/rally/riga_rx.svg"
-    },
-    {
-      "id": "killarney_rx",
-      "name": "Killarney International Raceway RX",
-      "module": "rally",
-      "category": "rally",
-      "tag": "WORLD RX SOUTH AFRICA",
-      "category_label": "World RX",
-      "description": "Cape Town rallycross thriller with Table Mountain backdrop, fast straight, technical infield dirt kickers and sweeping final turn.",
-      "kind": "circuit",
-      "country_code": "ZA",
-      "country_name": "South Africa",
-      "scale": "1:1",
-      "wikipedia_url": "https://en.wikipedia.org/wiki/Killarney_Motor_Racing_Complex",
-      "osm_url": "https://www.openstreetmap.org/way/42125321",
-      "is_inspired": false,
-      "default_laps": 5,
-      "length_m": 1051.4,
-      "min_width_m": 11.5,
-      "max_width_m": 14.0,
-      "surfaces": [
-        {
-          "surface": "Dirt",
-          "share_pct": 53.6
-        },
-        {
-          "surface": "Asphalt",
-          "share_pct": 46.4
-        }
-      ],
-      "has_jumps": true,
-      "has_joker": true,
-      "has_pit_lane": false,
-      "has_junctions": true,
-      "image": "/textures/circuits/rally/killarney_rx.svg"
-    },
-    {
-      "id": "lessay_rx",
-      "name": "Circuit de Lessay",
-      "module": "rally",
-      "category": "rally",
-      "tag": "FRENCH RX",
-      "category_label": "Euro RX",
-      "description": "Normandy round of the French Rallycross Championship: a 200 m start straight and alternating asphalt and dirt sections on a compact 886 m lap.",
-      "kind": "circuit",
-      "country_code": "FR",
-      "country_name": "France",
-      "scale": "1:1",
-      "wikipedia_url": "https://en.wikipedia.org/wiki/Lessay",
-      "osm_url": "https://www.openstreetmap.org/way/788196389",
-      "is_inspired": false,
-      "default_laps": 5,
-      "length_m": 883.6,
-      "min_width_m": 11.5,
-      "max_width_m": 14.5,
-      "surfaces": [
-        {
-          "surface": "Asphalt",
-          "share_pct": 57.8
-        },
-        {
-          "surface": "Dirt",
-          "share_pct": 42.2
-        }
-      ],
-      "has_jumps": false,
-      "has_joker": true,
-      "has_pit_lane": false,
-      "has_junctions": true,
-      "image": "/textures/circuits/rally/lessay_rx.svg"
-    },
-    {
-      "id": "essay_rx",
-      "name": "Circuit des Ducs / Essay RX",
-      "module": "rally",
-      "category": "rally",
-      "tag": "WORLD RX FRANCE",
-      "category_label": "World RX",
-      "description": "Historic French rallycross proving ground in Normandy featuring a high-speed asphalt start, technical sweeping switchbacks, the iconic 'La Butte' dirt jump crest, and scenic Norman woods.",
-      "kind": "circuit",
-      "country_code": "FR",
-      "country_name": "France",
-      "scale": "1:1",
-      "wikipedia_url": "https://en.wikipedia.org/wiki/Essay,_Orne",
-      "osm_url": "https://www.openstreetmap.org/relation/10968337",
-      "is_inspired": false,
-      "default_laps": 5,
-      "length_m": 920.4,
-      "min_width_m": 9.0,
-      "max_width_m": 14.0,
-      "surfaces": [
-        {
-          "surface": "Asphalt",
-          "share_pct": 63.8
-        },
-        {
-          "surface": "Dirt",
-          "share_pct": 36.2
-        }
-      ],
-      "has_jumps": true,
-      "has_joker": true,
-      "has_pit_lane": false,
-      "has_junctions": true,
-      "image": "/textures/circuits/rally/essay_rx.svg"
-    },
-    {
-      "id": "dreux_rx",
-      "name": "Dreux Circuit de l'Ouest Parisien",
-      "module": "rally",
-      "category": "rally",
-      "tag": "EURO RX FRANCE",
-      "category_label": "Euro RX",
-      "description": "Classic French mixed-surface rallycross circuit with fast flowing dirt curves and wide asphalt launch.",
-      "kind": "circuit",
-      "country_code": "FR",
-      "country_name": "France",
-      "scale": "1:1",
-      "wikipedia_url": "https://en.wikipedia.org/wiki/Dreux",
-      "osm_url": "https://www.openstreetmap.org/relation/10950539",
-      "is_inspired": false,
-      "default_laps": 5,
-      "length_m": 1045.4,
-      "min_width_m": 8.5,
-      "max_width_m": 14.5,
-      "surfaces": [
-        {
-          "surface": "Dirt",
-          "share_pct": 56.8
-        },
-        {
-          "surface": "Asphalt",
-          "share_pct": 43.2
-        }
-      ],
-      "has_jumps": true,
-      "has_joker": true,
-      "has_pit_lane": false,
-      "has_junctions": true,
-      "image": "/textures/circuits/rally/dreux_rx.svg"
-    },
-    {
-      "id": "croft_rx",
-      "name": "Croft Rallycross Circuit",
-      "module": "rally",
-      "category": "rally",
-      "tag": "BRITISH RX",
-      "category_label": "Euro RX",
-      "description": "British Rallycross Championship venue in North Yorkshire: tarmac from Clervaux and Hawthorn, then a long loose-surface loop through the infield back to the pit straight.",
-      "kind": "circuit",
-      "country_code": "GB",
-      "country_name": "United Kingdom",
-      "scale": "1:1",
-      "wikipedia_url": "https://en.wikipedia.org/wiki/Croft_Circuit",
-      "osm_url": "https://www.openstreetmap.org/relation/21228308",
-      "is_inspired": false,
-      "default_laps": 5,
-      "length_m": 1243.6,
-      "min_width_m": 11.5,
-      "max_width_m": 14.5,
-      "surfaces": [
-        {
-          "surface": "Dirt",
-          "share_pct": 55.8
-        },
-        {
-          "surface": "Asphalt",
-          "share_pct": 44.2
-        }
-      ],
-      "has_jumps": false,
-      "has_joker": true,
-      "has_pit_lane": false,
-      "has_junctions": true,
-      "image": "/textures/circuits/rally/croft_rx.svg"
-    },
-    {
-      "id": "spa_rx",
-      "name": "Spa-Francorchamps RX",
-      "module": "rally",
-      "category": "rally",
-      "tag": "WORLD RX SPA RAIDILLON",
-      "category_label": "World RX",
-      "description": "World RX stadium circuit at Spa-Francorchamps charging backwards up the iconic Raidillon crest with banked gravel bowl and high-speed descent.",
-      "kind": "circuit",
-      "country_code": "BE",
-      "country_name": "Belgium",
-      "scale": "1:1",
-      "wikipedia_url": "https://en.wikipedia.org/wiki/Circuit_de_Spa-Francorchamps",
-      "osm_url": "https://www.openstreetmap.org/way/234804574",
-      "is_inspired": false,
-      "default_laps": 5,
-      "length_m": 1033.0,
-      "min_width_m": 13.0,
-      "max_width_m": 14.0,
-      "surfaces": [
-        {
-          "surface": "Asphalt",
-          "share_pct": 67.7
-        },
-        {
-          "surface": "Dirt",
-          "share_pct": 32.3
-        }
-      ],
-      "has_jumps": true,
-      "has_joker": true,
-      "has_pit_lane": false,
-      "has_junctions": true,
-      "image": "/textures/circuits/rally/spa_rx.svg"
-    },
-    {
-      "id": "silverstone_rx",
-      "name": "Silverstone Circuit RX",
-      "module": "rally",
-      "category": "rally",
-      "tag": "WORLD RX SPEEDMACHINE",
-      "category_label": "World RX",
-      "description": "Speedmachine rallycross stadium in the heart of Silverstone, featuring high-speed tarmac sweeps, arena jump and technical loose dirt esses.",
-      "kind": "circuit",
-      "country_code": "GB",
-      "country_name": "United Kingdom",
-      "scale": "1:1",
-      "wikipedia_url": "https://en.wikipedia.org/wiki/Silverstone_Circuit",
-      "osm_url": "https://www.openstreetmap.org/way/169851260",
-      "is_inspired": false,
-      "default_laps": 5,
-      "length_m": 957.3,
-      "min_width_m": 11.5,
-      "max_width_m": 14.0,
-      "surfaces": [
-        {
-          "surface": "Asphalt",
-          "share_pct": 60.8
-        },
-        {
-          "surface": "Dirt",
-          "share_pct": 39.2
-        }
-      ],
-      "has_jumps": true,
-      "has_joker": true,
-      "has_pit_lane": false,
-      "has_junctions": true,
-      "image": "/textures/circuits/rally/silverstone_rx.svg"
-    },
-    {
-      "id": "erx_motor_park",
-      "name": "ERX Motor Park RX",
-      "module": "rally",
-      "category": "rally",
-      "tag": "NITROCROSS ERX GAP JUMP",
-      "category_label": "Nitrocross",
-      "description": "Premier Nitrocross all-dirt amphitheater in Minnesota featuring the iconic 70-foot stadium gap jump, banked clay switchbacks and rolling rhythm rollers.",
-      "kind": "circuit",
-      "country_code": "US",
-      "country_name": "United States",
-      "scale": "1:1",
-      "wikipedia_url": "https://en.wikipedia.org/wiki/Nitrocross",
-      "osm_url": "https://www.openstreetmap.org/way/1023648273",
-      "is_inspired": false,
-      "default_laps": 5,
-      "length_m": 1145.6,
-      "min_width_m": 13.5,
-      "max_width_m": 14.5,
-      "surfaces": [
-        {
-          "surface": "Dirt",
-          "share_pct": 85.6
-        },
-        {
-          "surface": "Asphalt",
-          "share_pct": 14.4
-        }
-      ],
-      "has_jumps": true,
-      "has_joker": true,
-      "has_pit_lane": false,
-      "has_junctions": true,
-      "image": "/textures/circuits/rally/erx_motor_park.svg"
     },
     {
       "id": "monza",
@@ -4171,6 +3471,706 @@
       "has_pit_lane": false,
       "has_junctions": false,
       "image": "/textures/circuits/extreme_offroad/mint400_grand_loop.svg"
+    },
+    {
+      "id": "holjes_rx",
+      "name": "Höljes Motorstadion",
+      "module": "rally",
+      "category": "rallycross",
+      "tag": "WORLD RX SWEDEN",
+      "category_label": "World RX",
+      "description": "The holy grail of Rallycross featuring the iconic Höljes jump crest, banked Velodrome & mixed gravel sliding.",
+      "kind": "circuit",
+      "country_code": "SE",
+      "country_name": "Sweden",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/H%C3%B6ljes_Motorstadion",
+      "osm_url": "https://www.openstreetmap.org/way/599300791",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1194.5,
+      "min_width_m": 11.5,
+      "max_width_m": 14.5,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 63.2
+        },
+        {
+          "surface": "Dirt",
+          "share_pct": 36.8
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/holjes_rx.svg"
+    },
+    {
+      "id": "lydden_hill",
+      "name": "Lydden Hill Race Circuit",
+      "module": "rally",
+      "category": "rallycross",
+      "tag": "WORLD RX GREAT BRITAIN",
+      "category_label": "World RX",
+      "description": "The historic birthplace of Rallycross featuring Chessons Drift dirt slide, North Bend & Devil's Elbow.",
+      "kind": "circuit",
+      "country_code": "GB",
+      "country_name": "United Kingdom",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Lydden_Hill_Race_Circuit",
+      "osm_url": "https://www.openstreetmap.org/way/234347787",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1158.8,
+      "min_width_m": 9.5,
+      "max_width_m": 13.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 64.0
+        },
+        {
+          "surface": "Dirt",
+          "share_pct": 36.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/lydden_hill.svg"
+    },
+    {
+      "id": "hell_rx",
+      "name": "Lånkebanen / Hell RX",
+      "module": "rally",
+      "category": "rallycross",
+      "tag": "WORLD RX NORWAY",
+      "category_label": "World RX",
+      "description": "Welcome to Hell! Fast downhill asphalt sweep, loose gravel carousel, technical esses & high-flying crests.",
+      "kind": "circuit",
+      "country_code": "NO",
+      "country_name": "Norway",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/L%C3%A5nkebanen",
+      "osm_url": "https://www.openstreetmap.org/way/1069390967",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1004.1,
+      "min_width_m": 11.5,
+      "max_width_m": 14.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 67.7
+        },
+        {
+          "surface": "Dirt",
+          "share_pct": 32.3
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/hell_rx.svg"
+    },
+    {
+      "id": "loheac_rx",
+      "name": "Circuit de Lohéac",
+      "module": "rally",
+      "category": "rallycross",
+      "tag": "WORLD RX FRANCE",
+      "category_label": "World RX",
+      "description": "The French Rallycross classic with long asphalt drag straight, gravel tabletop jump & tight switchbacks.",
+      "kind": "circuit",
+      "country_code": "FR",
+      "country_name": "France",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Circuit_de_Loh%C3%A9ac",
+      "osm_url": "https://www.openstreetmap.org/way/787615501",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1078.8,
+      "min_width_m": 11.5,
+      "max_width_m": 14.5,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 61.0
+        },
+        {
+          "surface": "Asphalt",
+          "share_pct": 39.0
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/loheac_rx.svg"
+    },
+    {
+      "id": "estering_rx",
+      "name": "Estering Buxtehude",
+      "module": "rally",
+      "category": "rallycross",
+      "tag": "WORLD RX GERMANY",
+      "category_label": "World RX",
+      "description": "The cathedral of German Rallycross featuring the iconic Turn 1 hairpin dive, high-speed forest drag and technical gravel carousel.",
+      "kind": "circuit",
+      "country_code": "DE",
+      "country_name": "Germany",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Estering",
+      "osm_url": "https://www.openstreetmap.org/way/267094190",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 936.6,
+      "min_width_m": 11.5,
+      "max_width_m": 14.5,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 69.2
+        },
+        {
+          "surface": "Dirt",
+          "share_pct": 30.8
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/estering_rx.svg"
+    },
+    {
+      "id": "montalegre_rx",
+      "name": "Pista de Montalegre",
+      "module": "rally",
+      "category": "rallycross",
+      "tag": "WORLD RX PORTUGAL",
+      "category_label": "World RX",
+      "description": "High-altitude mountain thriller in Portugal featuring an undulating drag straight, gravel stadium section and fast table crest.",
+      "kind": "circuit",
+      "country_code": "PT",
+      "country_name": "Portugal",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Montalegre",
+      "osm_url": "https://www.openstreetmap.org/way/1096210264",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1024.2,
+      "min_width_m": 10.0,
+      "max_width_m": 14.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 64.5
+        },
+        {
+          "surface": "Dirt",
+          "share_pct": 35.5
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/montalegre_rx.svg"
+    },
+    {
+      "id": "nyirad_rx",
+      "name": "Nyirád Racing Center",
+      "module": "rally",
+      "category": "rallycross",
+      "tag": "EURO RX HUNGARY",
+      "category_label": "Euro RX",
+      "description": "The infamous 'Red Cauldron' carved out of red bauxite quarries, featuring heavy gravel elevation changes and sweeping technical slides.",
+      "kind": "circuit",
+      "country_code": "HU",
+      "country_name": "Hungary",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Nyir%C3%A1d",
+      "osm_url": "https://www.openstreetmap.org/way/172413357",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1081.1,
+      "min_width_m": 9.0,
+      "max_width_m": 14.5,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 60.0
+        },
+        {
+          "surface": "Asphalt",
+          "share_pct": 40.0
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/nyirad_rx.svg"
+    },
+    {
+      "id": "kouvola_rx",
+      "name": "Tykkimäen Moottorirata",
+      "module": "rally",
+      "category": "rallycross",
+      "tag": "WORLD RX FINLAND",
+      "category_label": "World RX",
+      "description": "Finnish rallycross heartland featuring severe elevation rollercoasters, blind gravel drops and the flying Tykkimäki dirt crest.",
+      "kind": "circuit",
+      "country_code": "FI",
+      "country_name": "Finland",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Tykkim%C3%A4ki",
+      "osm_url": "https://www.openstreetmap.org/way/149713976",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 965.8,
+      "min_width_m": 7.5,
+      "max_width_m": 13.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 50.4
+        },
+        {
+          "surface": "Dirt",
+          "share_pct": 49.6
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/kouvola_rx.svg"
+    },
+    {
+      "id": "catalunya_rx",
+      "name": "Barcelona-Catalunya RX",
+      "module": "rally",
+      "category": "rallycross",
+      "tag": "WORLD RX SPAIN",
+      "category_label": "World RX",
+      "description": "World RX stadium circuit inside the iconic Spanish Grand Prix stadium, featuring downhill gravel hairpin slides and stadium jump.",
+      "kind": "circuit",
+      "country_code": "ES",
+      "country_name": "Spain",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Circuit_de_Barcelona-Catalunya",
+      "osm_url": "https://www.openstreetmap.org/relation/11362868",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1077.8,
+      "min_width_m": 8.5,
+      "max_width_m": 14.5,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 60.7
+        },
+        {
+          "surface": "Dirt",
+          "share_pct": 39.3
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/catalunya_rx.svg"
+    },
+    {
+      "id": "mettet_rx",
+      "name": "Circuit Jules Tacheny Mettet",
+      "module": "rally",
+      "category": "rallycross",
+      "tag": "WORLD RX BELGIUM",
+      "category_label": "World RX",
+      "description": "Fast technical Belgian rallycross circuit featuring the iconic Mettet dirt jump, rapid asphalt sweeper and tight infield hairpin.",
+      "kind": "circuit",
+      "country_code": "BE",
+      "country_name": "Belgium",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Circuit_Jules_Tacheny_Mettet",
+      "osm_url": "https://www.openstreetmap.org/way/178240082",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1113.4,
+      "min_width_m": 10.0,
+      "max_width_m": 14.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 57.3
+        },
+        {
+          "surface": "Dirt",
+          "share_pct": 42.7
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/mettet_rx.svg"
+    },
+    {
+      "id": "lavare_rx",
+      "name": "Circuit de Lavaré",
+      "module": "rally",
+      "category": "rallycross",
+      "tag": "EURO RX FRANCE",
+      "category_label": "Euro RX",
+      "description": "Sarthe rallycross venue of the French and European championships: a 260 m start straight, then four dirt and four asphalt sections, dirt-heavy.",
+      "kind": "circuit",
+      "country_code": "FR",
+      "country_name": "France",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Lavar%C3%A9",
+      "osm_url": "https://www.openstreetmap.org/relation/11752542",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1063.5,
+      "min_width_m": 10.5,
+      "max_width_m": 14.5,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 56.6
+        },
+        {
+          "surface": "Asphalt",
+          "share_pct": 43.4
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/lavare_rx.svg"
+    },
+    {
+      "id": "riga_rx",
+      "name": "Biķernieku Trase / Riga RX",
+      "module": "rally",
+      "category": "rallycross",
+      "tag": "WORLD RX LATVIA",
+      "category_label": "World RX",
+      "description": "Historic Riga forest arena featuring high-grip parallel asphalt drags, double jump crests and heavy-braking sandy gravel switchbacks.",
+      "kind": "circuit",
+      "country_code": "LV",
+      "country_name": "Latvia",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Bi%C4%B7ernieku_Kompleks%C4%81_Sporta_B%C4%81ze",
+      "osm_url": "https://www.openstreetmap.org/way/588947722",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1031.1,
+      "min_width_m": 7.5,
+      "max_width_m": 13.5,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 51.2
+        },
+        {
+          "surface": "Dirt",
+          "share_pct": 48.8
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/riga_rx.svg"
+    },
+    {
+      "id": "killarney_rx",
+      "name": "Killarney International Raceway RX",
+      "module": "rally",
+      "category": "rallycross",
+      "tag": "WORLD RX SOUTH AFRICA",
+      "category_label": "World RX",
+      "description": "Cape Town rallycross thriller with Table Mountain backdrop, fast straight, technical infield dirt kickers and sweeping final turn.",
+      "kind": "circuit",
+      "country_code": "ZA",
+      "country_name": "South Africa",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Killarney_Motor_Racing_Complex",
+      "osm_url": "https://www.openstreetmap.org/way/42125321",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1051.4,
+      "min_width_m": 11.5,
+      "max_width_m": 14.0,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 53.6
+        },
+        {
+          "surface": "Asphalt",
+          "share_pct": 46.4
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/killarney_rx.svg"
+    },
+    {
+      "id": "lessay_rx",
+      "name": "Circuit de Lessay",
+      "module": "rally",
+      "category": "rallycross",
+      "tag": "FRENCH RX",
+      "category_label": "Euro RX",
+      "description": "Normandy round of the French Rallycross Championship: a 200 m start straight and alternating asphalt and dirt sections on a compact 886 m lap.",
+      "kind": "circuit",
+      "country_code": "FR",
+      "country_name": "France",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Lessay",
+      "osm_url": "https://www.openstreetmap.org/way/788196389",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 883.6,
+      "min_width_m": 11.5,
+      "max_width_m": 14.5,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 57.8
+        },
+        {
+          "surface": "Dirt",
+          "share_pct": 42.2
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/lessay_rx.svg"
+    },
+    {
+      "id": "essay_rx",
+      "name": "Circuit des Ducs / Essay RX",
+      "module": "rally",
+      "category": "rallycross",
+      "tag": "WORLD RX FRANCE",
+      "category_label": "World RX",
+      "description": "Historic French rallycross proving ground in Normandy featuring a high-speed asphalt start, technical sweeping switchbacks, the iconic 'La Butte' dirt jump crest, and scenic Norman woods.",
+      "kind": "circuit",
+      "country_code": "FR",
+      "country_name": "France",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Essay,_Orne",
+      "osm_url": "https://www.openstreetmap.org/relation/10968337",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 920.4,
+      "min_width_m": 9.0,
+      "max_width_m": 14.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 63.8
+        },
+        {
+          "surface": "Dirt",
+          "share_pct": 36.2
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/essay_rx.svg"
+    },
+    {
+      "id": "dreux_rx",
+      "name": "Dreux Circuit de l'Ouest Parisien",
+      "module": "rally",
+      "category": "rallycross",
+      "tag": "EURO RX FRANCE",
+      "category_label": "Euro RX",
+      "description": "Classic French mixed-surface rallycross circuit with fast flowing dirt curves and wide asphalt launch.",
+      "kind": "circuit",
+      "country_code": "FR",
+      "country_name": "France",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Dreux",
+      "osm_url": "https://www.openstreetmap.org/relation/10950539",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1045.4,
+      "min_width_m": 8.5,
+      "max_width_m": 14.5,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 56.8
+        },
+        {
+          "surface": "Asphalt",
+          "share_pct": 43.2
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/dreux_rx.svg"
+    },
+    {
+      "id": "croft_rx",
+      "name": "Croft Rallycross Circuit",
+      "module": "rally",
+      "category": "rallycross",
+      "tag": "BRITISH RX",
+      "category_label": "Euro RX",
+      "description": "British Rallycross Championship venue in North Yorkshire: tarmac from Clervaux and Hawthorn, then a long loose-surface loop through the infield back to the pit straight.",
+      "kind": "circuit",
+      "country_code": "GB",
+      "country_name": "United Kingdom",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Croft_Circuit",
+      "osm_url": "https://www.openstreetmap.org/relation/21228308",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1243.6,
+      "min_width_m": 11.5,
+      "max_width_m": 14.5,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 55.8
+        },
+        {
+          "surface": "Asphalt",
+          "share_pct": 44.2
+        }
+      ],
+      "has_jumps": false,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/croft_rx.svg"
+    },
+    {
+      "id": "spa_rx",
+      "name": "Spa-Francorchamps RX",
+      "module": "rally",
+      "category": "rallycross",
+      "tag": "WORLD RX SPA RAIDILLON",
+      "category_label": "World RX",
+      "description": "World RX stadium circuit at Spa-Francorchamps charging backwards up the iconic Raidillon crest with banked gravel bowl and high-speed descent.",
+      "kind": "circuit",
+      "country_code": "BE",
+      "country_name": "Belgium",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Circuit_de_Spa-Francorchamps",
+      "osm_url": "https://www.openstreetmap.org/way/234804574",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1033.0,
+      "min_width_m": 13.0,
+      "max_width_m": 14.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 67.7
+        },
+        {
+          "surface": "Dirt",
+          "share_pct": 32.3
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/spa_rx.svg"
+    },
+    {
+      "id": "silverstone_rx",
+      "name": "Silverstone Circuit RX",
+      "module": "rally",
+      "category": "rallycross",
+      "tag": "WORLD RX SPEEDMACHINE",
+      "category_label": "World RX",
+      "description": "Speedmachine rallycross stadium in the heart of Silverstone, featuring high-speed tarmac sweeps, arena jump and technical loose dirt esses.",
+      "kind": "circuit",
+      "country_code": "GB",
+      "country_name": "United Kingdom",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Silverstone_Circuit",
+      "osm_url": "https://www.openstreetmap.org/way/169851260",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 957.3,
+      "min_width_m": 11.5,
+      "max_width_m": 14.0,
+      "surfaces": [
+        {
+          "surface": "Asphalt",
+          "share_pct": 60.8
+        },
+        {
+          "surface": "Dirt",
+          "share_pct": 39.2
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/silverstone_rx.svg"
+    },
+    {
+      "id": "erx_motor_park",
+      "name": "ERX Motor Park RX",
+      "module": "rally",
+      "category": "rallycross",
+      "tag": "NITROCROSS ERX GAP JUMP",
+      "category_label": "Nitrocross",
+      "description": "Premier Nitrocross all-dirt amphitheater in Minnesota featuring the iconic 70-foot stadium gap jump, banked clay switchbacks and rolling rhythm rollers.",
+      "kind": "circuit",
+      "country_code": "US",
+      "country_name": "United States",
+      "scale": "1:1",
+      "wikipedia_url": "https://en.wikipedia.org/wiki/Nitrocross",
+      "osm_url": "https://www.openstreetmap.org/way/1023648273",
+      "is_inspired": false,
+      "default_laps": 5,
+      "length_m": 1145.6,
+      "min_width_m": 13.5,
+      "max_width_m": 14.5,
+      "surfaces": [
+        {
+          "surface": "Dirt",
+          "share_pct": 85.6
+        },
+        {
+          "surface": "Asphalt",
+          "share_pct": 14.4
+        }
+      ],
+      "has_jumps": true,
+      "has_joker": true,
+      "has_pit_lane": false,
+      "has_junctions": true,
+      "image": "/textures/circuits/rally/erx_motor_park.svg"
     }
   ]
 }

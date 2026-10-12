@@ -5759,8 +5759,8 @@
           "short_name": "Contender (T3)",
           "tag": "T3",
           "pace_limit": 0.96,
-          "consistency": 0.83,
-          "composure": 0.78,
+          "consistency": 0.8,
+          "composure": 0.76,
           "bell_curve_weights": [
             5,
             20,
@@ -5790,7 +5790,7 @@
           "name": "Tier 5: Legend",
           "short_name": "Legend (T5)",
           "tag": "T5",
-          "pace_limit": 1.04,
+          "pace_limit": 1.035,
           "consistency": 0.99,
           "composure": 0.98,
           "bell_curve_weights": [

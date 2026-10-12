@@ -54,7 +54,7 @@ pub const SCHEMA_VERSION: u32 = 1;
 pub const DEFAULT_OUT_DIR: &str = "portals/shared/data/codex";
 
 /// Modules of the Steam v1 launch. GT, NASCAR and Extreme Off-Road are DLC.
-pub const LAUNCH_MODULES: [&str; 4] = ["classic", "kart", "autocross", "rally"];
+pub const LAUNCH_MODULES: [&str; 4] = ["classic", "kart", "autocross", "rallycross"];
 
 /// Which content an export holds. The Vault (archived content) is never exported.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -1832,7 +1832,7 @@ fn racing_data(scope: Scope, cars: &[CodexCar], circuits: &[CodexCircuit]) -> Co
                         CodexTierInfo { tier: 5, name: "SuperBuggy World Series".to_string(), required_licence: "Class C (Junior Competition)", car_cost_xp: 5_000, base_purse: 120_000 },
                     ],
                 ),
-                "rally" => (
+                "rallycross" => (
                     "Explosive multi-surface circuits combining tarmac, gravel, jump crests, and tactical joker lap routes from front-wheel-drive Rally4 up to electric RX1e and Apex Group E beasts.",
                     vec![
                         CodexTierInfo { tier: 1, name: "Rally4 Grassroots Cup".to_string(), required_licence: "Class C (Junior Competition)", car_cost_xp: 1_000, base_purse: 5_000 },
@@ -2118,7 +2118,7 @@ fn racing_data(scope: Scope, cars: &[CodexCar], circuits: &[CodexCircuit]) -> Co
             ],
         },
         CodexCareerLadder {
-            module_id: "rally",
+            module_id: "rallycross",
             module_name: "Rallycross & All-Terrain",
             tiers: vec![
                 CodexCareerTierDetails { tier: 1, name: "Tier 1: Rally4 Grassroots Cup", promotion_criteria: "Available immediately at career launch.", starter_car_id: Some("rally_gallia_200_t1"), starter_car_name: Some("Gallia 200 Rally4 T1"), car_cost_xp: 1_000, first_time_exploration_xp: 250, round_base_purse: 5_000, unlocked_tracks: vec!["holjes_rx", "lydden_hill", "mettet_rx", "dreux_rx", "croft_rx"] },
@@ -2288,7 +2288,7 @@ fn racing_data(scope: Scope, cars: &[CodexCar], circuits: &[CodexCircuit]) -> Co
             title: "Class C (Junior Competition)",
             badge: "CLASS C",
             description: "Junior competition licence authorizing participation in European Autocross cross-cars and mixed-surface Rallycross events.",
-            required_for: vec!["autocross", "rally"],
+            required_for: vec!["autocross", "rallycross"],
         },
         CodexLicenceGrade {
             grade: "ClassB",

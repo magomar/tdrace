@@ -27,12 +27,12 @@
       "circuits": 17
     },
     {
-      "id": "rally",
+      "id": "rallycross",
       "title": "RALLYCROSS WORLD CUP",
       "subtitle": "World & Continental Rallycross Mixed Surface Stages, Stadium Jumps & Drifts",
       "launch": true,
       "cars": 21,
-      "circuits": 20
+      "circuits": 0
     },
     {
       "id": "gt",

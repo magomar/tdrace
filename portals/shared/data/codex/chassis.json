@@ -5666,7 +5666,7 @@
       "description": "Agile, lightweight front-wheel-drive supermini hatchback with MacPherson strut suspension.",
       "modules": [
         "classic",
-        "rally"
+        "rallycross"
       ],
       "cars": [
         "classic_rx_vintage",
@@ -6110,7 +6110,7 @@
       "description": "All-wheel-drive traction with compliant suspension for mixed surfaces.",
       "modules": [
         "classic",
-        "rally",
+        "rallycross",
         "extreme_offroad"
       ],
       "cars": [
@@ -6563,7 +6563,7 @@
       "tag": "MID-ENGINE TURBO BEAST",
       "description": "Mid-engine 500+ BHP lightweight turbo monster with 50:50 AWD and hair-trigger dynamics.",
       "modules": [
-        "rally"
+        "rallycross"
       ],
       "cars": [
         "rally_vortek_turbo_quattro_t7",
@@ -7005,7 +7005,7 @@
       "tag": "RX1E DUAL-MOTOR AWD",
       "description": "RX1e / Group E low-CG dual-motor battery chassis with instantaneous AWD corner exit torque.",
       "modules": [
-        "rally"
+        "rallycross"
       ],
       "cars": [
         "rally_gallia_volt_t5",

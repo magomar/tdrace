@@ -232,7 +232,7 @@ fn racing_data_matches_series_formats_and_academy() {
     let disciplines = racing["disciplines"].as_array().unwrap();
     assert_eq!(disciplines.len(), 7);
     let disc_ids: Vec<&str> = disciplines.iter().map(|d| d["id"].as_str().unwrap()).collect();
-    assert_eq!(disc_ids, vec!["classic", "kart", "autocross", "rally", "gt", "nascar", "extreme_offroad"]);
+    assert_eq!(disc_ids, vec!["classic", "kart", "autocross", "rallycross", "gt", "nascar", "extreme_offroad"]);
 
     // Formats
     let formats = racing["formats"].as_array().unwrap();
@@ -277,7 +277,7 @@ fn racing_data_matches_series_formats_and_academy() {
     assert_eq!(curriculum[0]["tier"], 1);
     assert_eq!(curriculum[0]["gold_time_sec"].as_f64().unwrap() as f32, 61.2f32);
     assert_eq!(curriculum[3]["id"].as_str().unwrap(), "lesson_4_graduation_sprint");
-    assert_eq!(curriculum[3]["gold_time_sec"].as_f64().unwrap() as f32, 104.8f32);
+    assert_eq!(curriculum[3]["gold_time_sec"].as_f64().unwrap() as f32, 107.7f32);
     let ids: Vec<&str> = curriculum[4..].iter().map(|l| l["id"].as_str().unwrap()).collect();
     assert_eq!(ids, ["acad_2_1", "acad_2_2", "acad_2_3", "acad_2_4", "acad_3_1", "acad_3_2", "acad_3_3", "acad_3_4"]);
     let tier_of = |i: usize| curriculum[i]["tier"].as_u64().unwrap();
