@@ -196,7 +196,7 @@ pub fn render_track_manager_screen(
     for filter in filters.iter() {
         let idx = match filter {
             ModuleFilter::Classic => 0,
-            ModuleFilter::Rally => 1,
+            ModuleFilter::Rallycross => 1,
             ModuleFilter::Kart => 2,
             ModuleFilter::Gt => 3,
             ModuleFilter::Nascar => 4,
@@ -220,7 +220,7 @@ pub fn render_track_manager_screen(
 
         let chip_border = match filter {
             ModuleFilter::Classic => Palette::NEON_CYAN,
-            ModuleFilter::Rally => Palette::NEON_GOLD,
+            ModuleFilter::Rallycross => Palette::NEON_GOLD,
             ModuleFilter::Kart => Palette::NEON_MAGENTA,
             ModuleFilter::Gt => Palette::RED,
             ModuleFilter::Nascar => Palette::NEON_ORANGE,
