@@ -7,7 +7,7 @@
 id = "rally_rx1e_electric_championship"
 name = "RX1e Electric Championship"
 description = "680 BHP all-electric RX1e supercars with instant torque, tackling 10 World Rallycross mixed-surface circuits."
-module_id = "rally"
+module_id = "rallycross"
 tier = 5
 laps_per_round = 5
 bot_count = 7

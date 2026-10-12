@@ -7,7 +7,7 @@
 id = "rally_continental_rx_challenge"
 name = "Continental RX Challenge"
 description = "Continental European championship featuring 380–400 BHP touring supercars across 7 technical rallycross tracks."
-module_id = "rally"
+module_id = "rallycross"
 tier = 3
 laps_per_round = 5
 bot_count = 7

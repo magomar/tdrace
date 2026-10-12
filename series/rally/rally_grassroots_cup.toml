@@ -7,7 +7,7 @@
 id = "rally_grassroots_cup"
 name = "Rallycross Grassroots Cup"
 description = "Entry-level front-wheel-drive rally academy championship testing Scandinavian flicks and loose surface traction across 5 technical European circuits."
-module_id = "rally"
+module_id = "rallycross"
 tier = 1
 laps_per_round = 5
 bot_count = 7

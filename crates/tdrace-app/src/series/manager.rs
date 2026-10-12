@@ -142,11 +142,19 @@ impl SeriesManager {
         })
     }
 
+    fn module_matches(series_mod: &str, requested: &str) -> bool {
+        if series_mod.eq_ignore_ascii_case(requested) {
+            return true;
+        }
+        let is_rally_alias = |m: &str| m.eq_ignore_ascii_case("rally") || m.eq_ignore_ascii_case("rallycross") || m.eq_ignore_ascii_case("rx");
+        is_rally_alias(series_mod) && is_rally_alias(requested)
+    }
+
     /// Retrieves all series matching a motorsport module (e.g. "gt", "nascar").
     pub fn get_by_module(&self, module_id: &str) -> Vec<&SeriesDefinition> {
         self.series
             .values()
-            .filter(|c| c.series.module_id.eq_ignore_ascii_case(module_id))
+            .filter(|c| Self::module_matches(&c.series.module_id, module_id))
             .collect()
     }
 
@@ -154,7 +162,7 @@ impl SeriesManager {
     pub fn get_by_module_and_tier(&self, module_id: &str, tier: u32) -> Option<&SeriesDefinition> {
         self.series
             .values()
-            .find(|c| c.series.module_id.eq_ignore_ascii_case(module_id) && c.series.tier == tier)
+            .find(|c| Self::module_matches(&c.series.module_id, module_id) && c.series.tier == tier)
     }
 
     /// Returns all championships matching module_id and tier, sorted by name (Spec 053).
@@ -162,7 +170,7 @@ impl SeriesManager {
         let mut list: Vec<&SeriesDefinition> = self
             .series
             .values()
-            .filter(|c| c.series.module_id.eq_ignore_ascii_case(module_id) && c.series.tier == tier)
+            .filter(|c| Self::module_matches(&c.series.module_id, module_id) && c.series.tier == tier)
             .collect();
         list.sort_by(|a, b| a.series.name.cmp(&b.series.name));
         list

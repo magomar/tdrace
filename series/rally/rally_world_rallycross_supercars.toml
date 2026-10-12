@@ -7,7 +7,7 @@
 id = "rally_world_rallycross_supercars"
 name = "World Rallycross Supercar Trophy"
 description = "The pinnacle of internal combustion rallycross: 600 BHP custom turbo monsters producing 900 Nm of torque with aggressive anti-lag across 8 legendary World Rallycross arenas."
-module_id = "rally"
+module_id = "rallycross"
 tier = 4
 laps_per_round = 5
 bot_count = 7

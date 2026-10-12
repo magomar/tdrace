@@ -7,7 +7,7 @@
 id = "rally_apex_group_e"
 name = "Apex Group E Electric Trophy"
 description = "1,070 BHP electric FC1-X machines, the most powerful rallycross cars ever raced, across 12 world circuits."
-module_id = "rally"
+module_id = "rallycross"
 tier = 6
 laps_per_round = 5
 bot_count = 7
