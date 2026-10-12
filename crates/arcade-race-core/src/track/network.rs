@@ -1091,6 +1091,29 @@ impl TrackNetwork {
         }
     }
 
+    /// Returns the segment for the launch chute if configured (Spec 103).
+    pub fn launch_chute_segment(&self) -> Option<&RoadSegment> {
+        let chute_id = self.launch_chute.as_ref()?.segment_id;
+        self.get_segment(chute_id)
+    }
+
+    /// Returns the network segments that belong to a joker / alternate branch layout (Spec 081 / 102).
+    pub fn joker_segments(&self) -> Vec<&RoadSegment> {
+        let default_seq = self
+            .active_or_default_layout(None)
+            .map(|l| &l.segment_sequence[..])
+            .unwrap_or(&[]);
+        let chute = self.launch_chute.as_ref().map(|c| c.segment_id);
+        self.segments
+            .iter()
+            .filter(|seg| {
+                Some(seg.id) != chute
+                    && !default_seq.contains(&seg.id)
+                    && self.layouts.iter().any(|l| l.segment_sequence.contains(&seg.id))
+            })
+            .collect()
+    }
+
     /// Synthesizes a composite, continuous `TrackSpline` from an ordered sequence of segments in a layout.
     /// Enables transparent backwards compatibility with systems requiring a flat `TrackSpline`.
     pub fn build_composite_spline_for_layout(&self, layout_id: &str) -> Option<TrackSpline> {
@@ -1590,6 +1613,28 @@ mod tests {
         assert_eq!(branches.len(), 2);
         assert_eq!(branches[0].id, SegmentId(2));
         assert_eq!(branches[1].id, SegmentId(3));
+
+        // When segment 3 is designated as launch chute
+        net.launch_chute = Some(LaunchChuteConfig {
+            segment_id: SegmentId(3),
+            merge_junction_id: JunctionId(0),
+            pad_width: 16.0,
+            grid_slots: vec![],
+            side_barriers: vec![],
+            terminal_barrier: crate::track::geometry::WallBarrier::new(
+                Vec2::ZERO,
+                Vec2::ZERO,
+                crate::track::geometry::BarrierType::Concrete,
+            ),
+            surface: SurfaceType::Asphalt,
+        });
+
+        assert_eq!(net.launch_chute_segment().map(|s| s.id), Some(SegmentId(3)));
+
+        // Joker segments should only include segment 2 (not chute, not default layout)
+        let jokers = net.joker_segments();
+        assert_eq!(jokers.len(), 1);
+        assert_eq!(jokers[0].id, SegmentId(2));
     }
 
     #[test]

@@ -174,6 +174,37 @@ pub fn compute_star_vertices(center: Vec2, r_out: f32, r_in: f32, heading_angle:
     vertices
 }
 
+/// Computes the 2D bounding box (min, max) for the minimap radar,
+/// incorporating both the main track spline and any branch segments (e.g. joker detours, launch chutes).
+pub fn compute_minimap_bounds(track: &Track) -> Option<(Vec2, Vec2)> {
+    if track.spline.samples.is_empty() {
+        return None;
+    }
+
+    let mut min_x = f32::INFINITY;
+    let mut min_y = f32::INFINITY;
+    let mut max_x = f32::NEG_INFINITY;
+    let mut max_y = f32::NEG_INFINITY;
+
+    for s in &track.spline.samples {
+        min_x = min_x.min(s.point.x);
+        min_y = min_y.min(s.point.y);
+        max_x = max_x.max(s.point.x);
+        max_y = max_y.max(s.point.y);
+    }
+
+    for seg in track.branch_segments() {
+        for s in &seg.samples {
+            min_x = min_x.min(s.point.x);
+            min_y = min_y.min(s.point.y);
+            max_x = max_x.max(s.point.x);
+            max_y = max_y.max(s.point.y);
+        }
+    }
+
+    Some((Vec2::new(min_x, min_y), Vec2::new(max_x, max_y)))
+}
+
 /// Draws the modern mini-map radar with clean track trace and directional cones.
 /// Defaults to focusing on car index 0 as the player car.
 #[allow(clippy::too_many_arguments)]
@@ -208,22 +239,13 @@ pub fn render_minimap_with_player<B: Body2D>(
 ) {
     scaler.draw_glass_card(x, y, w, h, Color::new(0.06, 0.08, 0.12, 0.90), Palette::UI_CARD_BORDER, 1.8);
 
-    if track.spline.samples.is_empty() {
+    let Some((min, max)) = compute_minimap_bounds(track) else {
         return;
-    }
-
-    // Compute bounding box of track
-    let mut min_x = f32::INFINITY;
-    let mut min_y = f32::INFINITY;
-    let mut max_x = f32::NEG_INFINITY;
-    let mut max_y = f32::NEG_INFINITY;
-
-    for s in &track.spline.samples {
-        min_x = min_x.min(s.point.x);
-        min_y = min_y.min(s.point.y);
-        max_x = max_x.max(s.point.x);
-        max_y = max_y.max(s.point.y);
-    }
+    };
+    let min_x = min.x;
+    let min_y = min.y;
+    let max_x = max.x;
+    let max_y = max.y;
 
     let track_w = (max_x - min_x).max(10.0);
     let track_h = (max_y - min_y).max(10.0);
@@ -244,9 +266,32 @@ pub fn render_minimap_with_player<B: Body2D>(
         Vec2::new(map_cx + rx, map_cy + ry)
     };
 
+    // Draw branch segments under the main loop so junctions stay clean
+    if let Some(chute) = track.launch_chute_segment() {
+        for pair in chute.samples.windows(2) {
+            let p0 = to_map_pt(pair[0].point);
+            let p1 = to_map_pt(pair[1].point);
+            draw_line(p0.x, p0.y, p1.x, p1.y, scaler.s(2.8), Color::new(0.2, 0.4, 0.6, 0.3));
+            draw_line(p0.x, p0.y, p1.x, p1.y, scaler.s(1.6), Color::new(0.45, 0.6, 0.8, 0.75));
+        }
+    }
+
+    // Draw joker detours with distinct neon orange trace (Spec 081)
+    for joker in track.joker_segments() {
+        for pair in joker.samples.windows(2) {
+            let p0 = to_map_pt(pair[0].point);
+            let p1 = to_map_pt(pair[1].point);
+            // Outer glow
+            draw_line(p0.x, p0.y, p1.x, p1.y, scaler.s(3.5), Color::new(0.7, 0.35, 0.05, 0.45));
+            // Core track line
+            draw_line(p0.x, p0.y, p1.x, p1.y, scaler.s(2.0), Palette::NEON_ORANGE);
+        }
+    }
+
     // Draw track circuit outline with clean modern anti-aliased trace
     let samples = &track.spline.samples;
-    for i in 0..samples.len() {
+    let seg_count = if track.spline.closed { samples.len() } else { samples.len().saturating_sub(1) };
+    for i in 0..seg_count {
         let p0 = to_map_pt(samples[i].point);
         let p1 = to_map_pt(samples[(i + 1) % samples.len()].point);
         // Outer glow
@@ -542,6 +587,103 @@ mod tests {
         let v_left = verts[8] - center;
         assert!((v_right.x - v_left.x).abs() < 1e-4);
         assert!((v_right.y + v_left.y).abs() < 1e-4);
+    }
+
+    #[test]
+    fn test_minimap_bounds_with_joker_and_chute() {
+        use arcade_race_core::track::network::{
+            LaunchChuteConfig, RoadSegment, SegmentId, TrackLayout, TrackNetwork,
+        };
+        use arcade_race_core::track::spline::TrackWaypoint;
+        use wheelbase::SurfaceType;
+
+        let wps = vec![
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 10.0),
+            TrackWaypoint::new(Vec2::new(100.0, 0.0), 10.0),
+            TrackWaypoint::new(Vec2::new(100.0, 100.0), 10.0),
+            TrackWaypoint::new(Vec2::new(0.0, 100.0), 10.0),
+        ];
+
+        let mut track = Track::default();
+        track.spline = arcade_race_core::track::spline::TrackSpline::new(wps.clone(), true);
+
+        // Without branches, bounds reflect only the main spline
+        let (min_main, max_main) = compute_minimap_bounds(&track).expect("bounds computed");
+
+        // Joker segment that extends out to x = 150.0 (beyond the main spline max_x)
+        let joker_wps = vec![
+            TrackWaypoint::new(Vec2::new(100.0, 0.0), 10.0),
+            TrackWaypoint::new(Vec2::new(150.0, 50.0), 10.0),
+            TrackWaypoint::new(Vec2::new(100.0, 100.0), 10.0),
+        ];
+
+        // Chute segment that extends back to x = -30.0, y = -20.0 (beyond main spline min)
+        let chute_wps = vec![
+            TrackWaypoint::new(Vec2::new(-30.0, -20.0), 10.0),
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 10.0),
+        ];
+
+        let seg0 = RoadSegment::new(SegmentId(0), "Main Straight", wps[0..2].to_vec());
+        let seg1 = RoadSegment::new(SegmentId(1), "Main Turn", wps[1..].to_vec());
+        let seg2 = RoadSegment::new(SegmentId(2), "Joker Detour", joker_wps);
+        let seg3 = RoadSegment::new(SegmentId(3), "Launch Chute", chute_wps);
+
+        let mut net = TrackNetwork::new();
+        net.segments = vec![seg0, seg1, seg2, seg3];
+        net.layouts = vec![
+            TrackLayout {
+                id: "main".into(),
+                display_name: "Main".into(),
+                entry_segment: None,
+                segment_sequence: vec![SegmentId(0), SegmentId(1)],
+                is_closed: true,
+                total_lap_length: 400.0,
+                start_finish_segment: SegmentId(0),
+                checkpoint_ids: vec![],
+            },
+            TrackLayout {
+                id: "joker".into(),
+                display_name: "Joker".into(),
+                entry_segment: None,
+                segment_sequence: vec![SegmentId(0), SegmentId(2)],
+                is_closed: true,
+                total_lap_length: 450.0,
+                start_finish_segment: SegmentId(0),
+                checkpoint_ids: vec![],
+            },
+        ];
+        net.default_layout_id = "main".into();
+        net.launch_chute = Some(LaunchChuteConfig {
+            segment_id: SegmentId(3),
+            merge_junction_id: arcade_race_core::track::network::JunctionId(0),
+            pad_width: 16.0,
+            grid_slots: vec![],
+            side_barriers: vec![],
+            terminal_barrier: arcade_race_core::track::geometry::WallBarrier::new(
+                Vec2::ZERO,
+                Vec2::ZERO,
+                arcade_race_core::track::geometry::BarrierType::Concrete,
+            ),
+            surface: SurfaceType::Asphalt,
+        });
+
+        track.network = Some(net);
+
+        // Verify joker segments and launch chute segment
+        let jokers = track.joker_segments();
+        assert_eq!(jokers.len(), 1);
+        assert_eq!(jokers[0].id, SegmentId(2));
+        assert!(track.launch_chute_segment().is_some());
+        assert_eq!(track.launch_chute_segment().unwrap().id, SegmentId(3));
+
+        // Bounds must expand to encompass the full extent of the joker and chute segments
+        let (min_all, max_all) = compute_minimap_bounds(&track).expect("bounds computed");
+        assert!(max_all.x >= 150.0, "max_all.x ({}) should encompass joker waypoint at 150.0", max_all.x);
+        assert!(max_all.x > max_main.x, "max_all.x should expand past max_main.x");
+        assert!(min_all.x <= -30.0, "min_all.x ({}) should encompass chute waypoint at -30.0", min_all.x);
+        assert!(min_all.x < min_main.x, "min_all.x should expand past min_main.x");
+        assert!(min_all.y <= -20.0, "min_all.y ({}) should encompass chute waypoint at -20.0", min_all.y);
+        assert!(min_all.y < min_main.y, "min_all.y should expand past min_main.y");
     }
 }
 
