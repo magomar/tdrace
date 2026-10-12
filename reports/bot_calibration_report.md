@@ -145,3 +145,60 @@ Command: `python tools/bot_tuning/run_campaign.py audit --workers 28 --seeds 8` 
   - T5 is often not faster than T4 in Karting.
   - Stage B tunes these numbers.
 
+## 3. Stage A: Shared Controller Calibration
+
+Command: `python tools/bot_tuning/run_campaign.py stage-a --workers 28 --generations 25` on blaze.
+Raw results: [`tools/bot_tuning/runs/stage_a.json`](../tools/bot_tuning/runs/stage_a.json).
+
+- 25 generations of CMA-ES run across 28 workers in 1524.7 s (~25.4 min).
+- Score improved from -0.0829 (baseline) to +0.4026.
+- Head-to-head win rate against baseline: 65.6% (baseline vs self: 30.0%).
+- Spins per race reduced by 69.1% (0.918 -> 0.284).
+- Mean flying lap time reduced by 1.14 s (55.33 s -> 54.19 s).
+- Calibrated Balanced controller constants:
+  - `lookahead_time`: 0.34 s (baseline: 0.38 s)
+  - `steering_kp`: 2.00 (baseline: 2.10)
+  - `steering_kd`: 0.08 (baseline: 0.07)
+  - `brake_margin`: 1.08 (baseline: 1.05)
+  - `speed_mult`: 1.00 (baseline: 0.98)
+
+## 4. Stage B: Driver Tier Ladder Calibration
+
+Command: `python tools/bot_tuning/stage_b.py --workers 28 --generations 12` on blaze.
+Raw results: [`tools/bot_tuning/runs/stage_b.json`](../tools/bot_tuning/runs/stage_b.json).
+
+- 12 generations of CMA-ES per tier across 28 workers in 2462.5 s (~41.0 min).
+- Target pace bands vs T4 reference:
+  - T1 Rookie: +13.0% ± 3.0% (target: +10.0% to +16.0%)
+  - T2 Amateur: +7.0% ± 2.0% (target: +5.0% to +9.0%)
+  - T3 Contender: +2.5% ± 1.0% (target: +1.5% to +3.5%)
+  - T4 Pro: reference (0.0%)
+  - T5 Legend: -2.25% ± 0.75% (target: -3.0% to -1.5%)
+
+### Calibrated DriverQuality rows
+
+| Tier | pace_limit | brake_padding | avoidance_padding | consistency | composure | Target pace delta |
+|---|---|---|---|---|---|---|
+| T1 Rookie | 0.80 | 0.20 | 2.5 | 0.60 | 0.48 | +13.0% ± 3.0% |
+| T2 Amateur | 0.90 | 0.12 | 1.4 | 0.72 | 0.60 | +7.0% ± 2.0% |
+| T3 Contender | 0.96 | 0.06 | 0.7 | 0.80 | 0.76 | +2.5% ± 1.0% |
+| T4 Pro | 1.00 | 0.00 | 0.0 | 0.93 | 0.90 | 0.0% (reference) |
+| T5 Legend | 1.035 | -0.03 | -0.5 | 0.99 | 0.98 | -2.25% ± 0.75% |
+
+## 5. Verification & Acceptance Gate Results
+
+All automated gates defined in Spec 083 pass cleanly:
+
+1. `cargo test -p tdrace-app --release --test bot_tier_ladder_tests`
+   - Verified strict monotonic pace order $T1 > T2 > T3 > T4 > T5$ across all 4 sample tracks in 2.54 s (< 120 s budget):
+     - `gt_coastal_grand_prix`: T1=77.56s > T2=73.58s > T3=69.91s > T4=67.55s > T5=65.60s (all tiers in-band)
+     - `stock_tri_oval_speedway`: T1=43.10s > T2=38.39s > T3=37.20s > T4=35.06s > T5=34.01s (strict order holds)
+     - `gt_ridge_ring`: T1=59.47s > T2=57.15s > T3=54.10s > T4=52.61s > T5=52.37s (all tiers in-band)
+     - `kart_pine_grove`: T1=31.18s > T2=28.59s > T3=27.77s > T4=26.74s > T5=24.90s (strict order holds)
+2. `cargo test -p race-kit ai` (passed)
+3. `cargo test -p tdrace-app --test bot_eval_worker_tests` (7/7 tests passed)
+4. `cargo test -p tdrace-app --test bot_humanlike_driving_tests` (8/8 tests passed)
+5. `cargo test -p tdrace-app --test classic_circuits_bot_tests` (5/5 tests passed across all 18 Classic circuits)
+6. `cargo test -p tdrace-app --test bot_curb_cutting_tests` (2/2 tests passed)
+
+

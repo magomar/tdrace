@@ -3,6 +3,7 @@
 
 use tdrace_app::ai::bot_harness::{run_harness_race, sample_bot, HarnessEntry, CLASSIC_CIRCUIT_CARS as CIRCUITS};
 use tdrace_app::ai::{DriverTier, DrivingStyle};
+use tdrace_app::module::classic::ClassicGameModule;
 
 
 

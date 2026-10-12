@@ -245,7 +245,7 @@ impl DriverQuality {
                 // Spec 046: 0.88 -> 0.82, so a keyboard driver on Balanced beats a Tier 1 grid. 0.80 since
                 // curbs no longer add grip (tdrace-le75): the keyboard driver lost 1.1 s on Ridge Ring.
                 pace_limit: 0.80,
-                brake_padding: 0.22,
+                brake_padding: 0.20,
                 avoidance_padding: 2.5,
                 consistency: 0.60,
                 composure: 0.48,
@@ -263,8 +263,8 @@ impl DriverQuality {
                 pace_limit: 0.96,
                 brake_padding: 0.06,
                 avoidance_padding: 0.7,
-                consistency: 0.83,
-                composure: 0.78,
+                consistency: 0.80,
+                composure: 0.76,
             },
             DriverTier::Pro => Self {
                 tier,
@@ -276,7 +276,7 @@ impl DriverQuality {
             },
             DriverTier::Legend => Self {
                 tier,
-                pace_limit: 1.04,
+                pace_limit: 1.035,
                 brake_padding: -0.03,
                 avoidance_padding: -0.5,
                 consistency: 0.99,
@@ -303,12 +303,12 @@ pub struct StyleTuning {
 impl StyleTuning {
     pub const fn for_style(style: DrivingStyle) -> Self {
         let (lookahead_time, steering_kp, steering_kd, brake_margin, aggression, avoidance_distance, speed_mult) = match style {
-            DrivingStyle::Smooth => (0.40, 2.30, 0.08, 1.02, 0.70, 6.5, 1.01),
-            DrivingStyle::Aggressive => (0.32, 2.50, 0.05, 0.90, 0.95, 5.0, 1.02),
-            DrivingStyle::Tenacious => (0.42, 2.20, 0.08, 1.05, 0.82, 6.0, 0.99),
-            DrivingStyle::Calculating => (0.39, 2.40, 0.07, 1.00, 0.75, 6.5, 1.00),
-            DrivingStyle::Bold => (0.31, 2.70, 0.04, 0.88, 0.92, 5.2, 1.01),
-            DrivingStyle::Balanced => (0.38, 2.10, 0.07, 1.05, 0.65, 7.0, 0.98),
+            DrivingStyle::Smooth => (0.36, 2.20, 0.09, 1.05, 0.70, 6.5, 1.03),
+            DrivingStyle::Aggressive => (0.28, 2.40, 0.06, 0.93, 0.95, 5.0, 1.04),
+            DrivingStyle::Tenacious => (0.38, 2.10, 0.09, 1.08, 0.82, 6.0, 1.01),
+            DrivingStyle::Calculating => (0.35, 2.30, 0.08, 1.03, 0.75, 6.5, 1.02),
+            DrivingStyle::Bold => (0.27, 2.60, 0.05, 0.91, 0.92, 5.2, 1.03),
+            DrivingStyle::Balanced => (0.34, 2.00, 0.08, 1.08, 0.65, 7.0, 1.00),
         };
         Self { lookahead_time, steering_kp, steering_kd, brake_margin, aggression, avoidance_distance, speed_mult }
     }
