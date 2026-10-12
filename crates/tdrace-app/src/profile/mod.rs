@@ -590,13 +590,13 @@ impl ModuleCareerProgress {
             ("nascar", 4) => vec!["nascar_crossbow_sierra_t4".to_string()],
             ("nascar", 5) => vec!["nascar_crossbow_manta_t5".to_string()],
 
-            ("rally", 1) => vec!["rally_gallia_200_t1".to_string()],
-            ("rally", 2) => vec!["rally_nordic_rx_lites_t2".to_string()],
-            ("rally", 3) => vec!["rally_volkskraft_strassen_t3".to_string()],
-            ("rally", 4) => vec!["rally_gallia_lyon_t4".to_string()],
-            ("rally", 5) => vec!["rally_gallia_volt_t5".to_string()],
-            ("rally", 6) => vec!["rally_nordic_valkyrie_t6".to_string()],
-            ("rally", 0 | 7) => vec!["rally_vortek_turbo_quattro_t7".to_string()],
+            ("rally" | "rallycross" | "rx", 1) => vec!["rally_gallia_200_t1".to_string()],
+            ("rally" | "rallycross" | "rx", 2) => vec!["rally_nordic_rx_lites_t2".to_string()],
+            ("rally" | "rallycross" | "rx", 3) => vec!["rally_volkskraft_strassen_t3".to_string()],
+            ("rally" | "rallycross" | "rx", 4) => vec!["rally_gallia_lyon_t4".to_string()],
+            ("rally" | "rallycross" | "rx", 5) => vec!["rally_gallia_volt_t5".to_string()],
+            ("rally" | "rallycross" | "rx", 6) => vec!["rally_nordic_valkyrie_t6".to_string()],
+            ("rally" | "rallycross" | "rx", 0 | 7) => vec!["rally_vortek_turbo_quattro_t7".to_string()],
 
             ("kart", 1) => vec!["kart_blackline_cadet_t1".to_string()],
             ("kart", 2) => vec!["kart_verde_sprint_t2".to_string()],
@@ -693,7 +693,7 @@ impl ModuleCareerProgress {
                 5 => 95_000,
                 _ => (tier as u64) * 20_000,
             },
-            "rally" | "rx" => match tier {
+            "rally" | "rallycross" | "rx" => match tier {
                 1 => 16_000,
                 2 => 48_000,
                 3 => 85_000,
@@ -731,7 +731,7 @@ impl ModuleCareerProgress {
     pub fn car_credit_cost_for_car(car_id: &str, module_id: &str, tier: u8) -> u64 {
         if let Some(m) = crate::catalog::find_model_by_id(car_id) {
             Self::car_credit_cost_for_module(m.module_id, m.tier)
-        } else if module_id == "kart" || module_id == "autocross" || module_id == "ax" || module_id == "rally" || module_id == "rx" {
+        } else if module_id == "kart" || module_id == "autocross" || module_id == "ax" || module_id == "rally" || module_id == "rallycross" || module_id == "rx" {
             Self::car_credit_cost_for_module(module_id, tier)
         } else {
             Self::car_credit_cost(tier)
@@ -845,7 +845,7 @@ impl ModuleCareerProgress {
     pub fn max_tier(&self) -> u32 {
         if self.module_id == "extreme_offroad" {
             7
-        } else if self.module_id == "rally" || self.module_id == "kart" {
+        } else if self.module_id == "rally" || self.module_id == "rallycross" || self.module_id == "kart" {
             6
         } else {
             5
@@ -889,6 +889,7 @@ impl ModuleCareerProgress {
                 || self.module_id == "autocross"
                 || self.module_id == "ax"
                 || self.module_id == "rally"
+                || self.module_id == "rallycross"
                 || self.module_id == "rx");
         let already_unlocked = if is_grassroots_starter {
             false
@@ -1143,7 +1144,7 @@ impl ModuleCareerProgress {
                     self.ensure_track("phoenix_raceway");
                 }
             }
-            "rally" => {
+            "rally" | "rallycross" | "rx" => {
                 // Tier 1 (5 circuits)
                 self.ensure_track("holjes_rx");
                 self.ensure_track("lydden_hill");

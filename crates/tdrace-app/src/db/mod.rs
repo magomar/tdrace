@@ -971,6 +971,10 @@ impl HallOfFameDb {
 
     /// Retrieves module career progress for a given player profile and module ID.
     pub fn get_module_progress(&self, profile_id: i64, module_id: &str) -> Result<Option<ModuleCareerProgress>> {
+        self.get_module_progress_inner(profile_id, module_id, true)
+    }
+
+    fn get_module_progress_inner(&self, profile_id: i64, module_id: &str, allow_fallback: bool) -> Result<Option<ModuleCareerProgress>> {
         let mut stmt = self.conn.prepare(
             "SELECT profile_id, module_id, xp, level, unlocked_cars, unlocked_tracks, completed_events,
                     trophies_gold, trophies_silver, trophies_bronze, updated_at,
@@ -1043,7 +1047,20 @@ impl HallOfFameDb {
         })?;
 
         if let Some(res) = rows.next() {
-            Ok(Some(res?))
+            let mut prog = res?;
+            prog.module_id = module_id.to_string();
+            Ok(Some(prog))
+        } else if allow_fallback {
+            let fallback_mod = match module_id {
+                "rallycross" => Some("rally"),
+                "rally" => Some("rallycross"),
+                _ => None,
+            };
+            if let Some(fb) = fallback_mod {
+                self.get_module_progress_inner(profile_id, fb, false)
+            } else {
+                Ok(None)
+            }
         } else {
             Ok(None)
         }
@@ -1318,7 +1335,7 @@ impl HallOfFameDb {
         let normalized = match module_id {
             "gt_challenge" => "gt",
             "karting" => "kart",
-            "rallycross" => "rally",
+            "rally" | "rallycross" | "rx" => "rallycross",
             "offroad" => "extreme_offroad",
             m => m,
         };
@@ -1345,7 +1362,7 @@ impl HallOfFameDb {
             let award_norm = match award.module_id.as_str() {
                 "gt_challenge" => "gt",
                 "karting" => "kart",
-                "rallycross" => "rally",
+                "rally" | "rallycross" | "rx" => "rallycross",
                 "offroad" => "extreme_offroad",
                 m => m,
             };
@@ -1697,11 +1714,24 @@ impl HallOfFameDb {
 
     pub fn get_module_progress(&self, profile_id: i64, module_id: &str) -> Result<Option<ModuleCareerProgress>> {
         let guard = self.progress.lock().unwrap();
+        let fallback = match module_id {
+            "rallycross" => Some("rally"),
+            "rally" => Some("rallycross"),
+            _ => None,
+        };
         let res = guard
             .iter()
             .find(|p| p.profile_id == profile_id && p.module_id == module_id)
+            .or_else(|| {
+                fallback.and_then(|fb| {
+                    guard.iter().find(|p| p.profile_id == profile_id && p.module_id == fb)
+                })
+            })
             .cloned();
-        Ok(res)
+        Ok(res.map(|mut p| {
+            p.module_id = module_id.to_string();
+            p
+        }))
     }
 
     pub fn get_all_module_progress(&self, profile_id: i64) -> Result<std::collections::HashMap<String, ModuleCareerProgress>> {
@@ -1791,7 +1821,7 @@ impl HallOfFameDb {
         let normalized = match module_id {
             "gt_challenge" => "gt",
             "karting" => "kart",
-            "rallycross" => "rally",
+            "rally" | "rallycross" | "rx" => "rallycross",
             "offroad" => "extreme_offroad",
             m => m,
         };
@@ -1800,7 +1830,7 @@ impl HallOfFameDb {
             let a_norm = match a.module_id.as_str() {
                 "gt_challenge" => "gt",
                 "karting" => "kart",
-                "rallycross" => "rally",
+                "rally" | "rallycross" | "rx" => "rallycross",
                 "offroad" => "extreme_offroad",
                 m => m,
             };
