@@ -89,20 +89,33 @@ impl ClassicGameModule {
         cfg.finalized()
     }
 
-    /// 450 BHP Fantasy Group B Rally Beast: explosive 4WD acceleration, multi-surface suspension compliance, agile slide damping.
+    /// 550 BHP Fantasy Group B Rally Beast: explosive 4WD acceleration, multi-surface suspension compliance, agile slide damping.
     pub fn car_classic_rally() -> CarConfig {
         let mut cfg = CarConfig::rally_car();
         cfg.mass = 1050.0;
-        cfg.max_engine_force = 9200.0;
+        cfg.max_engine_force = 10500.0; // Group B explosive punch (~10 N/kg)
         cfg.top_speed_mps = 59.7; // ~215 km/h
         cfg.max_brake_force = 15000.0;
-        cfg.max_steer_angle = 0.62;
-        cfg.steer_speed = 8.5;
+        cfg.max_steer_angle = 0.72; // ~41.3 deg wide steering lock for Scandinavian flicks
+        cfg.steer_speed = 9.0;
         cfg.steer_return_speed = 12.0;
+        cfg.counter_steer_assist = 1.50;
+        cfg.roll_balance = 0.46; // Balanced roll stiffness promotes rear rotation
+        cfg.brake_bias = 0.54;   // Stable trail-braking without front plow
+        cfg.front_differential = tdrace_core::physics::config::DifferentialType::LimitedSlip {
+            power_lock: 0.25,
+            coast_lock: 0.15,
+            preload_nm: 25.0,
+        };
         cfg.downforce_coefficient = 1.10;
+        cfg.tire.grip = 1.18;
+        cfg.tire.load_sensitivity = 0.10;
         cfg.tire.slide_grip = 0.94;
-        cfg.tire.peak_slip_angle_deg = 10.2;
-        cfg.assists = tdrace_core::physics::config::DriverAssistsConfig::arcade();
+        cfg.tire.peak_slip_angle_deg = 13.5;
+        cfg.assists = tdrace_core::physics::config::DriverAssistsConfig::sport();
+        for w in &mut cfg.wheels {
+            w.tire_width = 0.26;
+        }
         cfg.with_rally_balance() // 4WD, 30:70 front/rear torque split, softer rear tire
     }
 
@@ -444,7 +457,7 @@ impl GameModule for ClassicGameModule {
                     mudflaps: true,
                     large_wing: true,
                 },
-                stats: (0.88, 0.94, 0.92, 0.88),
+                stats: (0.88, 0.96, 0.95, 0.92),
                 default_schemes: vec![
                     CarColorScheme::from_index(3),
                     CarColorScheme::from_index(0),
