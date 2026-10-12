@@ -1,0 +1,2884 @@
+{
+  "evorl_commit": "11b9ac3",
+  "tdrace_commit": "61e334dd",
+  "seed": 83,
+  "generations_per_tier": 12,
+  "population": 10,
+  "seeds_per_gen": 4,
+  "final_seeds": 16,
+  "elapsed_s": 2462.5094409339945,
+  "tiers": {
+    "tier_3": {
+      "tier": 3,
+      "name": "Contender",
+      "target_centre": 0.025,
+      "target_half_width": 0.01,
+      "best": {
+        "key": "88c4e8543b0c",
+        "params": {
+          "brake_padding": 0.017667552255525423,
+          "composure": 0.7483627396106369,
+          "consistency": 0.7826244009177432,
+          "pace_limit": 0.9698078431881505
+        },
+        "score": -0.7435807621872902,
+        "metrics": {
+          "mean_delta_pct": 1.87,
+          "target_delta_pct": 2.5,
+          "circuits_in_band": 10,
+          "total_circuits": 13,
+          "mean_band_error": 0.1698,
+          "disq_rate": 0.2668,
+          "spins": 110,
+          "stalls": 1,
+          "dnfs": 0,
+          "circuit_deltas_pct": {
+            "classic/gt_coastal_grand_prix": 3.19,
+            "classic/stock_tri_oval_speedway": 1.79,
+            "classic/gt_ridge_ring": 2.16,
+            "classic/kart_pine_grove": 2.05,
+            "kart/lonato": 1.93,
+            "kart/genk": 1.44,
+            "kart/whilton_mill": 2.14,
+            "autocross/maggiora_ax": 2.22,
+            "autocross/nova_paka_ax": 0.89,
+            "autocross/st_junien_ax": 2.25,
+            "rally/holjes_rx": 1.78,
+            "rally/mettet_rx": 2.28,
+            "rally/montalegre_rx": 0.15
+          }
+        }
+      },
+      "baseline": {
+        "key": "1aaee9681a35",
+        "params": {
+          "brake_padding": 0.06,
+          "composure": 0.78,
+          "consistency": 0.83,
+          "pace_limit": 0.96
+        },
+        "score": -0.7790080889191836,
+        "metrics": {
+          "mean_delta_pct": 1.5,
+          "target_delta_pct": 2.5,
+          "circuits_in_band": 6,
+          "total_circuits": 13,
+          "mean_band_error": 0.2024,
+          "disq_rate": 0.238,
+          "spins": 97,
+          "stalls": 2,
+          "dnfs": 0,
+          "circuit_deltas_pct": {
+            "classic/gt_coastal_grand_prix": 2.39,
+            "classic/stock_tri_oval_speedway": 2.1,
+            "classic/gt_ridge_ring": 1.4,
+            "classic/kart_pine_grove": 2.04,
+            "kart/lonato": 1.23,
+            "kart/genk": 0.97,
+            "kart/whilton_mill": 2.1,
+            "autocross/maggiora_ax": 0.68,
+            "autocross/nova_paka_ax": 0.97,
+            "autocross/st_junien_ax": 2.28,
+            "rally/holjes_rx": 0.76,
+            "rally/mettet_rx": 1.91,
+            "rally/montalegre_rx": 0.62
+          }
+        }
+      },
+      "history": [
+        {
+          "generation": 0,
+          "best_score": -0.5674696990556689,
+          "best_params": {
+            "brake_padding": 0.013680249632700078,
+            "composure": 0.7517181478085254,
+            "consistency": 0.8330533630631541,
+            "pace_limit": 0.9580752248521225
+          },
+          "best_metrics": {
+            "mean_delta_pct": 2.48,
+            "target_delta_pct": 2.5,
+            "circuits_in_band": 8,
+            "total_circuits": 13,
+            "mean_band_error": 0.0867,
+            "disq_rate": 0.2404,
+            "spins": 24,
+            "stalls": 1,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 3.9,
+              "classic/stock_tri_oval_speedway": 4.11,
+              "classic/gt_ridge_ring": 2.86,
+              "classic/kart_pine_grove": 1.37,
+              "kart/lonato": 3.85,
+              "kart/genk": 1.6,
+              "kart/whilton_mill": 2.45,
+              "autocross/maggiora_ax": 2.7,
+              "autocross/nova_paka_ax": 1.55,
+              "autocross/st_junien_ax": 2.01,
+              "rally/holjes_rx": 2.82,
+              "rally/mettet_rx": 2.23,
+              "rally/montalegre_rx": 0.82
+            }
+          },
+          "mean_score": -1.6922969538539656,
+          "elapsed_s": 53.28838820999954
+        },
+        {
+          "generation": 1,
+          "best_score": -1.231076713506282,
+          "best_params": {
+            "brake_padding": 0.0043842380607808235,
+            "composure": 0.7436975569390748,
+            "consistency": 0.8220984624860612,
+            "pace_limit": 0.9825501907323788
+          },
+          "best_metrics": {
+            "mean_delta_pct": 1.42,
+            "target_delta_pct": 2.5,
+            "circuits_in_band": 5,
+            "total_circuits": 13,
+            "mean_band_error": 0.5186,
+            "disq_rate": 0.2981,
+            "spins": 31,
+            "stalls": 0,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 0.98,
+              "classic/stock_tri_oval_speedway": 1.09,
+              "classic/gt_ridge_ring": 1.43,
+              "classic/kart_pine_grove": 2.74,
+              "kart/lonato": 0.89,
+              "kart/genk": 1.24,
+              "kart/whilton_mill": 0.8,
+              "autocross/maggiora_ax": 1.8,
+              "autocross/nova_paka_ax": 3.34,
+              "autocross/st_junien_ax": 1.66,
+              "rally/holjes_rx": -0.8,
+              "rally/mettet_rx": 2.1,
+              "rally/montalegre_rx": 1.2
+            }
+          },
+          "mean_score": -3.0967560077566048,
+          "elapsed_s": 97.96640087800915
+        },
+        {
+          "generation": 2,
+          "best_score": -1.3056585667070753,
+          "best_params": {
+            "brake_padding": -0.003091450767408896,
+            "composure": 0.7437106313807572,
+            "consistency": 0.8116965545303533,
+            "pace_limit": 0.9946705625923271
+          },
+          "best_metrics": {
+            "mean_delta_pct": 1.54,
+            "target_delta_pct": 2.5,
+            "circuits_in_band": 3,
+            "total_circuits": 13,
+            "mean_band_error": 0.8094,
+            "disq_rate": 0.2019,
+            "spins": 21,
+            "stalls": 0,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 2.44,
+              "classic/stock_tri_oval_speedway": 0.56,
+              "classic/gt_ridge_ring": 1.26,
+              "classic/kart_pine_grove": 1.02,
+              "kart/lonato": 0.3,
+              "kart/genk": 1.2,
+              "kart/whilton_mill": 0.78,
+              "autocross/maggiora_ax": 0.06,
+              "autocross/nova_paka_ax": 1.67,
+              "autocross/st_junien_ax": 0.99,
+              "rally/holjes_rx": 5.64,
+              "rally/mettet_rx": 3.18,
+              "rally/montalegre_rx": 0.9
+            }
+          },
+          "mean_score": -4.429481769723035,
+          "elapsed_s": 142.2946179970022
+        },
+        {
+          "generation": 3,
+          "best_score": -0.9253810378035205,
+          "best_params": {
+            "brake_padding": 0.02555224919225249,
+            "composure": 0.7394915920485237,
+            "consistency": 0.8291293887550655,
+            "pace_limit": 0.9690316825976937
+          },
+          "best_metrics": {
+            "mean_delta_pct": 1.93,
+            "target_delta_pct": 2.5,
+            "circuits_in_band": 5,
+            "total_circuits": 13,
+            "mean_band_error": 0.2963,
+            "disq_rate": 0.2981,
+            "spins": 29,
+            "stalls": 2,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 3.54,
+              "classic/stock_tri_oval_speedway": 0.93,
+              "classic/gt_ridge_ring": 3.79,
+              "classic/kart_pine_grove": 1.57,
+              "kart/lonato": 3.69,
+              "kart/genk": 2.25,
+              "kart/whilton_mill": 2.68,
+              "autocross/maggiora_ax": 0.57,
+              "autocross/nova_paka_ax": 1.89,
+              "autocross/st_junien_ax": 1.36,
+              "rally/holjes_rx": 0.87,
+              "rally/mettet_rx": 1.85,
+              "rally/montalegre_rx": 0.04
+            }
+          },
+          "mean_score": -2.499105756233463,
+          "elapsed_s": 186.92133528800332
+        },
+        {
+          "generation": 4,
+          "best_score": -1.4967743811204945,
+          "best_params": {
+            "brake_padding": -0.00045240565003258626,
+            "composure": 0.7638038875175897,
+            "consistency": 0.8218041021433504,
+            "pace_limit": 0.9726782786583406
+          },
+          "best_metrics": {
+            "mean_delta_pct": 1.25,
+            "target_delta_pct": 2.5,
+            "circuits_in_band": 6,
+            "total_circuits": 13,
+            "mean_band_error": 0.9932,
+            "disq_rate": 0.1731,
+            "spins": 18,
+            "stalls": 0,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 1.92,
+              "classic/stock_tri_oval_speedway": 2.08,
+              "classic/gt_ridge_ring": 1.81,
+              "classic/kart_pine_grove": 0.47,
+              "kart/lonato": 1.43,
+              "kart/genk": 1.33,
+              "kart/whilton_mill": 2.82,
+              "autocross/maggiora_ax": 1.65,
+              "autocross/nova_paka_ax": 1.11,
+              "autocross/st_junien_ax": 2.89,
+              "rally/holjes_rx": -0.39,
+              "rally/mettet_rx": -0.9,
+              "rally/montalegre_rx": -0.02
+            }
+          },
+          "mean_score": -2.969086536918402,
+          "elapsed_s": 230.84211479499936
+        },
+        {
+          "generation": 5,
+          "best_score": -0.6708725347214664,
+          "best_params": {
+            "brake_padding": -0.027991676300557933,
+            "composure": 0.7424624131959888,
+            "consistency": 0.8212000407283749,
+            "pace_limit": 0.9837573506901094
+          },
+          "best_metrics": {
+            "mean_delta_pct": 2.03,
+            "target_delta_pct": 2.5,
+            "circuits_in_band": 5,
+            "total_circuits": 13,
+            "mean_band_error": 0.0719,
+            "disq_rate": 0.2885,
+            "spins": 30,
+            "stalls": 0,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 3.91,
+              "classic/stock_tri_oval_speedway": 1.51,
+              "classic/gt_ridge_ring": 1.14,
+              "classic/kart_pine_grove": 1.88,
+              "kart/lonato": 2.11,
+              "kart/genk": 0.95,
+              "kart/whilton_mill": 1.2,
+              "autocross/maggiora_ax": 1.38,
+              "autocross/nova_paka_ax": 3.62,
+              "autocross/st_junien_ax": 2.06,
+              "rally/holjes_rx": 1.52,
+              "rally/mettet_rx": 3.87,
+              "rally/montalegre_rx": 1.21
+            }
+          },
+          "mean_score": -2.226981881812457,
+          "elapsed_s": 274.13871434800967
+        },
+        {
+          "generation": 6,
+          "best_score": -0.7554024051675522,
+          "best_params": {
+            "brake_padding": -0.011876098092628198,
+            "composure": 0.7267239855521042,
+            "consistency": 0.8078355565480339,
+            "pace_limit": 0.9900234594056423
+          },
+          "best_metrics": {
+            "mean_delta_pct": 2.05,
+            "target_delta_pct": 2.5,
+            "circuits_in_band": 9,
+            "total_circuits": 13,
+            "mean_band_error": 0.1199,
+            "disq_rate": 0.3077,
+            "spins": 31,
+            "stalls": 1,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 3.14,
+              "classic/stock_tri_oval_speedway": 0.4,
+              "classic/gt_ridge_ring": 2.08,
+              "classic/kart_pine_grove": 1.43,
+              "kart/lonato": 1.96,
+              "kart/genk": 1.76,
+              "kart/whilton_mill": 2.57,
+              "autocross/maggiora_ax": 0.93,
+              "autocross/nova_paka_ax": 1.57,
+              "autocross/st_junien_ax": 2.56,
+              "rally/holjes_rx": 3.67,
+              "rally/mettet_rx": 1.65,
+              "rally/montalegre_rx": 2.94
+            }
+          },
+          "mean_score": -5.361616479875936,
+          "elapsed_s": 316.5009698740032
+        },
+        {
+          "generation": 7,
+          "best_score": -0.8003451427975281,
+          "best_params": {
+            "brake_padding": 0.03629879659779632,
+            "composure": 0.7032170509937828,
+            "consistency": 0.7998518470444108,
+            "pace_limit": 0.9691705691258167
+          },
+          "best_metrics": {
+            "mean_delta_pct": 1.69,
+            "target_delta_pct": 2.5,
+            "circuits_in_band": 5,
+            "total_circuits": 13,
+            "mean_band_error": 0.1957,
+            "disq_rate": 0.2692,
+            "spins": 28,
+            "stalls": 0,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 2.07,
+              "classic/stock_tri_oval_speedway": 1.12,
+              "classic/gt_ridge_ring": 4.21,
+              "classic/kart_pine_grove": 1.05,
+              "kart/lonato": 2.44,
+              "kart/genk": 1.4,
+              "kart/whilton_mill": 1.51,
+              "autocross/maggiora_ax": 1.95,
+              "autocross/nova_paka_ax": 1.37,
+              "autocross/st_junien_ax": 2.13,
+              "rally/holjes_rx": 1.32,
+              "rally/mettet_rx": 1.04,
+              "rally/montalegre_rx": 0.31
+            }
+          },
+          "mean_score": -1.8800789486866687,
+          "elapsed_s": 360.2952507370064
+        },
+        {
+          "generation": 8,
+          "best_score": -0.7619940931871422,
+          "best_params": {
+            "brake_padding": -0.04629568915680794,
+            "composure": 0.7448062260446918,
+            "consistency": 0.8089882759298279,
+            "pace_limit": 0.9767161190035877
+          },
+          "best_metrics": {
+            "mean_delta_pct": 2.34,
+            "target_delta_pct": 2.5,
+            "circuits_in_band": 9,
+            "total_circuits": 13,
+            "mean_band_error": 0.3171,
+            "disq_rate": 0.2212,
+            "spins": 23,
+            "stalls": 0,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 2.03,
+              "classic/stock_tri_oval_speedway": 1.26,
+              "classic/gt_ridge_ring": 1.5,
+              "classic/kart_pine_grove": 2.83,
+              "kart/lonato": 3.47,
+              "kart/genk": 1.84,
+              "kart/whilton_mill": 3.26,
+              "autocross/maggiora_ax": 1.7,
+              "autocross/nova_paka_ax": 1.13,
+              "autocross/st_junien_ax": 2.86,
+              "rally/holjes_rx": 2.64,
+              "rally/mettet_rx": 5.27,
+              "rally/montalegre_rx": 0.6
+            }
+          },
+          "mean_score": -2.2226964623439427,
+          "elapsed_s": 403.9237253350002
+        },
+        {
+          "generation": 9,
+          "best_score": -0.5950446724256341,
+          "best_params": {
+            "brake_padding": 0.017667552255525423,
+            "composure": 0.7483627396106369,
+            "consistency": 0.7826244009177432,
+            "pace_limit": 0.9698078431881505
+          },
+          "best_metrics": {
+            "mean_delta_pct": 2.55,
+            "target_delta_pct": 2.5,
+            "circuits_in_band": 9,
+            "total_circuits": 13,
+            "mean_band_error": 0.0564,
+            "disq_rate": 0.2692,
+            "spins": 27,
+            "stalls": 1,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 1.69,
+              "classic/stock_tri_oval_speedway": 2.7,
+              "classic/gt_ridge_ring": 1.32,
+              "classic/kart_pine_grove": 2.74,
+              "kart/lonato": 2.14,
+              "kart/genk": 2.39,
+              "kart/whilton_mill": 1.69,
+              "autocross/maggiora_ax": 3.96,
+              "autocross/nova_paka_ax": 1.92,
+              "autocross/st_junien_ax": 1.58,
+              "rally/holjes_rx": 3.53,
+              "rally/mettet_rx": 4.2,
+              "rally/montalegre_rx": 3.25
+            }
+          },
+          "mean_score": -2.18465346132274,
+          "elapsed_s": 447.3954079730029
+        },
+        {
+          "generation": 10,
+          "best_score": -0.7721822943355741,
+          "best_params": {
+            "brake_padding": -0.031608954838584266,
+            "composure": 0.7545699644874766,
+            "consistency": 0.7872384421086348,
+            "pace_limit": 0.9871901203015481
+          },
+          "best_metrics": {
+            "mean_delta_pct": 1.62,
+            "target_delta_pct": 2.5,
+            "circuits_in_band": 7,
+            "total_circuits": 13,
+            "mean_band_error": 0.2326,
+            "disq_rate": 0.2308,
+            "spins": 24,
+            "stalls": 0,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 1.38,
+              "classic/stock_tri_oval_speedway": 1.2,
+              "classic/gt_ridge_ring": 1.13,
+              "classic/kart_pine_grove": 2.83,
+              "kart/lonato": 2.23,
+              "kart/genk": 1.67,
+              "kart/whilton_mill": 2.21,
+              "autocross/maggiora_ax": 1.99,
+              "autocross/nova_paka_ax": 0.51,
+              "autocross/st_junien_ax": 2.56,
+              "rally/holjes_rx": 0.86,
+              "rally/mettet_rx": 2.13,
+              "rally/montalegre_rx": 0.32
+            }
+          },
+          "mean_score": -2.179093140435208,
+          "elapsed_s": 490.61738695800886
+        },
+        {
+          "generation": 11,
+          "best_score": -1.0226367242525054,
+          "best_params": {
+            "brake_padding": -0.04523419179666503,
+            "composure": 0.7574396977806801,
+            "consistency": 0.7857421559722622,
+            "pace_limit": 0.9742597636782098
+          },
+          "best_metrics": {
+            "mean_delta_pct": 2.25,
+            "target_delta_pct": 2.5,
+            "circuits_in_band": 6,
+            "total_circuits": 13,
+            "mean_band_error": 0.555,
+            "disq_rate": 0.2308,
+            "spins": 24,
+            "stalls": 0,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 3.51,
+              "classic/stock_tri_oval_speedway": 2.49,
+              "classic/gt_ridge_ring": 3.88,
+              "classic/kart_pine_grove": 1.54,
+              "kart/lonato": 3.71,
+              "kart/genk": 1.53,
+              "kart/whilton_mill": 3.7,
+              "autocross/maggiora_ax": 2.13,
+              "autocross/nova_paka_ax": 0.66,
+              "autocross/st_junien_ax": 2.88,
+              "rally/holjes_rx": 1.35,
+              "rally/mettet_rx": 2.92,
+              "rally/montalegre_rx": -1.0
+            }
+          },
+          "mean_score": -1.799942970430434,
+          "elapsed_s": 534.2221511149983
+        }
+      ],
+      "final": [
+        {
+          "key": "88c4e8543b0c",
+          "params": {
+            "brake_padding": 0.017667552255525423,
+            "composure": 0.7483627396106369,
+            "consistency": 0.7826244009177432,
+            "pace_limit": 0.9698078431881505
+          },
+          "score": -0.7435807621872902,
+          "metrics": {
+            "mean_delta_pct": 1.87,
+            "target_delta_pct": 2.5,
+            "circuits_in_band": 10,
+            "total_circuits": 13,
+            "mean_band_error": 0.1698,
+            "disq_rate": 0.2668,
+            "spins": 110,
+            "stalls": 1,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 3.19,
+              "classic/stock_tri_oval_speedway": 1.79,
+              "classic/gt_ridge_ring": 2.16,
+              "classic/kart_pine_grove": 2.05,
+              "kart/lonato": 1.93,
+              "kart/genk": 1.44,
+              "kart/whilton_mill": 2.14,
+              "autocross/maggiora_ax": 2.22,
+              "autocross/nova_paka_ax": 0.89,
+              "autocross/st_junien_ax": 2.25,
+              "rally/holjes_rx": 1.78,
+              "rally/mettet_rx": 2.28,
+              "rally/montalegre_rx": 0.15
+            }
+          }
+        },
+        {
+          "key": "1aaee9681a35",
+          "params": {
+            "brake_padding": 0.06,
+            "composure": 0.78,
+            "consistency": 0.83,
+            "pace_limit": 0.96
+          },
+          "score": -0.7790080889191836,
+          "metrics": {
+            "mean_delta_pct": 1.5,
+            "target_delta_pct": 2.5,
+            "circuits_in_band": 6,
+            "total_circuits": 13,
+            "mean_band_error": 0.2024,
+            "disq_rate": 0.238,
+            "spins": 97,
+            "stalls": 2,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 2.39,
+              "classic/stock_tri_oval_speedway": 2.1,
+              "classic/gt_ridge_ring": 1.4,
+              "classic/kart_pine_grove": 2.04,
+              "kart/lonato": 1.23,
+              "kart/genk": 0.97,
+              "kart/whilton_mill": 2.1,
+              "autocross/maggiora_ax": 0.68,
+              "autocross/nova_paka_ax": 0.97,
+              "autocross/st_junien_ax": 2.28,
+              "rally/holjes_rx": 0.76,
+              "rally/mettet_rx": 1.91,
+              "rally/montalegre_rx": 0.62
+            }
+          }
+        },
+        {
+          "key": "9bc624caf4a4",
+          "params": {
+            "brake_padding": 0.014953322375652875,
+            "composure": 0.7192236000874563,
+            "consistency": 0.7848196321436851,
+            "pace_limit": 0.9691198140515614
+          },
+          "score": -0.998465396301804,
+          "metrics": {
+            "mean_delta_pct": 1.98,
+            "target_delta_pct": 2.5,
+            "circuits_in_band": 10,
+            "total_circuits": 13,
+            "mean_band_error": 0.3467,
+            "disq_rate": 0.3125,
+            "spins": 126,
+            "stalls": 5,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 2.67,
+              "classic/stock_tri_oval_speedway": 2.24,
+              "classic/gt_ridge_ring": 3.4,
+              "classic/kart_pine_grove": 2.88,
+              "kart/lonato": 1.51,
+              "kart/genk": 2.02,
+              "kart/whilton_mill": 2.43,
+              "autocross/maggiora_ax": 1.94,
+              "autocross/nova_paka_ax": 1.11,
+              "autocross/st_junien_ax": 2.3,
+              "rally/holjes_rx": 0.17,
+              "rally/mettet_rx": 3.21,
+              "rally/montalegre_rx": -0.1
+            }
+          }
+        },
+        {
+          "key": "ee2b7c112647",
+          "params": {
+            "brake_padding": 0.013680249632700078,
+            "composure": 0.7517181478085254,
+            "consistency": 0.8330533630631541,
+            "pace_limit": 0.9580752248521225
+          },
+          "score": -1.3251608121586962,
+          "metrics": {
+            "mean_delta_pct": 1.7,
+            "target_delta_pct": 2.5,
+            "circuits_in_band": 9,
+            "total_circuits": 13,
+            "mean_band_error": 0.7992,
+            "disq_rate": 0.2308,
+            "spins": 95,
+            "stalls": 2,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 2.35,
+              "classic/stock_tri_oval_speedway": 2.83,
+              "classic/gt_ridge_ring": 2.87,
+              "classic/kart_pine_grove": 2.48,
+              "kart/lonato": 2.28,
+              "kart/genk": 1.81,
+              "kart/whilton_mill": 2.8,
+              "autocross/maggiora_ax": 1.76,
+              "autocross/nova_paka_ax": 1.2,
+              "autocross/st_junien_ax": 2.23,
+              "rally/holjes_rx": -0.96,
+              "rally/mettet_rx": 0.9,
+              "rally/montalegre_rx": -0.47
+            }
+          }
+        },
+        {
+          "key": "29e88c0980e5",
+          "params": {
+            "brake_padding": -0.027991676300557933,
+            "composure": 0.7424624131959888,
+            "consistency": 0.8212000407283749,
+            "pace_limit": 0.9837573506901094
+          },
+          "score": -1.7900244806894898,
+          "metrics": {
+            "mean_delta_pct": 1.3,
+            "target_delta_pct": 2.5,
+            "circuits_in_band": 7,
+            "total_circuits": 13,
+            "mean_band_error": 1.1372,
+            "disq_rate": 0.2548,
+            "spins": 105,
+            "stalls": 1,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 1.42,
+              "classic/stock_tri_oval_speedway": 1.47,
+              "classic/gt_ridge_ring": 1.93,
+              "classic/kart_pine_grove": 2.07,
+              "kart/lonato": 1.69,
+              "kart/genk": 1.48,
+              "kart/whilton_mill": 2.47,
+              "autocross/maggiora_ax": 1.75,
+              "autocross/nova_paka_ax": 1.01,
+              "autocross/st_junien_ax": 2.12,
+              "rally/holjes_rx": -1.76,
+              "rally/mettet_rx": 1.75,
+              "rally/montalegre_rx": -0.47
+            }
+          }
+        }
+      ]
+    },
+    "tier_2": {
+      "tier": 2,
+      "name": "Amateur",
+      "target_centre": 0.07,
+      "target_half_width": 0.02,
+      "best": {
+        "key": "3378442ee64a",
+        "params": {
+          "brake_padding": 0.12,
+          "composure": 0.6,
+          "consistency": 0.72,
+          "pace_limit": 0.9
+        },
+        "score": -4.472804759743285,
+        "metrics": {
+          "mean_delta_pct": 4.61,
+          "target_delta_pct": 7.0,
+          "circuits_in_band": 6,
+          "total_circuits": 13,
+          "mean_band_error": 3.2221,
+          "disq_rate": 0.3389,
+          "spins": 140,
+          "stalls": 4,
+          "dnfs": 0,
+          "circuit_deltas_pct": {
+            "classic/gt_coastal_grand_prix": 8.06,
+            "classic/stock_tri_oval_speedway": 8.15,
+            "classic/gt_ridge_ring": 5.68,
+            "classic/kart_pine_grove": 5.54,
+            "kart/lonato": 4.45,
+            "kart/genk": 3.85,
+            "kart/whilton_mill": 5.2,
+            "autocross/maggiora_ax": 4.83,
+            "autocross/nova_paka_ax": 2.92,
+            "autocross/st_junien_ax": 5.73,
+            "rally/holjes_rx": -0.03,
+            "rally/mettet_rx": 3.23,
+            "rally/montalegre_rx": 2.27
+          }
+        }
+      },
+      "baseline": {
+        "key": "3378442ee64a",
+        "params": {
+          "brake_padding": 0.12,
+          "composure": 0.6,
+          "consistency": 0.72,
+          "pace_limit": 0.9
+        },
+        "score": -4.472804759743285,
+        "metrics": {
+          "mean_delta_pct": 4.61,
+          "target_delta_pct": 7.0,
+          "circuits_in_band": 6,
+          "total_circuits": 13,
+          "mean_band_error": 3.2221,
+          "disq_rate": 0.3389,
+          "spins": 140,
+          "stalls": 4,
+          "dnfs": 0,
+          "circuit_deltas_pct": {
+            "classic/gt_coastal_grand_prix": 8.06,
+            "classic/stock_tri_oval_speedway": 8.15,
+            "classic/gt_ridge_ring": 5.68,
+            "classic/kart_pine_grove": 5.54,
+            "kart/lonato": 4.45,
+            "kart/genk": 3.85,
+            "kart/whilton_mill": 5.2,
+            "autocross/maggiora_ax": 4.83,
+            "autocross/nova_paka_ax": 2.92,
+            "autocross/st_junien_ax": 5.73,
+            "rally/holjes_rx": -0.03,
+            "rally/mettet_rx": 3.23,
+            "rally/montalegre_rx": 2.27
+          }
+        }
+      },
+      "history": [
+        {
+          "generation": 0,
+          "best_score": -3.892619290621911,
+          "best_params": {
+            "brake_padding": 0.1387381738257325,
+            "composure": 0.5790950208202303,
+            "consistency": 0.7080079339837168,
+            "pace_limit": 0.8924162281245824
+          },
+          "best_metrics": {
+            "mean_delta_pct": 4.65,
+            "target_delta_pct": 7.0,
+            "circuits_in_band": 5,
+            "total_circuits": 13,
+            "mean_band_error": 2.8227,
+            "disq_rate": 0.2596,
+            "spins": 27,
+            "stalls": 0,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 6.68,
+              "classic/stock_tri_oval_speedway": 8.45,
+              "classic/gt_ridge_ring": 9.01,
+              "classic/kart_pine_grove": 5.0,
+              "kart/lonato": 3.43,
+              "kart/genk": 2.44,
+              "kart/whilton_mill": 4.7,
+              "autocross/maggiora_ax": 5.4,
+              "autocross/nova_paka_ax": 2.14,
+              "autocross/st_junien_ax": 5.17,
+              "rally/holjes_rx": 3.1,
+              "rally/mettet_rx": 3.74,
+              "rally/montalegre_rx": 1.23
+            }
+          },
+          "mean_score": -6.798519330330555,
+          "elapsed_s": 48.02896733299713
+        },
+        {
+          "generation": 1,
+          "best_score": -4.711021528177724,
+          "best_params": {
+            "brake_padding": 0.14712418243512135,
+            "composure": 0.5968633119432328,
+            "consistency": 0.7300518710797738,
+            "pace_limit": 0.8852049979338061
+          },
+          "best_metrics": {
+            "mean_delta_pct": 4.74,
+            "target_delta_pct": 7.0,
+            "circuits_in_band": 6,
+            "total_circuits": 13,
+            "mean_band_error": 3.5471,
+            "disq_rate": 0.3269,
+            "spins": 34,
+            "stalls": 0,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 8.53,
+              "classic/stock_tri_oval_speedway": 6.46,
+              "classic/gt_ridge_ring": 6.39,
+              "classic/kart_pine_grove": 4.72,
+              "kart/lonato": 6.17,
+              "kart/genk": 3.96,
+              "kart/whilton_mill": 6.3,
+              "autocross/maggiora_ax": 6.35,
+              "autocross/nova_paka_ax": 3.94,
+              "autocross/st_junien_ax": 3.83,
+              "rally/holjes_rx": -0.43,
+              "rally/mettet_rx": 3.83,
+              "rally/montalegre_rx": 1.6
+            }
+          },
+          "mean_score": -6.424917642481208,
+          "elapsed_s": 91.80657654900278
+        },
+        {
+          "generation": 2,
+          "best_score": -4.806178444008973,
+          "best_params": {
+            "brake_padding": 0.15422704735121606,
+            "composure": 0.5827875527579646,
+            "consistency": 0.7394375087467999,
+            "pace_limit": 0.8813257166477927
+          },
+          "best_metrics": {
+            "mean_delta_pct": 4.9,
+            "target_delta_pct": 7.0,
+            "circuits_in_band": 4,
+            "total_circuits": 13,
+            "mean_band_error": 3.5774,
+            "disq_rate": 0.3942,
+            "spins": 39,
+            "stalls": 2,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 9.48,
+              "classic/stock_tri_oval_speedway": 8.37,
+              "classic/gt_ridge_ring": 8.87,
+              "classic/kart_pine_grove": 4.85,
+              "kart/lonato": 3.21,
+              "kart/genk": 3.84,
+              "kart/whilton_mill": 6.2,
+              "autocross/maggiora_ax": 4.21,
+              "autocross/nova_paka_ax": 1.84,
+              "autocross/st_junien_ax": 3.88,
+              "rally/holjes_rx": 1.87,
+              "rally/mettet_rx": 6.57,
+              "rally/montalegre_rx": 0.52
+            }
+          },
+          "mean_score": -7.92472747784345,
+          "elapsed_s": 135.62160021299496
+        },
+        {
+          "generation": 3,
+          "best_score": -3.1930848131093335,
+          "best_params": {
+            "brake_padding": 0.1902876640601442,
+            "composure": 0.5912482913067699,
+            "consistency": 0.7506983225023997,
+            "pace_limit": 0.9200776798588371
+          },
+          "best_metrics": {
+            "mean_delta_pct": 4.1,
+            "target_delta_pct": 7.0,
+            "circuits_in_band": 4,
+            "total_circuits": 13,
+            "mean_band_error": 1.6427,
+            "disq_rate": 0.3558,
+            "spins": 37,
+            "stalls": 0,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 3.66,
+              "classic/stock_tri_oval_speedway": 4.15,
+              "classic/gt_ridge_ring": 2.95,
+              "classic/kart_pine_grove": 5.11,
+              "kart/lonato": 2.78,
+              "kart/genk": 2.8,
+              "kart/whilton_mill": 4.11,
+              "autocross/maggiora_ax": 5.13,
+              "autocross/nova_paka_ax": 3.67,
+              "autocross/st_junien_ax": 5.69,
+              "rally/holjes_rx": 5.39,
+              "rally/mettet_rx": 3.75,
+              "rally/montalegre_rx": 4.15
+            }
+          },
+          "mean_score": -7.046431032282906,
+          "elapsed_s": 180.96763202900183
+        },
+        {
+          "generation": 4,
+          "best_score": -5.243121839709669,
+          "best_params": {
+            "brake_padding": 0.16430353861824532,
+            "composure": 0.5841335971457691,
+            "consistency": 0.7410381559053866,
+            "pace_limit": 0.923443899832161
+          },
+          "best_metrics": {
+            "mean_delta_pct": 4.44,
+            "target_delta_pct": 7.0,
+            "circuits_in_band": 6,
+            "total_circuits": 13,
+            "mean_band_error": 3.6837,
+            "disq_rate": 0.4519,
+            "spins": 45,
+            "stalls": 2,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 5.6,
+              "classic/stock_tri_oval_speedway": 6.66,
+              "classic/gt_ridge_ring": 8.92,
+              "classic/kart_pine_grove": 6.02,
+              "kart/lonato": 2.57,
+              "kart/genk": 2.09,
+              "kart/whilton_mill": 4.38,
+              "autocross/maggiora_ax": 2.69,
+              "autocross/nova_paka_ax": 1.79,
+              "autocross/st_junien_ax": 5.05,
+              "rally/holjes_rx": 6.85,
+              "rally/mettet_rx": 4.2,
+              "rally/montalegre_rx": 0.9
+            }
+          },
+          "mean_score": -6.654094572680691,
+          "elapsed_s": 225.11566836899146
+        },
+        {
+          "generation": 5,
+          "best_score": -8.19882935026588,
+          "best_params": {
+            "brake_padding": 0.1600993086696968,
+            "composure": 0.5863908350016379,
+            "consistency": 0.731058224284705,
+            "pace_limit": 0.9268577329155372
+          },
+          "best_metrics": {
+            "mean_delta_pct": 3.31,
+            "target_delta_pct": 7.0,
+            "circuits_in_band": 2,
+            "total_circuits": 13,
+            "mean_band_error": 6.0496,
+            "disq_rate": 0.3942,
+            "spins": 41,
+            "stalls": 1,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 5.11,
+              "classic/stock_tri_oval_speedway": 4.15,
+              "classic/gt_ridge_ring": 3.06,
+              "classic/kart_pine_grove": 7.81,
+              "kart/lonato": 4.44,
+              "kart/genk": 2.58,
+              "kart/whilton_mill": 1.74,
+              "autocross/maggiora_ax": 3.31,
+              "autocross/nova_paka_ax": 2.97,
+              "autocross/st_junien_ax": 4.2,
+              "rally/holjes_rx": 3.36,
+              "rally/mettet_rx": -0.12,
+              "rally/montalegre_rx": 0.44
+            }
+          },
+          "mean_score": -10.984445833635892,
+          "elapsed_s": 269.4308120529895
+        },
+        {
+          "generation": 6,
+          "best_score": -3.5112234488158007,
+          "best_params": {
+            "brake_padding": 0.15366140742126802,
+            "composure": 0.6014471229866352,
+            "consistency": 0.742862211497814,
+            "pace_limit": 0.9170134134933394
+          },
+          "best_metrics": {
+            "mean_delta_pct": 4.23,
+            "target_delta_pct": 7.0,
+            "circuits_in_band": 1,
+            "total_circuits": 13,
+            "mean_band_error": 2.1299,
+            "disq_rate": 0.3077,
+            "spins": 31,
+            "stalls": 1,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 10.09,
+              "classic/stock_tri_oval_speedway": 3.11,
+              "classic/gt_ridge_ring": 4.09,
+              "classic/kart_pine_grove": 3.97,
+              "kart/lonato": 2.7,
+              "kart/genk": 3.12,
+              "kart/whilton_mill": 4.32,
+              "autocross/maggiora_ax": 2.98,
+              "autocross/nova_paka_ax": 3.11,
+              "autocross/st_junien_ax": 4.81,
+              "rally/holjes_rx": 4.45,
+              "rally/mettet_rx": 3.06,
+              "rally/montalegre_rx": 5.21
+            }
+          },
+          "mean_score": -7.423256803157798,
+          "elapsed_s": 313.23563005699543
+        },
+        {
+          "generation": 7,
+          "best_score": -4.101881709873361,
+          "best_params": {
+            "brake_padding": 0.18571097189115682,
+            "composure": 0.5578178631985597,
+            "consistency": 0.7358446082585048,
+            "pace_limit": 0.9131134936974304
+          },
+          "best_metrics": {
+            "mean_delta_pct": 4.09,
+            "target_delta_pct": 7.0,
+            "circuits_in_band": 2,
+            "total_circuits": 13,
+            "mean_band_error": 2.506,
+            "disq_rate": 0.375,
+            "spins": 39,
+            "stalls": 1,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 5.8,
+              "classic/stock_tri_oval_speedway": 3.91,
+              "classic/gt_ridge_ring": 8.65,
+              "classic/kart_pine_grove": 3.11,
+              "kart/lonato": 2.57,
+              "kart/genk": 4.28,
+              "kart/whilton_mill": 4.67,
+              "autocross/maggiora_ax": 3.39,
+              "autocross/nova_paka_ax": 3.15,
+              "autocross/st_junien_ax": 4.22,
+              "rally/holjes_rx": 4.77,
+              "rally/mettet_rx": 1.89,
+              "rally/montalegre_rx": 2.78
+            }
+          },
+          "mean_score": -7.975291769510615,
+          "elapsed_s": 358.7958382569923
+        },
+        {
+          "generation": 8,
+          "best_score": -3.5616113036742827,
+          "best_params": {
+            "brake_padding": 0.14864110586945978,
+            "composure": 0.5889906640074415,
+            "consistency": 0.7340532199797292,
+            "pace_limit": 0.8985503346997585
+          },
+          "best_metrics": {
+            "mean_delta_pct": 4.35,
+            "target_delta_pct": 7.0,
+            "circuits_in_band": 4,
+            "total_circuits": 13,
+            "mean_band_error": 2.2652,
+            "disq_rate": 0.2981,
+            "spins": 31,
+            "stalls": 0,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 5.47,
+              "classic/stock_tri_oval_speedway": 7.81,
+              "classic/gt_ridge_ring": 4.8,
+              "classic/kart_pine_grove": 3.4,
+              "kart/lonato": 3.8,
+              "kart/genk": 2.18,
+              "kart/whilton_mill": 3.86,
+              "autocross/maggiora_ax": 4.23,
+              "autocross/nova_paka_ax": 4.22,
+              "autocross/st_junien_ax": 5.63,
+              "rally/holjes_rx": 1.13,
+              "rally/mettet_rx": 5.23,
+              "rally/montalegre_rx": 4.83
+            }
+          },
+          "mean_score": -6.405492994340446,
+          "elapsed_s": 404.77879511199717
+        },
+        {
+          "generation": 9,
+          "best_score": -3.8806680399294913,
+          "best_params": {
+            "brake_padding": 0.14627884522241247,
+            "composure": 0.5531332723447273,
+            "consistency": 0.7222048936260724,
+            "pace_limit": 0.8765516623748253
+          },
+          "best_metrics": {
+            "mean_delta_pct": 5.05,
+            "target_delta_pct": 7.0,
+            "circuits_in_band": 8,
+            "total_circuits": 13,
+            "mean_band_error": 2.7317,
+            "disq_rate": 0.3846,
+            "spins": 40,
+            "stalls": 0,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 7.93,
+              "classic/stock_tri_oval_speedway": 8.06,
+              "classic/gt_ridge_ring": 6.7,
+              "classic/kart_pine_grove": 5.28,
+              "kart/lonato": 4.73,
+              "kart/genk": 5.01,
+              "kart/whilton_mill": 6.04,
+              "autocross/maggiora_ax": 5.7,
+              "autocross/nova_paka_ax": 4.01,
+              "autocross/st_junien_ax": 5.48,
+              "rally/holjes_rx": -0.37,
+              "rally/mettet_rx": 4.38,
+              "rally/montalegre_rx": 2.71
+            }
+          },
+          "mean_score": -8.067568213928787,
+          "elapsed_s": 449.33767865400296
+        },
+        {
+          "generation": 10,
+          "best_score": -3.38370306966089,
+          "best_params": {
+            "brake_padding": 0.18581230154430506,
+            "composure": 0.5705408154335198,
+            "consistency": 0.7446476707903678,
+            "pace_limit": 0.8863244913708449
+          },
+          "best_metrics": {
+            "mean_delta_pct": 4.57,
+            "target_delta_pct": 7.0,
+            "circuits_in_band": 3,
+            "total_circuits": 13,
+            "mean_band_error": 2.0802,
+            "disq_rate": 0.3558,
+            "spins": 37,
+            "stalls": 2,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 5.85,
+              "classic/stock_tri_oval_speedway": 6.05,
+              "classic/gt_ridge_ring": 8.72,
+              "classic/kart_pine_grove": 4.95,
+              "kart/lonato": 4.73,
+              "kart/genk": 3.71,
+              "kart/whilton_mill": 4.98,
+              "autocross/maggiora_ax": 4.33,
+              "autocross/nova_paka_ax": 3.39,
+              "autocross/st_junien_ax": 4.65,
+              "rally/holjes_rx": 2.74,
+              "rally/mettet_rx": 4.34,
+              "rally/montalegre_rx": 0.92
+            }
+          },
+          "mean_score": -6.367234054163326,
+          "elapsed_s": 493.99753218499245
+        },
+        {
+          "generation": 11,
+          "best_score": -4.083143467105466,
+          "best_params": {
+            "brake_padding": 0.17738202935010258,
+            "composure": 0.5289296331793409,
+            "consistency": 0.7386217704152545,
+            "pace_limit": 0.9117095757607903
+          },
+          "best_metrics": {
+            "mean_delta_pct": 4.45,
+            "target_delta_pct": 7.0,
+            "circuits_in_band": 3,
+            "total_circuits": 13,
+            "mean_band_error": 2.6253,
+            "disq_rate": 0.4038,
+            "spins": 41,
+            "stalls": 2,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 4.35,
+              "classic/stock_tri_oval_speedway": 3.63,
+              "classic/gt_ridge_ring": 10.47,
+              "classic/kart_pine_grove": 5.35,
+              "kart/lonato": 3.97,
+              "kart/genk": 3.28,
+              "kart/whilton_mill": 6.12,
+              "autocross/maggiora_ax": 4.02,
+              "autocross/nova_paka_ax": 2.99,
+              "autocross/st_junien_ax": 5.37,
+              "rally/holjes_rx": 1.03,
+              "rally/mettet_rx": 2.88,
+              "rally/montalegre_rx": 4.41
+            }
+          },
+          "mean_score": -6.875153335085706,
+          "elapsed_s": 538.6528615510033
+        }
+      ],
+      "final": [
+        {
+          "key": "3378442ee64a",
+          "params": {
+            "brake_padding": 0.12,
+            "composure": 0.6,
+            "consistency": 0.72,
+            "pace_limit": 0.9
+          },
+          "score": -4.472804759743285,
+          "metrics": {
+            "mean_delta_pct": 4.61,
+            "target_delta_pct": 7.0,
+            "circuits_in_band": 6,
+            "total_circuits": 13,
+            "mean_band_error": 3.2221,
+            "disq_rate": 0.3389,
+            "spins": 140,
+            "stalls": 4,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 8.06,
+              "classic/stock_tri_oval_speedway": 8.15,
+              "classic/gt_ridge_ring": 5.68,
+              "classic/kart_pine_grove": 5.54,
+              "kart/lonato": 4.45,
+              "kart/genk": 3.85,
+              "kart/whilton_mill": 5.2,
+              "autocross/maggiora_ax": 4.83,
+              "autocross/nova_paka_ax": 2.92,
+              "autocross/st_junien_ax": 5.73,
+              "rally/holjes_rx": -0.03,
+              "rally/mettet_rx": 3.23,
+              "rally/montalegre_rx": 2.27
+            }
+          }
+        },
+        {
+          "key": "d8178d72b45e",
+          "params": {
+            "brake_padding": 0.15366140742126802,
+            "composure": 0.6014471229866352,
+            "consistency": 0.742862211497814,
+            "pace_limit": 0.9170134134933394
+          },
+          "score": -5.086090469367612,
+          "metrics": {
+            "mean_delta_pct": 3.66,
+            "target_delta_pct": 7.0,
+            "circuits_in_band": 3,
+            "total_circuits": 13,
+            "mean_band_error": 3.2854,
+            "disq_rate": 0.3413,
+            "spins": 140,
+            "stalls": 2,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 5.06,
+              "classic/stock_tri_oval_speedway": 5.04,
+              "classic/gt_ridge_ring": 5.46,
+              "classic/kart_pine_grove": 3.39,
+              "kart/lonato": 2.48,
+              "kart/genk": 3.07,
+              "kart/whilton_mill": 3.96,
+              "autocross/maggiora_ax": 4.43,
+              "autocross/nova_paka_ax": 2.39,
+              "autocross/st_junien_ax": 4.46,
+              "rally/holjes_rx": 2.94,
+              "rally/mettet_rx": 3.86,
+              "rally/montalegre_rx": 1.01
+            }
+          }
+        },
+        {
+          "key": "550be96aa42a",
+          "params": {
+            "brake_padding": 0.14864110586945978,
+            "composure": 0.5889906640074415,
+            "consistency": 0.7340532199797292,
+            "pace_limit": 0.8985503346997585
+          },
+          "score": -5.6422881944449506,
+          "metrics": {
+            "mean_delta_pct": 4.47,
+            "target_delta_pct": 7.0,
+            "circuits_in_band": 6,
+            "total_circuits": 13,
+            "mean_band_error": 4.2217,
+            "disq_rate": 0.3894,
+            "spins": 158,
+            "stalls": 5,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 7.65,
+              "classic/stock_tri_oval_speedway": 6.67,
+              "classic/gt_ridge_ring": 5.63,
+              "classic/kart_pine_grove": 4.87,
+              "kart/lonato": 3.7,
+              "kart/genk": 3.59,
+              "kart/whilton_mill": 6.51,
+              "autocross/maggiora_ax": 5.15,
+              "autocross/nova_paka_ax": 2.97,
+              "autocross/st_junien_ax": 5.86,
+              "rally/holjes_rx": -1.46,
+              "rally/mettet_rx": 2.91,
+              "rally/montalegre_rx": 4.0
+            }
+          }
+        },
+        {
+          "key": "d2d123ffa5c1",
+          "params": {
+            "brake_padding": 0.18581230154430506,
+            "composure": 0.5705408154335198,
+            "consistency": 0.7446476707903678,
+            "pace_limit": 0.8863244913708449
+          },
+          "score": -6.337170071342711,
+          "metrics": {
+            "mean_delta_pct": 4.39,
+            "target_delta_pct": 7.0,
+            "circuits_in_band": 6,
+            "total_circuits": 13,
+            "mean_band_error": 4.8498,
+            "disq_rate": 0.4038,
+            "spins": 161,
+            "stalls": 9,
+            "dnfs": 1,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 6.65,
+              "classic/stock_tri_oval_speedway": 7.08,
+              "classic/gt_ridge_ring": 7.13,
+              "classic/kart_pine_grove": 5.18,
+              "kart/lonato": 4.66,
+              "kart/genk": 3.83,
+              "kart/whilton_mill": 5.42,
+              "autocross/maggiora_ax": 4.61,
+              "autocross/nova_paka_ax": 2.89,
+              "autocross/st_junien_ax": 5.53,
+              "rally/holjes_rx": -1.28,
+              "rally/mettet_rx": 4.57,
+              "rally/montalegre_rx": 0.83
+            }
+          }
+        },
+        {
+          "key": "a315b83dba2c",
+          "params": {
+            "brake_padding": 0.1902876640601442,
+            "composure": 0.5912482913067699,
+            "consistency": 0.7506983225023997,
+            "pace_limit": 0.9200776798588371
+          },
+          "score": -6.657322256959969,
+          "metrics": {
+            "mean_delta_pct": 3.19,
+            "target_delta_pct": 7.0,
+            "circuits_in_band": 1,
+            "total_circuits": 13,
+            "mean_band_error": 4.4424,
+            "disq_rate": 0.3822,
+            "spins": 157,
+            "stalls": 4,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 5.04,
+              "classic/stock_tri_oval_speedway": 4.37,
+              "classic/gt_ridge_ring": 3.43,
+              "classic/kart_pine_grove": 3.9,
+              "kart/lonato": 2.99,
+              "kart/genk": 2.46,
+              "kart/whilton_mill": 3.7,
+              "autocross/maggiora_ax": 3.42,
+              "autocross/nova_paka_ax": 3.17,
+              "autocross/st_junien_ax": 4.03,
+              "rally/holjes_rx": 1.08,
+              "rally/mettet_rx": 2.58,
+              "rally/montalegre_rx": 1.33
+            }
+          }
+        }
+      ]
+    },
+    "tier_1": {
+      "tier": 1,
+      "name": "Rookie",
+      "target_centre": 0.13,
+      "target_half_width": 0.03,
+      "best": {
+        "key": "49245b67303c",
+        "params": {
+          "brake_padding": 0.16456866777454088,
+          "composure": 0.4081582261886392,
+          "consistency": 0.4612725528481515,
+          "pace_limit": 0.8931860159193032
+        },
+        "score": -6.422481169085576,
+        "metrics": {
+          "mean_delta_pct": 9.11,
+          "target_delta_pct": 13.0,
+          "circuits_in_band": 3,
+          "total_circuits": 13,
+          "mean_band_error": 3.9413,
+          "disq_rate": 0.4832,
+          "spins": 192,
+          "stalls": 13,
+          "dnfs": 0,
+          "circuit_deltas_pct": {
+            "classic/gt_coastal_grand_prix": 10.98,
+            "classic/stock_tri_oval_speedway": 9.65,
+            "classic/gt_ridge_ring": 14.11,
+            "classic/kart_pine_grove": 7.28,
+            "kart/lonato": 8.06,
+            "kart/genk": 7.24,
+            "kart/whilton_mill": 9.87,
+            "autocross/maggiora_ax": 9.01,
+            "autocross/nova_paka_ax": 7.14,
+            "autocross/st_junien_ax": 9.61,
+            "rally/holjes_rx": 5.22,
+            "rally/mettet_rx": 9.77,
+            "rally/montalegre_rx": 10.49
+          }
+        }
+      },
+      "baseline": {
+        "key": "f0126ac1f63e",
+        "params": {
+          "brake_padding": 0.2,
+          "composure": 0.48,
+          "consistency": 0.6,
+          "pace_limit": 0.82
+        },
+        "score": -20.423510123259117,
+        "metrics": {
+          "mean_delta_pct": 8.88,
+          "target_delta_pct": 13.0,
+          "circuits_in_band": 6,
+          "total_circuits": 13,
+          "mean_band_error": 18.0147,
+          "disq_rate": 0.3558,
+          "spins": 145,
+          "stalls": 3,
+          "dnfs": 0,
+          "circuit_deltas_pct": {
+            "classic/gt_coastal_grand_prix": 14.56,
+            "classic/stock_tri_oval_speedway": 14.47,
+            "classic/gt_ridge_ring": 12.22,
+            "classic/kart_pine_grove": 10.49,
+            "kart/lonato": 9.5,
+            "kart/genk": 9.72,
+            "kart/whilton_mill": 11.64,
+            "autocross/maggiora_ax": 10.35,
+            "autocross/nova_paka_ax": 6.04,
+            "autocross/st_junien_ax": 9.64,
+            "rally/holjes_rx": -0.65,
+            "rally/mettet_rx": 7.32,
+            "rally/montalegre_rx": 0.13
+          }
+        }
+      },
+      "history": [
+        {
+          "generation": 0,
+          "best_score": -15.4259715350199,
+          "best_params": {
+            "brake_padding": 0.1915772038527629,
+            "composure": 0.4661131477444769,
+            "consistency": 0.6086762182085536,
+            "pace_limit": 0.8084528321154625
+          },
+          "best_metrics": {
+            "mean_delta_pct": 10.09,
+            "target_delta_pct": 13.0,
+            "circuits_in_band": 4,
+            "total_circuits": 13,
+            "mean_band_error": 13.7142,
+            "disq_rate": 0.4327,
+            "spins": 43,
+            "stalls": 3,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 14.97,
+              "classic/stock_tri_oval_speedway": 17.16,
+              "classic/gt_ridge_ring": 14.76,
+              "classic/kart_pine_grove": 15.2,
+              "kart/lonato": 9.96,
+              "kart/genk": 8.79,
+              "kart/whilton_mill": 12.87,
+              "autocross/maggiora_ax": 9.78,
+              "autocross/nova_paka_ax": 7.43,
+              "autocross/st_junien_ax": 9.72,
+              "rally/holjes_rx": 3.45,
+              "rally/mettet_rx": 8.18,
+              "rally/montalegre_rx": -1.07
+            }
+          },
+          "mean_score": -21.760669958996,
+          "elapsed_s": 49.4413118520024
+        },
+        {
+          "generation": 1,
+          "best_score": -10.169071417694454,
+          "best_params": {
+            "brake_padding": 0.16031644590676025,
+            "composure": 0.4873140630322295,
+            "consistency": 0.6038938069545382,
+            "pace_limit": 0.7810401310562819
+          },
+          "best_metrics": {
+            "mean_delta_pct": 11.36,
+            "target_delta_pct": 13.0,
+            "circuits_in_band": 7,
+            "total_circuits": 13,
+            "mean_band_error": 9.2257,
+            "disq_rate": 0.3365,
+            "spins": 34,
+            "stalls": 3,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 17.88,
+              "classic/stock_tri_oval_speedway": 15.16,
+              "classic/gt_ridge_ring": 14.63,
+              "classic/kart_pine_grove": 13.86,
+              "kart/lonato": 14.41,
+              "kart/genk": 10.86,
+              "kart/whilton_mill": 16.94,
+              "autocross/maggiora_ax": 11.31,
+              "autocross/nova_paka_ax": 7.55,
+              "autocross/st_junien_ax": 11.78,
+              "rally/holjes_rx": 1.55,
+              "rally/mettet_rx": 7.19,
+              "rally/montalegre_rx": 4.5
+            }
+          },
+          "mean_score": -20.421859342833027,
+          "elapsed_s": 94.10666840999329
+        },
+        {
+          "generation": 2,
+          "best_score": -16.767071487568163,
+          "best_params": {
+            "brake_padding": 0.17912260106364308,
+            "composure": 0.47609206731659737,
+            "consistency": 0.5896296235152658,
+            "pace_limit": 0.8059158918526464
+          },
+          "best_metrics": {
+            "mean_delta_pct": 9.74,
+            "target_delta_pct": 13.0,
+            "circuits_in_band": 9,
+            "total_circuits": 13,
+            "mean_band_error": 14.9355,
+            "disq_rate": 0.3846,
+            "spins": 40,
+            "stalls": 0,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 13.69,
+              "classic/stock_tri_oval_speedway": 13.55,
+              "classic/gt_ridge_ring": 12.75,
+              "classic/kart_pine_grove": 12.21,
+              "kart/lonato": 10.42,
+              "kart/genk": 11.41,
+              "kart/whilton_mill": 14.18,
+              "autocross/maggiora_ax": 13.09,
+              "autocross/nova_paka_ax": 6.61,
+              "autocross/st_junien_ax": 10.08,
+              "rally/holjes_rx": 0.44,
+              "rally/mettet_rx": 7.39,
+              "rally/montalegre_rx": 0.81
+            }
+          },
+          "mean_score": -19.888482448452073,
+          "elapsed_s": 139.10463508700195
+        },
+        {
+          "generation": 3,
+          "best_score": -16.875256088430437,
+          "best_params": {
+            "brake_padding": 0.18318456157438323,
+            "composure": 0.4829856018203884,
+            "consistency": 0.5829401612773957,
+            "pace_limit": 0.8038085639243197
+          },
+          "best_metrics": {
+            "mean_delta_pct": 10.48,
+            "target_delta_pct": 13.0,
+            "circuits_in_band": 6,
+            "total_circuits": 13,
+            "mean_band_error": 15.3343,
+            "disq_rate": 0.4519,
+            "spins": 47,
+            "stalls": 2,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 17.93,
+              "classic/stock_tri_oval_speedway": 18.07,
+              "classic/gt_ridge_ring": 12.96,
+              "classic/kart_pine_grove": 12.21,
+              "kart/lonato": 12.73,
+              "kart/genk": 10.72,
+              "kart/whilton_mill": 14.03,
+              "autocross/maggiora_ax": 11.95,
+              "autocross/nova_paka_ax": 7.81,
+              "autocross/st_junien_ax": 8.69,
+              "rally/holjes_rx": 0.47,
+              "rally/mettet_rx": 8.13,
+              "rally/montalegre_rx": 0.49
+            }
+          },
+          "mean_score": -20.421545524165253,
+          "elapsed_s": 183.8510472199996
+        },
+        {
+          "generation": 4,
+          "best_score": -14.050682519055238,
+          "best_params": {
+            "brake_padding": 0.16655732530997555,
+            "composure": 0.46199594927956583,
+            "consistency": 0.5727939390075537,
+            "pace_limit": 0.8295542331042087
+          },
+          "best_metrics": {
+            "mean_delta_pct": 8.47,
+            "target_delta_pct": 13.0,
+            "circuits_in_band": 5,
+            "total_circuits": 13,
+            "mean_band_error": 11.2453,
+            "disq_rate": 0.375,
+            "spins": 37,
+            "stalls": 2,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 11.52,
+              "classic/stock_tri_oval_speedway": 11.69,
+              "classic/gt_ridge_ring": 10.58,
+              "classic/kart_pine_grove": 11.17,
+              "kart/lonato": 7.61,
+              "kart/genk": 8.87,
+              "kart/whilton_mill": 11.78,
+              "autocross/maggiora_ax": 7.52,
+              "autocross/nova_paka_ax": 6.97,
+              "autocross/st_junien_ax": 8.48,
+              "rally/holjes_rx": 5.99,
+              "rally/mettet_rx": 7.95,
+              "rally/montalegre_rx": -0.06
+            }
+          },
+          "mean_score": -17.870542268309286,
+          "elapsed_s": 228.7460174000007
+        },
+        {
+          "generation": 5,
+          "best_score": -10.257502460491759,
+          "best_params": {
+            "brake_padding": 0.1572146944026283,
+            "composure": 0.4711229284622502,
+            "consistency": 0.5129902748374521,
+            "pace_limit": 0.8205280102016203
+          },
+          "best_metrics": {
+            "mean_delta_pct": 10.61,
+            "target_delta_pct": 13.0,
+            "circuits_in_band": 7,
+            "total_circuits": 13,
+            "mean_band_error": 8.8598,
+            "disq_rate": 0.4135,
+            "spins": 42,
+            "stalls": 2,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 13.01,
+              "classic/stock_tri_oval_speedway": 15.06,
+              "classic/gt_ridge_ring": 16.79,
+              "classic/kart_pine_grove": 15.58,
+              "kart/lonato": 12.64,
+              "kart/genk": 8.37,
+              "kart/whilton_mill": 13.51,
+              "autocross/maggiora_ax": 11.88,
+              "autocross/nova_paka_ax": 6.2,
+              "autocross/st_junien_ax": 11.97,
+              "rally/holjes_rx": 4.74,
+              "rally/mettet_rx": 4.34,
+              "rally/montalegre_rx": 3.85
+            }
+          },
+          "mean_score": -16.029169507066168,
+          "elapsed_s": 273.9564350980072
+        },
+        {
+          "generation": 6,
+          "best_score": -10.449384069811735,
+          "best_params": {
+            "brake_padding": 0.19675118837087613,
+            "composure": 0.46505073347687786,
+            "consistency": 0.5408684630001535,
+            "pace_limit": 0.8200606880245866
+          },
+          "best_metrics": {
+            "mean_delta_pct": 9.61,
+            "target_delta_pct": 13.0,
+            "circuits_in_band": 5,
+            "total_circuits": 13,
+            "mean_band_error": 8.5671,
+            "disq_rate": 0.3654,
+            "spins": 38,
+            "stalls": 1,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 12.55,
+              "classic/stock_tri_oval_speedway": 12.67,
+              "classic/gt_ridge_ring": 15.84,
+              "classic/kart_pine_grove": 11.08,
+              "kart/lonato": 9.37,
+              "kart/genk": 8.74,
+              "kart/whilton_mill": 12.7,
+              "autocross/maggiora_ax": 9.88,
+              "autocross/nova_paka_ax": 9.14,
+              "autocross/st_junien_ax": 9.76,
+              "rally/holjes_rx": 1.33,
+              "rally/mettet_rx": 5.65,
+              "rally/montalegre_rx": 6.2
+            }
+          },
+          "mean_score": -15.1254981821911,
+          "elapsed_s": 318.969543151994
+        },
+        {
+          "generation": 7,
+          "best_score": -7.981269789900343,
+          "best_params": {
+            "brake_padding": 0.16456866777454088,
+            "composure": 0.4081582261886392,
+            "consistency": 0.4612725528481515,
+            "pace_limit": 0.8931860159193032
+          },
+          "best_metrics": {
+            "mean_delta_pct": 9.04,
+            "target_delta_pct": 13.0,
+            "circuits_in_band": 4,
+            "total_circuits": 13,
+            "mean_band_error": 5.376,
+            "disq_rate": 0.5192,
+            "spins": 53,
+            "stalls": 1,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 12.51,
+              "classic/stock_tri_oval_speedway": 7.15,
+              "classic/gt_ridge_ring": 9.44,
+              "classic/kart_pine_grove": 10.02,
+              "kart/lonato": 8.22,
+              "kart/genk": 5.69,
+              "kart/whilton_mill": 12.01,
+              "autocross/maggiora_ax": 7.84,
+              "autocross/nova_paka_ax": 8.6,
+              "autocross/st_junien_ax": 9.96,
+              "rally/holjes_rx": 9.8,
+              "rally/mettet_rx": 12.05,
+              "rally/montalegre_rx": 4.25
+            }
+          },
+          "mean_score": -14.725677375316579,
+          "elapsed_s": 365.3614954280056
+        },
+        {
+          "generation": 8,
+          "best_score": -9.361271522009108,
+          "best_params": {
+            "brake_padding": 0.19042410589982883,
+            "composure": 0.43853555981449577,
+            "consistency": 0.4929525582364009,
+            "pace_limit": 0.8879617628027567
+          },
+          "best_metrics": {
+            "mean_delta_pct": 9.08,
+            "target_delta_pct": 13.0,
+            "circuits_in_band": 4,
+            "total_circuits": 13,
+            "mean_band_error": 6.9202,
+            "disq_rate": 0.4519,
+            "spins": 45,
+            "stalls": 4,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 11.57,
+              "classic/stock_tri_oval_speedway": 9.78,
+              "classic/gt_ridge_ring": 13.98,
+              "classic/kart_pine_grove": 12.01,
+              "kart/lonato": 8.99,
+              "kart/genk": 7.75,
+              "kart/whilton_mill": 8.24,
+              "autocross/maggiora_ax": 10.76,
+              "autocross/nova_paka_ax": 7.98,
+              "autocross/st_junien_ax": 9.48,
+              "rally/holjes_rx": 2.3,
+              "rally/mettet_rx": 9.26,
+              "rally/montalegre_rx": 5.93
+            }
+          },
+          "mean_score": -22.24253473509152,
+          "elapsed_s": 411.1769667280023
+        },
+        {
+          "generation": 9,
+          "best_score": -5.149581481128456,
+          "best_params": {
+            "brake_padding": 0.14153025699024538,
+            "composure": 0.4357945637012439,
+            "consistency": 0.4606832941509703,
+            "pace_limit": 0.8192511382351797
+          },
+          "best_metrics": {
+            "mean_delta_pct": 12.04,
+            "target_delta_pct": 13.0,
+            "circuits_in_band": 7,
+            "total_circuits": 13,
+            "mean_band_error": 4.1155,
+            "disq_rate": 0.4712,
+            "spins": 48,
+            "stalls": 4,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 17.04,
+              "classic/stock_tri_oval_speedway": 14.49,
+              "classic/gt_ridge_ring": 13.65,
+              "classic/kart_pine_grove": 16.46,
+              "kart/lonato": 12.34,
+              "kart/genk": 10.89,
+              "kart/whilton_mill": 15.62,
+              "autocross/maggiora_ax": 14.62,
+              "autocross/nova_paka_ax": 8.98,
+              "autocross/st_junien_ax": 12.21,
+              "rally/holjes_rx": 3.62,
+              "rally/mettet_rx": 9.86,
+              "rally/montalegre_rx": 6.77
+            }
+          },
+          "mean_score": -13.99171088933873,
+          "elapsed_s": 456.4555296920007
+        },
+        {
+          "generation": 10,
+          "best_score": -7.393235502693171,
+          "best_params": {
+            "brake_padding": 0.16562982257192918,
+            "composure": 0.40121639050906455,
+            "consistency": 0.46822852474959054,
+            "pace_limit": 0.8218837182596999
+          },
+          "best_metrics": {
+            "mean_delta_pct": 11.53,
+            "target_delta_pct": 13.0,
+            "circuits_in_band": 9,
+            "total_circuits": 13,
+            "mean_band_error": 6.2554,
+            "disq_rate": 0.4615,
+            "spins": 47,
+            "stalls": 3,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 14.43,
+              "classic/stock_tri_oval_speedway": 14.17,
+              "classic/gt_ridge_ring": 16.54,
+              "classic/kart_pine_grove": 15.22,
+              "kart/lonato": 12.16,
+              "kart/genk": 10.4,
+              "kart/whilton_mill": 12.97,
+              "autocross/maggiora_ax": 13.02,
+              "autocross/nova_paka_ax": 9.05,
+              "autocross/st_junien_ax": 11.58,
+              "rally/holjes_rx": 3.92,
+              "rally/mettet_rx": 13.07,
+              "rally/montalegre_rx": 3.44
+            }
+          },
+          "mean_score": -12.615268346169673,
+          "elapsed_s": 502.29488005299936
+        },
+        {
+          "generation": 11,
+          "best_score": -6.039398719437751,
+          "best_params": {
+            "brake_padding": 0.15409880472496795,
+            "composure": 0.4060649737106574,
+            "consistency": 0.49605114115620486,
+            "pace_limit": 0.8221421168579667
+          },
+          "best_metrics": {
+            "mean_delta_pct": 11.93,
+            "target_delta_pct": 13.0,
+            "circuits_in_band": 8,
+            "total_circuits": 13,
+            "mean_band_error": 5.0014,
+            "disq_rate": 0.4615,
+            "spins": 48,
+            "stalls": 0,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 14.17,
+              "classic/stock_tri_oval_speedway": 18.17,
+              "classic/gt_ridge_ring": 14.17,
+              "classic/kart_pine_grove": 16.52,
+              "kart/lonato": 12.99,
+              "kart/genk": 12.99,
+              "kart/whilton_mill": 13.42,
+              "autocross/maggiora_ax": 12.83,
+              "autocross/nova_paka_ax": 7.67,
+              "autocross/st_junien_ax": 11.42,
+              "rally/holjes_rx": 4.33,
+              "rally/mettet_rx": 11.12,
+              "rally/montalegre_rx": 5.27
+            }
+          },
+          "mean_score": -13.526558151827405,
+          "elapsed_s": 548.4857428490068
+        }
+      ],
+      "final": [
+        {
+          "key": "49245b67303c",
+          "params": {
+            "brake_padding": 0.16456866777454088,
+            "composure": 0.4081582261886392,
+            "consistency": 0.4612725528481515,
+            "pace_limit": 0.8931860159193032
+          },
+          "score": -6.422481169085576,
+          "metrics": {
+            "mean_delta_pct": 9.11,
+            "target_delta_pct": 13.0,
+            "circuits_in_band": 3,
+            "total_circuits": 13,
+            "mean_band_error": 3.9413,
+            "disq_rate": 0.4832,
+            "spins": 192,
+            "stalls": 13,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 10.98,
+              "classic/stock_tri_oval_speedway": 9.65,
+              "classic/gt_ridge_ring": 14.11,
+              "classic/kart_pine_grove": 7.28,
+              "kart/lonato": 8.06,
+              "kart/genk": 7.24,
+              "kart/whilton_mill": 9.87,
+              "autocross/maggiora_ax": 9.01,
+              "autocross/nova_paka_ax": 7.14,
+              "autocross/st_junien_ax": 9.61,
+              "rally/holjes_rx": 5.22,
+              "rally/mettet_rx": 9.77,
+              "rally/montalegre_rx": 10.49
+            }
+          }
+        },
+        {
+          "key": "f67480970b95",
+          "params": {
+            "brake_padding": 0.16562982257192918,
+            "composure": 0.40121639050906455,
+            "consistency": 0.46822852474959054,
+            "pace_limit": 0.8218837182596999
+          },
+          "score": -9.882476064175016,
+          "metrics": {
+            "mean_delta_pct": 11.4,
+            "target_delta_pct": 13.0,
+            "circuits_in_band": 9,
+            "total_circuits": 13,
+            "mean_band_error": 8.6806,
+            "disq_rate": 0.4736,
+            "spins": 190,
+            "stalls": 12,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 15.44,
+              "classic/stock_tri_oval_speedway": 14.7,
+              "classic/gt_ridge_ring": 18.12,
+              "classic/kart_pine_grove": 13.86,
+              "kart/lonato": 11.15,
+              "kart/genk": 11.31,
+              "kart/whilton_mill": 14.56,
+              "autocross/maggiora_ax": 12.06,
+              "autocross/nova_paka_ax": 8.81,
+              "autocross/st_junien_ax": 11.36,
+              "rally/holjes_rx": 2.91,
+              "rally/mettet_rx": 11.5,
+              "rally/montalegre_rx": 2.47
+            }
+          }
+        },
+        {
+          "key": "9b219066b3f8",
+          "params": {
+            "brake_padding": 0.14153025699024538,
+            "composure": 0.4357945637012439,
+            "consistency": 0.4606832941509703,
+            "pace_limit": 0.8192511382351797
+          },
+          "score": -10.06095429356916,
+          "metrics": {
+            "mean_delta_pct": 10.88,
+            "target_delta_pct": 13.0,
+            "circuits_in_band": 10,
+            "total_circuits": 13,
+            "mean_band_error": 8.8479,
+            "disq_rate": 0.3822,
+            "spins": 155,
+            "stalls": 5,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 14.06,
+              "classic/stock_tri_oval_speedway": 13.56,
+              "classic/gt_ridge_ring": 12.14,
+              "classic/kart_pine_grove": 14.26,
+              "kart/lonato": 12.53,
+              "kart/genk": 10.51,
+              "kart/whilton_mill": 14.04,
+              "autocross/maggiora_ax": 12.28,
+              "autocross/nova_paka_ax": 9.07,
+              "autocross/st_junien_ax": 11.85,
+              "rally/holjes_rx": 0.04,
+              "rally/mettet_rx": 10.97,
+              "rally/montalegre_rx": 6.13
+            }
+          }
+        },
+        {
+          "key": "ccaf62aa4ee3",
+          "params": {
+            "brake_padding": 0.15409880472496795,
+            "composure": 0.4060649737106574,
+            "consistency": 0.49605114115620486,
+            "pace_limit": 0.8221421168579667
+          },
+          "score": -12.286237446131755,
+          "metrics": {
+            "mean_delta_pct": 10.86,
+            "target_delta_pct": 13.0,
+            "circuits_in_band": 8,
+            "total_circuits": 13,
+            "mean_band_error": 10.9716,
+            "disq_rate": 0.4279,
+            "spins": 173,
+            "stalls": 13,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 13.43,
+              "classic/stock_tri_oval_speedway": 14.03,
+              "classic/gt_ridge_ring": 17.82,
+              "classic/kart_pine_grove": 14.71,
+              "kart/lonato": 11.56,
+              "kart/genk": 9.81,
+              "kart/whilton_mill": 13.34,
+              "autocross/maggiora_ax": 11.48,
+              "autocross/nova_paka_ax": 8.9,
+              "autocross/st_junien_ax": 11.22,
+              "rally/holjes_rx": 1.43,
+              "rally/mettet_rx": 11.47,
+              "rally/montalegre_rx": 1.96
+            }
+          }
+        },
+        {
+          "key": "f0126ac1f63e",
+          "params": {
+            "brake_padding": 0.2,
+            "composure": 0.48,
+            "consistency": 0.6,
+            "pace_limit": 0.82
+          },
+          "score": -20.423510123259117,
+          "metrics": {
+            "mean_delta_pct": 8.88,
+            "target_delta_pct": 13.0,
+            "circuits_in_band": 6,
+            "total_circuits": 13,
+            "mean_band_error": 18.0147,
+            "disq_rate": 0.3558,
+            "spins": 145,
+            "stalls": 3,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": 14.56,
+              "classic/stock_tri_oval_speedway": 14.47,
+              "classic/gt_ridge_ring": 12.22,
+              "classic/kart_pine_grove": 10.49,
+              "kart/lonato": 9.5,
+              "kart/genk": 9.72,
+              "kart/whilton_mill": 11.64,
+              "autocross/maggiora_ax": 10.35,
+              "autocross/nova_paka_ax": 6.04,
+              "autocross/st_junien_ax": 9.64,
+              "rally/holjes_rx": -0.65,
+              "rally/mettet_rx": 7.32,
+              "rally/montalegre_rx": 0.13
+            }
+          }
+        }
+      ]
+    },
+    "tier_5": {
+      "tier": 5,
+      "name": "Legend",
+      "target_centre": -0.0225,
+      "target_half_width": 0.0075,
+      "best": {
+        "key": "ca2f6573e27b",
+        "params": {
+          "brake_padding": -0.04393827303474938,
+          "composure": 0.990629463643141,
+          "consistency": 0.9914694001647122,
+          "pace_limit": 1.0347741335012366
+        },
+        "score": -1.2013772250301584,
+        "metrics": {
+          "mean_delta_pct": -0.95,
+          "target_delta_pct": -2.25,
+          "circuits_in_band": 2,
+          "total_circuits": 13,
+          "mean_band_error": 0.6091,
+          "disq_rate": 0.2115,
+          "spins": 88,
+          "stalls": 0,
+          "dnfs": 0,
+          "circuit_deltas_pct": {
+            "classic/gt_coastal_grand_prix": -1.44,
+            "classic/stock_tri_oval_speedway": -1.41,
+            "classic/gt_ridge_ring": -1.54,
+            "classic/kart_pine_grove": -0.65,
+            "kart/lonato": -0.66,
+            "kart/genk": -0.03,
+            "kart/whilton_mill": -0.9,
+            "autocross/maggiora_ax": -0.53,
+            "autocross/nova_paka_ax": -0.85,
+            "autocross/st_junien_ax": -1.15,
+            "rally/holjes_rx": 0.06,
+            "rally/mettet_rx": -1.36,
+            "rally/montalegre_rx": -1.89
+          }
+        }
+      },
+      "baseline": {
+        "key": "ad39f33775f5",
+        "params": {
+          "brake_padding": -0.03,
+          "composure": 0.98,
+          "consistency": 0.99,
+          "pace_limit": 1.04
+        },
+        "score": -1.5700074673983817,
+        "metrics": {
+          "mean_delta_pct": -1.15,
+          "target_delta_pct": -2.25,
+          "circuits_in_band": 4,
+          "total_circuits": 13,
+          "mean_band_error": 1.0502,
+          "disq_rate": 0.1995,
+          "spins": 83,
+          "stalls": 0,
+          "dnfs": 0,
+          "circuit_deltas_pct": {
+            "classic/gt_coastal_grand_prix": -2.3,
+            "classic/stock_tri_oval_speedway": -1.86,
+            "classic/gt_ridge_ring": -2.17,
+            "classic/kart_pine_grove": -1.2,
+            "kart/lonato": -1.19,
+            "kart/genk": -0.76,
+            "kart/whilton_mill": -1.21,
+            "autocross/maggiora_ax": -1.18,
+            "autocross/nova_paka_ax": -0.63,
+            "autocross/st_junien_ax": -1.48,
+            "rally/holjes_rx": 1.96,
+            "rally/mettet_rx": -1.62,
+            "rally/montalegre_rx": -1.32
+          }
+        }
+      },
+      "history": [
+        {
+          "generation": 0,
+          "best_score": -1.0848399648062381,
+          "best_params": {
+            "brake_padding": -0.04113586818675164,
+            "composure": 0.9677940003422318,
+            "consistency": 0.986564336043673,
+            "pace_limit": 1.0328202004003089
+          },
+          "best_metrics": {
+            "mean_delta_pct": -0.99,
+            "target_delta_pct": -2.25,
+            "circuits_in_band": 0,
+            "total_circuits": 13,
+            "mean_band_error": 0.6577,
+            "disq_rate": 0.1346,
+            "spins": 14,
+            "stalls": 0,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": -0.22,
+              "classic/stock_tri_oval_speedway": -0.98,
+              "classic/gt_ridge_ring": -1.33,
+              "classic/kart_pine_grove": -0.92,
+              "kart/lonato": -0.58,
+              "kart/genk": -0.76,
+              "kart/whilton_mill": -1.22,
+              "autocross/maggiora_ax": -1.06,
+              "autocross/nova_paka_ax": -0.62,
+              "autocross/st_junien_ax": -1.38,
+              "rally/holjes_rx": 0.4,
+              "rally/mettet_rx": -3.18,
+              "rally/montalegre_rx": -1.06
+            }
+          },
+          "mean_score": -3.648487927223418,
+          "elapsed_s": 48.774854789997335
+        },
+        {
+          "generation": 1,
+          "best_score": -1.3390135473101834,
+          "best_params": {
+            "brake_padding": -0.016429552778140274,
+            "composure": 0.9539443171543663,
+            "consistency": 0.9972487773631658,
+            "pace_limit": 1.0218993958090237
+          },
+          "best_metrics": {
+            "mean_delta_pct": -0.99,
+            "target_delta_pct": -2.25,
+            "circuits_in_band": 2,
+            "total_circuits": 13,
+            "mean_band_error": 0.8156,
+            "disq_rate": 0.1827,
+            "spins": 19,
+            "stalls": 0,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": -0.76,
+              "classic/stock_tri_oval_speedway": -0.51,
+              "classic/gt_ridge_ring": -2.68,
+              "classic/kart_pine_grove": -0.65,
+              "kart/lonato": -0.15,
+              "kart/genk": -0.81,
+              "kart/whilton_mill": -0.06,
+              "autocross/maggiora_ax": 0.1,
+              "autocross/nova_paka_ax": -1.18,
+              "autocross/st_junien_ax": -0.45,
+              "rally/holjes_rx": -1.09,
+              "rally/mettet_rx": -1.51,
+              "rally/montalegre_rx": -3.16
+            }
+          },
+          "mean_score": -2.7552262263502394,
+          "elapsed_s": 91.42722387099639
+        },
+        {
+          "generation": 2,
+          "best_score": -1.4626874512216834,
+          "best_params": {
+            "brake_padding": -0.045154933209393386,
+            "composure": 0.9543733835159955,
+            "consistency": 0.9972414386386707,
+            "pace_limit": 1.0247586837170766
+          },
+          "best_metrics": {
+            "mean_delta_pct": -0.7,
+            "target_delta_pct": -2.25,
+            "circuits_in_band": 1,
+            "total_circuits": 13,
+            "mean_band_error": 0.8572,
+            "disq_rate": 0.1827,
+            "spins": 19,
+            "stalls": 0,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": -0.7,
+              "classic/stock_tri_oval_speedway": -0.68,
+              "classic/gt_ridge_ring": -0.86,
+              "classic/kart_pine_grove": -0.58,
+              "kart/lonato": -0.39,
+              "kart/genk": -1.25,
+              "kart/whilton_mill": 0.09,
+              "autocross/maggiora_ax": -0.11,
+              "autocross/nova_paka_ax": -1.02,
+              "autocross/st_junien_ax": -0.63,
+              "rally/holjes_rx": -1.66,
+              "rally/mettet_rx": -1.11,
+              "rally/montalegre_rx": -0.19
+            }
+          },
+          "mean_score": -2.9075823426696195,
+          "elapsed_s": 133.30805738100025
+        },
+        {
+          "generation": 3,
+          "best_score": -1.4562431675860963,
+          "best_params": {
+            "brake_padding": -0.030826456069847456,
+            "composure": 0.9981964955205379,
+            "consistency": 0.990814638630709,
+            "pace_limit": 1.0308531747730454
+          },
+          "best_metrics": {
+            "mean_delta_pct": -0.85,
+            "target_delta_pct": -2.25,
+            "circuits_in_band": 2,
+            "total_circuits": 13,
+            "mean_band_error": 0.8945,
+            "disq_rate": 0.1827,
+            "spins": 19,
+            "stalls": 0,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": -1.55,
+              "classic/stock_tri_oval_speedway": -0.96,
+              "classic/gt_ridge_ring": -0.91,
+              "classic/kart_pine_grove": -1.32,
+              "kart/lonato": -1.36,
+              "kart/genk": -0.18,
+              "kart/whilton_mill": -0.4,
+              "autocross/maggiora_ax": -0.13,
+              "autocross/nova_paka_ax": -1.32,
+              "autocross/st_junien_ax": -0.21,
+              "rally/holjes_rx": -0.15,
+              "rally/mettet_rx": -2.65,
+              "rally/montalegre_rx": 0.11
+            }
+          },
+          "mean_score": -3.252921257480705,
+          "elapsed_s": 175.43622330899234
+        },
+        {
+          "generation": 4,
+          "best_score": -1.2345399765282938,
+          "best_params": {
+            "brake_padding": -0.029705001053196824,
+            "composure": 0.947525923013599,
+            "consistency": 0.9867618823472517,
+            "pace_limit": 1.0273710636298643
+          },
+          "best_metrics": {
+            "mean_delta_pct": -0.93,
+            "target_delta_pct": -2.25,
+            "circuits_in_band": 1,
+            "total_circuits": 13,
+            "mean_band_error": 0.6748,
+            "disq_rate": 0.1923,
+            "spins": 20,
+            "stalls": 0,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": -1.06,
+              "classic/stock_tri_oval_speedway": -1.03,
+              "classic/gt_ridge_ring": -1.13,
+              "classic/kart_pine_grove": -1.03,
+              "kart/lonato": 0.35,
+              "kart/genk": -0.81,
+              "kart/whilton_mill": -0.84,
+              "autocross/maggiora_ax": -0.29,
+              "autocross/nova_paka_ax": -0.97,
+              "autocross/st_junien_ax": -1.18,
+              "rally/holjes_rx": -2.86,
+              "rally/mettet_rx": -0.91,
+              "rally/montalegre_rx": -0.29
+            }
+          },
+          "mean_score": -2.442319232547812,
+          "elapsed_s": 216.80537710498902
+        },
+        {
+          "generation": 5,
+          "best_score": -0.8765896284945693,
+          "best_params": {
+            "brake_padding": -0.04618999687042361,
+            "composure": 0.988122288259265,
+            "consistency": 0.9916093444162059,
+            "pace_limit": 1.0428675211180922
+          },
+          "best_metrics": {
+            "mean_delta_pct": -1.19,
+            "target_delta_pct": -2.25,
+            "circuits_in_band": 5,
+            "total_circuits": 13,
+            "mean_band_error": 0.4754,
+            "disq_rate": 0.1442,
+            "spins": 15,
+            "stalls": 0,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": -1.85,
+              "classic/stock_tri_oval_speedway": -1.51,
+              "classic/gt_ridge_ring": -1.46,
+              "classic/kart_pine_grove": -0.93,
+              "kart/lonato": -0.79,
+              "kart/genk": -0.34,
+              "kart/whilton_mill": -1.37,
+              "autocross/maggiora_ax": -1.2,
+              "autocross/nova_paka_ax": -1.56,
+              "autocross/st_junien_ax": -1.57,
+              "rally/holjes_rx": 0.46,
+              "rally/mettet_rx": -1.28,
+              "rally/montalegre_rx": -2.05
+            }
+          },
+          "mean_score": -2.21848983436056,
+          "elapsed_s": 258.86488496400125
+        },
+        {
+          "generation": 6,
+          "best_score": -1.4751897182324392,
+          "best_params": {
+            "brake_padding": -0.02385286400843871,
+            "composure": 0.9999181505254334,
+            "consistency": 0.9795307168042828,
+            "pace_limit": 1.0200057151338247
+          },
+          "best_metrics": {
+            "mean_delta_pct": -0.64,
+            "target_delta_pct": -2.25,
+            "circuits_in_band": 1,
+            "total_circuits": 13,
+            "mean_band_error": 0.9286,
+            "disq_rate": 0.1442,
+            "spins": 15,
+            "stalls": 0,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": -0.87,
+              "classic/stock_tri_oval_speedway": -0.75,
+              "classic/gt_ridge_ring": -0.61,
+              "classic/kart_pine_grove": -0.49,
+              "kart/lonato": -0.34,
+              "kart/genk": -0.6,
+              "kart/whilton_mill": -0.43,
+              "autocross/maggiora_ax": -0.3,
+              "autocross/nova_paka_ax": -0.62,
+              "autocross/st_junien_ax": -0.61,
+              "rally/holjes_rx": -2.17,
+              "rally/mettet_rx": -0.46,
+              "rally/montalegre_rx": -0.12
+            }
+          },
+          "mean_score": -3.5263482208626975,
+          "elapsed_s": 300.28375185299956
+        },
+        {
+          "generation": 7,
+          "best_score": -1.331706480008328,
+          "best_params": {
+            "brake_padding": -0.04232229857490861,
+            "composure": 0.977751349430219,
+            "consistency": 0.9881757815944453,
+            "pace_limit": 1.0408949979694262
+          },
+          "best_metrics": {
+            "mean_delta_pct": -0.85,
+            "target_delta_pct": -2.25,
+            "circuits_in_band": 1,
+            "total_circuits": 13,
+            "mean_band_error": 0.8091,
+            "disq_rate": 0.1635,
+            "spins": 17,
+            "stalls": 0,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": -1.73,
+              "classic/stock_tri_oval_speedway": -1.11,
+              "classic/gt_ridge_ring": -1.46,
+              "classic/kart_pine_grove": -0.61,
+              "kart/lonato": -1.47,
+              "kart/genk": -0.62,
+              "kart/whilton_mill": -1.47,
+              "autocross/maggiora_ax": -0.56,
+              "autocross/nova_paka_ax": -1.1,
+              "autocross/st_junien_ax": -1.14,
+              "rally/holjes_rx": -0.24,
+              "rally/mettet_rx": 0.44,
+              "rally/montalegre_rx": 0.01
+            }
+          },
+          "mean_score": -2.922226871317422,
+          "elapsed_s": 341.8768023099983
+        },
+        {
+          "generation": 8,
+          "best_score": -1.014008307340138,
+          "best_params": {
+            "brake_padding": -0.046117034930842404,
+            "composure": 0.9488394824079341,
+            "consistency": 0.9815603180668074,
+            "pace_limit": 1.0312279263063644
+          },
+          "best_metrics": {
+            "mean_delta_pct": -1.14,
+            "target_delta_pct": -2.25,
+            "circuits_in_band": 4,
+            "total_circuits": 13,
+            "mean_band_error": 0.5258,
+            "disq_rate": 0.1827,
+            "spins": 19,
+            "stalls": 0,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": -1.67,
+              "classic/stock_tri_oval_speedway": -1.49,
+              "classic/gt_ridge_ring": -1.71,
+              "classic/kart_pine_grove": -0.87,
+              "kart/lonato": -0.56,
+              "kart/genk": -1.01,
+              "kart/whilton_mill": -0.66,
+              "autocross/maggiora_ax": -0.33,
+              "autocross/nova_paka_ax": -0.9,
+              "autocross/st_junien_ax": -0.83,
+              "rally/holjes_rx": 0.05,
+              "rally/mettet_rx": -2.82,
+              "rally/montalegre_rx": -2.06
+            }
+          },
+          "mean_score": -2.714453055094683,
+          "elapsed_s": 383.7939171889884
+        },
+        {
+          "generation": 9,
+          "best_score": -1.1512982738058877,
+          "best_params": {
+            "brake_padding": -0.03382054629080237,
+            "composure": 0.9938413571355976,
+            "consistency": 0.9855815120829966,
+            "pace_limit": 1.0304676307292084
+          },
+          "best_metrics": {
+            "mean_delta_pct": -1.13,
+            "target_delta_pct": -2.25,
+            "circuits_in_band": 4,
+            "total_circuits": 13,
+            "mean_band_error": 0.6611,
+            "disq_rate": 0.1827,
+            "spins": 19,
+            "stalls": 0,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": -1.47,
+              "classic/stock_tri_oval_speedway": -1.66,
+              "classic/gt_ridge_ring": -1.14,
+              "classic/kart_pine_grove": -1.24,
+              "kart/lonato": -0.45,
+              "kart/genk": -0.88,
+              "kart/whilton_mill": -0.64,
+              "autocross/maggiora_ax": -1.06,
+              "autocross/nova_paka_ax": -0.74,
+              "autocross/st_junien_ax": -2.13,
+              "rally/holjes_rx": 0.82,
+              "rally/mettet_rx": -2.6,
+              "rally/montalegre_rx": -1.53
+            }
+          },
+          "mean_score": -2.593400807192863,
+          "elapsed_s": 424.98121487899334
+        },
+        {
+          "generation": 10,
+          "best_score": -0.8396013806598052,
+          "best_params": {
+            "brake_padding": -0.039412264261438866,
+            "composure": 0.9858827995224981,
+            "consistency": 0.9914593848364119,
+            "pace_limit": 1.0356365938798373
+          },
+          "best_metrics": {
+            "mean_delta_pct": -1.26,
+            "target_delta_pct": -2.25,
+            "circuits_in_band": 4,
+            "total_circuits": 13,
+            "mean_band_error": 0.3962,
+            "disq_rate": 0.1731,
+            "spins": 18,
+            "stalls": 0,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": -1.49,
+              "classic/stock_tri_oval_speedway": -1.47,
+              "classic/gt_ridge_ring": -1.42,
+              "classic/kart_pine_grove": -0.54,
+              "kart/lonato": -0.69,
+              "kart/genk": 0.16,
+              "kart/whilton_mill": -0.59,
+              "autocross/maggiora_ax": -1.51,
+              "autocross/nova_paka_ax": -1.46,
+              "autocross/st_junien_ax": -1.48,
+              "rally/holjes_rx": -2.81,
+              "rally/mettet_rx": -1.54,
+              "rally/montalegre_rx": -1.59
+            }
+          },
+          "mean_score": -2.090778671862574,
+          "elapsed_s": 466.13013201300055
+        },
+        {
+          "generation": 11,
+          "best_score": -1.0194129483981489,
+          "best_params": {
+            "brake_padding": -0.05876597418267532,
+            "composure": 0.9852342083431016,
+            "consistency": 0.993576656691101,
+            "pace_limit": 1.0502117769004107
+          },
+          "best_metrics": {
+            "mean_delta_pct": -1.42,
+            "target_delta_pct": -2.25,
+            "circuits_in_band": 5,
+            "total_circuits": 13,
+            "mean_band_error": 0.5089,
+            "disq_rate": 0.2212,
+            "spins": 23,
+            "stalls": 0,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": -2.29,
+              "classic/stock_tri_oval_speedway": -2.3,
+              "classic/gt_ridge_ring": -1.97,
+              "classic/kart_pine_grove": -1.18,
+              "kart/lonato": -0.89,
+              "kart/genk": -1.58,
+              "kart/whilton_mill": -1.32,
+              "autocross/maggiora_ax": -0.74,
+              "autocross/nova_paka_ax": -0.52,
+              "autocross/st_junien_ax": -0.94,
+              "rally/holjes_rx": 0.56,
+              "rally/mettet_rx": -2.2,
+              "rally/montalegre_rx": -3.14
+            }
+          },
+          "mean_score": -2.660641332342921,
+          "elapsed_s": 507.629087497
+        }
+      ],
+      "final": [
+        {
+          "key": "ca2f6573e27b",
+          "params": {
+            "brake_padding": -0.04393827303474938,
+            "composure": 0.990629463643141,
+            "consistency": 0.9914694001647122,
+            "pace_limit": 1.0347741335012366
+          },
+          "score": -1.2013772250301584,
+          "metrics": {
+            "mean_delta_pct": -0.95,
+            "target_delta_pct": -2.25,
+            "circuits_in_band": 2,
+            "total_circuits": 13,
+            "mean_band_error": 0.6091,
+            "disq_rate": 0.2115,
+            "spins": 88,
+            "stalls": 0,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": -1.44,
+              "classic/stock_tri_oval_speedway": -1.41,
+              "classic/gt_ridge_ring": -1.54,
+              "classic/kart_pine_grove": -0.65,
+              "kart/lonato": -0.66,
+              "kart/genk": -0.03,
+              "kart/whilton_mill": -0.9,
+              "autocross/maggiora_ax": -0.53,
+              "autocross/nova_paka_ax": -0.85,
+              "autocross/st_junien_ax": -1.15,
+              "rally/holjes_rx": 0.06,
+              "rally/mettet_rx": -1.36,
+              "rally/montalegre_rx": -1.89
+            }
+          }
+        },
+        {
+          "key": "cb3cae695b5a",
+          "params": {
+            "brake_padding": -0.046117034930842404,
+            "composure": 0.9488394824079341,
+            "consistency": 0.9815603180668074,
+            "pace_limit": 1.0312279263063644
+          },
+          "score": -1.2505744030712307,
+          "metrics": {
+            "mean_delta_pct": -0.79,
+            "target_delta_pct": -2.25,
+            "circuits_in_band": 0,
+            "total_circuits": 13,
+            "mean_band_error": 0.6734,
+            "disq_rate": 0.1827,
+            "spins": 76,
+            "stalls": 1,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": -1.11,
+              "classic/stock_tri_oval_speedway": -1.28,
+              "classic/gt_ridge_ring": -1.01,
+              "classic/kart_pine_grove": -0.91,
+              "kart/lonato": -0.49,
+              "kart/genk": 0.06,
+              "kart/whilton_mill": -0.48,
+              "autocross/maggiora_ax": -0.25,
+              "autocross/nova_paka_ax": -0.6,
+              "autocross/st_junien_ax": -0.69,
+              "rally/holjes_rx": -0.89,
+              "rally/mettet_rx": -1.21,
+              "rally/montalegre_rx": -1.47
+            }
+          }
+        },
+        {
+          "key": "b77c1f645abe",
+          "params": {
+            "brake_padding": -0.039412264261438866,
+            "composure": 0.9858827995224981,
+            "consistency": 0.9914593848364119,
+            "pace_limit": 1.0356365938798373
+          },
+          "score": -1.264908452578457,
+          "metrics": {
+            "mean_delta_pct": -0.96,
+            "target_delta_pct": -2.25,
+            "circuits_in_band": 3,
+            "total_circuits": 13,
+            "mean_band_error": 0.7184,
+            "disq_rate": 0.1899,
+            "spins": 79,
+            "stalls": 0,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": -1.85,
+              "classic/stock_tri_oval_speedway": -1.71,
+              "classic/gt_ridge_ring": -1.93,
+              "classic/kart_pine_grove": -1.01,
+              "kart/lonato": -0.89,
+              "kart/genk": -0.54,
+              "kart/whilton_mill": -1.1,
+              "autocross/maggiora_ax": -1.35,
+              "autocross/nova_paka_ax": -0.6,
+              "autocross/st_junien_ax": -1.39,
+              "rally/holjes_rx": -0.35,
+              "rally/mettet_rx": -0.16,
+              "rally/montalegre_rx": 0.42
+            }
+          }
+        },
+        {
+          "key": "ad39f33775f5",
+          "params": {
+            "brake_padding": -0.03,
+            "composure": 0.98,
+            "consistency": 0.99,
+            "pace_limit": 1.04
+          },
+          "score": -1.5700074673983817,
+          "metrics": {
+            "mean_delta_pct": -1.15,
+            "target_delta_pct": -2.25,
+            "circuits_in_band": 4,
+            "total_circuits": 13,
+            "mean_band_error": 1.0502,
+            "disq_rate": 0.1995,
+            "spins": 83,
+            "stalls": 0,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": -2.3,
+              "classic/stock_tri_oval_speedway": -1.86,
+              "classic/gt_ridge_ring": -2.17,
+              "classic/kart_pine_grove": -1.2,
+              "kart/lonato": -1.19,
+              "kart/genk": -0.76,
+              "kart/whilton_mill": -1.21,
+              "autocross/maggiora_ax": -1.18,
+              "autocross/nova_paka_ax": -0.63,
+              "autocross/st_junien_ax": -1.48,
+              "rally/holjes_rx": 1.96,
+              "rally/mettet_rx": -1.62,
+              "rally/montalegre_rx": -1.32
+            }
+          }
+        },
+        {
+          "key": "2fafdfb0b4f3",
+          "params": {
+            "brake_padding": -0.04618999687042361,
+            "composure": 0.988122288259265,
+            "consistency": 0.9916093444162059,
+            "pace_limit": 1.0428675211180922
+          },
+          "score": -1.7205014520176805,
+          "metrics": {
+            "mean_delta_pct": -0.88,
+            "target_delta_pct": -2.25,
+            "circuits_in_band": 3,
+            "total_circuits": 13,
+            "mean_band_error": 1.1591,
+            "disq_rate": 0.1875,
+            "spins": 78,
+            "stalls": 0,
+            "dnfs": 0,
+            "circuit_deltas_pct": {
+              "classic/gt_coastal_grand_prix": -2.72,
+              "classic/stock_tri_oval_speedway": -1.92,
+              "classic/gt_ridge_ring": -1.86,
+              "classic/kart_pine_grove": -0.89,
+              "kart/lonato": -0.95,
+              "kart/genk": -0.86,
+              "kart/whilton_mill": -0.81,
+              "autocross/maggiora_ax": -0.81,
+              "autocross/nova_paka_ax": -0.63,
+              "autocross/st_junien_ax": -1.13,
+              "rally/holjes_rx": 1.39,
+              "rally/mettet_rx": -0.47,
+              "rally/montalegre_rx": 0.16
+            }
+          }
+        }
+      ]
+    }
+  }
+}
