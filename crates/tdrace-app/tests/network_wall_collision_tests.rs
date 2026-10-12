@@ -114,3 +114,35 @@ fn test_hilltop_leap_joker_merge_walls_leave_no_pocket() {
     }
     assert!(loose.is_empty(), "main wall ends near the joker merge that meet no wall: {}", loose.join(", "));
 }
+
+#[test]
+fn test_erx_motor_park_joker_merge_walls_leave_no_pocket() {
+    let track = catalog::official_track("rally", "erx_motor_park");
+    let net = track.network.as_ref().unwrap();
+    let merge = net
+        .junctions
+        .iter()
+        .find_map(|j| match &j.kind {
+            JunctionKind::Merge { egress_socket, .. } if j.name.contains("Joker") => Some(egress_socket.point),
+            _ => None,
+        })
+        .expect("the joker merge");
+    let main: Vec<_> = track.geometry.inner_walls.iter().chain(&track.geometry.outer_walls).collect();
+    let all: Vec<_> = main.iter().copied().chain(&track.geometry.network_walls).collect();
+    let mut loose = Vec::new();
+    for (i, w) in main.iter().enumerate() {
+        for end in [w.segment.start, w.segment.end] {
+            if end.distance(merge) > MERGE_RADIUS_M {
+                continue;
+            }
+            let joined = all.iter().enumerate().any(|(j, other)| {
+                j != i && [other.segment.start, other.segment.end].iter().any(|p| p.distance(end) < WALL_JOIN_M)
+            });
+            if !joined {
+                loose.push(format!("({:.1}, {:.1})", end.x, end.y));
+            }
+        }
+    }
+    assert!(loose.is_empty(), "main wall ends near the joker merge that meet no wall: {}", loose.join(", "));
+}
+
