@@ -2850,3 +2850,33 @@ fn test_editor_tags_the_joker_branch_of_a_split() {
     let plain = tdrace_core::catalog::official_track("classic", "oval_speedway");
     assert_eq!(branch_socket_label(&plain, JunctionId(0), 0), "[Main]");
 }
+
+#[test]
+fn test_editor_network_branch_filtering_preserves_main_layout_segments() {
+    use tdrace_core::track::network::SegmentId;
+
+    let track = tdrace_core::catalog::official_track("rally", "kouvola_rx");
+    let network = track.network.as_ref().expect("Kouvola must have a network");
+
+    // Main layout sequence: [0, 4, 1, 3]
+    for seg_id in [SegmentId(0), SegmentId(4), SegmentId(1), SegmentId(3)] {
+        assert!(
+            !network.is_branch_segment(seg_id),
+            "Segment {:?} is part of main layout and must not be filtered as a branch",
+            seg_id
+        );
+    }
+
+    // Secondary / detour segments: [2] (Joker) and [5] (Launch chute)
+    for seg_id in [SegmentId(2), SegmentId(5)] {
+        assert!(
+            network.is_branch_segment(seg_id),
+            "Segment {:?} is a detour/chute and must be filtered as a branch",
+            seg_id
+        );
+    }
+
+    let branches = network.branch_segments();
+    let branch_ids: Vec<SegmentId> = branches.iter().map(|s| s.id).collect();
+    assert_eq!(branch_ids, vec![SegmentId(2), SegmentId(5)]);
+}

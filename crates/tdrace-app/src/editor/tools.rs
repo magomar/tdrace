@@ -3292,9 +3292,9 @@ pub fn render_editor_gizmos(state: &EditorState, tools: &ToolSettings, _camera: 
         }
     }
 
-    // Render branch segments (id != 0)
+    // Render branch segments (e.g. Joker Lap detours, launch chutes, alternate routes)
     for seg in &network.segments {
-        if seg.id.0 != 0 && !seg.waypoints.is_empty() {
+        if network.is_branch_segment(seg.id) && !seg.waypoints.is_empty() {
             let n_bwp = seg.waypoints.len();
             for (w_i, wp) in seg.waypoints.iter().enumerate() {
                 draw_circle(wp.point.x, wp.point.y, 1.2, Palette::NEON_MAGENTA);

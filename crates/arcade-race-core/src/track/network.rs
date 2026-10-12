@@ -1060,6 +1060,32 @@ impl TrackNetwork {
             .or_else(|| self.layouts.first())
     }
 
+    /// Returns the network segments that are not on the default layout (e.g. Joker Lap detours, launch chutes, alternate routes).
+    pub fn branch_segments(&self) -> Vec<&RoadSegment> {
+        let default_seq = self
+            .active_or_default_layout(None)
+            .map(|l| &l.segment_sequence[..])
+            .unwrap_or(&[]);
+        if default_seq.is_empty() {
+            self.segments.iter().filter(|s| s.id.0 != 0).collect()
+        } else {
+            self.segments.iter().filter(|s| !default_seq.contains(&s.id)).collect()
+        }
+    }
+
+    /// Returns true if the segment with the given id is a branch segment (not part of the default layout sequence).
+    pub fn is_branch_segment(&self, id: SegmentId) -> bool {
+        let default_seq = self
+            .active_or_default_layout(None)
+            .map(|l| &l.segment_sequence[..])
+            .unwrap_or(&[]);
+        if default_seq.is_empty() {
+            id.0 != 0
+        } else {
+            !default_seq.contains(&id)
+        }
+    }
+
     /// Synthesizes a composite, continuous `TrackSpline` from an ordered sequence of segments in a layout.
     /// Enables transparent backwards compatibility with systems requiring a flat `TrackSpline`.
     pub fn build_composite_spline_for_layout(&self, layout_id: &str) -> Option<TrackSpline> {
@@ -1414,5 +1440,52 @@ mod tests {
         let (b, c) = (Vec2::new(20.0, 5.0), Vec2::new(10.0, 15.0));
         assert!(point_in_triangle_2d(Vec2::new(12.0, 7.0), a, b, c));
         assert!(!point_in_triangle_2d(far, a, b, c));
+    }
+
+    #[test]
+    fn test_track_network_branch_segments_filtering() {
+        let seg0 = RoadSegment::new(SegmentId(0), "Main Straight", vec![]);
+        let seg1 = RoadSegment::new(SegmentId(1), "Main Turn", vec![]);
+        let seg2 = RoadSegment::new(SegmentId(2), "Joker Loop", vec![]);
+        let seg3 = RoadSegment::new(SegmentId(3), "Launch Chute", vec![]);
+
+        let mut net = TrackNetwork::new();
+        net.segments = vec![seg0, seg1, seg2, seg3];
+        net.layouts = vec![
+            TrackLayout {
+                id: "main".into(),
+                display_name: "Standard Circuit".into(),
+                entry_segment: None,
+                segment_sequence: vec![SegmentId(0), SegmentId(1)],
+                is_closed: true,
+                total_lap_length: 500.0,
+                start_finish_segment: SegmentId(0),
+                checkpoint_ids: vec![],
+            },
+            TrackLayout {
+                id: "joker".into(),
+                display_name: "Joker Detour".into(),
+                entry_segment: None,
+                segment_sequence: vec![SegmentId(0), SegmentId(2)],
+                is_closed: true,
+                total_lap_length: 530.0,
+                start_finish_segment: SegmentId(0),
+                checkpoint_ids: vec![],
+            },
+        ];
+        net.default_layout_id = "main".into();
+
+        // Segments 0 and 1 are on the default layout sequence -> not branches
+        assert!(!net.is_branch_segment(SegmentId(0)));
+        assert!(!net.is_branch_segment(SegmentId(1)));
+
+        // Segments 2 and 3 are NOT on the default layout sequence -> branches
+        assert!(net.is_branch_segment(SegmentId(2)));
+        assert!(net.is_branch_segment(SegmentId(3)));
+
+        let branches = net.branch_segments();
+        assert_eq!(branches.len(), 2);
+        assert_eq!(branches[0].id, SegmentId(2));
+        assert_eq!(branches[1].id, SegmentId(3));
     }
 }

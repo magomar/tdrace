@@ -1150,8 +1150,7 @@ const WALL_TRIM_STEP_M: f32 = 1.0;
 
 /// Network segments that are not on the default layout (the Rallycross joker branch).
 pub(crate) fn branch_segments(net: &TrackNetwork) -> Vec<&RoadSegment> {
-    let Some(main) = net.active_or_default_layout(None) else { return Vec::new(); };
-    net.segments.iter().filter(|s| !main.segment_sequence.contains(&s.id)).collect()
+    net.branch_segments()
 }
 
 /// Wall pieces that close the funnel of a launch chute: each loose end of a chute wall (not the rear corners) is
