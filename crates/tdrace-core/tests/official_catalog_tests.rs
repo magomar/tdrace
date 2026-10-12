@@ -145,3 +145,13 @@ fn test_rebuild_reproduces_every_osm_circuit() {
     }
     assert!(failures.is_empty(), "{:#?}", failures);
 }
+
+#[test]
+fn test_catalog_rallycross_synonym() {
+    let rx_count = catalog::module_circuits("rallycross").count();
+    let rally_count = catalog::module_circuits("rally").count();
+    assert_eq!(rx_count, 20);
+    assert_eq!(rx_count, rally_count);
+    assert!(catalog::find("hell", Some("rallycross")).is_some());
+    assert!(catalog::find("hell", Some("rally")).is_some());
+}

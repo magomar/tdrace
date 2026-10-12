@@ -33,6 +33,13 @@ impl EmbeddedCircuit {
     }
 }
 
+#[inline]
+fn module_matches(c_module: &str, requested: &str) -> bool {
+    c_module == requested
+        || (c_module == "rally" && requested == "rallycross")
+        || (c_module == "rallycross" && requested == "rally")
+}
+
 /// All official circuits, grouped by module in directory-name order, each module in list order.
 pub fn circuits() -> &'static [EmbeddedCircuit] {
     CIRCUITS
@@ -40,7 +47,7 @@ pub fn circuits() -> &'static [EmbeddedCircuit] {
 
 /// Official circuits of one module, in list order.
 pub fn module_circuits(module: &str) -> impl Iterator<Item = &'static EmbeddedCircuit> + '_ {
-    CIRCUITS.iter().filter(move |c| c.module == module)
+    CIRCUITS.iter().filter(move |c| module_matches(c.module, module))
 }
 
 /// Old or short circuit names and the catalog id each maps to (`tracks/.aliases.json`).
@@ -60,7 +67,7 @@ pub fn canonical_id(slug: &str) -> Option<&'static str> {
 pub fn find(slug: &str, module_hint: Option<&str>) -> Option<&'static EmbeddedCircuit> {
     let id = canonical_id(slug)?;
     module_hint
-        .and_then(|m| CIRCUITS.iter().find(|c| c.id == id && c.module == m))
+        .and_then(|m| CIRCUITS.iter().find(|c| c.id == id && module_matches(c.module, m)))
         .or_else(|| CIRCUITS.iter().find(|c| c.id == id))
 }
 
