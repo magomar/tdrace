@@ -984,10 +984,18 @@ fn test_arcade_settings_modal_helpers_tab_integration() {
     assert_eq!(modal.gameplay_sub_tab, 0); // General
     assert_eq!(modal.nav.column_lengths[3], 7);
 
-    // 2. Switch to VISUAL AIDS subtab and verify 14 rows
-    modal.switch_gameplay_subtab(1);
+    // 2. Switch to subtabs and verify column lengths
+    modal.switch_gameplay_subtab(1); // CAR AIDS
     assert_eq!(modal.gameplay_sub_tab, 1);
-    assert_eq!(modal.nav.column_lengths[3], 14);
+    assert_eq!(modal.nav.column_lengths[3], 8);
+
+    modal.switch_gameplay_subtab(2); // TRACK AIDS
+    assert_eq!(modal.gameplay_sub_tab, 2);
+    assert_eq!(modal.nav.column_lengths[3], 6);
+
+    modal.switch_gameplay_subtab(3); // PILOT LABELS
+    assert_eq!(modal.gameplay_sub_tab, 3);
+    assert_eq!(modal.nav.column_lengths[3], 6);
 
     // 3. Verify default state matches HelpersSettingsState::default() and Full preset
     let def_helpers = HelpersSettingsState::default();
@@ -996,6 +1004,10 @@ fn test_arcade_settings_modal_helpers_tab_integration() {
     assert!(def_helpers.radar_sonar_ping);
     assert_eq!(def_helpers.racing_line_mode, 0);
     assert!((def_helpers.racing_line_opacity - 0.70).abs() < 1e-4);
+    assert!(def_helpers.bot_nameplates_enabled);
+    assert_eq!(def_helpers.bot_nameplates_max_visible, 24);
+    assert!((def_helpers.bot_nameplates_opacity - 0.80).abs() < 1e-4);
+    assert!(!def_helpers.bot_nameplates_compact);
     assert!(!modal.has_changes());
 
     // 4. Test presets: Minimal (1) and Off (2)
@@ -1036,6 +1048,10 @@ fn test_arcade_settings_modal_helpers_tab_integration() {
     modal.radar_ping_dropdown.set_selected(1);
     modal.racing_line_dropdown.set_selected(1);
     modal.racing_line_opacity_slider.set_value(90.0);
+    modal.bot_nameplates_dropdown.set_selected(1);
+    modal.bot_nameplates_max_slider.set_value(18.0);
+    modal.bot_nameplates_opacity_slider.set_value(55.0);
+    modal.bot_nameplates_detail_dropdown.set_selected(1);
 
     let state = modal.helpers_state();
     assert!(!state.ribbon_enabled);
@@ -1047,6 +1063,10 @@ fn test_arcade_settings_modal_helpers_tab_integration() {
     assert!(!state.radar_sonar_ping);
     assert_eq!(state.racing_line_mode, 1);
     assert!((state.racing_line_opacity - 0.90).abs() < 1e-4);
+    assert!(!state.bot_nameplates_enabled);
+    assert_eq!(state.bot_nameplates_max_visible, 18);
+    assert!((state.bot_nameplates_opacity - 0.55).abs() < 1e-4);
+    assert!(state.bot_nameplates_compact);
 
     // 5. Test set_helpers_state
     let custom = HelpersSettingsState {
@@ -1062,6 +1082,10 @@ fn test_arcade_settings_modal_helpers_tab_integration() {
         radar_sonar_ping: false,
         racing_line_mode: 1,
         racing_line_opacity: 0.60,
+        bot_nameplates_enabled: false,
+        bot_nameplates_max_visible: 12,
+        bot_nameplates_opacity: 0.45,
+        bot_nameplates_compact: true,
     };
     modal.set_helpers_state(&custom);
     let cur = modal.helpers_state();
@@ -1078,6 +1102,10 @@ fn test_arcade_settings_modal_helpers_tab_integration() {
     assert_eq!(cur.radar_sonar_ping, custom.radar_sonar_ping);
     assert_eq!(cur.racing_line_mode, custom.racing_line_mode);
     assert!((cur.racing_line_opacity - custom.racing_line_opacity).abs() < 1e-4);
+    assert_eq!(cur.bot_nameplates_enabled, custom.bot_nameplates_enabled);
+    assert_eq!(cur.bot_nameplates_max_visible, custom.bot_nameplates_max_visible);
+    assert!((cur.bot_nameplates_opacity - custom.bot_nameplates_opacity).abs() < 1e-4);
+    assert_eq!(cur.bot_nameplates_compact, custom.bot_nameplates_compact);
 
     // 6. Test restore_defaults restores helpers
     modal.restore_defaults();
@@ -1094,6 +1122,10 @@ fn test_arcade_settings_modal_helpers_tab_integration() {
     assert_eq!(restored.radar_sonar_ping, def_helpers.radar_sonar_ping);
     assert_eq!(restored.racing_line_mode, def_helpers.racing_line_mode);
     assert!((restored.racing_line_opacity - def_helpers.racing_line_opacity).abs() < 1e-4);
+    assert_eq!(restored.bot_nameplates_enabled, def_helpers.bot_nameplates_enabled);
+    assert_eq!(restored.bot_nameplates_max_visible, def_helpers.bot_nameplates_max_visible);
+    assert!((restored.bot_nameplates_opacity - def_helpers.bot_nameplates_opacity).abs() < 1e-4);
+    assert_eq!(restored.bot_nameplates_compact, def_helpers.bot_nameplates_compact);
 }
 
 #[test]
@@ -1142,14 +1174,26 @@ fn test_arcade_settings_modal_gameplay_subtab_navigation() {
     assert!(modal.is_subtab_focused);
     assert_eq!(modal.gameplay_sub_tab, 0);
 
-    // 5. Press Right Arrow on Subtab Bar -> switches to Visual Driving Aids subtab
+    // 3. Press Right Arrow on Subtab Bar -> switches to CAR AIDS subtab (8 rows)
     ctx.gamepad = &gp_right;
     modal.update(&mut ctx);
     assert!(modal.is_subtab_focused);
     assert_eq!(modal.gameplay_sub_tab, 1);
-    assert_eq!(modal.nav.column_lengths[3], 14);
+    assert_eq!(modal.nav.column_lengths[3], 8);
 
-    // 6. Press Down Arrow from Subtab Bar -> enters row 0 of Visual Driving Aids!
+    // 4. Press Right Arrow on Subtab Bar -> switches to TRACK AIDS subtab (6 rows)
+    modal.update(&mut ctx);
+    assert!(modal.is_subtab_focused);
+    assert_eq!(modal.gameplay_sub_tab, 2);
+    assert_eq!(modal.nav.column_lengths[3], 6);
+
+    // 5. Press Right Arrow on Subtab Bar -> switches to PILOT LABELS subtab (6 rows)
+    modal.update(&mut ctx);
+    assert!(modal.is_subtab_focused);
+    assert_eq!(modal.gameplay_sub_tab, 3);
+    assert_eq!(modal.nav.column_lengths[3], 6);
+
+    // 6. Press Down Arrow from Subtab Bar -> enters row 0 of PILOT LABELS!
     ctx.gamepad = &gp_down;
     modal.update(&mut ctx);
     assert!(!modal.is_tab_focused);
@@ -1160,27 +1204,39 @@ fn test_arcade_settings_modal_gameplay_subtab_navigation() {
     ctx.gamepad = &gp_up;
     modal.update(&mut ctx);
     assert!(modal.is_subtab_focused);
-    assert_eq!(modal.gameplay_sub_tab, 1);
+    assert_eq!(modal.gameplay_sub_tab, 3);
 
-    // 8. Press Left Arrow on Subtab Bar -> switches back to General
+    // 8. Press Left Arrow on Subtab Bar -> switches back to TRACK AIDS (2)
     ctx.gamepad = &gp_left;
+    modal.update(&mut ctx);
+    assert!(modal.is_subtab_focused);
+    assert_eq!(modal.gameplay_sub_tab, 2);
+    assert_eq!(modal.nav.column_lengths[3], 6);
+
+    // 9. Press Left Arrow on Subtab Bar -> switches back to CAR AIDS (1)
+    modal.update(&mut ctx);
+    assert!(modal.is_subtab_focused);
+    assert_eq!(modal.gameplay_sub_tab, 1);
+    assert_eq!(modal.nav.column_lengths[3], 8);
+
+    // 10. Press Left Arrow on Subtab Bar -> switches back to GENERAL (0)
     modal.update(&mut ctx);
     assert!(modal.is_subtab_focused);
     assert_eq!(modal.gameplay_sub_tab, 0);
     assert_eq!(modal.nav.column_lengths[3], 7);
 
-    // 9. Press Up Arrow from Subtab Bar -> returns to Main Tab Bar
+    // 11. Press Up Arrow from Subtab Bar -> returns to Main Tab Bar
     ctx.gamepad = &gp_up;
     modal.update(&mut ctx);
     assert!(modal.is_tab_focused);
     assert!(!modal.is_subtab_focused);
     assert_eq!(modal.tab_bar.active_tab_name(), "GAMEPLAY");
 
-    // 10. Switch to Visual Aids, enter settings, and verify Cancel/B returns to General
-    modal.switch_gameplay_subtab(1);
+    // 12. Switch to Pilot Labels (3), enter settings, and verify Cancel/B returns to General
+    modal.switch_gameplay_subtab(3);
     modal.is_tab_focused = false;
     modal.is_subtab_focused = false;
-    modal.nav.set_focus(3, 2); // Row 2 in Visual Aids
+    modal.nav.set_focus(3, 2); // Row 2 in Pilot Labels
     ctx.gamepad = &gp_cancel;
     modal.update(&mut ctx);
     assert_eq!(modal.gameplay_sub_tab, 0); // Returned to General

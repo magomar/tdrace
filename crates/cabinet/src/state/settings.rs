@@ -60,6 +60,10 @@ pub struct SettingsSnapshot {
     pub radar_sonar_ping_idx: usize,
     pub racing_line_idx: usize,
     pub racing_line_opacity_pct: f32,
+    pub bot_nameplates_idx: usize,
+    pub bot_nameplates_max_visible: f32,
+    pub bot_nameplates_opacity_pct: f32,
+    pub bot_nameplates_detail_idx: usize,
 }
 
 impl Default for SettingsSnapshot {
@@ -103,11 +107,15 @@ impl Default for SettingsSnapshot {
             radar_sonar_ping_idx: 0,
             racing_line_idx: 0,
             racing_line_opacity_pct: 70.0,
+            bot_nameplates_idx: 0,
+            bot_nameplates_max_visible: 24.0,
+            bot_nameplates_opacity_pct: 80.0,
+            bot_nameplates_detail_idx: 0,
         }
     }
 }
 
-/// Serializable / translatable state for the 12 player helpers settings widgets.
+/// Serializable / translatable state for the player helpers settings widgets.
 #[derive(Debug, Clone, PartialEq)]
 pub struct HelpersSettingsState {
     pub aura_enabled: bool,
@@ -122,6 +130,10 @@ pub struct HelpersSettingsState {
     pub radar_sonar_ping: bool,
     pub racing_line_mode: usize,
     pub racing_line_opacity: f32,
+    pub bot_nameplates_enabled: bool,
+    pub bot_nameplates_max_visible: usize,
+    pub bot_nameplates_opacity: f32,
+    pub bot_nameplates_compact: bool,
 }
 
 impl Default for HelpersSettingsState {
@@ -139,6 +151,10 @@ impl Default for HelpersSettingsState {
             radar_sonar_ping: true,
             racing_line_mode: 0,
             racing_line_opacity: 0.70,
+            bot_nameplates_enabled: true,
+            bot_nameplates_max_visible: 24,
+            bot_nameplates_opacity: 0.80,
+            bot_nameplates_compact: false,
         }
     }
 }
@@ -444,6 +460,10 @@ pub struct ArcadeSettingsModal {
     pub radar_ping_dropdown: DropdownWidget,
     pub racing_line_dropdown: DropdownWidget,
     pub racing_line_opacity_slider: SliderWidget,
+    pub bot_nameplates_dropdown: DropdownWidget,
+    pub bot_nameplates_max_slider: SliderWidget,
+    pub bot_nameplates_opacity_slider: SliderWidget,
+    pub bot_nameplates_detail_dropdown: DropdownWidget,
 
     pub is_tab_focused: bool,
     pub is_subtab_focused: bool,
@@ -533,6 +553,11 @@ impl ArcadeSettingsModal {
             "Line Only (Constant Guidance)".to_string(),
             "Braking Only (Dynamic Zones)".to_string(),
             "Disabled".to_string(),
+        ];
+        let bot_nameplates_options = vec!["Enabled".to_string(), "Disabled".to_string()];
+        let bot_detail_options = vec![
+            "Full (Tier & #Number)".to_string(),
+            "Compact (Name Only)".to_string(),
         ];
         let steering_profile_options: Vec<String> = SteeringProfile::PRESETS
             .iter()
@@ -694,6 +719,31 @@ impl ArcadeSettingsModal {
                 70.0,
             )
             .with_suffix(" %"),
+            bot_nameplates_dropdown: DropdownWidget::new(
+                "PILOT LABELS",
+                bot_nameplates_options,
+                0,
+            ),
+            bot_nameplates_max_slider: SliderWidget::new(
+                "MAX VISIBLE PILOTS",
+                3.0,
+                24.0,
+                1.0,
+                24.0,
+            ),
+            bot_nameplates_opacity_slider: SliderWidget::new(
+                "PILOT LABELS OPACITY",
+                20.0,
+                100.0,
+                5.0,
+                80.0,
+            )
+            .with_suffix(" %"),
+            bot_nameplates_detail_dropdown: DropdownWidget::new(
+                "LABEL DETAIL",
+                bot_detail_options,
+                0,
+            ),
 
             is_tab_focused: true,
             is_subtab_focused: false,
@@ -762,15 +812,22 @@ impl ArcadeSettingsModal {
         }
     }
 
-    /// Switches the Gameplay subtab (0: General, 1: Visual Aids) and updates navigation grid bounds.
+    /// Switches the Gameplay subtab (0: General, 1: Car Aids, 2: Track Aids, 3: Pilot Labels) and updates navigation grid bounds.
     pub fn switch_gameplay_subtab(&mut self, subtab: usize) {
         self.gameplay_sub_tab = subtab;
-        if subtab == 1 {
-            self.nav.set_column_len(3, 14);
-            self.nav.set_focus(3, 0);
-        } else {
-            self.nav.set_column_len(3, 7);
-            self.nav.set_focus(3, 0);
+        match subtab {
+            1 => {
+                self.nav.set_column_len(3, 8);
+                self.nav.set_focus(3, 0);
+            }
+            2 | 3 => {
+                self.nav.set_column_len(3, 6);
+                self.nav.set_focus(3, 0);
+            }
+            _ => {
+                self.nav.set_column_len(3, 7);
+                self.nav.set_focus(3, 0);
+            }
         }
     }
 
@@ -901,6 +958,10 @@ impl ArcadeSettingsModal {
             radar_sonar_ping: self.radar_ping_dropdown.selected_index == 0,
             racing_line_mode: self.racing_line_dropdown.selected_index,
             racing_line_opacity: self.racing_line_opacity_slider.value / 100.0,
+            bot_nameplates_enabled: self.bot_nameplates_dropdown.selected_index == 0,
+            bot_nameplates_max_visible: self.bot_nameplates_max_slider.value.round() as usize,
+            bot_nameplates_opacity: self.bot_nameplates_opacity_slider.value / 100.0,
+            bot_nameplates_compact: self.bot_nameplates_detail_dropdown.selected_index == 1,
         }
     }
 
@@ -926,6 +987,14 @@ impl ArcadeSettingsModal {
         self.racing_line_dropdown.set_selected(state.racing_line_mode);
         self.racing_line_opacity_slider
             .set_value(state.racing_line_opacity * 100.0);
+        self.bot_nameplates_dropdown
+            .set_selected(if state.bot_nameplates_enabled { 0 } else { 1 });
+        self.bot_nameplates_max_slider
+            .set_value(state.bot_nameplates_max_visible as f32);
+        self.bot_nameplates_opacity_slider
+            .set_value(state.bot_nameplates_opacity * 100.0);
+        self.bot_nameplates_detail_dropdown
+            .set_selected(if state.bot_nameplates_compact { 1 } else { 0 });
         self.sync_preset_from_helpers();
     }
 
@@ -1108,6 +1177,10 @@ impl ArcadeSettingsModal {
             radar_sonar_ping_idx: self.radar_ping_dropdown.selected_index,
             racing_line_idx: self.racing_line_dropdown.selected_index,
             racing_line_opacity_pct: self.racing_line_opacity_slider.value,
+            bot_nameplates_idx: self.bot_nameplates_dropdown.selected_index,
+            bot_nameplates_max_visible: self.bot_nameplates_max_slider.value,
+            bot_nameplates_opacity_pct: self.bot_nameplates_opacity_slider.value,
+            bot_nameplates_detail_idx: self.bot_nameplates_detail_dropdown.selected_index,
         }
     }
 
@@ -1174,6 +1247,14 @@ impl ArcadeSettingsModal {
         self.racing_line_dropdown.set_selected(snap.racing_line_idx);
         self.racing_line_opacity_slider
             .set_value(snap.racing_line_opacity_pct);
+        self.bot_nameplates_dropdown
+            .set_selected(snap.bot_nameplates_idx);
+        self.bot_nameplates_max_slider
+            .set_value(snap.bot_nameplates_max_visible);
+        self.bot_nameplates_opacity_slider
+            .set_value(snap.bot_nameplates_opacity_pct);
+        self.bot_nameplates_detail_dropdown
+            .set_selected(snap.bot_nameplates_detail_idx);
     }
 
     /// Returns true if any setting differs from the initial baseline snapshot.
@@ -1216,6 +1297,12 @@ impl ArcadeSettingsModal {
             || (cur.chevron_brightness - init.chevron_brightness).abs() > 0.001
             || cur.adaptive_idx != init.adaptive_idx
             || cur.radar_sonar_ping_idx != init.radar_sonar_ping_idx
+            || cur.racing_line_idx != init.racing_line_idx
+            || (cur.racing_line_opacity_pct - init.racing_line_opacity_pct).abs() > 0.001
+            || cur.bot_nameplates_idx != init.bot_nameplates_idx
+            || (cur.bot_nameplates_max_visible - init.bot_nameplates_max_visible).abs() > 0.001
+            || (cur.bot_nameplates_opacity_pct - init.bot_nameplates_opacity_pct).abs() > 0.001
+            || cur.bot_nameplates_detail_idx != init.bot_nameplates_detail_idx
     }
 }
 
@@ -1273,7 +1360,9 @@ impl CabinetScreen for ArcadeSettingsModal {
             || self.chevron_dropdown.is_open
             || self.adaptive_dropdown.is_open
             || self.radar_ping_dropdown.is_open
-            || self.racing_line_dropdown.is_open;
+            || self.racing_line_dropdown.is_open
+            || self.bot_nameplates_dropdown.is_open
+            || self.bot_nameplates_detail_dropdown.is_open;
 
         // Cancel / Back closes modal or prompts confirmation if settings have changed
         if self.nav.is_cancelled(
@@ -1302,12 +1391,14 @@ impl CabinetScreen for ArcadeSettingsModal {
                 self.adaptive_dropdown.is_open = false;
                 self.radar_ping_dropdown.is_open = false;
                 self.racing_line_dropdown.is_open = false;
+                self.bot_nameplates_dropdown.is_open = false;
+                self.bot_nameplates_detail_dropdown.is_open = false;
                 ctx.play_ui_cancel();
                 return ScreenAction::None;
             }
 
             // If currently viewing detailed Visual Aids inside Gameplay, Back returns to Gameplay General
-            if self.tab_bar.active_tab == 3 && self.gameplay_sub_tab == 1 {
+            if self.tab_bar.active_tab == 3 && self.gameplay_sub_tab > 0 {
                 self.switch_gameplay_subtab(0);
                 self.is_subtab_focused = true;
                 ctx.play_ui_cancel();
@@ -1489,10 +1580,10 @@ impl CabinetScreen for ArcadeSettingsModal {
                         ctx.play_ui_move();
                     }
                 } else if active_tab == 3 {
-                    // Focus is on Gameplay Sub-tab Bar (General vs Visual Aids)
+                    // Focus is on Gameplay Sub-tab Bar (General / Car Aids / Track Aids / Pilot Labels)
                     if nav_left {
-                        if self.gameplay_sub_tab != 0 {
-                            self.switch_gameplay_subtab(0);
+                        if self.gameplay_sub_tab > 0 {
+                            self.switch_gameplay_subtab(self.gameplay_sub_tab - 1);
                             ctx.play_ui_move();
                         } else {
                             // Move back to DISPLAY tab
@@ -1503,8 +1594,8 @@ impl CabinetScreen for ArcadeSettingsModal {
                             ctx.play_ui_move();
                         }
                     } else if nav_right {
-                        if self.gameplay_sub_tab != 1 {
-                            self.switch_gameplay_subtab(1);
+                        if self.gameplay_sub_tab < 3 {
+                            self.switch_gameplay_subtab(self.gameplay_sub_tab + 1);
                             ctx.play_ui_move();
                         } else {
                             // Wrap to AUDIO tab
@@ -1952,13 +2043,25 @@ impl CabinetScreen for ArcadeSettingsModal {
             _ => {
                 // GAMEPLAY (Tab 3):
                 // Sub-tab pills rects
-                let subtab_pills_y = box_y + scaler.s(90.0);
+                let subtab_pills_y = box_y + scaler.s(88.0);
                 let subtab_pills_h = scaler.s(26.0);
-                let pill_gap = scaler.s(8.0);
-                let pill_w = (content_w - pill_gap) * 0.5;
+                let pill_gap = scaler.s(6.0);
+                let pill_w = (content_w - pill_gap * 3.0) / 4.0;
                 let pill0_rect = (content_x, subtab_pills_y, pill_w, subtab_pills_h);
                 let pill1_rect = (
-                    content_x + pill_w + pill_gap,
+                    content_x + (pill_w + pill_gap),
+                    subtab_pills_y,
+                    pill_w,
+                    subtab_pills_h,
+                );
+                let pill2_rect = (
+                    content_x + (pill_w + pill_gap) * 2.0,
+                    subtab_pills_y,
+                    pill_w,
+                    subtab_pills_h,
+                );
+                let pill3_rect = (
+                    content_x + (pill_w + pill_gap) * 3.0,
                     subtab_pills_y,
                     pill_w,
                     subtab_pills_h,
@@ -1974,322 +2077,398 @@ impl CabinetScreen for ArcadeSettingsModal {
                     self.is_subtab_focused = true;
                     self.is_tab_focused = false;
                     ctx.play_ui_select();
+                } else if NavGrid2D::check_mouse_click(pill2_rect) && self.gameplay_sub_tab != 2 {
+                    self.switch_gameplay_subtab(2);
+                    self.is_subtab_focused = true;
+                    self.is_tab_focused = false;
+                    ctx.play_ui_select();
+                } else if NavGrid2D::check_mouse_click(pill3_rect) && self.gameplay_sub_tab != 3 {
+                    self.switch_gameplay_subtab(3);
+                    self.is_subtab_focused = true;
+                    self.is_tab_focused = false;
+                    ctx.play_ui_select();
                 }
 
-                if self.gameplay_sub_tab == 0 {
-                    // GENERAL SUB-TAB:
-                    // 0: Assist, 1: Speed, 2: Ghost, 3: Damage, 4: Visual Aids Preset, 5: Customize Button, 6: Bottom Buttons
-                    let (gen_row_h, gen_row_gap, gen_content_y) =
-                        (scaler.s(36.0), scaler.s(6.0), box_y + scaler.s(124.0));
-                    let r0 = (content_x, gen_content_y, content_w, gen_row_h);
-                    let r1 = (
-                        content_x,
-                        gen_content_y + (gen_row_h + gen_row_gap),
-                        content_w,
-                        gen_row_h,
-                    );
-                    let r2 = (
-                        content_x,
-                        gen_content_y + (gen_row_h + gen_row_gap) * 2.0,
-                        content_w,
-                        gen_row_h,
-                    );
-                    let r3 = (
-                        content_x,
-                        gen_content_y + (gen_row_h + gen_row_gap) * 3.0,
-                        content_w,
-                        gen_row_h,
-                    );
-                    let r4 = (
-                        content_x,
-                        gen_content_y + (gen_row_h + gen_row_gap) * 4.0,
-                        content_w,
-                        gen_row_h,
-                    );
-                    let r5 = (
-                        content_x,
-                        gen_content_y + (gen_row_h + gen_row_gap) * 5.0,
-                        content_w,
-                        gen_row_h,
-                    );
+                match self.gameplay_sub_tab {
+                    0 => {
+                        // GENERAL SUB-TAB:
+                        // 0: Assist, 1: Speed, 2: Ghost, 3: Damage, 4: Visual Aids Preset, 5: Customize Button, 6: Bottom Buttons
+                        let (gen_row_h, gen_row_gap, gen_content_y) =
+                            (scaler.s(36.0), scaler.s(6.0), box_y + scaler.s(122.0));
+                        let r0 = (content_x, gen_content_y, content_w, gen_row_h);
+                        let r1 = (
+                            content_x,
+                            gen_content_y + (gen_row_h + gen_row_gap),
+                            content_w,
+                            gen_row_h,
+                        );
+                        let r2 = (
+                            content_x,
+                            gen_content_y + (gen_row_h + gen_row_gap) * 2.0,
+                            content_w,
+                            gen_row_h,
+                        );
+                        let r3 = (
+                            content_x,
+                            gen_content_y + (gen_row_h + gen_row_gap) * 3.0,
+                            content_w,
+                            gen_row_h,
+                        );
+                        let r4 = (
+                            content_x,
+                            gen_content_y + (gen_row_h + gen_row_gap) * 4.0,
+                            content_w,
+                            gen_row_h,
+                        );
+                        let r5 = (
+                            content_x,
+                            gen_content_y + (gen_row_h + gen_row_gap) * 5.0,
+                            content_w,
+                            gen_row_h,
+                        );
 
-                    if self.assist_dropdown.handle_input(
-                        active_row == 0,
-                        ctx.gamepad.nav_left,
-                        ctx.gamepad.nav_right,
-                        ctx.gamepad.nav_up,
-                        ctx.gamepad.nav_down,
-                        ctx.gamepad.btn_confirm_pressed,
-                        ctx.gamepad.btn_cancel_pressed,
-                        r0,
-                        scaler,
-                    ) {
-                        ctx.play_ui_select();
-                    }
-                    if self.speed_unit_dropdown.handle_input(
-                        active_row == 1,
-                        ctx.gamepad.nav_left,
-                        ctx.gamepad.nav_right,
-                        ctx.gamepad.nav_up,
-                        ctx.gamepad.nav_down,
-                        ctx.gamepad.btn_confirm_pressed,
-                        ctx.gamepad.btn_cancel_pressed,
-                        r1,
-                        scaler,
-                    ) {
-                        ctx.play_ui_select();
-                    }
-                    if self.ghost_car_dropdown.handle_input(
-                        active_row == 2,
-                        ctx.gamepad.nav_left,
-                        ctx.gamepad.nav_right,
-                        ctx.gamepad.nav_up,
-                        ctx.gamepad.nav_down,
-                        ctx.gamepad.btn_confirm_pressed,
-                        ctx.gamepad.btn_cancel_pressed,
-                        r2,
-                        scaler,
-                    ) {
-                        ctx.play_ui_select();
-                    }
-                    if self.car_damage_dropdown.handle_input(
-                        active_row == 3,
-                        ctx.gamepad.nav_left,
-                        ctx.gamepad.nav_right,
-                        ctx.gamepad.nav_up,
-                        ctx.gamepad.nav_down,
-                        ctx.gamepad.btn_confirm_pressed,
-                        ctx.gamepad.btn_cancel_pressed,
-                        r3,
-                        scaler,
-                    ) {
-                        ctx.play_ui_select();
-                    }
+                        if self.assist_dropdown.handle_input(
+                            active_row == 0,
+                            ctx.gamepad.nav_left,
+                            ctx.gamepad.nav_right,
+                            ctx.gamepad.nav_up,
+                            ctx.gamepad.nav_down,
+                            ctx.gamepad.btn_confirm_pressed,
+                            ctx.gamepad.btn_cancel_pressed,
+                            r0,
+                            scaler,
+                        ) {
+                            ctx.play_ui_select();
+                        }
+                        if self.speed_unit_dropdown.handle_input(
+                            active_row == 1,
+                            ctx.gamepad.nav_left,
+                            ctx.gamepad.nav_right,
+                            ctx.gamepad.nav_up,
+                            ctx.gamepad.nav_down,
+                            ctx.gamepad.btn_confirm_pressed,
+                            ctx.gamepad.btn_cancel_pressed,
+                            r1,
+                            scaler,
+                        ) {
+                            ctx.play_ui_select();
+                        }
+                        if self.ghost_car_dropdown.handle_input(
+                            active_row == 2,
+                            ctx.gamepad.nav_left,
+                            ctx.gamepad.nav_right,
+                            ctx.gamepad.nav_up,
+                            ctx.gamepad.nav_down,
+                            ctx.gamepad.btn_confirm_pressed,
+                            ctx.gamepad.btn_cancel_pressed,
+                            r2,
+                            scaler,
+                        ) {
+                            ctx.play_ui_select();
+                        }
+                        if self.car_damage_dropdown.handle_input(
+                            active_row == 3,
+                            ctx.gamepad.nav_left,
+                            ctx.gamepad.nav_right,
+                            ctx.gamepad.nav_up,
+                            ctx.gamepad.nav_down,
+                            ctx.gamepad.btn_confirm_pressed,
+                            ctx.gamepad.btn_cancel_pressed,
+                            r3,
+                            scaler,
+                        ) {
+                            ctx.play_ui_select();
+                        }
 
-                    let prev_preset = self.visual_aids_preset_dropdown.selected_index;
-                    if self.visual_aids_preset_dropdown.handle_input(
-                        active_row == 4,
-                        ctx.gamepad.nav_left,
-                        ctx.gamepad.nav_right,
-                        ctx.gamepad.nav_up,
-                        ctx.gamepad.nav_down,
-                        ctx.gamepad.btn_confirm_pressed,
-                        ctx.gamepad.btn_cancel_pressed,
-                        r4,
-                        scaler,
-                    ) {
-                        ctx.play_ui_select();
-                        let new_preset = self.visual_aids_preset_dropdown.selected_index;
-                        if new_preset != prev_preset {
-                            if new_preset < 3 {
-                                self.apply_visual_aids_preset(new_preset);
-                            } else {
-                                self.switch_gameplay_subtab(1);
+                        let prev_preset = self.visual_aids_preset_dropdown.selected_index;
+                        if self.visual_aids_preset_dropdown.handle_input(
+                            active_row == 4,
+                            ctx.gamepad.nav_left,
+                            ctx.gamepad.nav_right,
+                            ctx.gamepad.nav_up,
+                            ctx.gamepad.nav_down,
+                            ctx.gamepad.btn_confirm_pressed,
+                            ctx.gamepad.btn_cancel_pressed,
+                            r4,
+                            scaler,
+                        ) {
+                            ctx.play_ui_select();
+                            let new_preset = self.visual_aids_preset_dropdown.selected_index;
+                            if new_preset != prev_preset {
+                                if new_preset < 3 {
+                                    self.apply_visual_aids_preset(new_preset);
+                                } else {
+                                    self.switch_gameplay_subtab(1);
+                                }
                             }
                         }
-                    }
 
-                    // Row 5: Customize Button
-                    let is_cust_focused = active_row == 5;
-                    let is_confirm = safe_key_pressed(KeyCode::Enter)
-                        || safe_key_pressed(KeyCode::KpEnter)
-                        || safe_key_pressed(KeyCode::Space)
-                        || ctx.gamepad.btn_confirm_pressed
-                        || ctx.gamepad.btn_a_pressed;
+                        // Row 5: Customize Button
+                        let is_cust_focused = active_row == 5;
+                        let is_confirm = safe_key_pressed(KeyCode::Enter)
+                            || safe_key_pressed(KeyCode::KpEnter)
+                            || safe_key_pressed(KeyCode::Space)
+                            || ctx.gamepad.btn_confirm_pressed
+                            || ctx.gamepad.btn_a_pressed;
 
-                    if (is_cust_focused && is_confirm) || NavGrid2D::check_mouse_click(r5) {
-                        self.switch_gameplay_subtab(1);
-                        ctx.play_ui_select();
-                    }
-                } else {
-                    // VISUAL AIDS SUB-TAB:
-                    // 0: Preset, 1: Aura, 2: Aura Ratio, 3: Aura Brightness, 4: Ribbon, 5: Ribbon Brightness, 6: Ribbon Scale
-                    // 7: Chevron, 8: Chevron Brightness, 9: Adaptive, 10: Radar Ping, 11: Racing Line, 12: Racing Line Opacity, 13: Bottom Buttons
-                    let (aid_row_h, aid_row_gap, aid_content_y) =
-                        (scaler.s(21.0), scaler.s(2.5), box_y + scaler.s(118.0));
-                    let mut y = aid_content_y;
-                    let r0 = (content_x, y, content_w, aid_row_h);
-                    y += aid_row_h + aid_row_gap;
-                    let r1 = (content_x, y, content_w, aid_row_h);
-                    y += aid_row_h + aid_row_gap;
-                    let r2 = (content_x, y, content_w, aid_row_h);
-                    y += aid_row_h + aid_row_gap;
-                    let r3 = (content_x, y, content_w, aid_row_h);
-                    y += aid_row_h + aid_row_gap;
-                    let r4 = (content_x, y, content_w, aid_row_h);
-                    y += aid_row_h + aid_row_gap;
-                    let r5 = (content_x, y, content_w, aid_row_h);
-                    y += aid_row_h + aid_row_gap;
-                    let r6 = (content_x, y, content_w, aid_row_h);
-                    y += aid_row_h + aid_row_gap;
-                    let r7 = (content_x, y, content_w, aid_row_h);
-                    y += aid_row_h + aid_row_gap;
-                    let r8 = (content_x, y, content_w, aid_row_h);
-                    y += aid_row_h + aid_row_gap;
-                    let r9 = (content_x, y, content_w, aid_row_h);
-                    y += aid_row_h + aid_row_gap;
-                    let r10 = (content_x, y, content_w, aid_row_h);
-                    y += aid_row_h + aid_row_gap;
-                    let r11 = (content_x, y, content_w, aid_row_h);
-                    y += aid_row_h + aid_row_gap;
-                    let r12 = (content_x, y, content_w, aid_row_h);
-
-                    let prev_preset = self.visual_aids_preset_dropdown.selected_index;
-                    if self.visual_aids_preset_dropdown.handle_input(
-                        active_row == 0,
-                        ctx.gamepad.nav_left,
-                        ctx.gamepad.nav_right,
-                        ctx.gamepad.nav_up,
-                        ctx.gamepad.nav_down,
-                        ctx.gamepad.btn_confirm_pressed,
-                        ctx.gamepad.btn_cancel_pressed,
-                        r0,
-                        scaler,
-                    ) {
-                        ctx.play_ui_select();
-                        let new_preset = self.visual_aids_preset_dropdown.selected_index;
-                        if new_preset != prev_preset && new_preset < 3 {
-                            self.apply_visual_aids_preset(new_preset);
+                        if (is_cust_focused && is_confirm) || NavGrid2D::check_mouse_click(r5) {
+                            self.switch_gameplay_subtab(1);
+                            ctx.play_ui_select();
                         }
                     }
+                    1 => {
+                        // CAR AIDS SUB-TAB:
+                        // 0: Preset, 1: Chevron, 2: Chevron Brightness, 3: Aura, 4: Aura Ratio, 5: Aura Brightness, 6: Adaptive
+                        let (aid_row_h, aid_row_gap, aid_content_y) =
+                            (scaler.s(34.0), scaler.s(6.0), box_y + scaler.s(122.0));
+                        let mut y = aid_content_y;
+                        let r0 = (content_x, y, content_w, aid_row_h);
+                        y += aid_row_h + aid_row_gap;
+                        let r1 = (content_x, y, content_w, aid_row_h);
+                        y += aid_row_h + aid_row_gap;
+                        let r2 = (content_x, y, content_w, aid_row_h);
+                        y += aid_row_h + aid_row_gap;
+                        let r3 = (content_x, y, content_w, aid_row_h);
+                        y += aid_row_h + aid_row_gap;
+                        let r4 = (content_x, y, content_w, aid_row_h);
+                        y += aid_row_h + aid_row_gap;
+                        let r5 = (content_x, y, content_w, aid_row_h);
+                        y += aid_row_h + aid_row_gap;
+                        let r6 = (content_x, y, content_w, aid_row_h);
 
-                    if self.aura_dropdown.handle_input(
-                        active_row == 1,
-                        ctx.gamepad.nav_left,
-                        ctx.gamepad.nav_right,
-                        ctx.gamepad.nav_up,
-                        ctx.gamepad.nav_down,
-                        ctx.gamepad.btn_confirm_pressed,
-                        ctx.gamepad.btn_cancel_pressed,
-                        r1,
-                        scaler,
-                    ) {
-                        self.sync_preset_from_helpers();
-                        ctx.play_ui_select();
+                        let prev_preset = self.visual_aids_preset_dropdown.selected_index;
+                        if self.visual_aids_preset_dropdown.handle_input(
+                            active_row == 0,
+                            ctx.gamepad.nav_left,
+                            ctx.gamepad.nav_right,
+                            ctx.gamepad.nav_up,
+                            ctx.gamepad.nav_down,
+                            ctx.gamepad.btn_confirm_pressed,
+                            ctx.gamepad.btn_cancel_pressed,
+                            r0,
+                            scaler,
+                        ) {
+                            ctx.play_ui_select();
+                            let new_preset = self.visual_aids_preset_dropdown.selected_index;
+                            if new_preset != prev_preset && new_preset < 3 {
+                                self.apply_visual_aids_preset(new_preset);
+                            }
+                        }
+
+                        if self.chevron_dropdown.handle_input(
+                            active_row == 1,
+                            ctx.gamepad.nav_left,
+                            ctx.gamepad.nav_right,
+                            ctx.gamepad.nav_up,
+                            ctx.gamepad.nav_down,
+                            ctx.gamepad.btn_confirm_pressed,
+                            ctx.gamepad.btn_cancel_pressed,
+                            r1,
+                            scaler,
+                        ) {
+                            self.sync_preset_from_helpers();
+                            ctx.play_ui_select();
+                        }
+                        if self.chevron_brightness_slider.handle_input(
+                            active_row == 2,
+                            ctx.gamepad.nav_left,
+                            ctx.gamepad.nav_right,
+                            r2,
+                        ) {
+                            self.sync_preset_from_helpers();
+                            ctx.play_ui_move();
+                        }
+                        if self.aura_dropdown.handle_input(
+                            active_row == 3,
+                            ctx.gamepad.nav_left,
+                            ctx.gamepad.nav_right,
+                            ctx.gamepad.nav_up,
+                            ctx.gamepad.nav_down,
+                            ctx.gamepad.btn_confirm_pressed,
+                            ctx.gamepad.btn_cancel_pressed,
+                            r3,
+                            scaler,
+                        ) {
+                            self.sync_preset_from_helpers();
+                            ctx.play_ui_select();
+                        }
+                        if self.aura_ratio_slider.handle_input(
+                            active_row == 4,
+                            ctx.gamepad.nav_left,
+                            ctx.gamepad.nav_right,
+                            r4,
+                        ) {
+                            self.sync_preset_from_helpers();
+                            ctx.play_ui_move();
+                        }
+                        if self.aura_brightness_slider.handle_input(
+                            active_row == 5,
+                            ctx.gamepad.nav_left,
+                            ctx.gamepad.nav_right,
+                            r5,
+                        ) {
+                            self.sync_preset_from_helpers();
+                            ctx.play_ui_move();
+                        }
+                        if self.adaptive_dropdown.handle_input(
+                            active_row == 6,
+                            ctx.gamepad.nav_left,
+                            ctx.gamepad.nav_right,
+                            ctx.gamepad.nav_up,
+                            ctx.gamepad.nav_down,
+                            ctx.gamepad.btn_confirm_pressed,
+                            ctx.gamepad.btn_cancel_pressed,
+                            r6,
+                            scaler,
+                        ) {
+                            self.sync_preset_from_helpers();
+                            ctx.play_ui_select();
+                        }
                     }
-                    if self.aura_ratio_slider.handle_input(
-                        active_row == 2,
-                        ctx.gamepad.nav_left,
-                        ctx.gamepad.nav_right,
-                        r2,
-                    ) {
-                        self.sync_preset_from_helpers();
-                        ctx.play_ui_move();
+                    2 => {
+                        // TRACK AIDS SUB-TAB:
+                        // 0: Racing Line, 1: Racing Line Opacity, 2: Ribbon, 3: Ribbon Brightness, 4: Ribbon Scale
+                        let (aid_row_h, aid_row_gap, aid_content_y) =
+                            (scaler.s(38.0), scaler.s(8.0), box_y + scaler.s(122.0));
+                        let mut y = aid_content_y;
+                        let r0 = (content_x, y, content_w, aid_row_h);
+                        y += aid_row_h + aid_row_gap;
+                        let r1 = (content_x, y, content_w, aid_row_h);
+                        y += aid_row_h + aid_row_gap;
+                        let r2 = (content_x, y, content_w, aid_row_h);
+                        y += aid_row_h + aid_row_gap;
+                        let r3 = (content_x, y, content_w, aid_row_h);
+                        y += aid_row_h + aid_row_gap;
+                        let r4 = (content_x, y, content_w, aid_row_h);
+
+                        if self.racing_line_dropdown.handle_input(
+                            active_row == 0,
+                            ctx.gamepad.nav_left,
+                            ctx.gamepad.nav_right,
+                            ctx.gamepad.nav_up,
+                            ctx.gamepad.nav_down,
+                            ctx.gamepad.btn_confirm_pressed,
+                            ctx.gamepad.btn_cancel_pressed,
+                            r0,
+                            scaler,
+                        ) {
+                            self.sync_preset_from_helpers();
+                            ctx.play_ui_select();
+                        }
+                        if self.racing_line_opacity_slider.handle_input(
+                            active_row == 1,
+                            ctx.gamepad.nav_left,
+                            ctx.gamepad.nav_right,
+                            r1,
+                        ) {
+                            self.sync_preset_from_helpers();
+                            ctx.play_ui_move();
+                        }
+                        if self.ribbon_dropdown.handle_input(
+                            active_row == 2,
+                            ctx.gamepad.nav_left,
+                            ctx.gamepad.nav_right,
+                            ctx.gamepad.nav_up,
+                            ctx.gamepad.nav_down,
+                            ctx.gamepad.btn_confirm_pressed,
+                            ctx.gamepad.btn_cancel_pressed,
+                            r2,
+                            scaler,
+                        ) {
+                            self.sync_preset_from_helpers();
+                            ctx.play_ui_select();
+                        }
+                        if self.ribbon_brightness_slider.handle_input(
+                            active_row == 3,
+                            ctx.gamepad.nav_left,
+                            ctx.gamepad.nav_right,
+                            r3,
+                        ) {
+                            self.sync_preset_from_helpers();
+                            ctx.play_ui_move();
+                        }
+                        if self.ribbon_scale_slider.handle_input(
+                            active_row == 4,
+                            ctx.gamepad.nav_left,
+                            ctx.gamepad.nav_right,
+                            r4,
+                        ) {
+                            self.sync_preset_from_helpers();
+                            ctx.play_ui_move();
+                        }
                     }
-                    if self.aura_brightness_slider.handle_input(
-                        active_row == 3,
-                        ctx.gamepad.nav_left,
-                        ctx.gamepad.nav_right,
-                        r3,
-                    ) {
-                        self.sync_preset_from_helpers();
-                        ctx.play_ui_move();
-                    }
-                    if self.ribbon_dropdown.handle_input(
-                        active_row == 4,
-                        ctx.gamepad.nav_left,
-                        ctx.gamepad.nav_right,
-                        ctx.gamepad.nav_up,
-                        ctx.gamepad.nav_down,
-                        ctx.gamepad.btn_confirm_pressed,
-                        ctx.gamepad.btn_cancel_pressed,
-                        r4,
-                        scaler,
-                    ) {
-                        self.sync_preset_from_helpers();
-                        ctx.play_ui_select();
-                    }
-                    if self.ribbon_brightness_slider.handle_input(
-                        active_row == 5,
-                        ctx.gamepad.nav_left,
-                        ctx.gamepad.nav_right,
-                        r5,
-                    ) {
-                        self.sync_preset_from_helpers();
-                        ctx.play_ui_move();
-                    }
-                    if self.ribbon_scale_slider.handle_input(
-                        active_row == 6,
-                        ctx.gamepad.nav_left,
-                        ctx.gamepad.nav_right,
-                        r6,
-                    ) {
-                        self.sync_preset_from_helpers();
-                        ctx.play_ui_move();
-                    }
-                    if self.chevron_dropdown.handle_input(
-                        active_row == 7,
-                        ctx.gamepad.nav_left,
-                        ctx.gamepad.nav_right,
-                        ctx.gamepad.nav_up,
-                        ctx.gamepad.nav_down,
-                        ctx.gamepad.btn_confirm_pressed,
-                        ctx.gamepad.btn_cancel_pressed,
-                        r7,
-                        scaler,
-                    ) {
-                        self.sync_preset_from_helpers();
-                        ctx.play_ui_select();
-                    }
-                    if self.chevron_brightness_slider.handle_input(
-                        active_row == 8,
-                        ctx.gamepad.nav_left,
-                        ctx.gamepad.nav_right,
-                        r8,
-                    ) {
-                        self.sync_preset_from_helpers();
-                        ctx.play_ui_move();
-                    }
-                    if self.adaptive_dropdown.handle_input(
-                        active_row == 9,
-                        ctx.gamepad.nav_left,
-                        ctx.gamepad.nav_right,
-                        ctx.gamepad.nav_up,
-                        ctx.gamepad.nav_down,
-                        ctx.gamepad.btn_confirm_pressed,
-                        ctx.gamepad.btn_cancel_pressed,
-                        r9,
-                        scaler,
-                    ) {
-                        self.sync_preset_from_helpers();
-                        ctx.play_ui_select();
-                    }
-                    if self.radar_ping_dropdown.handle_input(
-                        active_row == 10,
-                        ctx.gamepad.nav_left,
-                        ctx.gamepad.nav_right,
-                        ctx.gamepad.nav_up,
-                        ctx.gamepad.nav_down,
-                        ctx.gamepad.btn_confirm_pressed,
-                        ctx.gamepad.btn_cancel_pressed,
-                        r10,
-                        scaler,
-                    ) {
-                        self.sync_preset_from_helpers();
-                        ctx.play_ui_select();
-                    }
-                    if self.racing_line_dropdown.handle_input(
-                        active_row == 11,
-                        ctx.gamepad.nav_left,
-                        ctx.gamepad.nav_right,
-                        ctx.gamepad.nav_up,
-                        ctx.gamepad.nav_down,
-                        ctx.gamepad.btn_confirm_pressed,
-                        ctx.gamepad.btn_cancel_pressed,
-                        r11,
-                        scaler,
-                    ) {
-                        self.sync_preset_from_helpers();
-                        ctx.play_ui_select();
-                    }
-                    if self.racing_line_opacity_slider.handle_input(
-                        active_row == 12,
-                        ctx.gamepad.nav_left,
-                        ctx.gamepad.nav_right,
-                        r12,
-                    ) {
-                        self.sync_preset_from_helpers();
-                        ctx.play_ui_move();
+                    _ => {
+                        // PILOT LABELS SUB-TAB:
+                        // 0: Pilot Labels, 1: Max Visible Pilots, 2: Pilot Labels Opacity, 3: Label Detail, 4: Radar Ping
+                        let (aid_row_h, aid_row_gap, aid_content_y) =
+                            (scaler.s(38.0), scaler.s(8.0), box_y + scaler.s(122.0));
+                        let mut y = aid_content_y;
+                        let r0 = (content_x, y, content_w, aid_row_h);
+                        y += aid_row_h + aid_row_gap;
+                        let r1 = (content_x, y, content_w, aid_row_h);
+                        y += aid_row_h + aid_row_gap;
+                        let r2 = (content_x, y, content_w, aid_row_h);
+                        y += aid_row_h + aid_row_gap;
+                        let r3 = (content_x, y, content_w, aid_row_h);
+                        y += aid_row_h + aid_row_gap;
+                        let r4 = (content_x, y, content_w, aid_row_h);
+
+                        if self.bot_nameplates_dropdown.handle_input(
+                            active_row == 0,
+                            ctx.gamepad.nav_left,
+                            ctx.gamepad.nav_right,
+                            ctx.gamepad.nav_up,
+                            ctx.gamepad.nav_down,
+                            ctx.gamepad.btn_confirm_pressed,
+                            ctx.gamepad.btn_cancel_pressed,
+                            r0,
+                            scaler,
+                        ) {
+                            ctx.play_ui_select();
+                        }
+                        if self.bot_nameplates_max_slider.handle_input(
+                            active_row == 1,
+                            ctx.gamepad.nav_left,
+                            ctx.gamepad.nav_right,
+                            r1,
+                        ) {
+                            ctx.play_ui_move();
+                        }
+                        if self.bot_nameplates_opacity_slider.handle_input(
+                            active_row == 2,
+                            ctx.gamepad.nav_left,
+                            ctx.gamepad.nav_right,
+                            r2,
+                        ) {
+                            ctx.play_ui_move();
+                        }
+                        if self.bot_nameplates_detail_dropdown.handle_input(
+                            active_row == 3,
+                            ctx.gamepad.nav_left,
+                            ctx.gamepad.nav_right,
+                            ctx.gamepad.nav_up,
+                            ctx.gamepad.nav_down,
+                            ctx.gamepad.btn_confirm_pressed,
+                            ctx.gamepad.btn_cancel_pressed,
+                            r3,
+                            scaler,
+                        ) {
+                            ctx.play_ui_select();
+                        }
+                        if self.radar_ping_dropdown.handle_input(
+                            active_row == 4,
+                            ctx.gamepad.nav_left,
+                            ctx.gamepad.nav_right,
+                            ctx.gamepad.nav_up,
+                            ctx.gamepad.nav_down,
+                            ctx.gamepad.btn_confirm_pressed,
+                            ctx.gamepad.btn_cancel_pressed,
+                            r4,
+                            scaler,
+                        ) {
+                            self.sync_preset_from_helpers();
+                            ctx.play_ui_select();
+                        }
                     }
                 }
             }
@@ -3001,644 +3180,711 @@ impl CabinetScreen for ArcadeSettingsModal {
             }
             _ => {
                 // GAMEPLAY TAB (Tab 3):
-                // 1. Draw sub-tab pills
-                let subtab_pills_y = box_y + scaler.s(90.0);
+                // 1. Draw sub-tab pills (General / Car Aids / Track Aids / Pilot Labels)
+                let subtab_pills_y = box_y + scaler.s(88.0);
                 let subtab_pills_h = scaler.s(26.0);
-                let pill_gap = scaler.s(8.0);
-                let pill_w = (content_w - pill_gap) * 0.5;
-                let pill0_rect = (content_x, subtab_pills_y, pill_w, subtab_pills_h);
-                let pill1_rect = (
-                    content_x + pill_w + pill_gap,
-                    subtab_pills_y,
-                    pill_w,
-                    subtab_pills_h,
-                );
+                let pill_gap = scaler.s(6.0);
+                let pill_w = (content_w - pill_gap * 3.0) / 4.0;
+                let pill_rects = [
+                    (content_x, subtab_pills_y, pill_w, subtab_pills_h),
+                    (content_x + (pill_w + pill_gap), subtab_pills_y, pill_w, subtab_pills_h),
+                    (content_x + (pill_w + pill_gap) * 2.0, subtab_pills_y, pill_w, subtab_pills_h),
+                    (content_x + (pill_w + pill_gap) * 3.0, subtab_pills_y, pill_w, subtab_pills_h),
+                ];
+                let pill_names = ["GENERAL", "CAR AIDS", "TRACK AIDS", "PILOT LABELS"];
 
-                // Pill 0: GENERAL
-                let is_p0_active = self.gameplay_sub_tab == 0;
-                let is_p0_focused = self.is_subtab_focused && is_p0_active;
-                let is_p0_hovered = NavGrid2D::check_mouse_hover(pill0_rect);
-                let p0_bg = if is_p0_focused {
-                    Color::new(accent.r * 0.45, accent.g * 0.45, accent.b * 0.45, 0.95)
-                } else if is_p0_active {
-                    Color::new(accent.r * 0.35, accent.g * 0.35, accent.b * 0.35, 0.85)
-                } else if is_p0_hovered {
-                    Palette::UI_CARD_BG_HOVER
-                } else {
-                    Palette::UI_CARD_BG
-                };
-                let p0_border = if is_p0_focused {
-                    Palette::NEON_GOLD
-                } else if is_p0_active {
-                    accent
-                } else {
-                    Palette::UI_CARD_BORDER
-                };
-                scaler.draw_glass_card(
-                    pill0_rect.0,
-                    pill0_rect.1,
-                    pill0_rect.2,
-                    pill0_rect.3,
-                    p0_bg,
-                    p0_border,
-                    if is_p0_focused {
-                        2.5
-                    } else if is_p0_active {
-                        2.0
-                    } else {
-                        1.0
-                    },
-                );
-                let p0_label = if is_p0_focused {
-                    "< GAMEPLAY GENERAL >"
-                } else {
-                    "GAMEPLAY GENERAL"
-                };
-                fonts.draw_ui_bold_centered(
-                    p0_label,
-                    pill0_rect.0 + pill0_rect.2 * 0.5,
-                    pill0_rect.1 + pill0_rect.3 * 0.65,
-                    scaler.font_s(11.5),
-                    if is_p0_focused {
-                        Palette::NEON_GOLD
-                    } else if is_p0_active {
-                        Palette::WHITE
-                    } else {
-                        Palette::UI_TEXT_MUTED
-                    },
-                );
-
-                // Pill 1: VISUAL AIDS
-                let is_p1_active = self.gameplay_sub_tab == 1;
-                let is_p1_focused = self.is_subtab_focused && is_p1_active;
-                let is_p1_hovered = NavGrid2D::check_mouse_hover(pill1_rect);
-                let p1_bg = if is_p1_focused {
-                    Color::new(accent.r * 0.45, accent.g * 0.45, accent.b * 0.45, 0.95)
-                } else if is_p1_active {
-                    Color::new(accent.r * 0.35, accent.g * 0.35, accent.b * 0.35, 0.85)
-                } else if is_p1_hovered {
-                    Palette::UI_CARD_BG_HOVER
-                } else {
-                    Palette::UI_CARD_BG
-                };
-                let p1_border = if is_p1_focused {
-                    Palette::NEON_GOLD
-                } else if is_p1_active {
-                    accent
-                } else {
-                    Palette::UI_CARD_BORDER
-                };
-                scaler.draw_glass_card(
-                    pill1_rect.0,
-                    pill1_rect.1,
-                    pill1_rect.2,
-                    pill1_rect.3,
-                    p1_bg,
-                    p1_border,
-                    if is_p1_focused {
-                        2.5
-                    } else if is_p1_active {
-                        2.0
-                    } else {
-                        1.0
-                    },
-                );
-                let p1_label = if is_p1_focused {
-                    "< VISUAL DRIVING AIDS >"
-                } else {
-                    "VISUAL DRIVING AIDS"
-                };
-                fonts.draw_ui_bold_centered(
-                    p1_label,
-                    pill1_rect.0 + pill1_rect.2 * 0.5,
-                    pill1_rect.1 + pill1_rect.3 * 0.65,
-                    scaler.font_s(11.5),
-                    if is_p1_focused {
-                        Palette::NEON_GOLD
-                    } else if is_p1_active {
-                        Palette::WHITE
-                    } else {
-                        Palette::UI_TEXT_MUTED
-                    },
-                );
-
-                if self.gameplay_sub_tab == 0 {
-                    // GENERAL: 0: Assist, 1: Speed, 2: Ghost, 3: Damage, 4: Preset, 5: Customize Button
-                    let (gen_row_h, gen_row_gap, gen_content_y) =
-                        (scaler.s(36.0), scaler.s(6.0), box_y + scaler.s(124.0));
-                    let mut y = gen_content_y;
-                    let r0 = (content_x, y, content_w, gen_row_h);
-                    draw_dropdown(
-                        scaler,
-                        fonts,
-                        content_x,
-                        y,
-                        content_w,
-                        gen_row_h,
-                        &self.assist_dropdown.label,
-                        &self.assist_dropdown.options,
-                        self.assist_dropdown.selected_index,
-                        false,
-                        self.assist_dropdown.popup_hovered_index,
-                        active_row == 0,
-                        false,
-                        accent,
-                    );
-                    y += gen_row_h + gen_row_gap;
-                    let r1 = (content_x, y, content_w, gen_row_h);
-                    draw_dropdown(
-                        scaler,
-                        fonts,
-                        content_x,
-                        y,
-                        content_w,
-                        gen_row_h,
-                        &self.speed_unit_dropdown.label,
-                        &self.speed_unit_dropdown.options,
-                        self.speed_unit_dropdown.selected_index,
-                        false,
-                        self.speed_unit_dropdown.popup_hovered_index,
-                        active_row == 1,
-                        false,
-                        accent,
-                    );
-                    y += gen_row_h + gen_row_gap;
-                    let r2 = (content_x, y, content_w, gen_row_h);
-                    draw_dropdown(
-                        scaler,
-                        fonts,
-                        content_x,
-                        y,
-                        content_w,
-                        gen_row_h,
-                        &self.ghost_car_dropdown.label,
-                        &self.ghost_car_dropdown.options,
-                        self.ghost_car_dropdown.selected_index,
-                        false,
-                        self.ghost_car_dropdown.popup_hovered_index,
-                        active_row == 2,
-                        false,
-                        accent,
-                    );
-                    y += gen_row_h + gen_row_gap;
-                    let r3 = (content_x, y, content_w, gen_row_h);
-                    draw_dropdown(
-                        scaler,
-                        fonts,
-                        content_x,
-                        y,
-                        content_w,
-                        gen_row_h,
-                        &self.car_damage_dropdown.label,
-                        &self.car_damage_dropdown.options,
-                        self.car_damage_dropdown.selected_index,
-                        false,
-                        self.car_damage_dropdown.popup_hovered_index,
-                        active_row == 3,
-                        false,
-                        accent,
-                    );
-                    y += gen_row_h + gen_row_gap;
-                    let r4 = (content_x, y, content_w, gen_row_h);
-                    draw_dropdown(
-                        scaler,
-                        fonts,
-                        content_x,
-                        y,
-                        content_w,
-                        gen_row_h,
-                        &self.visual_aids_preset_dropdown.label,
-                        &self.visual_aids_preset_dropdown.options,
-                        self.visual_aids_preset_dropdown.selected_index,
-                        false,
-                        self.visual_aids_preset_dropdown.popup_hovered_index,
-                        active_row == 4,
-                        false,
-                        accent,
-                    );
-                    y += gen_row_h + gen_row_gap;
-                    let r5 = (content_x, y, content_w, gen_row_h);
-
-                    // Row 5: Customize Button
-                    let is_cust_focused = active_row == 5;
-                    let is_cust_hovered = NavGrid2D::check_mouse_hover(r5);
-                    let cust_active = is_cust_focused || is_cust_hovered;
-                    let cust_bg = if cust_active {
+                for (idx, (rect, name)) in pill_rects.iter().zip(pill_names.iter()).enumerate() {
+                    let is_active = self.gameplay_sub_tab == idx;
+                    let is_focused = self.is_subtab_focused && is_active;
+                    let is_hovered = NavGrid2D::check_mouse_hover(*rect);
+                    let bg = if is_focused {
+                        Color::new(accent.r * 0.45, accent.g * 0.45, accent.b * 0.45, 0.95)
+                    } else if is_active {
+                        Color::new(accent.r * 0.35, accent.g * 0.35, accent.b * 0.35, 0.85)
+                    } else if is_hovered {
                         Palette::UI_CARD_BG_HOVER
                     } else {
                         Palette::UI_CARD_BG
                     };
-                    let cust_border = if cust_active {
-                        Palette::NEON_CYAN
+                    let border = if is_focused {
+                        Palette::NEON_GOLD
+                    } else if is_active {
+                        accent
                     } else {
                         Palette::UI_CARD_BORDER
                     };
                     scaler.draw_glass_card(
-                        r5.0,
-                        r5.1,
-                        r5.2,
-                        r5.3,
-                        cust_bg,
-                        cust_border,
-                        if cust_active { 2.0 } else { 1.0 },
+                        rect.0,
+                        rect.1,
+                        rect.2,
+                        rect.3,
+                        bg,
+                        border,
+                        if is_focused { 2.5 } else if is_active { 2.0 } else { 1.0 },
                     );
+                    let label = if is_focused {
+                        format!("< {} >", name)
+                    } else {
+                        name.to_string()
+                    };
                     fonts.draw_ui_bold_centered(
-                        if is_cust_focused {
-                            "[ENTER] CUSTOMIZE 10 INDIVIDUAL AIDS ➔"
-                        } else {
-                            "CUSTOMIZE 10 INDIVIDUAL AIDS ➔"
-                        },
-                        r5.0 + r5.2 * 0.5,
-                        r5.1 + r5.3 * 0.62,
-                        scaler.font_s(12.5),
-                        if cust_active {
-                            Palette::NEON_CYAN
-                        } else {
+                        &label,
+                        rect.0 + rect.2 * 0.5,
+                        rect.1 + rect.3 * 0.65,
+                        scaler.font_s(11.0),
+                        if is_focused {
+                            Palette::NEON_GOLD
+                        } else if is_active {
                             Palette::WHITE
+                        } else {
+                            Palette::UI_TEXT_MUTED
                         },
                     );
+                }
 
-                    // Popups
-                    if self.assist_dropdown.is_open {
-                        draw_dropdown_popup(
+                match self.gameplay_sub_tab {
+                    0 => {
+                        // GENERAL: 0: Assist, 1: Speed, 2: Ghost, 3: Damage, 4: Preset, 5: Customize Button
+                        let (gen_row_h, gen_row_gap, gen_content_y) =
+                            (scaler.s(36.0), scaler.s(6.0), box_y + scaler.s(122.0));
+                        let mut y = gen_content_y;
+                        let r0 = (content_x, y, content_w, gen_row_h);
+                        draw_dropdown(
                             scaler,
                             fonts,
-                            r0.0,
-                            r0.1,
-                            r0.2,
-                            r0.3,
+                            content_x,
+                            y,
+                            content_w,
+                            gen_row_h,
+                            &self.assist_dropdown.label,
                             &self.assist_dropdown.options,
                             self.assist_dropdown.selected_index,
+                            false,
                             self.assist_dropdown.popup_hovered_index,
+                            active_row == 0,
+                            false,
                             accent,
                         );
-                    } else if self.speed_unit_dropdown.is_open {
-                        draw_dropdown_popup(
+                        y += gen_row_h + gen_row_gap;
+                        let r1 = (content_x, y, content_w, gen_row_h);
+                        draw_dropdown(
                             scaler,
                             fonts,
-                            r1.0,
-                            r1.1,
-                            r1.2,
-                            r1.3,
+                            content_x,
+                            y,
+                            content_w,
+                            gen_row_h,
+                            &self.speed_unit_dropdown.label,
                             &self.speed_unit_dropdown.options,
                             self.speed_unit_dropdown.selected_index,
+                            false,
                             self.speed_unit_dropdown.popup_hovered_index,
+                            active_row == 1,
+                            false,
                             accent,
                         );
-                    } else if self.ghost_car_dropdown.is_open {
-                        draw_dropdown_popup(
+                        y += gen_row_h + gen_row_gap;
+                        let r2 = (content_x, y, content_w, gen_row_h);
+                        draw_dropdown(
                             scaler,
                             fonts,
-                            r2.0,
-                            r2.1,
-                            r2.2,
-                            r2.3,
+                            content_x,
+                            y,
+                            content_w,
+                            gen_row_h,
+                            &self.ghost_car_dropdown.label,
                             &self.ghost_car_dropdown.options,
                             self.ghost_car_dropdown.selected_index,
+                            false,
                             self.ghost_car_dropdown.popup_hovered_index,
+                            active_row == 2,
+                            false,
                             accent,
                         );
-                    } else if self.car_damage_dropdown.is_open {
-                        draw_dropdown_popup(
+                        y += gen_row_h + gen_row_gap;
+                        let r3 = (content_x, y, content_w, gen_row_h);
+                        draw_dropdown(
                             scaler,
                             fonts,
-                            r3.0,
-                            r3.1,
-                            r3.2,
-                            r3.3,
+                            content_x,
+                            y,
+                            content_w,
+                            gen_row_h,
+                            &self.car_damage_dropdown.label,
                             &self.car_damage_dropdown.options,
                             self.car_damage_dropdown.selected_index,
+                            false,
                             self.car_damage_dropdown.popup_hovered_index,
+                            active_row == 3,
+                            false,
                             accent,
                         );
-                    } else if self.visual_aids_preset_dropdown.is_open {
-                        draw_dropdown_popup(
+                        y += gen_row_h + gen_row_gap;
+                        let r4 = (content_x, y, content_w, gen_row_h);
+                        draw_dropdown(
                             scaler,
                             fonts,
-                            r4.0,
-                            r4.1,
-                            r4.2,
-                            r4.3,
+                            content_x,
+                            y,
+                            content_w,
+                            gen_row_h,
+                            &self.visual_aids_preset_dropdown.label,
                             &self.visual_aids_preset_dropdown.options,
                             self.visual_aids_preset_dropdown.selected_index,
+                            false,
                             self.visual_aids_preset_dropdown.popup_hovered_index,
+                            active_row == 4,
+                            false,
                             accent,
                         );
-                    }
-                } else {
-                    // VISUAL AIDS SUB-TAB (Tab 3, Sub-tab 1):
-                    let (aid_row_h, aid_row_gap, aid_content_y) =
-                        (scaler.s(21.0), scaler.s(2.5), box_y + scaler.s(118.0));
-                    let mut y = aid_content_y;
-                    let r0 = (content_x, y, content_w, aid_row_h);
-                    draw_dropdown(
-                        scaler,
-                        fonts,
-                        content_x,
-                        y,
-                        content_w,
-                        aid_row_h,
-                        &self.visual_aids_preset_dropdown.label,
-                        &self.visual_aids_preset_dropdown.options,
-                        self.visual_aids_preset_dropdown.selected_index,
-                        false,
-                        self.visual_aids_preset_dropdown.popup_hovered_index,
-                        active_row == 0,
-                        false,
-                        accent,
-                    );
-                    y += aid_row_h + aid_row_gap;
-                    let r1 = (content_x, y, content_w, aid_row_h);
-                    draw_dropdown(
-                        scaler,
-                        fonts,
-                        content_x,
-                        y,
-                        content_w,
-                        aid_row_h,
-                        &self.aura_dropdown.label,
-                        &self.aura_dropdown.options,
-                        self.aura_dropdown.selected_index,
-                        false,
-                        self.aura_dropdown.popup_hovered_index,
-                        active_row == 1,
-                        false,
-                        accent,
-                    );
-                    y += aid_row_h + aid_row_gap;
-                    draw_slider(
-                        scaler,
-                        fonts,
-                        content_x,
-                        y,
-                        content_w,
-                        aid_row_h,
-                        &self.aura_ratio_slider.label,
-                        &self.aura_ratio_slider.formatted_value(),
-                        self.aura_ratio_slider.normalized(),
-                        active_row == 2,
-                        false,
-                        accent,
-                    );
-                    y += aid_row_h + aid_row_gap;
-                    draw_slider(
-                        scaler,
-                        fonts,
-                        content_x,
-                        y,
-                        content_w,
-                        aid_row_h,
-                        &self.aura_brightness_slider.label,
-                        &self.aura_brightness_slider.formatted_value(),
-                        self.aura_brightness_slider.normalized(),
-                        active_row == 3,
-                        false,
-                        accent,
-                    );
-                    y += aid_row_h + aid_row_gap;
-                    let r4 = (content_x, y, content_w, aid_row_h);
-                    draw_dropdown(
-                        scaler,
-                        fonts,
-                        content_x,
-                        y,
-                        content_w,
-                        aid_row_h,
-                        &self.ribbon_dropdown.label,
-                        &self.ribbon_dropdown.options,
-                        self.ribbon_dropdown.selected_index,
-                        false,
-                        self.ribbon_dropdown.popup_hovered_index,
-                        active_row == 4,
-                        false,
-                        accent,
-                    );
-                    y += aid_row_h + aid_row_gap;
-                    draw_slider(
-                        scaler,
-                        fonts,
-                        content_x,
-                        y,
-                        content_w,
-                        aid_row_h,
-                        &self.ribbon_brightness_slider.label,
-                        &self.ribbon_brightness_slider.formatted_value(),
-                        self.ribbon_brightness_slider.normalized(),
-                        active_row == 5,
-                        false,
-                        accent,
-                    );
-                    y += aid_row_h + aid_row_gap;
-                    draw_slider(
-                        scaler,
-                        fonts,
-                        content_x,
-                        y,
-                        content_w,
-                        aid_row_h,
-                        &self.ribbon_scale_slider.label,
-                        &self.ribbon_scale_slider.formatted_value(),
-                        self.ribbon_scale_slider.normalized(),
-                        active_row == 6,
-                        false,
-                        accent,
-                    );
-                    y += aid_row_h + aid_row_gap;
-                    let r7 = (content_x, y, content_w, aid_row_h);
-                    draw_dropdown(
-                        scaler,
-                        fonts,
-                        content_x,
-                        y,
-                        content_w,
-                        aid_row_h,
-                        &self.chevron_dropdown.label,
-                        &self.chevron_dropdown.options,
-                        self.chevron_dropdown.selected_index,
-                        false,
-                        self.chevron_dropdown.popup_hovered_index,
-                        active_row == 7,
-                        false,
-                        accent,
-                    );
-                    y += aid_row_h + aid_row_gap;
-                    draw_slider(
-                        scaler,
-                        fonts,
-                        content_x,
-                        y,
-                        content_w,
-                        aid_row_h,
-                        &self.chevron_brightness_slider.label,
-                        &self.chevron_brightness_slider.formatted_value(),
-                        self.chevron_brightness_slider.normalized(),
-                        active_row == 8,
-                        false,
-                        accent,
-                    );
-                    y += aid_row_h + aid_row_gap;
-                    let r9 = (content_x, y, content_w, aid_row_h);
-                    draw_dropdown(
-                        scaler,
-                        fonts,
-                        content_x,
-                        y,
-                        content_w,
-                        aid_row_h,
-                        &self.adaptive_dropdown.label,
-                        &self.adaptive_dropdown.options,
-                        self.adaptive_dropdown.selected_index,
-                        false,
-                        self.adaptive_dropdown.popup_hovered_index,
-                        active_row == 9,
-                        false,
-                        accent,
-                    );
-                    y += aid_row_h + aid_row_gap;
-                    let r10 = (content_x, y, content_w, aid_row_h);
-                    draw_dropdown(
-                        scaler,
-                        fonts,
-                        content_x,
-                        y,
-                        content_w,
-                        aid_row_h,
-                        &self.radar_ping_dropdown.label,
-                        &self.radar_ping_dropdown.options,
-                        self.radar_ping_dropdown.selected_index,
-                        false,
-                        self.radar_ping_dropdown.popup_hovered_index,
-                        active_row == 10,
-                        false,
-                        accent,
-                    );
-                    y += aid_row_h + aid_row_gap;
-                    let r11 = (content_x, y, content_w, aid_row_h);
-                    draw_dropdown(
-                        scaler,
-                        fonts,
-                        content_x,
-                        y,
-                        content_w,
-                        aid_row_h,
-                        &self.racing_line_dropdown.label,
-                        &self.racing_line_dropdown.options,
-                        self.racing_line_dropdown.selected_index,
-                        false,
-                        self.racing_line_dropdown.popup_hovered_index,
-                        active_row == 11,
-                        false,
-                        accent,
-                    );
-                    y += aid_row_h + aid_row_gap;
-                    let _r12 = (content_x, y, content_w, aid_row_h);
-                    draw_slider(
-                        scaler,
-                        fonts,
-                        content_x,
-                        y,
-                        content_w,
-                        aid_row_h,
-                        &self.racing_line_opacity_slider.label,
-                        &self.racing_line_opacity_slider.formatted_value(),
-                        self.racing_line_opacity_slider.normalized(),
-                        active_row == 12,
-                        false,
-                        accent,
-                    );
+                        y += gen_row_h + gen_row_gap;
+                        let r5 = (content_x, y, content_w, gen_row_h);
 
-                    // Popups
-                    if self.visual_aids_preset_dropdown.is_open {
-                        draw_dropdown_popup(
+                        // Row 5: Customize Button
+                        let is_cust_focused = active_row == 5;
+                        let is_cust_hovered = NavGrid2D::check_mouse_hover(r5);
+                        let cust_active = is_cust_focused || is_cust_hovered;
+                        let cust_bg = if cust_active {
+                            Palette::UI_CARD_BG_HOVER
+                        } else {
+                            Palette::UI_CARD_BG
+                        };
+                        let cust_border = if cust_active {
+                            Palette::NEON_CYAN
+                        } else {
+                            Palette::UI_CARD_BORDER
+                        };
+                        scaler.draw_glass_card(
+                            r5.0,
+                            r5.1,
+                            r5.2,
+                            r5.3,
+                            cust_bg,
+                            cust_border,
+                            if cust_active { 2.0 } else { 1.0 },
+                        );
+                        fonts.draw_ui_bold_centered(
+                            if is_cust_focused {
+                                "[ENTER] CUSTOMIZE CAR & TRACK AIDS ➔"
+                            } else {
+                                "CUSTOMIZE CAR & TRACK AIDS ➔"
+                            },
+                            r5.0 + r5.2 * 0.5,
+                            r5.1 + r5.3 * 0.62,
+                            scaler.font_s(12.5),
+                            if cust_active {
+                                Palette::NEON_CYAN
+                            } else {
+                                Palette::WHITE
+                            },
+                        );
+
+                        // Popups
+                        if self.assist_dropdown.is_open {
+                            draw_dropdown_popup(
+                                scaler,
+                                fonts,
+                                r0.0,
+                                r0.1,
+                                r0.2,
+                                r0.3,
+                                &self.assist_dropdown.options,
+                                self.assist_dropdown.selected_index,
+                                self.assist_dropdown.popup_hovered_index,
+                                accent,
+                            );
+                        } else if self.speed_unit_dropdown.is_open {
+                            draw_dropdown_popup(
+                                scaler,
+                                fonts,
+                                r1.0,
+                                r1.1,
+                                r1.2,
+                                r1.3,
+                                &self.speed_unit_dropdown.options,
+                                self.speed_unit_dropdown.selected_index,
+                                self.speed_unit_dropdown.popup_hovered_index,
+                                accent,
+                            );
+                        } else if self.ghost_car_dropdown.is_open {
+                            draw_dropdown_popup(
+                                scaler,
+                                fonts,
+                                r2.0,
+                                r2.1,
+                                r2.2,
+                                r2.3,
+                                &self.ghost_car_dropdown.options,
+                                self.ghost_car_dropdown.selected_index,
+                                self.ghost_car_dropdown.popup_hovered_index,
+                                accent,
+                            );
+                        } else if self.car_damage_dropdown.is_open {
+                            draw_dropdown_popup(
+                                scaler,
+                                fonts,
+                                r3.0,
+                                r3.1,
+                                r3.2,
+                                r3.3,
+                                &self.car_damage_dropdown.options,
+                                self.car_damage_dropdown.selected_index,
+                                self.car_damage_dropdown.popup_hovered_index,
+                                accent,
+                            );
+                        } else if self.visual_aids_preset_dropdown.is_open {
+                            draw_dropdown_popup(
+                                scaler,
+                                fonts,
+                                r4.0,
+                                r4.1,
+                                r4.2,
+                                r4.3,
+                                &self.visual_aids_preset_dropdown.options,
+                                self.visual_aids_preset_dropdown.selected_index,
+                                self.visual_aids_preset_dropdown.popup_hovered_index,
+                                accent,
+                            );
+                        }
+                    }
+                    1 => {
+                        // CAR AIDS SUB-TAB:
+                        // 0: Preset, 1: Chevron, 2: Chevron Brightness, 3: Aura, 4: Aura Ratio, 5: Aura Brightness, 6: Adaptive
+                        let (aid_row_h, aid_row_gap, aid_content_y) =
+                            (scaler.s(34.0), scaler.s(6.0), box_y + scaler.s(122.0));
+                        let mut y = aid_content_y;
+                        let r0 = (content_x, y, content_w, aid_row_h);
+                        draw_dropdown(
                             scaler,
                             fonts,
-                            r0.0,
-                            r0.1,
-                            r0.2,
-                            r0.3,
+                            content_x,
+                            y,
+                            content_w,
+                            aid_row_h,
+                            &self.visual_aids_preset_dropdown.label,
                             &self.visual_aids_preset_dropdown.options,
                             self.visual_aids_preset_dropdown.selected_index,
+                            false,
                             self.visual_aids_preset_dropdown.popup_hovered_index,
+                            active_row == 0,
+                            false,
                             accent,
                         );
-                    } else if self.aura_dropdown.is_open {
-                        draw_dropdown_popup(
+                        y += aid_row_h + aid_row_gap;
+                        let r1 = (content_x, y, content_w, aid_row_h);
+                        draw_dropdown(
                             scaler,
                             fonts,
-                            r1.0,
-                            r1.1,
-                            r1.2,
-                            r1.3,
-                            &self.aura_dropdown.options,
-                            self.aura_dropdown.selected_index,
-                            self.aura_dropdown.popup_hovered_index,
-                            accent,
-                        );
-                    } else if self.ribbon_dropdown.is_open {
-                        draw_dropdown_popup(
-                            scaler,
-                            fonts,
-                            r4.0,
-                            r4.1,
-                            r4.2,
-                            r4.3,
-                            &self.ribbon_dropdown.options,
-                            self.ribbon_dropdown.selected_index,
-                            self.ribbon_dropdown.popup_hovered_index,
-                            accent,
-                        );
-                    } else if self.chevron_dropdown.is_open {
-                        draw_dropdown_popup(
-                            scaler,
-                            fonts,
-                            r7.0,
-                            r7.1,
-                            r7.2,
-                            r7.3,
+                            content_x,
+                            y,
+                            content_w,
+                            aid_row_h,
+                            &self.chevron_dropdown.label,
                             &self.chevron_dropdown.options,
                             self.chevron_dropdown.selected_index,
+                            false,
                             self.chevron_dropdown.popup_hovered_index,
+                            active_row == 1,
+                            false,
                             accent,
                         );
-                    } else if self.adaptive_dropdown.is_open {
-                        draw_dropdown_popup(
+                        y += aid_row_h + aid_row_gap;
+                        let _r2 = (content_x, y, content_w, aid_row_h);
+                        draw_slider(
                             scaler,
                             fonts,
-                            r9.0,
-                            r9.1,
-                            r9.2,
-                            r9.3,
+                            content_x,
+                            y,
+                            content_w,
+                            aid_row_h,
+                            &self.chevron_brightness_slider.label,
+                            &self.chevron_brightness_slider.formatted_value(),
+                            self.chevron_brightness_slider.normalized(),
+                            active_row == 2,
+                            false,
+                            accent,
+                        );
+                        y += aid_row_h + aid_row_gap;
+                        let r3 = (content_x, y, content_w, aid_row_h);
+                        draw_dropdown(
+                            scaler,
+                            fonts,
+                            content_x,
+                            y,
+                            content_w,
+                            aid_row_h,
+                            &self.aura_dropdown.label,
+                            &self.aura_dropdown.options,
+                            self.aura_dropdown.selected_index,
+                            false,
+                            self.aura_dropdown.popup_hovered_index,
+                            active_row == 3,
+                            false,
+                            accent,
+                        );
+                        y += aid_row_h + aid_row_gap;
+                        let _r4 = (content_x, y, content_w, aid_row_h);
+                        draw_slider(
+                            scaler,
+                            fonts,
+                            content_x,
+                            y,
+                            content_w,
+                            aid_row_h,
+                            &self.aura_ratio_slider.label,
+                            &self.aura_ratio_slider.formatted_value(),
+                            self.aura_ratio_slider.normalized(),
+                            active_row == 4,
+                            false,
+                            accent,
+                        );
+                        y += aid_row_h + aid_row_gap;
+                        let _r5 = (content_x, y, content_w, aid_row_h);
+                        draw_slider(
+                            scaler,
+                            fonts,
+                            content_x,
+                            y,
+                            content_w,
+                            aid_row_h,
+                            &self.aura_brightness_slider.label,
+                            &self.aura_brightness_slider.formatted_value(),
+                            self.aura_brightness_slider.normalized(),
+                            active_row == 5,
+                            false,
+                            accent,
+                        );
+                        y += aid_row_h + aid_row_gap;
+                        let r6 = (content_x, y, content_w, aid_row_h);
+                        draw_dropdown(
+                            scaler,
+                            fonts,
+                            content_x,
+                            y,
+                            content_w,
+                            aid_row_h,
+                            &self.adaptive_dropdown.label,
                             &self.adaptive_dropdown.options,
                             self.adaptive_dropdown.selected_index,
+                            false,
                             self.adaptive_dropdown.popup_hovered_index,
+                            active_row == 6,
+                            false,
                             accent,
                         );
-                    } else if self.radar_ping_dropdown.is_open {
-                        draw_dropdown_popup(
+
+                        // Popups
+                        if self.visual_aids_preset_dropdown.is_open {
+                            draw_dropdown_popup(
+                                scaler,
+                                fonts,
+                                r0.0,
+                                r0.1,
+                                r0.2,
+                                r0.3,
+                                &self.visual_aids_preset_dropdown.options,
+                                self.visual_aids_preset_dropdown.selected_index,
+                                self.visual_aids_preset_dropdown.popup_hovered_index,
+                                accent,
+                            );
+                        } else if self.chevron_dropdown.is_open {
+                            draw_dropdown_popup(
+                                scaler,
+                                fonts,
+                                r1.0,
+                                r1.1,
+                                r1.2,
+                                r1.3,
+                                &self.chevron_dropdown.options,
+                                self.chevron_dropdown.selected_index,
+                                self.chevron_dropdown.popup_hovered_index,
+                                accent,
+                            );
+                        } else if self.aura_dropdown.is_open {
+                            draw_dropdown_popup(
+                                scaler,
+                                fonts,
+                                r3.0,
+                                r3.1,
+                                r3.2,
+                                r3.3,
+                                &self.aura_dropdown.options,
+                                self.aura_dropdown.selected_index,
+                                self.aura_dropdown.popup_hovered_index,
+                                accent,
+                            );
+                        } else if self.adaptive_dropdown.is_open {
+                            draw_dropdown_popup(
+                                scaler,
+                                fonts,
+                                r6.0,
+                                r6.1,
+                                r6.2,
+                                r6.3,
+                                &self.adaptive_dropdown.options,
+                                self.adaptive_dropdown.selected_index,
+                                self.adaptive_dropdown.popup_hovered_index,
+                                accent,
+                            );
+                        }
+                    }
+                    2 => {
+                        // TRACK AIDS SUB-TAB:
+                        // 0: Racing Line, 1: Racing Line Opacity, 2: Ribbon, 3: Ribbon Brightness, 4: Ribbon Scale
+                        let (aid_row_h, aid_row_gap, aid_content_y) =
+                            (scaler.s(38.0), scaler.s(8.0), box_y + scaler.s(122.0));
+                        let mut y = aid_content_y;
+                        let r0 = (content_x, y, content_w, aid_row_h);
+                        draw_dropdown(
                             scaler,
                             fonts,
-                            r10.0,
-                            r10.1,
-                            r10.2,
-                            r10.3,
-                            &self.radar_ping_dropdown.options,
-                            self.radar_ping_dropdown.selected_index,
-                            self.radar_ping_dropdown.popup_hovered_index,
-                            accent,
-                        );
-                    } else if self.racing_line_dropdown.is_open {
-                        draw_dropdown_popup(
-                            scaler,
-                            fonts,
-                            r11.0,
-                            r11.1,
-                            r11.2,
-                            r11.3,
+                            content_x,
+                            y,
+                            content_w,
+                            aid_row_h,
+                            &self.racing_line_dropdown.label,
                             &self.racing_line_dropdown.options,
                             self.racing_line_dropdown.selected_index,
+                            false,
                             self.racing_line_dropdown.popup_hovered_index,
+                            active_row == 0,
+                            false,
                             accent,
                         );
+                        y += aid_row_h + aid_row_gap;
+                        let _r1 = (content_x, y, content_w, aid_row_h);
+                        draw_slider(
+                            scaler,
+                            fonts,
+                            content_x,
+                            y,
+                            content_w,
+                            aid_row_h,
+                            &self.racing_line_opacity_slider.label,
+                            &self.racing_line_opacity_slider.formatted_value(),
+                            self.racing_line_opacity_slider.normalized(),
+                            active_row == 1,
+                            false,
+                            accent,
+                        );
+                        y += aid_row_h + aid_row_gap;
+                        let r2 = (content_x, y, content_w, aid_row_h);
+                        draw_dropdown(
+                            scaler,
+                            fonts,
+                            content_x,
+                            y,
+                            content_w,
+                            aid_row_h,
+                            &self.ribbon_dropdown.label,
+                            &self.ribbon_dropdown.options,
+                            self.ribbon_dropdown.selected_index,
+                            false,
+                            self.ribbon_dropdown.popup_hovered_index,
+                            active_row == 2,
+                            false,
+                            accent,
+                        );
+                        y += aid_row_h + aid_row_gap;
+                        let _r3 = (content_x, y, content_w, aid_row_h);
+                        draw_slider(
+                            scaler,
+                            fonts,
+                            content_x,
+                            y,
+                            content_w,
+                            aid_row_h,
+                            &self.ribbon_brightness_slider.label,
+                            &self.ribbon_brightness_slider.formatted_value(),
+                            self.ribbon_brightness_slider.normalized(),
+                            active_row == 3,
+                            false,
+                            accent,
+                        );
+                        y += aid_row_h + aid_row_gap;
+                        let _r4 = (content_x, y, content_w, aid_row_h);
+                        draw_slider(
+                            scaler,
+                            fonts,
+                            content_x,
+                            y,
+                            content_w,
+                            aid_row_h,
+                            &self.ribbon_scale_slider.label,
+                            &self.ribbon_scale_slider.formatted_value(),
+                            self.ribbon_scale_slider.normalized(),
+                            active_row == 4,
+                            false,
+                            accent,
+                        );
+
+                        // Popups
+                        if self.racing_line_dropdown.is_open {
+                            draw_dropdown_popup(
+                                scaler,
+                                fonts,
+                                r0.0,
+                                r0.1,
+                                r0.2,
+                                r0.3,
+                                &self.racing_line_dropdown.options,
+                                self.racing_line_dropdown.selected_index,
+                                self.racing_line_dropdown.popup_hovered_index,
+                                accent,
+                            );
+                        } else if self.ribbon_dropdown.is_open {
+                            draw_dropdown_popup(
+                                scaler,
+                                fonts,
+                                r2.0,
+                                r2.1,
+                                r2.2,
+                                r2.3,
+                                &self.ribbon_dropdown.options,
+                                self.ribbon_dropdown.selected_index,
+                                self.ribbon_dropdown.popup_hovered_index,
+                                accent,
+                            );
+                        }
+                    }
+                    _ => {
+                        // PILOT LABELS SUB-TAB:
+                        // 0: Pilot Labels, 1: Max Visible Pilots, 2: Pilot Labels Opacity, 3: Label Detail, 4: Radar Ping
+                        let (aid_row_h, aid_row_gap, aid_content_y) =
+                            (scaler.s(38.0), scaler.s(8.0), box_y + scaler.s(122.0));
+                        let mut y = aid_content_y;
+                        let r0 = (content_x, y, content_w, aid_row_h);
+                        draw_dropdown(
+                            scaler,
+                            fonts,
+                            content_x,
+                            y,
+                            content_w,
+                            aid_row_h,
+                            &self.bot_nameplates_dropdown.label,
+                            &self.bot_nameplates_dropdown.options,
+                            self.bot_nameplates_dropdown.selected_index,
+                            false,
+                            self.bot_nameplates_dropdown.popup_hovered_index,
+                            active_row == 0,
+                            false,
+                            accent,
+                        );
+                        y += aid_row_h + aid_row_gap;
+                        let _r1 = (content_x, y, content_w, aid_row_h);
+                        let max_vis_str = if self.bot_nameplates_max_slider.value >= 24.0 {
+                            "24 (All Racers)".to_string()
+                        } else {
+                            format!("{}", self.bot_nameplates_max_slider.value.round() as usize)
+                        };
+                        draw_slider(
+                            scaler,
+                            fonts,
+                            content_x,
+                            y,
+                            content_w,
+                            aid_row_h,
+                            &self.bot_nameplates_max_slider.label,
+                            &max_vis_str,
+                            self.bot_nameplates_max_slider.normalized(),
+                            active_row == 1,
+                            false,
+                            accent,
+                        );
+                        y += aid_row_h + aid_row_gap;
+                        let _r2 = (content_x, y, content_w, aid_row_h);
+                        draw_slider(
+                            scaler,
+                            fonts,
+                            content_x,
+                            y,
+                            content_w,
+                            aid_row_h,
+                            &self.bot_nameplates_opacity_slider.label,
+                            &self.bot_nameplates_opacity_slider.formatted_value(),
+                            self.bot_nameplates_opacity_slider.normalized(),
+                            active_row == 2,
+                            false,
+                            accent,
+                        );
+                        y += aid_row_h + aid_row_gap;
+                        let r3 = (content_x, y, content_w, aid_row_h);
+                        draw_dropdown(
+                            scaler,
+                            fonts,
+                            content_x,
+                            y,
+                            content_w,
+                            aid_row_h,
+                            &self.bot_nameplates_detail_dropdown.label,
+                            &self.bot_nameplates_detail_dropdown.options,
+                            self.bot_nameplates_detail_dropdown.selected_index,
+                            false,
+                            self.bot_nameplates_detail_dropdown.popup_hovered_index,
+                            active_row == 3,
+                            false,
+                            accent,
+                        );
+                        y += aid_row_h + aid_row_gap;
+                        let r4 = (content_x, y, content_w, aid_row_h);
+                        draw_dropdown(
+                            scaler,
+                            fonts,
+                            content_x,
+                            y,
+                            content_w,
+                            aid_row_h,
+                            &self.radar_ping_dropdown.label,
+                            &self.radar_ping_dropdown.options,
+                            self.radar_ping_dropdown.selected_index,
+                            false,
+                            self.radar_ping_dropdown.popup_hovered_index,
+                            active_row == 4,
+                            false,
+                            accent,
+                        );
+
+                        // Popups
+                        if self.bot_nameplates_dropdown.is_open {
+                            draw_dropdown_popup(
+                                scaler,
+                                fonts,
+                                r0.0,
+                                r0.1,
+                                r0.2,
+                                r0.3,
+                                &self.bot_nameplates_dropdown.options,
+                                self.bot_nameplates_dropdown.selected_index,
+                                self.bot_nameplates_dropdown.popup_hovered_index,
+                                accent,
+                            );
+                        } else if self.bot_nameplates_detail_dropdown.is_open {
+                            draw_dropdown_popup(
+                                scaler,
+                                fonts,
+                                r3.0,
+                                r3.1,
+                                r3.2,
+                                r3.3,
+                                &self.bot_nameplates_detail_dropdown.options,
+                                self.bot_nameplates_detail_dropdown.selected_index,
+                                self.bot_nameplates_detail_dropdown.popup_hovered_index,
+                                accent,
+                            );
+                        } else if self.radar_ping_dropdown.is_open {
+                            draw_dropdown_popup(
+                                scaler,
+                                fonts,
+                                r4.0,
+                                r4.1,
+                                r4.2,
+                                r4.3,
+                                &self.radar_ping_dropdown.options,
+                                self.radar_ping_dropdown.selected_index,
+                                self.radar_ping_dropdown.popup_hovered_index,
+                                accent,
+                            );
+                        }
                     }
                 }
             }
@@ -3772,10 +4018,10 @@ impl CabinetScreen for ArcadeSettingsModal {
             if self.tab_bar.active_tab == 1 {
                 "◄ / ► ARROWS: Switch Subtab (Keyboard & Filter / Gamepad)   •   ▼ DOWN / ENTER: Adjust Settings   •   ▲ UP: Main Tabs"
             } else {
-                "◄ / ► ARROWS: Switch View (General / Visual Aids)   •   ▼ DOWN / ENTER: Adjust Settings   •   ▲ UP: Main Tabs"
+                "◄ / ► ARROWS: Switch Subtab (General / Car Aids / Track Aids / Pilot Labels)   •   ▼ DOWN / ENTER: Adjust Settings   •   ▲ UP: Main Tabs"
             }
-        } else if self.tab_bar.active_tab == 3 && self.gameplay_sub_tab == 1 {
-            "◄ / ►: Adjust Setting   •   ▲ / ▼: Navigate   •   ▲ UP (at top): Switch View   •   ESC / B: Back to General"
+        } else if self.tab_bar.active_tab == 3 && self.gameplay_sub_tab > 0 {
+            "◄ / ►: Adjust Setting   •   ▲ / ▼: Navigate   •   ▲ UP (at top): Subtabs   •   ESC / B: Back to General"
         } else if self.tab_bar.active_tab == 1 {
             "◄ / ►: Adjust Setting   •   ▲ / ▼: Navigate   •   ▲ UP (at top): Subtabs   •   TAB / Q / E: Switch Category   •   ESC: Close"
         } else {

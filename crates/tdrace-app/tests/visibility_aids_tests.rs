@@ -235,6 +235,10 @@ fn test_race_session_settings_modal_helpers_workflow() {
         modal.chevron_brightness_slider.set_value(0.80);
         modal.adaptive_dropdown.set_selected(1); // Disabled
         modal.radar_ping_dropdown.set_selected(1); // Disabled
+        modal.bot_nameplates_dropdown.set_selected(1); // Disabled
+        modal.bot_nameplates_max_slider.set_value(18.0);
+        modal.bot_nameplates_opacity_slider.set_value(65.0);
+        modal.bot_nameplates_detail_dropdown.set_selected(1); // Compact
     }
 
     session.close_settings_modal(true);
@@ -251,6 +255,10 @@ fn test_race_session_settings_modal_helpers_workflow() {
     assert!(!session.config.player_helpers.roof_beacon);
     assert!(!session.config.player_helpers.adaptive_visibility);
     assert!(!session.config.player_helpers.radar_sonar_ping);
+    assert!(!session.config.player_helpers.bot_nameplates);
+    assert_eq!(session.config.player_helpers.bot_nameplates_max_visible, 18);
+    assert!((session.config.player_helpers.bot_nameplates_opacity - 0.65).abs() < 1e-4);
+    assert!(session.config.player_helpers.bot_nameplates_compact);
 
     // Also assert runtime visibility_options synced
     assert!(!session.visibility_options.ground_aura);
@@ -264,6 +272,10 @@ fn test_race_session_settings_modal_helpers_workflow() {
     assert!(!session.visibility_options.roof_beacon);
     assert!(!session.visibility_options.adaptive_visibility);
     assert!(!session.visibility_options.sonar_ping);
+    assert!(!session.visibility_options.bot_nameplates);
+    assert_eq!(session.visibility_options.bot_nameplates_max_visible, 18);
+    assert!((session.visibility_options.bot_nameplates_opacity - 0.65).abs() < 1e-4);
+    assert!(session.visibility_options.bot_nameplates_compact);
 }
 
 #[test]
