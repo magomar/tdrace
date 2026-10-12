@@ -472,22 +472,35 @@ impl GameConfig {
     /// Candidate search paths in priority order for loading a module-specific config file (e.g. `config.gt.toml`).
     pub fn candidate_module_paths(module_id: &str) -> Vec<PathBuf> {
         let mut paths = Vec::new();
-        // 1. User config directory ~/.config/tdrace/ (overrides defaults)
-        let user_dir = crate::storage::resolve_user_config_dir();
-        paths.push(user_dir.join(format!("config.{}.toml", module_id)));
-        paths.push(user_dir.join(format!("{}.toml", module_id)));
+        let alias = match module_id {
+            "rallycross" => Some("rally"),
+            "rally" => Some("rallycross"),
+            _ => None,
+        };
+        let ids: Vec<&str> = if let Some(a) = alias {
+            vec![module_id, a]
+        } else {
+            vec![module_id]
+        };
 
-        // 2. Root / CWD: config.<module>.toml, configs/<module>.toml
-        paths.push(PathBuf::from(format!("config.{}.toml", module_id)));
-        paths.push(PathBuf::from(format!("configs/{}.toml", module_id)));
-        // 3. Workspace root relative paths (when run from crate subdirectories)
-        paths.push(PathBuf::from(format!("../../config.{}.toml", module_id)));
-        paths.push(PathBuf::from(format!("../../configs/{}.toml", module_id)));
-        paths.push(PathBuf::from(format!("../config.{}.toml", module_id)));
-        paths.push(PathBuf::from(format!("../configs/{}.toml", module_id)));
-        // 4. modules/<module>/config.toml, modules/<module>.toml
-        paths.push(PathBuf::from(format!("modules/{}/config.toml", module_id)));
-        paths.push(PathBuf::from(format!("modules/{}.toml", module_id)));
+        for mid in ids {
+            // 1. User config directory ~/.config/tdrace/ (overrides defaults)
+            let user_dir = crate::storage::resolve_user_config_dir();
+            paths.push(user_dir.join(format!("config.{}.toml", mid)));
+            paths.push(user_dir.join(format!("{}.toml", mid)));
+
+            // 2. Root / CWD: config.<module>.toml, configs/<module>.toml
+            paths.push(PathBuf::from(format!("config.{}.toml", mid)));
+            paths.push(PathBuf::from(format!("configs/{}.toml", mid)));
+            // 3. Workspace root relative paths (when run from crate subdirectories)
+            paths.push(PathBuf::from(format!("../../config.{}.toml", mid)));
+            paths.push(PathBuf::from(format!("../../configs/{}.toml", mid)));
+            paths.push(PathBuf::from(format!("../config.{}.toml", mid)));
+            paths.push(PathBuf::from(format!("../configs/{}.toml", mid)));
+            // 4. modules/<module>/config.toml, modules/<module>.toml
+            paths.push(PathBuf::from(format!("modules/{}/config.toml", mid)));
+            paths.push(PathBuf::from(format!("modules/{}.toml", mid)));
+        }
 
         paths
     }
@@ -567,7 +580,12 @@ impl GameConfig {
             Err(_) => return self.clone(),
         };
 
-        let module_val_opt = self.modules.get(module_id);
+        let alias = match module_id {
+            "rallycross" => Some("rally"),
+            "rally" => Some("rallycross"),
+            _ => None,
+        };
+        let module_val_opt = self.modules.get(module_id).or_else(|| alias.and_then(|a| self.modules.get(a)));
         if let Some(module_val) = module_val_opt {
             deep_merge_toml(&mut base_value, module_val);
         }
@@ -595,7 +613,12 @@ impl GameConfig {
         };
 
         // 2. Apply in-file [modules.<module_id>] override if present
-        let module_val_opt = self.modules.get(module_id);
+        let alias = match module_id {
+            "rallycross" => Some("rally"),
+            "rally" => Some("rallycross"),
+            _ => None,
+        };
+        let module_val_opt = self.modules.get(module_id).or_else(|| alias.and_then(|a| self.modules.get(a)));
         if let Some(module_val) = module_val_opt {
             deep_merge_toml(&mut base_value, module_val);
         }

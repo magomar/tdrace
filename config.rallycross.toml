@@ -1,0 +1,13 @@
+# Rallycross World Cup Module Configuration
+# Specific overrides here prevail over the general config.toml
+
+[gameplay]
+default_track = "holjes_rx"
+default_laps = 5
+default_num_bots = 7
+default_assist_profile = "sport"
+
+[camera]
+trauma_decay = 1.8
+max_shake_offset = 2.0
+position_smoothing = 8.0
