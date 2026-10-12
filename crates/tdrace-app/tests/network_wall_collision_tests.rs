@@ -146,3 +146,26 @@ fn test_erx_motor_park_joker_merge_walls_leave_no_pocket() {
     assert!(loose.is_empty(), "main wall ends near the joker merge that meet no wall: {}", loose.join(", "));
 }
 
+#[test]
+fn test_kouvola_rx_joker_chicane_walls_leave_no_gap() {
+    let track = catalog::official_track("rally", "kouvola_rx");
+    let chicane_apex = Vec2::new(83.0, 63.0);
+    let main: Vec<_> = track.geometry.inner_walls.iter().chain(&track.geometry.outer_walls).collect();
+    let all: Vec<_> = main.iter().copied().chain(&track.geometry.network_walls).collect();
+    let mut loose = Vec::new();
+    for (i, w) in main.iter().enumerate() {
+        for end in [w.segment.start, w.segment.end] {
+            if end.distance(chicane_apex) > 25.0 {
+                continue;
+            }
+            let joined = all.iter().enumerate().any(|(j, other)| {
+                j != i && [other.segment.start, other.segment.end].iter().any(|p| p.distance(end) < WALL_JOIN_M)
+            });
+            if !joined {
+                loose.push(format!("({:.1}, {:.1})", end.x, end.y));
+            }
+        }
+    }
+    assert!(loose.is_empty(), "main wall ends near chicane apex that meet no wall: {}", loose.join(", "));
+}
+
