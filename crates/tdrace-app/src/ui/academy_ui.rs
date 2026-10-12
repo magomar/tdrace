@@ -1,4 +1,4 @@
-//! # Classic Academy User Interface & Graduation Ceremony (Spec 060, Spec 064)
+//! # Classic Motor Academy User Interface & Graduation Ceremony (Spec 060, Spec 064)
 //!
 //! Renders the tabbed curriculum selector screen (one tier of 4 missions at a time), medal
 //! achievements, challenge HUD pace deltas, the result banner, and the vector National Grassroots
@@ -106,7 +106,7 @@ pub fn graduation_showroom_button_rect(sw: f32, sh: f32) -> (f32, f32, f32, f32)
     (btn_x, btn_y, btn_w, btn_h)
 }
 
-/// Renders the Classic Academy curriculum screen: the tier tabs and the four missions of the tier that
+/// Renders the Classic Motor Academy curriculum screen: the tier tabs and the four missions of the tier that
 /// `selected_idx` (a lesson index over all tiers) points into.
 pub fn render_academy_curriculum_screen(
     fonts: &Fonts,
@@ -122,7 +122,7 @@ pub fn render_academy_curriculum_screen(
 
     // Header Title & Description
     fonts.draw_display_centered_with_shadow(
-        "CLASSIC ARCADE ACADEMY • DRIVER LICENSING",
+        "CLASSIC MOTOR ACADEMY • DRIVER LICENSING",
         sw * 0.5,
         scaler.s(32.0),
         scaler.font_s(26.0),
@@ -460,7 +460,7 @@ pub fn render_academy_hud(
     };
 
     fonts.draw_ui_bold_centered(
-        &format!("CLASSIC ACADEMY: {}", def.title.to_uppercase()),
+        &format!("CLASSIC MOTOR ACADEMY: {}", def.title.to_uppercase()),
         sw * 0.5,
         banner_y + scaler.s(18.0),
         scaler.font_s(11.0),

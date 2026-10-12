@@ -1,8 +1,8 @@
-//! # Classic Academy Engine & Challenge Evaluation (Spec 060, Spec 064)
+//! # Classic Motor Academy Engine & Challenge Evaluation (Spec 060, Spec 064)
 //!
 //! Provides the challenge runtime, real-time pace delta calculation,
 //! contact/clean-attempt validation, and milestone bounty evaluation
-//! for the Classic Arcade Academy curriculum.
+//! for the Classic Motor Academy curriculum.
 
 use serde::{Deserialize, Serialize};
 pub use tdrace_core::profile::{

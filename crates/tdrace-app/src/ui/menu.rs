@@ -4116,7 +4116,7 @@ impl ModalityItem {
         match self {
             Self::QuickRace => "Quick Race",
             Self::CustomRace => "Custom Race",
-            Self::ClassicAcademy => "Classic Academy",
+            Self::ClassicAcademy => "Classic Motor Academy",
             Self::CareerMode => "Career Mode",
             Self::TimeTrial => "Time Trial",
             Self::FreeRide => "Free Ride",
@@ -4321,14 +4321,14 @@ impl ModalityModal {
             Self::LanComingSoon => "Local Area Network multiplayer is currently under active development.\nDirect IP connection, auto-discovery broadcast, and dedicated headless server support are coming in an upcoming release.",
             Self::CloudComingSoon => "Worldwide online matchmaking and cloud lobbies are currently under active development.\nGlobal leaderboards, ranked matchmaking, and cloud ghost synchronization will debut in Phase 2.",
             Self::CareerComingSoon => "Career campaign progression for this motorsport category is currently under development.\nTier ladders, championship calendars, vehicle unlocking, and trophy progression are coming soon.",
-            Self::LicenseRequired => "Welcome, Rookie Driver!\nTo compete in sanctioned motorsport championships, you must first obtain your National Grassroots Racing License at the Classic Academy.\n\nComplete the 4 Academy lessons to earn your license and seed cash for your first competition machine.",
+            Self::LicenseRequired => "Welcome, Rookie Driver!\nTo compete in sanctioned motorsport championships, you must first obtain your National Grassroots Racing License at the Classic Motor Academy.\n\nComplete the 4 Academy lessons to earn your license and seed cash for your first competition machine.",
             Self::VehicleRequired => "Congratulations on earning your National Grassroots License!\n\nTo enter sanctioned career championships, you must purchase your first competition car from the Showroom.\n\nVisit the Showroom now to choose from the Cadet Kart 60cc, Cross Car Junior, or Rally4!",
         }
     }
 
     pub fn confirm_button_text(&self) -> &'static str {
         match self {
-            Self::LicenseRequired => "[ ENROLL IN CLASSIC ACADEMY ]",
+            Self::LicenseRequired => "[ ENROLL IN CLASSIC MOTOR ACADEMY ]",
             Self::VehicleRequired => "[ VISIT SHOWROOM ]",
             _ => "[ OK / CONTINUE ]",
         }
