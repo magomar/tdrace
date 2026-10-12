@@ -638,7 +638,7 @@ fn test_screen_transition_module_select_switch_to_menu() {
     // Advance to Holding: module switch should be automatically applied
     session.update_transition(0.20);
     assert_eq!(session.state, GameState::Menu);
-    assert_eq!(session.active_module_id, "rally");
+    assert_eq!(session.active_module_id, "rallycross");
 
     // Complete transition
     session.update_transition(0.25);
