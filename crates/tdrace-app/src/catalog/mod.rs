@@ -113,14 +113,14 @@ impl RealCarModel {
         match self.module_id {
             "gt" | "gt_challenge" => tdrace_core::CarCategory::Gt,
             "nascar" => tdrace_core::CarCategory::Nascar,
-            "rally" => tdrace_core::CarCategory::Rally,
+            "rally" | "rallycross" | "rx" => tdrace_core::CarCategory::Rallycross,
             "kart" => tdrace_core::CarCategory::Kart,
             "extreme_offroad" => tdrace_core::CarCategory::OffRoad,
             "autocross" => tdrace_core::CarCategory::Autocross,
             "classic" => match self.id {
                 "classic_gt" | "classic_gt_vintage" => tdrace_core::CarCategory::Gt,
                 "classic_nascar" | "classic_stock_vintage" => tdrace_core::CarCategory::Nascar,
-                "classic_rally" | "classic_rx_vintage" => tdrace_core::CarCategory::Rally,
+                "classic_rally" | "classic_rx_vintage" => tdrace_core::CarCategory::Rallycross,
                 "classic_kart" | "classic_kart_vintage" => tdrace_core::CarCategory::Kart,
                 "classic_offroad" | "classic_at_safari" => tdrace_core::CarCategory::OffRoad,
                 "classic_ax_mudlark" | "classic_ax_brawler" | "classic_ax_talon" => tdrace_core::CarCategory::Autocross,
@@ -177,7 +177,7 @@ impl RealCarModel {
 
         // 6. Vehicle Category and Tier Terrain Flotation Matrix (Spec 025 Section 3.4)
         cfg.terrain = match self.module_id {
-            "rally" => match self.tier {
+            "rally" | "rallycross" => match self.tier {
                 1 => TerrainInteractionConfig {
                     sand_flotation: 1.00,
                     mud_flotation: 0.95,
@@ -277,7 +277,7 @@ impl RealCarModel {
 
         // Spec 043: grip stat, drivetrain and brakes must reach the per-wheel assemblies.
         let cfg = cfg.finalized();
-        if self.category() == tdrace_core::CarCategory::Rally {
+        if self.category() == tdrace_core::CarCategory::Rallycross {
             cfg.with_rally_balance()
         } else {
             cfg
@@ -320,11 +320,11 @@ impl RealCarModel {
                 ("nascar", 5) => EngineSoundType::NascarV8,
 
                 // 3. Rallycross (T1–T5)
-                ("rally", 1) => EngineSoundType::CrossCarMotorcycle,
-                ("rally", 2) => EngineSoundType::Super1600Atmo,
-                ("rally", 3) => EngineSoundType::Rally2Turbo,
-                ("rally", 4) => EngineSoundType::SupercarRx1,
-                ("rally", 5) => EngineSoundType::GroupBInline5,
+                ("rally" | "rallycross", 1) => EngineSoundType::CrossCarMotorcycle,
+                ("rally" | "rallycross", 2) => EngineSoundType::Super1600Atmo,
+                ("rally" | "rallycross", 3) => EngineSoundType::Rally2Turbo,
+                ("rally" | "rallycross", 4) => EngineSoundType::SupercarRx1,
+                ("rally" | "rallycross", 5) => EngineSoundType::GroupBInline5,
 
                 // 4. Grassroots & Professional Karting (T1–T6)
                 ("kart", 1) => EngineSoundType::KartCadet60,
@@ -352,7 +352,7 @@ impl RealCarModel {
 
                 _ => match self.module_id {
                     "nascar" => EngineSoundType::LateModelV8,
-                    "rally" => EngineSoundType::CrossCarMotorcycle,
+                    "rally" | "rallycross" => EngineSoundType::CrossCarMotorcycle,
                     "kart" => EngineSoundType::KartCadet60,
                     "extreme_offroad" => EngineSoundType::SandRailBoxer,
                     "autocross" => EngineSoundType::CrossCarMotorcycle,
@@ -1453,7 +1453,7 @@ pub static ALL_REAL_CARS: &[RealCarModel] = &[
         name: "Gallia 200 Rally Junior T1",
         manufacturer: "Gallia Sport",
         year: 2021,
-        module_id: "rally",
+        module_id: "rallycross",
         category_name: "Rally Junior FWD",
         tier: 1,
         bhp: 208,
@@ -1477,7 +1477,7 @@ pub static ALL_REAL_CARS: &[RealCarModel] = &[
         name: "Forge Spark Rally Junior T1",
         manufacturer: "Forge Motor Co",
         year: 2022,
-        module_id: "rally",
+        module_id: "rallycross",
         category_name: "Rally Junior FWD",
         tier: 1,
         bhp: 210,
@@ -1501,7 +1501,7 @@ pub static ALL_REAL_CARS: &[RealCarModel] = &[
         name: "Rouen Dauphine Rally Junior T1",
         manufacturer: "Rouen Motorsport",
         year: 2021,
-        module_id: "rally",
+        module_id: "rallycross",
         category_name: "Rally Junior FWD",
         tier: 1,
         bhp: 215,
@@ -1526,7 +1526,7 @@ pub static ALL_REAL_CARS: &[RealCarModel] = &[
         name: "Nordic RX Lites AWD T2",
         manufacturer: "Nordic RX Engineering",
         year: 2022,
-        module_id: "rally",
+        module_id: "rallycross",
         category_name: "Supercar Lites / RX2",
         tier: 2,
         bhp: 310,
@@ -1550,7 +1550,7 @@ pub static ALL_REAL_CARS: &[RealCarModel] = &[
         name: "AeroTech RX Lite Chassis T2",
         manufacturer: "AeroTech RX",
         year: 2022,
-        module_id: "rally",
+        module_id: "rallycross",
         category_name: "Supercar Lites / RX2",
         tier: 2,
         bhp: 310,
@@ -1574,7 +1574,7 @@ pub static ALL_REAL_CARS: &[RealCarModel] = &[
         name: "VoltTech Electrocross T2",
         manufacturer: "VoltTech Racing",
         year: 2023,
-        module_id: "rally",
+        module_id: "rallycross",
         category_name: "Supercar Lites / RX2",
         tier: 2,
         bhp: 335,
@@ -1599,7 +1599,7 @@ pub static ALL_REAL_CARS: &[RealCarModel] = &[
         name: "Hanguk Apex RX Supercar T3",
         manufacturer: "Hanguk Motorsport",
         year: 2022,
-        module_id: "rally",
+        module_id: "rallycross",
         category_name: "Continental Rallycross Supercar",
         tier: 3,
         bhp: 380,
@@ -1623,7 +1623,7 @@ pub static ALL_REAL_CARS: &[RealCarModel] = &[
         name: "Volkskraft Strassen RX Supercar T3",
         manufacturer: "Volkskraft",
         year: 2021,
-        module_id: "rally",
+        module_id: "rallycross",
         category_name: "Continental Rallycross Supercar",
         tier: 3,
         bhp: 380,
@@ -1647,7 +1647,7 @@ pub static ALL_REAL_CARS: &[RealCarModel] = &[
         name: "Vortek Quattro RX Supercar T3",
         manufacturer: "Vortek Automobil",
         year: 2020,
-        module_id: "rally",
+        module_id: "rallycross",
         category_name: "Continental Rallycross Supercar",
         tier: 3,
         bhp: 380,
@@ -1672,7 +1672,7 @@ pub static ALL_REAL_CARS: &[RealCarModel] = &[
         name: "Gallia Lyon WRX Supercar T4",
         manufacturer: "Gallia Sport",
         year: 2021,
-        module_id: "rally",
+        module_id: "rallycross",
         category_name: "World Rallycross Supercar",
         tier: 4,
         bhp: 600,
@@ -1696,7 +1696,7 @@ pub static ALL_REAL_CARS: &[RealCarModel] = &[
         name: "Forge Comet WRX Supercar T4",
         manufacturer: "Forge Motor Co",
         year: 2020,
-        module_id: "rally",
+        module_id: "rallycross",
         category_name: "World Rallycross Supercar",
         tier: 4,
         bhp: 600,
@@ -1720,7 +1720,7 @@ pub static ALL_REAL_CARS: &[RealCarModel] = &[
         name: "Sixstar Vortex WRX Supercar T4",
         manufacturer: "Sixstar Rally",
         year: 2021,
-        module_id: "rally",
+        module_id: "rallycross",
         category_name: "World Rallycross Supercar",
         tier: 4,
         bhp: 600,
@@ -1745,7 +1745,7 @@ pub static ALL_REAL_CARS: &[RealCarModel] = &[
         name: "Gallia Volt RX1e Supercar T5",
         manufacturer: "Gallia Sport",
         year: 2022,
-        module_id: "rally",
+        module_id: "rallycross",
         category_name: "RX1e Electric Supercar",
         tier: 5,
         bhp: 680,
@@ -1769,7 +1769,7 @@ pub static ALL_REAL_CARS: &[RealCarModel] = &[
         name: "Volkskraft Electro RX1e T5",
         manufacturer: "Volkskraft",
         year: 2022,
-        module_id: "rally",
+        module_id: "rallycross",
         category_name: "RX1e Electric Supercar",
         tier: 5,
         bhp: 680,
@@ -1793,7 +1793,7 @@ pub static ALL_REAL_CARS: &[RealCarModel] = &[
         name: "Torino Integrale Evo-e RX T5",
         manufacturer: "Torino Corse",
         year: 2023,
-        module_id: "rally",
+        module_id: "rallycross",
         category_name: "RX1e Electric Supercar",
         tier: 5,
         bhp: 680,
@@ -1818,7 +1818,7 @@ pub static ALL_REAL_CARS: &[RealCarModel] = &[
         name: "Nordic RX Valkyrie Group E T6",
         manufacturer: "Nordic RX Engineering",
         year: 2022,
-        module_id: "rally",
+        module_id: "rallycross",
         category_name: "Apex Group E Electric",
         tier: 6,
         bhp: 1070,
@@ -1842,7 +1842,7 @@ pub static ALL_REAL_CARS: &[RealCarModel] = &[
         name: "Green Mountain Titan Group E T6",
         manufacturer: "Green Mountain Motorsport",
         year: 2023,
-        module_id: "rally",
+        module_id: "rallycross",
         category_name: "Apex Group E Electric",
         tier: 6,
         bhp: 1070,
@@ -1866,7 +1866,7 @@ pub static ALL_REAL_CARS: &[RealCarModel] = &[
         name: "Rampart Wasp Group E T6",
         manufacturer: "Rampart Performance",
         year: 2024,
-        module_id: "rally",
+        module_id: "rallycross",
         category_name: "Apex Group E Electric",
         tier: 6,
         bhp: 1070,
@@ -1891,7 +1891,7 @@ pub static ALL_REAL_CARS: &[RealCarModel] = &[
         name: "Vortek Turbo Quattro Legend T7",
         manufacturer: "Vortek Automobil",
         year: 1985,
-        module_id: "rally",
+        module_id: "rallycross",
         category_name: "Heritage Group B",
         tier: 7,
         bhp: 550,
@@ -1915,7 +1915,7 @@ pub static ALL_REAL_CARS: &[RealCarModel] = &[
         name: "Gallia Corsica Turbo Legend T7",
         manufacturer: "Gallia Sport",
         year: 1985,
-        module_id: "rally",
+        module_id: "rallycross",
         category_name: "Heritage Group B",
         tier: 7,
         bhp: 530,
@@ -1939,7 +1939,7 @@ pub static ALL_REAL_CARS: &[RealCarModel] = &[
         name: "Torino Stradale S4 Legend T7",
         manufacturer: "Torino Corse",
         year: 1986,
-        module_id: "rally",
+        module_id: "rallycross",
         category_name: "Heritage Group B",
         tier: 7,
         bhp: 550,
@@ -3766,14 +3766,15 @@ pub fn get_models_for_module(module_id: &str) -> Vec<&'static RealCarModel> {
     if module_id == "starter" || module_id == "grassroots" {
         return ALL_REAL_CARS
             .iter()
-            .filter(|c| (c.module_id == "kart" || c.module_id == "autocross" || c.module_id == "rally") && c.tier == 1)
+            .filter(|c| (c.module_id == "kart" || c.module_id == "autocross" || c.module_id == "rallycross" || c.module_id == "rally") && c.tier == 1)
             .collect();
     }
     let mod_id = match module_id {
         "gt_challenge" => "gt",
+        "rally" | "rallycross" | "rx" => "rallycross",
         other => other,
     };
-    ALL_REAL_CARS.iter().filter(|c| c.module_id == mod_id).collect()
+    ALL_REAL_CARS.iter().filter(|c| c.module_id == mod_id || (mod_id == "rallycross" && c.module_id == "rally")).collect()
 }
 
 /// Returns all vehicles belonging to the specified module ID and tier (1..=5).
@@ -3786,11 +3787,12 @@ pub fn get_models_for_module_and_tier(module_id: &str, tier: u8) -> Vec<&'static
     }
     let mod_id = match module_id {
         "gt_challenge" => "gt",
+        "rally" | "rallycross" | "rx" => "rallycross",
         other => other,
     };
     ALL_REAL_CARS
         .iter()
-        .filter(|c| c.module_id == mod_id && c.tier == tier)
+        .filter(|c| (c.module_id == mod_id || (mod_id == "rallycross" && c.module_id == "rally")) && c.tier == tier)
         .collect()
 }
 
@@ -3851,13 +3853,13 @@ pub fn get_tier_name(module_id: &str, tier: u8) -> &'static str {
         ("nascar", 4) => "Tier 4: Pro Super Truck V8 Series",
         ("nascar", 5) => "Tier 5: Trans-National TA1 Silhouette",
 
-        ("rally", 1) => "Tier 1: Rally Junior FWD",
-        ("rally", 2) => "Tier 2: Supercar Lites AWD",
-        ("rally", 3) => "Tier 3: Continental RX Supercar",
-        ("rally", 4) => "Tier 4: World Rallycross Supercar",
-        ("rally", 5) => "Tier 5: RX1e Electric Supercar",
-        ("rally", 6) => "Tier 6: Apex Group E Electric",
-        ("rally", 7) => "Tier 7: Heritage Group B",
+        ("rally" | "rallycross", 1) => "Tier 1: Rally Junior FWD",
+        ("rally" | "rallycross", 2) => "Tier 2: Supercar Lites AWD",
+        ("rally" | "rallycross", 3) => "Tier 3: Continental RX Supercar",
+        ("rally" | "rallycross", 4) => "Tier 4: World Rallycross Supercar",
+        ("rally" | "rallycross", 5) => "Tier 5: RX1e Electric Supercar",
+        ("rally" | "rallycross", 6) => "Tier 6: Apex Group E Electric",
+        ("rally" | "rallycross", 7) => "Tier 7: Heritage Group B",
 
         ("extreme_offroad", 1) => "Tier 1: Sand Rail Buggy",
         ("extreme_offroad", 2) => "Tier 2: Trophy Truck 4x4",
@@ -3913,7 +3915,7 @@ mod tests {
 
     #[test]
     fn test_all_modules_have_5_tiers() {
-        for m in ["gt", "nascar", "rally", "extreme_offroad", "kart", "autocross"] {
+        for m in ["gt", "nascar", "rallycross", "extreme_offroad", "kart", "autocross"] {
             for t in 1..=5 {
                 let models = get_models_for_module_and_tier(m, t);
                 assert!(
