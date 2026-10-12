@@ -17,7 +17,7 @@ pub fn normalize_discipline(disc: &str) -> &'static str {
     match disc {
         "gt" | "gt_challenge" => "gt",
         "kart" | "karting" => "kart",
-        "rally" | "rallycross" => "rally",
+        "rally" | "rallycross" | "rx" => "rallycross",
         "nascar" => "nascar",
         "extreme_offroad" | "offroad" => "extreme_offroad",
         _ => "gt",
@@ -29,7 +29,8 @@ pub fn trophy_filename(discipline: &str, tier: u32, metal: Option<TrophyMetal>, 
     let size_suffix = if high_dpi { "256" } else { "128" };
     match metal {
         Some(m) => {
-            let disc = normalize_discipline(discipline);
+            let raw_disc = normalize_discipline(discipline);
+            let disc = if raw_disc == "rallycross" { "rally" } else { raw_disc };
             let t = tier.clamp(1, 5);
             format!("{}_t{}_{}-{}.png", disc, t, m.as_str(), size_suffix)
         }
