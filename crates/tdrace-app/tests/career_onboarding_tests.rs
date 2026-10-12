@@ -136,7 +136,7 @@ fn test_academy_all_bronze_progression_purse_and_unlocks() {
     assert_eq!(rookie.driver_xp, 450);
     assert!(rookie.academy_progress.is_lesson_unlocked(AcademyLessonId::Lesson3SurfaceTransition));
 
-    // Lesson 3: Bronze (target <= 70.6s)
+    // Lesson 3: Bronze (target <= 73.2s)
     let state3 = AcademyChallengeState::new(AcademyLessonId::Lesson3SurfaceTransition);
     let eval3 = academy::evaluate_academy_attempt(&mut rookie, AcademyLessonId::Lesson3SurfaceTransition, 66.9, &state3);
     assert_eq!(eval3.medal, AcademyMedal::Bronze);
