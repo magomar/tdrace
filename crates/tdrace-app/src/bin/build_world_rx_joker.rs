@@ -133,7 +133,7 @@ const WORLD_RX_CONFIGS: &[TrackJokerConfig] = &[
             side: 1.0,
             surface: SurfaceType::Dirt,
             bank_angle: 7.0,
-            target_delta: 42.0,
+            target_delta: 26.0,
         },
     },
     TrackJokerConfig {

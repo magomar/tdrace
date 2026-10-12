@@ -152,7 +152,9 @@ fn test_kouvola_rx_joker_chicane_walls_leave_no_gap() {
     let chicane_apex = Vec2::new(83.0, 63.0);
     let main: Vec<_> = track.geometry.inner_walls.iter().chain(&track.geometry.outer_walls).collect();
     let all: Vec<_> = main.iter().copied().chain(&track.geometry.network_walls).collect();
-    let mut loose = Vec::new();
+
+    // 1. Verify main track walls around the chicane have no loose ends (the inner wall gap is closed)
+    let mut loose_main = Vec::new();
     for (i, w) in main.iter().enumerate() {
         for end in [w.segment.start, w.segment.end] {
             if end.distance(chicane_apex) > 25.0 {
@@ -162,10 +164,33 @@ fn test_kouvola_rx_joker_chicane_walls_leave_no_gap() {
                 j != i && [other.segment.start, other.segment.end].iter().any(|p| p.distance(end) < WALL_JOIN_M)
             });
             if !joined {
-                loose.push(format!("({:.1}, {:.1})", end.x, end.y));
+                loose_main.push(format!("({:.1}, {:.1})", end.x, end.y));
             }
         }
     }
-    assert!(loose.is_empty(), "main wall ends near chicane apex that meet no wall: {}", loose.join(", "));
+    assert!(loose_main.is_empty(), "main wall ends near chicane apex that meet no wall: {}", loose_main.join(", "));
+
+    // 2. Verify network walls around the chicane have no gap (the joker outer wall is continuous)
+    let nw_near: Vec<_> = track.geometry.network_walls.iter()
+        .filter(|w| w.segment.start.distance(chicane_apex) < 25.0 || w.segment.end.distance(chicane_apex) < 25.0)
+        .collect();
+    assert!(!nw_near.is_empty(), "expected network walls near chicane apex");
+
+    // Inside the chicane apex zone (radius 20m), every network wall segment endpoint must meet another wall segment
+    let mut loose_nw = Vec::new();
+    for (i, w) in nw_near.iter().enumerate() {
+        for end in [w.segment.start, w.segment.end] {
+            if end.distance(chicane_apex) > 20.0 {
+                continue;
+            }
+            let joined = all.iter().enumerate().any(|(j, other)| {
+                j != i && [other.segment.start, other.segment.end].iter().any(|p| p.distance(end) < WALL_JOIN_M)
+            });
+            if !joined {
+                loose_nw.push(format!("({:.1}, {:.1})", end.x, end.y));
+            }
+        }
+    }
+    assert!(loose_nw.is_empty(), "network wall ends near chicane apex that meet no wall: {}", loose_nw.join(", "));
 }
 
