@@ -813,7 +813,7 @@ fn test_menu_category_filter_cycling_and_direct_keys() {
 
     // Cycling via prev / next
     session.menu_category_filter = session.menu_category_filter.next();
-    assert_eq!(session.menu_category_filter, MenuCategoryFilter::Rally);
+    assert_eq!(session.menu_category_filter, MenuCategoryFilter::Kart);
 
     session.menu_category_filter = session.menu_category_filter.prev();
     assert_eq!(session.menu_category_filter, MenuCategoryFilter::Classic);
@@ -825,12 +825,12 @@ fn test_menu_category_filter_cycling_and_direct_keys() {
     // Next wrap-around through all 8 categories
     let mut cur = MenuCategoryFilter::Classic;
     for expected in [
-        MenuCategoryFilter::Rally,
         MenuCategoryFilter::Kart,
-        MenuCategoryFilter::Gt,
-        MenuCategoryFilter::Nascar,
-        MenuCategoryFilter::ExtremeOffroad,
         MenuCategoryFilter::Autocross,
+        MenuCategoryFilter::Rally,
+        MenuCategoryFilter::Nascar,
+        MenuCategoryFilter::Gt,
+        MenuCategoryFilter::ExtremeOffroad,
         MenuCategoryFilter::Custom,
         MenuCategoryFilter::Classic,
     ] {
@@ -843,7 +843,7 @@ fn test_menu_category_filter_cycling_and_direct_keys() {
     session.input.gamepad.snapshot.btn_rb_pressed = true;
     session.update_menu();
     session.input.gamepad.snapshot.btn_rb_pressed = false;
-    assert_eq!(session.menu_category_filter, MenuCategoryFilter::Rally);
+    assert_eq!(session.menu_category_filter, MenuCategoryFilter::Kart);
 
     session.input.gamepad.snapshot.btn_lb_pressed = true;
     session.update_menu();
@@ -868,7 +868,7 @@ fn test_menu_category_filter_cycling_and_direct_keys() {
     session.input.gamepad.snapshot.dpad_right_pressed = true;
     session.update_menu();
     session.input.gamepad.snapshot.dpad_right_pressed = false;
-    assert_eq!(session.menu_category_filter, MenuCategoryFilter::Rally);
+    assert_eq!(session.menu_category_filter, MenuCategoryFilter::Kart);
 
     // 4. Down from CategoryFilter returns focus to CatalogFilter
     session.input.gamepad.snapshot.dpad_down_pressed = true;
@@ -937,7 +937,19 @@ fn test_menu_category_filter_circuits_isolation() {
     }
 
     // Strict Category Enforcement: exactly 8 categories, and each category only contains its domain
-    assert_eq!(MenuCategoryFilter::ALL.len(), 8);
+    assert_eq!(
+        MenuCategoryFilter::ALL,
+        [
+            MenuCategoryFilter::Classic,
+            MenuCategoryFilter::Kart,
+            MenuCategoryFilter::Autocross,
+            MenuCategoryFilter::Rally,
+            MenuCategoryFilter::Nascar,
+            MenuCategoryFilter::Gt,
+            MenuCategoryFilter::ExtremeOffroad,
+            MenuCategoryFilter::Custom,
+        ]
+    );
     for cat in MenuCategoryFilter::ALL {
         session.menu_category_filter = cat;
         let tracks = session.filtered_menu_tracks();

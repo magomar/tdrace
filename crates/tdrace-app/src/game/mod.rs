@@ -11295,17 +11295,17 @@ impl RaceSession {
         let num_cat = if is_key_pressed(KeyCode::Key1) {
             Some(MenuCategoryFilter::Classic)
         } else if is_key_pressed(KeyCode::Key2) {
-            Some(MenuCategoryFilter::Rally)
-        } else if is_key_pressed(KeyCode::Key3) {
             Some(MenuCategoryFilter::Kart)
+        } else if is_key_pressed(KeyCode::Key3) {
+            Some(MenuCategoryFilter::Autocross)
         } else if is_key_pressed(KeyCode::Key4) {
-            Some(MenuCategoryFilter::Gt)
+            Some(MenuCategoryFilter::Rally)
         } else if is_key_pressed(KeyCode::Key5) {
             Some(MenuCategoryFilter::Nascar)
         } else if is_key_pressed(KeyCode::Key6) {
-            Some(MenuCategoryFilter::ExtremeOffroad)
+            Some(MenuCategoryFilter::Gt)
         } else if is_key_pressed(KeyCode::Key7) {
-            Some(MenuCategoryFilter::Autocross)
+            Some(MenuCategoryFilter::ExtremeOffroad)
         } else if is_key_pressed(KeyCode::Key8) {
             Some(MenuCategoryFilter::Custom)
         } else {

@@ -1261,36 +1261,36 @@ impl TrackCatalogFilter {
 pub enum MenuCategoryFilter {
     #[default]
     Classic,
-    Rally,
     Kart,
-    Gt,
-    Nascar,
-    ExtremeOffroad,
     Autocross,
+    Rally,
+    Nascar,
+    Gt,
+    ExtremeOffroad,
     Custom,
 }
 
 impl MenuCategoryFilter {
     pub const ALL: [Self; 8] = [
         Self::Classic,
-        Self::Rally,
         Self::Kart,
-        Self::Gt,
-        Self::Nascar,
-        Self::ExtremeOffroad,
         Self::Autocross,
+        Self::Rally,
+        Self::Nascar,
+        Self::Gt,
+        Self::ExtremeOffroad,
         Self::Custom,
     ];
 
     pub fn label(&self) -> &'static str {
         match self {
             Self::Classic => "CLASSIC",
-            Self::Rally => "RALLY",
             Self::Kart => "KART",
-            Self::Gt => "GT",
-            Self::Nascar => "STOCK CAR",
-            Self::ExtremeOffroad => "OFF-ROAD",
             Self::Autocross => "AUTOCROSS",
+            Self::Rally => "RALLY",
+            Self::Nascar => "STOCK CAR",
+            Self::Gt => "GT",
+            Self::ExtremeOffroad => "OFF-ROAD",
             Self::Custom => "CUSTOM",
         }
     }
@@ -1299,12 +1299,12 @@ impl MenuCategoryFilter {
         match self {
             Self::Custom => None,
             Self::Classic => Some("classic"),
-            Self::Rally => Some("rally"),
             Self::Kart => Some("kart"),
-            Self::Gt => Some("gt"),
-            Self::Nascar => Some("nascar"),
-            Self::ExtremeOffroad => Some("extreme_offroad"),
             Self::Autocross => Some("autocross"),
+            Self::Rally => Some("rally"),
+            Self::Nascar => Some("nascar"),
+            Self::Gt => Some("gt"),
+            Self::ExtremeOffroad => Some("extreme_offroad"),
         }
     }
 
@@ -1325,12 +1325,12 @@ impl MenuCategoryFilter {
     pub fn from_module_id(module_id: &str) -> Self {
         match module_id {
             "classic" => Self::Classic,
-            "rally" => Self::Rally,
             "kart" => Self::Kart,
-            "gt" | "gt_challenge" => Self::Gt,
-            "nascar" => Self::Nascar,
-            "extreme_offroad" => Self::ExtremeOffroad,
             "autocross" | "ax" => Self::Autocross,
+            "rally" => Self::Rally,
+            "nascar" => Self::Nascar,
+            "gt" | "gt_challenge" => Self::Gt,
+            "extreme_offroad" => Self::ExtremeOffroad,
             _ => Self::Classic,
         }
     }
