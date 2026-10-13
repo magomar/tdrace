@@ -3,18 +3,18 @@ type: validation_receipt
 schema_version: "1.0"
 spec: "specs/114_realworld_homologation_telemetry_calibration_for_autocross_and_rallycross_highpower_4wd_drivetrains_competition_braking_and_mechanical_grip.md"
 epic: "tdrace-ibjhr"
-candidate_commit: "6a92e6e9c41aa9f0ca1fa64aac12d7848f981087"
+candidate_commit: "3b472ec469edcc2087c91d5c6c30809ce19f8012"
 verifier: "local-user"
-evaluated_at: "2026-10-13T09:04:08Z"
+evaluated_at: "2026-10-13T09:06:03Z"
 command: "cargo test -p tdrace-app --test autocross_catalog_tests && cargo test -p tdrace-app --test rallycross_and_autocross_simulation_tests -- test_calibrated"
 exit_code: 0
-duration_ms: 66337
+duration_ms: 65510
 status: passed
 ---
 
 # 🧾 Validation Receipt: Spec 114
 
-- **Candidate Commit**: `6a92e6e9c41aa9f0ca1fa64aac12d7848f981087`
+- **Candidate Commit**: `3b472ec469edcc2087c91d5c6c30809ce19f8012`
 - **Spec**: `specs/114_realworld_homologation_telemetry_calibration_for_autocross_and_rallycross_highpower_4wd_drivetrains_competition_braking_and_mechanical_grip.md`
 - **Command**: `cargo test -p tdrace-app --test autocross_catalog_tests && cargo test -p tdrace-app --test rallycross_and_autocross_simulation_tests -- test_calibrated`
 - **Result**: `passed` (exit code: 0)
@@ -28,8 +28,8 @@ stdout:
 
 running 7 tests
 test test_autocross_4wd_loose_surface_balance_and_differentials ... ok
-test test_autocross_catalog_has_fifteen_vehicles ... ok
 test test_autocross_catalog_has_three_vehicles_per_tier ... ok
+test test_autocross_catalog_has_fifteen_vehicles ... ok
 test test_autocross_specific_vehicle_identities ... ok
 test test_carchoice_direct_instantiation_parity ... ok
 test test_autocross_buggy1600_turning_circle_diameter_and_differential_action ... ok
@@ -43,7 +43,7 @@ test test_calibrated_autocross_multi_circuit ... ok
 test test_calibrated_rallycross_multi_circuit has been running for over 60 seconds
 test test_calibrated_rallycross_multi_circuit ... ok
 
-test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 66.20s
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 65.38s
 
 
 stderr:
