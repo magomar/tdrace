@@ -3,7 +3,7 @@ type: Architecture Spec
 template: architecture
 title: "Real-World Homologation Telemetry Calibration for Autocross and Rallycross High-Power 4WD Drivetrains, Competition Braking, and Mechanical Grip"
 description: "Calibrates high-power 4WD vehicle dynamics across Continental Autocross and FIA Rallycross against real-world manufacturer homologation telemetry, introducing 45:55/42:58 competition AWD torque distribution, 22.5 kN competition disc braking, 1.20 base competition compound grip, and staggered rear SuperBuggy wheels to resolve high-tier drivability decay and restore monotonic tier pace progression."
-status: in_progress
+status: implemented
 receipt: "docs/receipts/spec-114-receipt.md"
 verified: { by: "human:mario", at: "2026-10-13T08:35:40Z", hash: "dad277c17223" }
 created: 2026-10-13
