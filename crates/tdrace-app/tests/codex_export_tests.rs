@@ -300,7 +300,7 @@ fn racing_data_matches_series_formats_and_academy() {
 
     let tiers = academy["tiers"].as_array().unwrap();
     let totals: Vec<u64> = tiers.iter().map(|t| t["bounty_total"].as_u64().unwrap()).collect();
-    assert_eq!(totals, [14_500, 25_000, 50_000]);
+    assert_eq!(totals, [7_000, 25_000, 50_000]);
     let grades: Vec<&str> = tiers.iter().map(|t| t["licence_grade"].as_str().unwrap()).collect();
     assert_eq!(grades, ["ClassD", "ClassC", "ClassB"]);
     assert_eq!(academy["daily_stipend_cap"], 5);

@@ -122,7 +122,7 @@ impl Default for PlayerProfile {
 }
 
 impl PlayerProfile {
-    pub const STARTING_CREDITS: u64 = 10_000;
+    pub const STARTING_CREDITS: u64 = 0;
     /// Racing number of a new profile and the fallback for an invalid stored number.
     pub const DEFAULT_RACE_NUMBER: u8 = 7;
 
@@ -682,13 +682,13 @@ impl ModuleCareerProgress {
     pub fn car_credit_cost_for_module(module_id: &str, tier: u8) -> u64 {
         match module_id {
             "kart" => match tier {
-                1 => 19_500,
-                2 => 28_500,
-                3 => 42_000,
-                4 => 58_000,
-                5 => 76_000,
-                6 => 98_000,
-                _ => (tier as u64) * 20_000,
+                1 => 5_000,
+                2 => 8_500,
+                3 => 12_000,
+                4 => 18_000,
+                5 => 26_000,
+                6 => 38_000,
+                _ => (tier as u64) * 10_000,
             },
             "autocross" | "ax" => match tier {
                 1 => 12_000,

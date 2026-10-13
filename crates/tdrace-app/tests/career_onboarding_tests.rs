@@ -9,9 +9,9 @@ use tdrace_app::profile::{
 fn test_fresh_rookie_profile_zero_start_invariants() {
     let rookie = PlayerProfile::new_rookie("Ayrton");
 
-    // Invariant 1: 10,000 Credits starting wallet (Spec 053, 060)
-    assert_eq!(rookie.credits, 10_000);
-    assert_eq!(rookie.lifetime_credits, 10_000);
+    // Invariant 1: 0 Credits starting wallet (Spec 053, 060 zero-start)
+    assert_eq!(rookie.credits, 0);
+    assert_eq!(rookie.lifetime_credits, 0);
 
     // Invariant 2: 0 Global Driver XP
     assert_eq!(rookie.driver_xp, 0);
@@ -45,7 +45,7 @@ fn test_rookie_profile_database_persistence() {
     // Record lesson 1 completion
     let (medal, cr, _) = rookie.academy_progress.record_attempt(AcademyLessonId::Lesson1ApexLine, 59.5, true);
     assert_eq!(medal, AcademyMedal::Gold);
-    assert_eq!(cr, 2_000);
+    assert_eq!(cr, 1_300);
 
     let id = db.create_profile(&rookie).expect("Create rookie profile");
     let loaded = db.get_profile_by_id(id).expect("Fetch profile").expect("Profile exists");
@@ -99,7 +99,7 @@ fn test_academy_curriculum_graduation_grants_license() {
     // Complete Lesson 4 (Graduation Sprint) with Bronze
     let (medal, cr, _) = rookie.academy_progress.record_attempt(AcademyLessonId::Lesson4GraduationSprint, 125.3, true);
     assert_eq!(medal, AcademyMedal::Bronze);
-    assert_eq!(cr, 2_500);
+    assert_eq!(cr, 1_750);
 
     // Graduation ceremony grants the National Grassroots Racing License
     assert!(rookie.academy_progress.is_graduated());
@@ -111,7 +111,7 @@ fn test_academy_all_bronze_progression_purse_and_unlocks() {
     use tdrace_app::game::academy::{self, AcademyChallengeState};
 
     let mut rookie = PlayerProfile::new_rookie("Alain");
-    assert_eq!(rookie.credits, 10_000);
+    assert_eq!(rookie.credits, 0);
     assert_eq!(rookie.driver_xp, 0);
 
     // Lesson 1: Bronze (target <= 74.2s)
@@ -121,7 +121,7 @@ fn test_academy_all_bronze_progression_purse_and_unlocks() {
     let eval1 = academy::evaluate_academy_attempt(&mut rookie, AcademyLessonId::Lesson1ApexLine, 69.6, &state1);
     assert_eq!(eval1.medal, AcademyMedal::Bronze);
     assert_eq!(eval1.credits_awarded, 1_000);
-    assert_eq!(rookie.credits, 11_000);
+    assert_eq!(rookie.credits, 1_000);
     assert_eq!(eval1.xp_awarded, 200); // 100 base + 100 distance
     assert_eq!(rookie.driver_xp, 200);
     assert!(rookie.academy_progress.is_lesson_unlocked(AcademyLessonId::Lesson2BrakingChicane));
@@ -130,8 +130,8 @@ fn test_academy_all_bronze_progression_purse_and_unlocks() {
     let state2 = AcademyChallengeState::new(AcademyLessonId::Lesson2BrakingChicane);
     let eval2 = academy::evaluate_academy_attempt(&mut rookie, AcademyLessonId::Lesson2BrakingChicane, 71.3, &state2);
     assert_eq!(eval2.medal, AcademyMedal::Bronze);
-    assert_eq!(eval2.credits_awarded, 1_500);
-    assert_eq!(rookie.credits, 12_500);
+    assert_eq!(eval2.credits_awarded, 1_250);
+    assert_eq!(rookie.credits, 2_250);
     assert_eq!(eval2.xp_awarded, 250); // 150 base + 100 distance
     assert_eq!(rookie.driver_xp, 450);
     assert!(rookie.academy_progress.is_lesson_unlocked(AcademyLessonId::Lesson3SurfaceTransition));
@@ -140,8 +140,8 @@ fn test_academy_all_bronze_progression_purse_and_unlocks() {
     let state3 = AcademyChallengeState::new(AcademyLessonId::Lesson3SurfaceTransition);
     let eval3 = academy::evaluate_academy_attempt(&mut rookie, AcademyLessonId::Lesson3SurfaceTransition, 66.9, &state3);
     assert_eq!(eval3.medal, AcademyMedal::Bronze);
-    assert_eq!(eval3.credits_awarded, 2_000);
-    assert_eq!(rookie.credits, 14_500);
+    assert_eq!(eval3.credits_awarded, 1_500);
+    assert_eq!(rookie.credits, 3_750);
     assert_eq!(eval3.xp_awarded, 300); // 200 base + 100 distance
     assert_eq!(rookie.driver_xp, 750);
     assert!(rookie.academy_progress.is_lesson_unlocked(AcademyLessonId::Lesson4GraduationSprint));
@@ -150,8 +150,8 @@ fn test_academy_all_bronze_progression_purse_and_unlocks() {
     let state4 = AcademyChallengeState::new(AcademyLessonId::Lesson4GraduationSprint);
     let eval4 = academy::evaluate_academy_attempt(&mut rookie, AcademyLessonId::Lesson4GraduationSprint, 123.4, &state4);
     assert_eq!(eval4.medal, AcademyMedal::Bronze);
-    assert_eq!(eval4.credits_awarded, 2_500);
-    assert_eq!(rookie.credits, 17_000); // 10,000 seed + 7,000 purse!
+    assert_eq!(eval4.credits_awarded, 1_750);
+    assert_eq!(rookie.credits, 5_500); // 5,500 total bronze purse!
     assert_eq!(eval4.xp_awarded, 450); // 350 base + 100 distance
     assert_eq!(rookie.driver_xp, 1_200);
     assert!(eval4.newly_graduated);
@@ -178,9 +178,9 @@ fn test_academy_all_silver_and_gold_curriculum_purses() {
     }
     assert_eq!(
         rookie_silver.credits,
-        10_000 + academy::total_curriculum_purse(AcademyMedal::Silver)
+        academy::total_curriculum_purse(AcademyMedal::Silver)
     );
-    assert_eq!(rookie_silver.credits, 20_750); // 10,000 seed + 10,750 purse!
+    assert_eq!(rookie_silver.credits, 6_250); // 6,250 purse!
     assert!(rookie_silver.has_racing_license());
     assert_eq!(rookie_silver.license_grade, LicenseGrade::ClassD);
 
@@ -199,9 +199,9 @@ fn test_academy_all_silver_and_gold_curriculum_purses() {
     }
     assert_eq!(
         rookie_gold.credits,
-        10_000 + academy::total_curriculum_purse(AcademyMedal::Gold)
+        academy::total_curriculum_purse(AcademyMedal::Gold)
     );
-    assert_eq!(rookie_gold.credits, 24_500); // 10,000 seed + 14,500 purse!
+    assert_eq!(rookie_gold.credits, 7_000); // 7,000 purse!
     assert!(rookie_gold.has_racing_license());
     assert_eq!(rookie_gold.license_grade, LicenseGrade::ClassD);
 }
@@ -212,20 +212,20 @@ fn test_academy_attempt_idempotency_on_replay() {
 
     let mut rookie = PlayerProfile::new_rookie("Mika");
 
-    // First attempt: Gold (2,000 Cr bounty + 100 distance XP)
+    // First attempt: Gold (1,300 Cr bounty + 100 distance XP)
     let state = AcademyChallengeState::new(AcademyLessonId::Lesson1ApexLine);
     let eval1 = academy::evaluate_academy_attempt(&mut rookie, AcademyLessonId::Lesson1ApexLine, 59.5, &state);
     assert_eq!(eval1.medal, AcademyMedal::Gold);
-    assert_eq!(eval1.credits_awarded, 2_000);
-    assert_eq!(rookie.credits, 12_000); // 10,000 seed + 2,000 bounty
+    assert_eq!(eval1.credits_awarded, 1_300);
+    assert_eq!(rookie.credits, 1_300); // 1,300 bounty
     assert!(eval1.is_new_best);
 
     // Replay attempt: achieves Gold again with a faster time (57.9s)
-    // Awards practice stipend (+1,500 Cr) and distance XP (+100 XP), but NO duplicate 2,000 Cr bounty
+    // Awards practice stipend (+1,500 Cr) and distance XP (+100 XP), but NO duplicate 1,300 Cr bounty
     let eval2 = academy::evaluate_academy_attempt(&mut rookie, AcademyLessonId::Lesson1ApexLine, 57.9, &state);
     assert_eq!(eval2.medal, AcademyMedal::Gold);
     assert_eq!(eval2.credits_awarded, 1_500); // Practice stipend
-    assert_eq!(rookie.credits, 13_500); // 12,000 + 1,500 practice stipend
+    assert_eq!(rookie.credits, 2_800); // 1,300 + 1,500 practice stipend
     assert!(eval2.is_new_best); // Best time updated
     assert_eq!(
         rookie.academy_progress.lessons.get(&AcademyLessonId::Lesson1ApexLine).unwrap().best_time_sec,
@@ -251,7 +251,7 @@ fn test_academy_clean_attempt_and_disqualification_rules() {
     );
     assert_eq!(eval_collision.medal, AcademyMedal::None);
     assert_eq!(eval_collision.credits_awarded, 0);
-    assert_eq!(rookie.credits, 10_000);
+    assert_eq!(rookie.credits, 0);
     assert!(!eval_collision.clean_attempt);
     assert!(eval_collision.failure_reason.is_some());
 
@@ -267,7 +267,7 @@ fn test_academy_clean_attempt_and_disqualification_rules() {
     );
     assert_eq!(eval_offtrack.medal, AcademyMedal::None);
     assert_eq!(eval_offtrack.credits_awarded, 0);
-    assert_eq!(rookie.credits, 10_000);
+    assert_eq!(rookie.credits, 0);
     assert!(!eval_offtrack.clean_attempt);
 }
 
@@ -422,7 +422,7 @@ fn test_grassroots_pricing_calibration_and_affordability() {
     use tdrace_app::profile::ModuleCareerProgress;
 
     // 1. Verify pricing matches Grassroots Pricing Reference Table (Spec 060 Section 2.1 & 2.2)
-    assert_eq!(ModuleCareerProgress::car_credit_cost_for_module("kart", 1), 19_500);
+    assert_eq!(ModuleCareerProgress::car_credit_cost_for_module("kart", 1), 5_000);
     assert_eq!(ModuleCareerProgress::car_credit_cost_for_module("autocross", 1), 12_000);
     assert_eq!(ModuleCareerProgress::car_credit_cost_for_module("rally", 1), 16_000);
     assert_eq!(ModuleCareerProgress::car_credit_cost_for_module("gt", 1), 70_000);
@@ -430,15 +430,15 @@ fn test_grassroots_pricing_calibration_and_affordability() {
     // Specific catalog vehicle cost resolutions
     assert_eq!(
         ModuleCareerProgress::car_credit_cost_for_car("kart_blackline_cadet_t1", "kart", 1),
-        19_500
+        5_000
     );
     assert_eq!(
         ModuleCareerProgress::car_credit_cost_for_car("kart_rosso_junior_t1", "kart", 1),
-        19_500
+        5_000
     );
     assert_eq!(
         ModuleCareerProgress::car_credit_cost_for_car("kart_verde_sprout_t1", "kart", 1),
-        19_500
+        5_000
     );
     assert_eq!(
         ModuleCareerProgress::car_credit_cost_for_car("autocross_lifelive_tn5", "autocross", 1),
@@ -453,28 +453,28 @@ fn test_grassroots_pricing_calibration_and_affordability() {
         70_000
     );
 
-    // 2. Affordability with all-Bronze total purse (10,000 Cr seed + 7,000 Cr bronze = 17,000 Cr)
-    let bronze_purse = 17_000u64;
+    // 2. Affordability with all-Bronze total purse (5,500 Cr)
+    let bronze_purse = 5_500u64;
     let kart_progress = ModuleCareerProgress::default_for_module(1, "kart");
     let ax_progress = ModuleCareerProgress::default_for_module(1, "autocross");
     let rally_progress = ModuleCareerProgress::default_for_module(1, "rally");
     let gt_progress = ModuleCareerProgress::default_for_module(1, "gt");
 
-    // Cross Car and Rally4 are affordable with 17,000 Cr wallet
-    assert!(ax_progress.can_buy_car("autocross_lifelive_tn5", 1, bronze_purse));
-    assert!(rally_progress.can_buy_car("rally_gallia_200_t1", 1, bronze_purse));
-    // Cadet Kart (19,500 Cr) and GT4 (70,000 Cr) require Gold medals
-    assert!(!kart_progress.can_buy_car("kart_blackline_cadet_t1", 1, bronze_purse));
+    // Cadet Kart (5,000 Cr) is affordable with 5,500 Cr wallet
+    assert!(kart_progress.can_buy_car("kart_blackline_cadet_t1", 1, bronze_purse));
+    // Cross Car (12k), Rally4 (16k) and GT4 (70k) are unaffordable with bronze purse
+    assert!(!ax_progress.can_buy_car("autocross_lifelive_tn5", 1, bronze_purse));
+    assert!(!rally_progress.can_buy_car("rally_gallia_200_t1", 1, bronze_purse));
     assert!(!gt_progress.can_buy_car("gt_vandorn_stratus_t1", 1, bronze_purse));
 
-    // 3. Affordability with all-Gold graduation wallet (10,000 Cr seed + 14,500 Cr gold = 24,500 Cr)
-    let gold_purse = 24_500u64;
-    // Any of the three Cadet Karts and Cross Car Junior are affordable
+    // 3. Affordability with all-Gold graduation wallet (7,000 Cr)
+    let gold_purse = 7_000u64;
+    // Any of the three Cadet Karts are affordable
     assert!(kart_progress.can_buy_car("kart_blackline_cadet_t1", 1, gold_purse));
     assert!(kart_progress.can_buy_car("kart_rosso_junior_t1", 1, gold_purse));
     assert!(kart_progress.can_buy_car("kart_verde_sprout_t1", 1, gold_purse));
-    assert!(ax_progress.can_buy_car("autocross_lifelive_tn5", 1, gold_purse));
-    // GT4 (70,000 Cr) is still unaffordable
+    // Higher discipline cars (AX 12k, GT4 70k) are still unaffordable
+    assert!(!ax_progress.can_buy_car("autocross_lifelive_tn5", 1, gold_purse));
     assert!(!gt_progress.can_buy_car("gt_vandorn_stratus_t1", 1, gold_purse));
 }
 
@@ -487,12 +487,12 @@ fn test_starter_car_purchase_adds_to_owned_cars_and_unlocks_career() {
     let mut session = RaceSession::new();
     let mut rookie = PlayerProfile::new_rookie("Sebastian");
 
-    // 1. Graduate Academy (grants license and holds 24,500 Cr total starting + gold wallet)
+    // 1. Graduate Academy (grants license and holds 7,000 Cr gold wallet)
     rookie.academy_progress.license_granted = true;
     rookie.license_grade = LicenseGrade::ClassD;
-    rookie.credits = 24_500;
-    rookie.lifetime_credits = 24_500;
-    assert_eq!(rookie.credits, 24_500);
+    rookie.credits = 7_000;
+    rookie.lifetime_credits = 7_000;
+    assert_eq!(rookie.credits, 7_000);
     assert!(rookie.has_racing_license());
     assert!(rookie.owned_cars.is_empty());
     assert!(!rookie.can_access_career(), "Licensed rookie without a car cannot access career");
@@ -517,15 +517,15 @@ fn test_starter_car_purchase_adds_to_owned_cars_and_unlocks_career() {
         other => panic!("Expected ModalitySelect with VehicleRequired modal, got {:?}", other),
     }
 
-    // 3. Purchase Cadet Kart in Kart module (19,500 Cr)
+    // 3. Purchase Cadet Kart in Kart module (5,000 Cr)
     let mut kart_progress = ModuleCareerProgress::default_for_module(1, "kart");
     assert!(kart_progress.can_buy_car("kart_blackline_cadet_t1", 1, session.active_profile.credits));
     kart_progress
         .buy_car(&mut session.active_profile, "kart_blackline_cadet_t1", 1)
         .expect("Purchase Cadet Kart");
 
-    // Verify credits deducted: 24,500 - 19,500 = 5,000 Cr reserve preserved!
-    assert_eq!(session.active_profile.credits, 5_000);
+    // Verify credits deducted: 7,000 - 5,000 = 2,000 Cr reserve preserved!
+    assert_eq!(session.active_profile.credits, 2_000);
     // Verify car added to owned_cars
     assert_eq!(session.active_profile.owned_cars, vec!["kart_blackline_cadet_t1".to_string()]);
     // Career mode is now fully unlocked!
@@ -558,8 +558,8 @@ fn test_garage_allows_choosing_any_t1_kart_and_drives_it_in_championship() {
     let mut rookie = PlayerProfile::new_rookie("Max");
     rookie.academy_progress.license_granted = true;
     rookie.license_grade = LicenseGrade::ClassD;
-    rookie.credits = 24_500;
-    rookie.lifetime_credits = 24_500;
+    rookie.credits = 7_000;
+    rookie.lifetime_credits = 7_000;
 
     session.active_profile = rookie;
     assert!(session.active_profile.owned_cars.is_empty());
@@ -569,26 +569,26 @@ fn test_garage_allows_choosing_any_t1_kart_and_drives_it_in_championship() {
     assert!(!session.active_profile.is_car_owned("kart_rosso_junior_t1"));
     assert!(!session.active_profile.is_car_owned("kart_verde_sprout_t1"));
 
-    // 2. All three T1 karts cost 19,500 Cr and are affordable with 24,500 Cr wallet
+    // 2. All three T1 karts cost 5,000 Cr and are affordable with 7,000 Cr wallet
     let mut kart_progress = ModuleCareerProgress::default_for_module(1, "kart");
     assert!(kart_progress.can_buy_car_for_profile(&session.active_profile, "kart_rosso_junior_t1", 1));
     assert!(kart_progress.can_buy_car_for_profile(&session.active_profile, "kart_blackline_cadet_t1", 1));
     assert!(kart_progress.can_buy_car_for_profile(&session.active_profile, "kart_verde_sprout_t1", 1));
 
-    // 3. Purchase Rosso Kart Junior 60cc T1 (19,500 Cr)
+    // 3. Purchase Rosso Kart Junior 60cc T1 (5,000 Cr)
     kart_progress
         .buy_car(&mut session.active_profile, "kart_rosso_junior_t1", 1)
         .expect("Purchase Rosso Kart Junior");
     session.selected_car_model_id = Some("kart_rosso_junior_t1");
 
-    // 4. Verify wallet balance is 5,000 Cr reserve and only Rosso is owned
-    assert_eq!(session.active_profile.credits, 5_000);
+    // 4. Verify wallet balance is 2,000 Cr reserve and only Rosso is owned
+    assert_eq!(session.active_profile.credits, 2_000);
     assert_eq!(session.active_profile.owned_cars, vec!["kart_rosso_junior_t1".to_string()]);
     assert!(session.active_profile.is_car_owned("kart_rosso_junior_t1"));
     assert!(!session.active_profile.is_car_owned("kart_blackline_cadet_t1"));
     assert!(!session.active_profile.is_car_owned("kart_verde_sprout_t1"));
 
-    // 5. Verify other karts are now unaffordable (5,000 < 19,500)
+    // 5. Verify other karts are now unaffordable (2,000 < 5,000)
     assert!(!kart_progress.can_buy_car_for_profile(&session.active_profile, "kart_blackline_cadet_t1", 1));
     assert!(!kart_progress.can_buy_car_for_profile(&session.active_profile, "kart_verde_sprout_t1", 1));
 

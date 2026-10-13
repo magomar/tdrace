@@ -2,7 +2,7 @@
 type: Architecture Spec
 template: architecture
 title: "Performance-Based Individual Vehicle Pricing and Dynamic Catalog Valuation"
-description: "Establishes a data-driven Aggregated Performance Index (API) for vehicle models across all motorsport categories and scales individual credit purchase prices with intra-tier valuation spreads while anchoring entry grassroots karts at 19,500 Cr."
+description: "Establishes a data-driven Aggregated Performance Index (API) for vehicle models across all motorsport categories and scales individual credit purchase prices with intra-tier valuation spreads while anchoring entry grassroots karts at 5,000 Cr."
 status: draft
 created: 2026-10-13
 generated: { by: agent/antigravity, at: 2026-10-13T21:47:25Z }
@@ -14,7 +14,7 @@ depends_on:
 
 # Architecture Spec: Performance-Based Individual Vehicle Pricing and Dynamic Catalog Valuation 🏎️📊💰
 
-A data-driven catalog valuation and vehicle economics architecture replacing flat per-tier vehicle costs with individualized pricing based on an **Aggregated Performance Index (API)**. Integrating vehicle engineering telemetry (horsepower, torque, kerb weight, top speed, 0–100 km/h acceleration) with aerodynamic and chassis handling ratings from the asset catalogue, this specification introduces intra-tier valuation spreads ($\pm 10\text{--}30\%$) across all motorsport disciplines while strictly anchoring the grassroots entry point (Tier 1 Karts) at 19,500 Cr to preserve the [Spec 060](060_classic_academy_and_grassroots_career_onboarding.md) Classic Academy onboarding progression.
+A data-driven catalog valuation and vehicle economics architecture replacing flat per-tier vehicle costs with individualized pricing based on an **Aggregated Performance Index (API)**. Integrating vehicle engineering telemetry (horsepower, torque, kerb weight, top speed, 0–100 km/h acceleration) with aerodynamic and chassis handling ratings from the asset catalogue, this specification introduces intra-tier valuation spreads ($\pm 10\text{--}30\%$) across all motorsport disciplines while strictly anchoring the grassroots entry point (Tier 1 Karts) at 5,000 Cr to preserve the [Spec 060](060_classic_academy_and_grassroots_career_onboarding.md) Classic Academy onboarding progression.
 
 ---
 
@@ -32,9 +32,9 @@ graph TD
         M[Module: kart / gt / rally / autocross] --> F[car_credit_cost_for_module]
         T[Tier: 1..=6] --> F
         F --> P[Flat Price for All Models in Tier]
-        P --> C1[Model A: Blackline Cadet 60cc - 19,500 Cr]
-        P --> C2[Model B: Rosso Junior 60cc - 19,500 Cr]
-        P --> C3[Model C: Verde Sprout 60cc - 19,500 Cr]
+        P --> C1[Model A: Blackline Cadet 60cc - 5,000 Cr]
+        P --> C2[Model B: Rosso Junior 60cc - 5,000 Cr]
+        P --> C3[Model C: Verde Sprout 60cc - 5,000 Cr]
     end
 ```
 
@@ -135,16 +135,16 @@ $$\text{round}_{250}(x) = \left\lfloor \frac{x + 125}{250} \right\rfloor \times 
 ## 🏎️ Concrete Pricing Calibration Across Modalities
 
 ### 1. Karting Modality Tier 1 (Grassroots Onboarding Baseline)
-- Base Tier 1 Price: $P_{\text{base}}(\text{"kart"}, 1) = 19,500\text{ Cr}$
-- Academy Gold Purse: $24,500\text{ Cr}$
+- Base Tier 1 Price: $P_{\text{base}}(\text{"kart"}, 1) = 5,000\text{ Cr}$
+- Academy Graduation Purses: Bronze $5,500\text{ Cr}$, Silver $6,250\text{ Cr}$, Gold $7,000\text{ Cr}$
 - **Valuation Table**:
-  | Model ID | Model Name | Top Speed | 0-100 km/h | Radar Avg | $I_{\text{rel}}$ | Credit Price | Reserve from 24.5k |
-  | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-  | `kart_blackline_cadet_t1` | Blackline Cadet 60cc T1 | 85 km/h | 7.5 s | 0.588 | 0.00 | **19,500 Cr** | +5,000 Cr |
-  | `kart_rosso_junior_t1` | Rosso Kart Junior 60cc T1 | 85 km/h | 7.5 s | 0.588 | 0.00 | **19,500 Cr** | +5,000 Cr |
-  | `kart_verde_sprout_t1` | Verde Kart Sprout 60cc T1 | 86 km/h | 7.4 s | 0.601 | 1.00 | **23,400 Cr** | +1,100 Cr |
+  | Model ID | Model Name | Top Speed | 0-100 km/h | Radar Avg | $I_{\text{rel}}$ | Credit Price | Reserve from 7.0k Gold | Reserve from 5.5k Bronze |
+  | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+  | `kart_blackline_cadet_t1` | Blackline Cadet 60cc T1 | 85 km/h | 7.5 s | 0.588 | 0.00 | **5,000 Cr** | +2,000 Cr | +500 Cr |
+  | `kart_rosso_junior_t1` | Rosso Kart Junior 60cc T1 | 85 km/h | 7.5 s | 0.588 | 0.00 | **5,000 Cr** | +2,000 Cr | +500 Cr |
+  | `kart_verde_sprout_t1` | Verde Kart Sprout 60cc T1 | 86 km/h | 7.4 s | 0.601 | 1.00 | **6,000 Cr** | +1,000 Cr | (Requires Silver+) |
 
-*Outcome*: The player graduating Classic Academy with full gold medals can freely choose the balanced Blackline Cadet or Rosso Junior (leaving a healthy 5,000 Cr budget reserve for consumables and entry fees) or invest their surplus in the premium Verde Sprout (leaving 1,100 Cr reserve).
+*Outcome*: The player graduating Classic Academy with bronze medals (5,500 Cr) can afford either the Blackline Cadet or Rosso Junior (leaving a 500 Cr buffer), while silver/gold graduates can also afford the premium Verde Sprout (6,000 Cr, leaving up to a 1,000 Cr reserve). In all cases, the player can only afford exactly one kart and cannot double-purchase.
 
 ### 2. GT Modality Tier 1 (Clubsport Customer Racing)
 - Base Tier 1 Price: $P_{\text{base}}(\text{"gt"}, 1) = 45,000\text{ Cr}$, $\sigma(1) = 0.20$ (Spread: up to $+9,000\text{ Cr}$)
@@ -201,7 +201,7 @@ In [`crates/tdrace-app/src/ui/garage.rs`](../crates/tdrace-app/src/ui/garage.rs)
 
 ## 🛡️ Disaster Recovery, Monitoring, & Fallbacks
 
-* **Grassroots Price Floor Invariant**: A hard programmatic assertion ensures that `car_credit_cost_for_car` for the cheapest Tier 1 Kart never exceeds 19,500 Cr, ensuring that any player completing the Classic Academy can afford an entry vehicle.
+* **Grassroots Price Floor Invariant**: A hard programmatic assertion ensures that `car_credit_cost_for_car` for the cheapest Tier 1 Kart never exceeds 5,000 Cr, ensuring that any player completing the Classic Academy can afford an entry vehicle.
 * **Catalog Telemetry Fallback**: If a vehicle model lacks complete physical telemetry (e.g. unranked or prototype chassis), the valuation engine falls back smoothly to the baseline tier price $P_{\text{base}}(m, t)$ without panic or undefined behavior.
 * **Economic Unit Test Suite**: Comprehensive regression tests verify that all catalog models produce positive, non-zero prices that are strictly greater than zero and rounded to clean 250 Cr steps.
 
@@ -228,17 +228,18 @@ In [`crates/tdrace-app/src/ui/garage.rs`](../crates/tdrace-app/src/ui/garage.rs)
 #### Scenario: Tier 1 Kart models have differentiated performance-based pricing
 - [ ] **Given** the three Tier 1 Kart models (`kart_blackline_cadet_t1`, `kart_rosso_junior_t1`, `kart_verde_sprout_t1`)
 - [ ] **When** `car_credit_cost_for_car` is evaluated for each model at Tier 1
-- [ ] **Then** the baseline model (`kart_blackline_cadet_t1`) evaluates to exactly 19,500 Cr
-- [ ] **And** the baseline model (`kart_rosso_junior_t1`) evaluates to exactly 19,500 Cr
-- [ ] **And** the higher-performing model (`kart_verde_sprout_t1`) evaluates to a premium price strictly greater than 19,500 Cr (e.g. 23,400 Cr)
+- [ ] **Then** the baseline model (`kart_blackline_cadet_t1`) evaluates to exactly 5,000 Cr
+- [ ] **And** the baseline model (`kart_rosso_junior_t1`) evaluates to exactly 5,000 Cr
+- [ ] **And** the higher-performing model (`kart_verde_sprout_t1`) evaluates to a premium price strictly greater than 5,000 Cr (e.g. 6,000 Cr)
 - [ ] **And** all prices are multiples of 250 Cr
 
 #### Scenario: Academy graduate can purchase any Tier 1 kart with earned gold purse
-- [ ] **Given** a new player profile who graduated the Classic Academy with gold medals and has 24,500 Cr
+- [ ] **Given** a new player profile who graduated the Classic Academy with gold medals and has 7,000 Cr
 - [ ] **When** inspecting the garage showroom for Tier 1 Karting
 - [ ] **Then** all three Tier 1 karts are marked as affordable (`can_buy_car_for_profile == true`)
-- [ ] **And** purchasing the cheapest kart leaves a 5,000 Cr safety reserve
+- [ ] **And** purchasing the cheapest kart leaves a 2,000 Cr safety reserve
 - [ ] **And** purchasing the highest-spec kart leaves at least a 1,000 Cr safety reserve
+- [ ] **And** the profile cannot purchase a second kart with remaining credits
 
 #### Scenario: Intra-tier pricing monotonically aligns with performance index
 - [ ] **Given** any two models $A$ and $B$ in the same discipline module and tier

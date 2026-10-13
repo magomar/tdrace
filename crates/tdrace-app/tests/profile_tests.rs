@@ -578,7 +578,7 @@ fn test_module_career_progress_persistence_and_xp_leveling() {
     assert_eq!(ModuleCareerProgress::car_credit_cost(2), 60_000);
     let mut active_prof = db.get_active_profile().expect("Get active");
     assert_eq!(active_prof.credits, PlayerProfile::STARTING_CREDITS);
-    active_prof.add_credits(25_000);
+    active_prof.add_credits(35_000);
     assert_eq!(active_prof.credits, 35_000);
     assert!(!progress.can_buy_car("gt3_evo", 2, active_prof.credits), "Cannot afford 60k Cr car with 35k Cr");
     active_prof.add_credits(50_000);

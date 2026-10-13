@@ -363,8 +363,8 @@ pub fn setup_academy_session(
 pub fn total_curriculum_purse(medal: AcademyMedal) -> u64 {
     match medal {
         AcademyMedal::None => 0,
-        AcademyMedal::Bronze => 7_000,
-        AcademyMedal::Silver => 10_750,
-        AcademyMedal::Gold => 14_500,
+        AcademyMedal::Bronze => 5_500,
+        AcademyMedal::Silver => 6_250,
+        AcademyMedal::Gold => 7_000,
     }
 }

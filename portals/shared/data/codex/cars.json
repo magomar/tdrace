@@ -1539,22 +1539,22 @@
         "cg_height": 0.42,
         "max_engine_force": 10505.0,
         "max_reverse_force": 4875.0,
-        "max_brake_force": 13340.0,
+        "max_brake_force": 26100.0,
         "handbrake_force": 7500.0,
         "brake_bias": 0.62,
         "drive_bias": 0.3,
         "front_differential": {
           "LimitedSlip": {
-            "power_lock": 0.6,
-            "coast_lock": 0.4,
-            "preload_nm": 70.0
+            "power_lock": 0.35,
+            "coast_lock": 0.2,
+            "preload_nm": 40.0
           }
         },
         "rear_differential": {
           "LimitedSlip": {
             "power_lock": 0.7,
-            "coast_lock": 0.5,
-            "preload_nm": 85.0
+            "coast_lock": 0.45,
+            "preload_nm": 80.0
           }
         },
         "top_speed_mps": 59.722225,
@@ -1573,7 +1573,7 @@
         "engine_brake_front_share": 0.5,
         "downforce_coefficient": 0.836,
         "tire": {
-          "grip": 1.135,
+          "grip": 1.362,
           "peak_slip_angle_deg": 12.7,
           "peak_slip_ratio": 0.1,
           "slide_grip": 0.9,
@@ -1623,7 +1623,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.135,
+              "base_grip": 1.362,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -1655,7 +1655,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.135,
+              "grip": 1.362,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -1675,7 +1675,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.135,
+              "base_grip": 1.362,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -1707,7 +1707,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.135,
+              "grip": 1.362,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -1727,7 +1727,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.0442001,
+              "base_grip": 1.25304,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -1759,7 +1759,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.0442001,
+              "grip": 1.25304,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -1779,7 +1779,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.0442001,
+              "base_grip": 1.25304,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -1811,7 +1811,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.0442001,
+              "grip": 1.25304,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -2289,22 +2289,22 @@
         "cg_height": 0.39,
         "max_engine_force": 4375.0,
         "max_reverse_force": 4875.0,
-        "max_brake_force": 13156.001,
+        "max_brake_force": 25740.002,
         "handbrake_force": 7500.0,
         "brake_bias": 0.62,
-        "drive_bias": 0.5,
+        "drive_bias": 0.3,
         "front_differential": {
           "LimitedSlip": {
-            "power_lock": 0.6,
-            "coast_lock": 0.4,
-            "preload_nm": 70.0
+            "power_lock": 0.35,
+            "coast_lock": 0.2,
+            "preload_nm": 40.0
           }
         },
         "rear_differential": {
           "LimitedSlip": {
             "power_lock": 0.7,
-            "coast_lock": 0.5,
-            "preload_nm": 85.0
+            "coast_lock": 0.45,
+            "preload_nm": 80.0
           }
         },
         "top_speed_mps": 51.38889,
@@ -2323,7 +2323,7 @@
         "engine_brake_front_share": 0.5,
         "downforce_coefficient": 0.57,
         "tire": {
-          "grip": 1.1140001,
+          "grip": 1.3368001,
           "peak_slip_angle_deg": 12.7,
           "peak_slip_ratio": 0.1,
           "slide_grip": 0.9,
@@ -2334,7 +2334,7 @@
           "skid_full_threshold": 0.35
         },
         "rear_axle": {
-          "grip_scale": 1.0,
+          "grip_scale": 0.92,
           "peak_slip_scale": 0.81
         },
         "assists": {
@@ -2373,7 +2373,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.1140001,
+              "base_grip": 1.3368001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -2405,7 +2405,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.1140001,
+              "grip": 1.3368001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -2416,7 +2416,7 @@
               "skid_full_threshold": 0.35
             },
             "brake_bias_factor": 0.31,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.15
           },
           {
             "tire_radius": 0.33,
@@ -2425,7 +2425,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.1140001,
+              "base_grip": 1.3368001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -2457,7 +2457,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.1140001,
+              "grip": 1.3368001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -2468,7 +2468,7 @@
               "skid_full_threshold": 0.35
             },
             "brake_bias_factor": 0.31,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.15
           },
           {
             "tire_radius": 0.33,
@@ -2477,7 +2477,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.1140001,
+              "base_grip": 1.2298561,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -2509,7 +2509,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.1140001,
+              "grip": 1.2298561,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -2520,7 +2520,7 @@
               "skid_full_threshold": 0.35
             },
             "brake_bias_factor": 0.19,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.35
           },
           {
             "tire_radius": 0.33,
@@ -2529,7 +2529,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.1140001,
+              "base_grip": 1.2298561,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -2561,7 +2561,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.1140001,
+              "grip": 1.2298561,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -2572,7 +2572,7 @@
               "skid_full_threshold": 0.35
             },
             "brake_bias_factor": 0.19,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.35
           }
         ],
         "chassis": {
@@ -3782,22 +3782,22 @@
         "cg_height": 0.4,
         "max_engine_force": 2800.0,
         "max_reverse_force": 4875.0,
-        "max_brake_force": 11668.816,
+        "max_brake_force": 22830.291,
         "handbrake_force": 7500.0,
         "brake_bias": 0.62,
         "drive_bias": 0.0,
         "front_differential": {
           "LimitedSlip": {
-            "power_lock": 0.6,
-            "coast_lock": 0.4,
-            "preload_nm": 70.0
+            "power_lock": 0.35,
+            "coast_lock": 0.2,
+            "preload_nm": 40.0
           }
         },
         "rear_differential": {
           "LimitedSlip": {
             "power_lock": 0.7,
-            "coast_lock": 0.5,
-            "preload_nm": 85.0
+            "coast_lock": 0.45,
+            "preload_nm": 80.0
           }
         },
         "top_speed_mps": 54.166668,
@@ -3816,7 +3816,7 @@
         "engine_brake_front_share": 0.5,
         "downforce_coefficient": 0.34199998,
         "tire": {
-          "grip": 1.1140001,
+          "grip": 1.3368001,
           "peak_slip_angle_deg": 12.7,
           "peak_slip_ratio": 0.1,
           "slide_grip": 0.9,
@@ -3827,7 +3827,7 @@
           "skid_full_threshold": 0.35
         },
         "rear_axle": {
-          "grip_scale": 1.0,
+          "grip_scale": 0.92,
           "peak_slip_scale": 0.81
         },
         "assists": {
@@ -3866,7 +3866,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.1140001,
+              "base_grip": 1.3368001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -3898,7 +3898,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.1140001,
+              "grip": 1.3368001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -3918,7 +3918,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.1140001,
+              "base_grip": 1.3368001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -3950,7 +3950,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.1140001,
+              "grip": 1.3368001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -3970,7 +3970,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.1140001,
+              "base_grip": 1.2298561,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -4002,7 +4002,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.1140001,
+              "grip": 1.2298561,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -4022,7 +4022,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.1140001,
+              "base_grip": 1.2298561,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -4054,7 +4054,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.1140001,
+              "grip": 1.2298561,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -13376,12 +13376,24 @@
         "cg_height": 0.4,
         "max_engine_force": 4637.5,
         "max_reverse_force": 5000.0,
-        "max_brake_force": 10765.354,
+        "max_brake_force": 16850.117,
         "handbrake_force": 8200.0,
         "brake_bias": 0.58,
-        "drive_bias": 0.5,
-        "front_differential": "Open",
-        "rear_differential": "Spool",
+        "drive_bias": 0.3,
+        "front_differential": {
+          "LimitedSlip": {
+            "power_lock": 0.3,
+            "coast_lock": 0.15,
+            "preload_nm": 35.0
+          }
+        },
+        "rear_differential": {
+          "LimitedSlip": {
+            "power_lock": 0.65,
+            "coast_lock": 0.4,
+            "preload_nm": 75.0
+          }
+        },
         "top_speed_mps": 56.944447,
         "max_steer_angle": 0.65,
         "steer_speed": 9.009999,
@@ -13409,7 +13421,7 @@
           "skid_full_threshold": 0.28
         },
         "rear_axle": {
-          "grip_scale": 1.0,
+          "grip_scale": 0.92,
           "peak_slip_scale": 0.85
         },
         "assists": {
@@ -13443,7 +13455,7 @@
         "wheels": [
           {
             "tire_radius": 0.35,
-            "tire_width": 0.24,
+            "tire_width": 0.22,
             "rotational_inertia": 1.2,
             "compound": {
               "id": "AllTerrain",
@@ -13491,11 +13503,11 @@
               "skid_full_threshold": 0.28
             },
             "brake_bias_factor": 0.29,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.15
           },
           {
             "tire_radius": 0.35,
-            "tire_width": 0.24,
+            "tire_width": 0.22,
             "rotational_inertia": 1.2,
             "compound": {
               "id": "AllTerrain",
@@ -13543,16 +13555,16 @@
               "skid_full_threshold": 0.28
             },
             "brake_bias_factor": 0.29,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.15
           },
           {
             "tire_radius": 0.35,
-            "tire_width": 0.24,
-            "rotational_inertia": 1.2,
+            "tire_width": 0.28,
+            "rotational_inertia": 1.45,
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.362,
+              "base_grip": 1.25304,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -13584,7 +13596,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.362,
+              "grip": 1.25304,
               "peak_slip_angle_deg": 12.75,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.94,
@@ -13595,16 +13607,16 @@
               "skid_full_threshold": 0.28
             },
             "brake_bias_factor": 0.21000001,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.35
           },
           {
             "tire_radius": 0.35,
-            "tire_width": 0.24,
-            "rotational_inertia": 1.2,
+            "tire_width": 0.28,
+            "rotational_inertia": 1.45,
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.362,
+              "base_grip": 1.25304,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -13636,7 +13648,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.362,
+              "grip": 1.25304,
               "peak_slip_angle_deg": 12.75,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.94,
@@ -13647,7 +13659,7 @@
               "skid_full_threshold": 0.28
             },
             "brake_bias_factor": 0.21000001,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.35
           }
         ],
         "chassis": {
@@ -13745,12 +13757,24 @@
         "cg_height": 0.4,
         "max_engine_force": 4550.0,
         "max_reverse_force": 5000.0,
-        "max_brake_force": 10826.912,
+        "max_brake_force": 16946.47,
         "handbrake_force": 8200.0,
         "brake_bias": 0.58,
-        "drive_bias": 0.5,
-        "front_differential": "Open",
-        "rear_differential": "Spool",
+        "drive_bias": 0.3,
+        "front_differential": {
+          "LimitedSlip": {
+            "power_lock": 0.3,
+            "coast_lock": 0.15,
+            "preload_nm": 35.0
+          }
+        },
+        "rear_differential": {
+          "LimitedSlip": {
+            "power_lock": 0.65,
+            "coast_lock": 0.4,
+            "preload_nm": 75.0
+          }
+        },
         "top_speed_mps": 56.111115,
         "max_steer_angle": 0.65,
         "steer_speed": 9.044,
@@ -13778,7 +13802,7 @@
           "skid_full_threshold": 0.28
         },
         "rear_axle": {
-          "grip_scale": 1.0,
+          "grip_scale": 0.92,
           "peak_slip_scale": 0.85
         },
         "assists": {
@@ -13812,7 +13836,7 @@
         "wheels": [
           {
             "tire_radius": 0.35,
-            "tire_width": 0.24,
+            "tire_width": 0.22,
             "rotational_inertia": 1.2,
             "compound": {
               "id": "AllTerrain",
@@ -13860,11 +13884,11 @@
               "skid_full_threshold": 0.28
             },
             "brake_bias_factor": 0.29,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.15
           },
           {
             "tire_radius": 0.35,
-            "tire_width": 0.24,
+            "tire_width": 0.22,
             "rotational_inertia": 1.2,
             "compound": {
               "id": "AllTerrain",
@@ -13912,16 +13936,16 @@
               "skid_full_threshold": 0.28
             },
             "brake_bias_factor": 0.29,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.15
           },
           {
             "tire_radius": 0.35,
-            "tire_width": 0.24,
-            "rotational_inertia": 1.2,
+            "tire_width": 0.28,
+            "rotational_inertia": 1.45,
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.3584,
+              "base_grip": 1.249728,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -13953,7 +13977,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.3584,
+              "grip": 1.249728,
               "peak_slip_angle_deg": 12.75,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.94,
@@ -13964,16 +13988,16 @@
               "skid_full_threshold": 0.28
             },
             "brake_bias_factor": 0.21000001,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.35
           },
           {
             "tire_radius": 0.35,
-            "tire_width": 0.24,
-            "rotational_inertia": 1.2,
+            "tire_width": 0.28,
+            "rotational_inertia": 1.45,
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.3584,
+              "base_grip": 1.249728,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -14005,7 +14029,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.3584,
+              "grip": 1.249728,
               "peak_slip_angle_deg": 12.75,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.94,
@@ -14016,7 +14040,7 @@
               "skid_full_threshold": 0.28
             },
             "brake_bias_factor": 0.21000001,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.35
           }
         ],
         "chassis": {
@@ -14114,12 +14138,24 @@
         "cg_height": 0.4,
         "max_engine_force": 4462.5,
         "max_reverse_force": 5000.0,
-        "max_brake_force": 10985.882,
+        "max_brake_force": 17195.293,
         "handbrake_force": 8200.0,
         "brake_bias": 0.58,
-        "drive_bias": 0.5,
-        "front_differential": "Open",
-        "rear_differential": "Spool",
+        "drive_bias": 0.3,
+        "front_differential": {
+          "LimitedSlip": {
+            "power_lock": 0.3,
+            "coast_lock": 0.15,
+            "preload_nm": 35.0
+          }
+        },
+        "rear_differential": {
+          "LimitedSlip": {
+            "power_lock": 0.65,
+            "coast_lock": 0.4,
+            "preload_nm": 75.0
+          }
+        },
         "top_speed_mps": 55.555557,
         "max_steer_angle": 0.65,
         "steer_speed": 9.112,
@@ -14147,7 +14183,7 @@
           "skid_full_threshold": 0.28
         },
         "rear_axle": {
-          "grip_scale": 1.0,
+          "grip_scale": 0.92,
           "peak_slip_scale": 0.85
         },
         "assists": {
@@ -14181,7 +14217,7 @@
         "wheels": [
           {
             "tire_radius": 0.35,
-            "tire_width": 0.24,
+            "tire_width": 0.22,
             "rotational_inertia": 1.2,
             "compound": {
               "id": "AllTerrain",
@@ -14229,11 +14265,11 @@
               "skid_full_threshold": 0.28
             },
             "brake_bias_factor": 0.29,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.15
           },
           {
             "tire_radius": 0.35,
-            "tire_width": 0.24,
+            "tire_width": 0.22,
             "rotational_inertia": 1.2,
             "compound": {
               "id": "AllTerrain",
@@ -14281,16 +14317,16 @@
               "skid_full_threshold": 0.28
             },
             "brake_bias_factor": 0.29,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.15
           },
           {
             "tire_radius": 0.35,
-            "tire_width": 0.24,
-            "rotational_inertia": 1.2,
+            "tire_width": 0.28,
+            "rotational_inertia": 1.45,
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.3548001,
+              "base_grip": 1.2464161,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -14322,7 +14358,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.3548001,
+              "grip": 1.2464161,
               "peak_slip_angle_deg": 12.75,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.94,
@@ -14333,16 +14369,16 @@
               "skid_full_threshold": 0.28
             },
             "brake_bias_factor": 0.21000001,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.35
           },
           {
             "tire_radius": 0.35,
-            "tire_width": 0.24,
-            "rotational_inertia": 1.2,
+            "tire_width": 0.28,
+            "rotational_inertia": 1.45,
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.3548001,
+              "base_grip": 1.2464161,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -14374,7 +14410,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.3548001,
+              "grip": 1.2464161,
               "peak_slip_angle_deg": 12.75,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.94,
@@ -14385,7 +14421,7 @@
               "skid_full_threshold": 0.28
             },
             "brake_bias_factor": 0.21000001,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.35
           }
         ],
         "chassis": {
@@ -14483,22 +14519,22 @@
         "cg_height": 0.39,
         "max_engine_force": 9625.0,
         "max_reverse_force": 4875.0,
-        "max_brake_force": 13829.601,
+        "max_brake_force": 27057.912,
         "handbrake_force": 7500.0,
         "brake_bias": 0.62,
-        "drive_bias": 0.5,
+        "drive_bias": 0.3,
         "front_differential": {
           "LimitedSlip": {
-            "power_lock": 0.6,
-            "coast_lock": 0.4,
-            "preload_nm": 70.0
+            "power_lock": 0.35,
+            "coast_lock": 0.2,
+            "preload_nm": 40.0
           }
         },
         "rear_differential": {
           "LimitedSlip": {
             "power_lock": 0.7,
-            "coast_lock": 0.5,
-            "preload_nm": 85.0
+            "coast_lock": 0.45,
+            "preload_nm": 80.0
           }
         },
         "top_speed_mps": 59.722225,
@@ -14517,7 +14553,7 @@
         "engine_brake_front_share": 0.5,
         "downforce_coefficient": 0.87399995,
         "tire": {
-          "grip": 1.123,
+          "grip": 1.3476001,
           "peak_slip_angle_deg": 12.7,
           "peak_slip_ratio": 0.1,
           "slide_grip": 0.9,
@@ -14528,7 +14564,7 @@
           "skid_full_threshold": 0.35
         },
         "rear_axle": {
-          "grip_scale": 1.0,
+          "grip_scale": 0.92,
           "peak_slip_scale": 0.81
         },
         "assists": {
@@ -14567,7 +14603,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.123,
+              "base_grip": 1.3476001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -14599,7 +14635,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.123,
+              "grip": 1.3476001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -14610,7 +14646,7 @@
               "skid_full_threshold": 0.35
             },
             "brake_bias_factor": 0.31,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.15
           },
           {
             "tire_radius": 0.33,
@@ -14619,7 +14655,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.123,
+              "base_grip": 1.3476001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -14651,7 +14687,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.123,
+              "grip": 1.3476001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -14662,7 +14698,7 @@
               "skid_full_threshold": 0.35
             },
             "brake_bias_factor": 0.31,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.15
           },
           {
             "tire_radius": 0.33,
@@ -14671,7 +14707,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.123,
+              "base_grip": 1.2397921,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -14703,7 +14739,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.123,
+              "grip": 1.2397921,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -14714,7 +14750,7 @@
               "skid_full_threshold": 0.35
             },
             "brake_bias_factor": 0.19,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.35
           },
           {
             "tire_radius": 0.33,
@@ -14723,7 +14759,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.123,
+              "base_grip": 1.2397921,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -14755,7 +14791,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.123,
+              "grip": 1.2397921,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -14766,7 +14802,7 @@
               "skid_full_threshold": 0.35
             },
             "brake_bias_factor": 0.19,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.35
           }
         ],
         "chassis": {
@@ -14864,22 +14900,22 @@
         "cg_height": 0.39,
         "max_engine_force": 10150.0,
         "max_reverse_force": 4875.0,
-        "max_brake_force": 14347.2,
+        "max_brake_force": 28070.607,
         "handbrake_force": 7500.0,
         "brake_bias": 0.62,
-        "drive_bias": 0.5,
+        "drive_bias": 0.3,
         "front_differential": {
           "LimitedSlip": {
-            "power_lock": 0.6,
-            "coast_lock": 0.4,
-            "preload_nm": 70.0
+            "power_lock": 0.35,
+            "coast_lock": 0.2,
+            "preload_nm": 40.0
           }
         },
         "rear_differential": {
           "LimitedSlip": {
             "power_lock": 0.7,
-            "coast_lock": 0.5,
-            "preload_nm": 85.0
+            "coast_lock": 0.45,
+            "preload_nm": 80.0
           }
         },
         "top_speed_mps": 60.555557,
@@ -14898,7 +14934,7 @@
         "engine_brake_front_share": 0.5,
         "downforce_coefficient": 0.836,
         "tire": {
-          "grip": 1.12,
+          "grip": 1.3440001,
           "peak_slip_angle_deg": 12.7,
           "peak_slip_ratio": 0.1,
           "slide_grip": 0.9,
@@ -14909,7 +14945,7 @@
           "skid_full_threshold": 0.35
         },
         "rear_axle": {
-          "grip_scale": 1.0,
+          "grip_scale": 0.92,
           "peak_slip_scale": 0.81
         },
         "assists": {
@@ -14948,7 +14984,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.12,
+              "base_grip": 1.3440001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -14980,7 +15016,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.12,
+              "grip": 1.3440001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -14991,7 +15027,7 @@
               "skid_full_threshold": 0.35
             },
             "brake_bias_factor": 0.31,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.15
           },
           {
             "tire_radius": 0.33,
@@ -15000,7 +15036,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.12,
+              "base_grip": 1.3440001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -15032,7 +15068,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.12,
+              "grip": 1.3440001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -15043,7 +15079,7 @@
               "skid_full_threshold": 0.35
             },
             "brake_bias_factor": 0.31,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.15
           },
           {
             "tire_radius": 0.33,
@@ -15052,7 +15088,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.12,
+              "base_grip": 1.2364801,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -15084,7 +15120,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.12,
+              "grip": 1.2364801,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -15095,7 +15131,7 @@
               "skid_full_threshold": 0.35
             },
             "brake_bias_factor": 0.19,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.35
           },
           {
             "tire_radius": 0.33,
@@ -15104,7 +15140,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.12,
+              "base_grip": 1.2364801,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -15136,7 +15172,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.12,
+              "grip": 1.2364801,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -15147,7 +15183,7 @@
               "skid_full_threshold": 0.35
             },
             "brake_bias_factor": 0.19,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.35
           }
         ],
         "chassis": {
@@ -15245,22 +15281,22 @@
         "cg_height": 0.39,
         "max_engine_force": 9450.0,
         "max_reverse_force": 4875.0,
-        "max_brake_force": 14016.0,
+        "max_brake_force": 27422.607,
         "handbrake_force": 7500.0,
         "brake_bias": 0.62,
-        "drive_bias": 0.5,
+        "drive_bias": 0.3,
         "front_differential": {
           "LimitedSlip": {
-            "power_lock": 0.6,
-            "coast_lock": 0.4,
-            "preload_nm": 70.0
+            "power_lock": 0.35,
+            "coast_lock": 0.2,
+            "preload_nm": 40.0
           }
         },
         "rear_differential": {
           "LimitedSlip": {
             "power_lock": 0.7,
-            "coast_lock": 0.5,
-            "preload_nm": 85.0
+            "coast_lock": 0.45,
+            "preload_nm": 80.0
           }
         },
         "top_speed_mps": 59.444447,
@@ -15279,7 +15315,7 @@
         "engine_brake_front_share": 0.5,
         "downforce_coefficient": 0.8512,
         "tire": {
-          "grip": 1.1170001,
+          "grip": 1.3404002,
           "peak_slip_angle_deg": 12.7,
           "peak_slip_ratio": 0.1,
           "slide_grip": 0.9,
@@ -15290,7 +15326,7 @@
           "skid_full_threshold": 0.35
         },
         "rear_axle": {
-          "grip_scale": 1.0,
+          "grip_scale": 0.92,
           "peak_slip_scale": 0.81
         },
         "assists": {
@@ -15329,7 +15365,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.1170001,
+              "base_grip": 1.3404002,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -15361,7 +15397,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.1170001,
+              "grip": 1.3404002,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -15372,7 +15408,7 @@
               "skid_full_threshold": 0.35
             },
             "brake_bias_factor": 0.31,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.15
           },
           {
             "tire_radius": 0.33,
@@ -15381,7 +15417,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.1170001,
+              "base_grip": 1.3404002,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -15413,7 +15449,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.1170001,
+              "grip": 1.3404002,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -15424,7 +15460,7 @@
               "skid_full_threshold": 0.35
             },
             "brake_bias_factor": 0.31,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.15
           },
           {
             "tire_radius": 0.33,
@@ -15433,7 +15469,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.1170001,
+              "base_grip": 1.2331682,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -15465,7 +15501,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.1170001,
+              "grip": 1.2331682,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -15476,7 +15512,7 @@
               "skid_full_threshold": 0.35
             },
             "brake_bias_factor": 0.19,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.35
           },
           {
             "tire_radius": 0.33,
@@ -15485,7 +15521,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.1170001,
+              "base_grip": 1.2331682,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -15517,7 +15553,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.1170001,
+              "grip": 1.2331682,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -15528,7 +15564,7 @@
               "skid_full_threshold": 0.35
             },
             "brake_bias_factor": 0.19,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.35
           }
         ],
         "chassis": {
@@ -15624,14 +15660,26 @@
         "cg_to_front": 1.32,
         "cg_to_rear": 1.28,
         "cg_height": 0.4,
-        "max_engine_force": 11900.0,
+        "max_engine_force": 9860.0,
         "max_reverse_force": 5000.0,
-        "max_brake_force": 13616.0,
+        "max_brake_force": 21312.0,
         "handbrake_force": 8200.0,
         "brake_bias": 0.58,
-        "drive_bias": 0.5,
-        "front_differential": "Open",
-        "rear_differential": "Spool",
+        "drive_bias": 0.3,
+        "front_differential": {
+          "LimitedSlip": {
+            "power_lock": 0.3,
+            "coast_lock": 0.15,
+            "preload_nm": 35.0
+          }
+        },
+        "rear_differential": {
+          "LimitedSlip": {
+            "power_lock": 0.65,
+            "coast_lock": 0.4,
+            "preload_nm": 75.0
+          }
+        },
         "top_speed_mps": 62.5,
         "max_steer_angle": 0.65,
         "steer_speed": 9.248,
@@ -15659,7 +15707,7 @@
           "skid_full_threshold": 0.28
         },
         "rear_axle": {
-          "grip_scale": 1.0,
+          "grip_scale": 0.92,
           "peak_slip_scale": 0.85
         },
         "assists": {
@@ -15693,7 +15741,7 @@
         "wheels": [
           {
             "tire_radius": 0.35,
-            "tire_width": 0.24,
+            "tire_width": 0.22,
             "rotational_inertia": 1.2,
             "compound": {
               "id": "AllTerrain",
@@ -15741,11 +15789,11 @@
               "skid_full_threshold": 0.28
             },
             "brake_bias_factor": 0.29,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.15
           },
           {
             "tire_radius": 0.35,
-            "tire_width": 0.24,
+            "tire_width": 0.22,
             "rotational_inertia": 1.2,
             "compound": {
               "id": "AllTerrain",
@@ -15793,16 +15841,16 @@
               "skid_full_threshold": 0.28
             },
             "brake_bias_factor": 0.29,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.15
           },
           {
             "tire_radius": 0.35,
-            "tire_width": 0.24,
-            "rotational_inertia": 1.2,
+            "tire_width": 0.28,
+            "rotational_inertia": 1.45,
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.3692001,
+              "base_grip": 1.2596642,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -15834,7 +15882,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.3692001,
+              "grip": 1.2596642,
               "peak_slip_angle_deg": 12.75,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.94,
@@ -15845,16 +15893,16 @@
               "skid_full_threshold": 0.28
             },
             "brake_bias_factor": 0.21000001,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.35
           },
           {
             "tire_radius": 0.35,
-            "tire_width": 0.24,
-            "rotational_inertia": 1.2,
+            "tire_width": 0.28,
+            "rotational_inertia": 1.45,
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.3692001,
+              "base_grip": 1.2596642,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -15886,7 +15934,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.3692001,
+              "grip": 1.2596642,
               "peak_slip_angle_deg": 12.75,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.94,
@@ -15897,7 +15945,7 @@
               "skid_full_threshold": 0.28
             },
             "brake_bias_factor": 0.21000001,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.35
           }
         ],
         "chassis": {
@@ -15993,14 +16041,26 @@
         "cg_to_front": 1.32,
         "cg_to_rear": 1.28,
         "cg_height": 0.4,
-        "max_engine_force": 12600.0,
+        "max_engine_force": 10440.0,
         "max_reverse_force": 5000.0,
-        "max_brake_force": 13607.206,
+        "max_brake_force": 21298.234,
         "handbrake_force": 8200.0,
         "brake_bias": 0.58,
-        "drive_bias": 0.5,
-        "front_differential": "Open",
-        "rear_differential": "Spool",
+        "drive_bias": 0.3,
+        "front_differential": {
+          "LimitedSlip": {
+            "power_lock": 0.3,
+            "coast_lock": 0.15,
+            "preload_nm": 35.0
+          }
+        },
+        "rear_differential": {
+          "LimitedSlip": {
+            "power_lock": 0.65,
+            "coast_lock": 0.4,
+            "preload_nm": 75.0
+          }
+        },
         "top_speed_mps": 63.88889,
         "max_steer_angle": 0.65,
         "steer_speed": 9.18,
@@ -16028,7 +16088,7 @@
           "skid_full_threshold": 0.28
         },
         "rear_axle": {
-          "grip_scale": 1.0,
+          "grip_scale": 0.92,
           "peak_slip_scale": 0.85
         },
         "assists": {
@@ -16062,7 +16122,7 @@
         "wheels": [
           {
             "tire_radius": 0.35,
-            "tire_width": 0.24,
+            "tire_width": 0.22,
             "rotational_inertia": 1.2,
             "compound": {
               "id": "AllTerrain",
@@ -16110,11 +16170,11 @@
               "skid_full_threshold": 0.28
             },
             "brake_bias_factor": 0.29,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.15
           },
           {
             "tire_radius": 0.35,
-            "tire_width": 0.24,
+            "tire_width": 0.22,
             "rotational_inertia": 1.2,
             "compound": {
               "id": "AllTerrain",
@@ -16162,16 +16222,16 @@
               "skid_full_threshold": 0.28
             },
             "brake_bias_factor": 0.29,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.15
           },
           {
             "tire_radius": 0.35,
-            "tire_width": 0.24,
-            "rotational_inertia": 1.2,
+            "tire_width": 0.28,
+            "rotational_inertia": 1.45,
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.3728001,
+              "base_grip": 1.2629762,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -16203,7 +16263,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.3728001,
+              "grip": 1.2629762,
               "peak_slip_angle_deg": 12.75,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.94,
@@ -16214,16 +16274,16 @@
               "skid_full_threshold": 0.28
             },
             "brake_bias_factor": 0.21000001,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.35
           },
           {
             "tire_radius": 0.35,
-            "tire_width": 0.24,
-            "rotational_inertia": 1.2,
+            "tire_width": 0.28,
+            "rotational_inertia": 1.45,
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.3728001,
+              "base_grip": 1.2629762,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -16255,7 +16315,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.3728001,
+              "grip": 1.2629762,
               "peak_slip_angle_deg": 12.75,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.94,
@@ -16266,7 +16326,7 @@
               "skid_full_threshold": 0.28
             },
             "brake_bias_factor": 0.21000001,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.35
           }
         ],
         "chassis": {
@@ -16362,14 +16422,26 @@
         "cg_to_front": 1.32,
         "cg_to_rear": 1.28,
         "cg_height": 0.4,
-        "max_engine_force": 11375.0,
+        "max_engine_force": 9425.0,
         "max_reverse_force": 5000.0,
-        "max_brake_force": 13769.561,
+        "max_brake_force": 21552.355,
         "handbrake_force": 8200.0,
         "brake_bias": 0.58,
-        "drive_bias": 0.5,
-        "front_differential": "Open",
-        "rear_differential": "Spool",
+        "drive_bias": 0.3,
+        "front_differential": {
+          "LimitedSlip": {
+            "power_lock": 0.3,
+            "coast_lock": 0.15,
+            "preload_nm": 35.0
+          }
+        },
+        "rear_differential": {
+          "LimitedSlip": {
+            "power_lock": 0.65,
+            "coast_lock": 0.4,
+            "preload_nm": 75.0
+          }
+        },
         "top_speed_mps": 61.666668,
         "max_steer_angle": 0.65,
         "steer_speed": 9.316,
@@ -16397,7 +16469,7 @@
           "skid_full_threshold": 0.28
         },
         "rear_axle": {
-          "grip_scale": 1.0,
+          "grip_scale": 0.92,
           "peak_slip_scale": 0.85
         },
         "assists": {
@@ -16431,7 +16503,7 @@
         "wheels": [
           {
             "tire_radius": 0.35,
-            "tire_width": 0.24,
+            "tire_width": 0.22,
             "rotational_inertia": 1.2,
             "compound": {
               "id": "AllTerrain",
@@ -16479,11 +16551,11 @@
               "skid_full_threshold": 0.28
             },
             "brake_bias_factor": 0.29,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.15
           },
           {
             "tire_radius": 0.35,
-            "tire_width": 0.24,
+            "tire_width": 0.22,
             "rotational_inertia": 1.2,
             "compound": {
               "id": "AllTerrain",
@@ -16531,16 +16603,16 @@
               "skid_full_threshold": 0.28
             },
             "brake_bias_factor": 0.29,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.15
           },
           {
             "tire_radius": 0.35,
-            "tire_width": 0.24,
-            "rotational_inertia": 1.2,
+            "tire_width": 0.28,
+            "rotational_inertia": 1.45,
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.3656001,
+              "base_grip": 1.2563521,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -16572,7 +16644,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.3656001,
+              "grip": 1.2563521,
               "peak_slip_angle_deg": 12.75,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.94,
@@ -16583,16 +16655,16 @@
               "skid_full_threshold": 0.28
             },
             "brake_bias_factor": 0.21000001,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.35
           },
           {
             "tire_radius": 0.35,
-            "tire_width": 0.24,
-            "rotational_inertia": 1.2,
+            "tire_width": 0.28,
+            "rotational_inertia": 1.45,
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.3656001,
+              "base_grip": 1.2563521,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -16624,7 +16696,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.3656001,
+              "grip": 1.2563521,
               "peak_slip_angle_deg": 12.75,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.94,
@@ -16635,7 +16707,7 @@
               "skid_full_threshold": 0.28
             },
             "brake_bias_factor": 0.21000001,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.35
           }
         ],
         "chassis": {
@@ -16733,22 +16805,22 @@
         "cg_height": 0.4,
         "max_engine_force": 3640.0,
         "max_reverse_force": 4875.0,
-        "max_brake_force": 13215.845,
+        "max_brake_force": 25857.086,
         "handbrake_force": 7500.0,
         "brake_bias": 0.62,
         "drive_bias": 1.0,
         "front_differential": {
           "LimitedSlip": {
-            "power_lock": 0.6,
-            "coast_lock": 0.4,
-            "preload_nm": 70.0
+            "power_lock": 0.35,
+            "coast_lock": 0.2,
+            "preload_nm": 40.0
           }
         },
         "rear_differential": {
           "LimitedSlip": {
             "power_lock": 0.7,
-            "coast_lock": 0.5,
-            "preload_nm": 85.0
+            "coast_lock": 0.45,
+            "preload_nm": 80.0
           }
         },
         "top_speed_mps": 54.166668,
@@ -16767,7 +16839,7 @@
         "engine_brake_front_share": 0.5,
         "downforce_coefficient": 0.228,
         "tire": {
-          "grip": 1.084,
+          "grip": 1.3008001,
           "peak_slip_angle_deg": 12.7,
           "peak_slip_ratio": 0.1,
           "slide_grip": 0.9,
@@ -16778,7 +16850,7 @@
           "skid_full_threshold": 0.35
         },
         "rear_axle": {
-          "grip_scale": 1.0,
+          "grip_scale": 0.92,
           "peak_slip_scale": 0.81
         },
         "assists": {
@@ -16817,7 +16889,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.084,
+              "base_grip": 1.3008001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -16849,7 +16921,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.084,
+              "grip": 1.3008001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -16869,7 +16941,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.084,
+              "base_grip": 1.3008001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -16901,7 +16973,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.084,
+              "grip": 1.3008001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -16921,7 +16993,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.084,
+              "base_grip": 1.1967361,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -16953,7 +17025,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.084,
+              "grip": 1.1967361,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -16973,7 +17045,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.084,
+              "base_grip": 1.1967361,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -17005,7 +17077,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.084,
+              "grip": 1.1967361,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -17114,22 +17186,22 @@
         "cg_height": 0.4,
         "max_engine_force": 3675.0,
         "max_reverse_force": 4875.0,
-        "max_brake_force": 13264.078,
+        "max_brake_force": 25951.457,
         "handbrake_force": 7500.0,
         "brake_bias": 0.62,
         "drive_bias": 1.0,
         "front_differential": {
           "LimitedSlip": {
-            "power_lock": 0.6,
-            "coast_lock": 0.4,
-            "preload_nm": 70.0
+            "power_lock": 0.35,
+            "coast_lock": 0.2,
+            "preload_nm": 40.0
           }
         },
         "rear_differential": {
           "LimitedSlip": {
             "power_lock": 0.7,
-            "coast_lock": 0.5,
-            "preload_nm": 85.0
+            "coast_lock": 0.45,
+            "preload_nm": 80.0
           }
         },
         "top_speed_mps": 54.444447,
@@ -17148,7 +17220,7 @@
         "engine_brake_front_share": 0.5,
         "downforce_coefficient": 0.2356,
         "tire": {
-          "grip": 1.084,
+          "grip": 1.3008001,
           "peak_slip_angle_deg": 12.7,
           "peak_slip_ratio": 0.1,
           "slide_grip": 0.9,
@@ -17159,7 +17231,7 @@
           "skid_full_threshold": 0.35
         },
         "rear_axle": {
-          "grip_scale": 1.0,
+          "grip_scale": 0.92,
           "peak_slip_scale": 0.81
         },
         "assists": {
@@ -17198,7 +17270,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.084,
+              "base_grip": 1.3008001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -17230,7 +17302,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.084,
+              "grip": 1.3008001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -17250,7 +17322,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.084,
+              "base_grip": 1.3008001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -17282,7 +17354,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.084,
+              "grip": 1.3008001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -17302,7 +17374,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.084,
+              "base_grip": 1.1967361,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -17334,7 +17406,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.084,
+              "grip": 1.1967361,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -17354,7 +17426,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.084,
+              "base_grip": 1.1967361,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -17386,7 +17458,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.084,
+              "grip": 1.1967361,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -17495,22 +17567,22 @@
         "cg_height": 0.4,
         "max_engine_force": 3762.5,
         "max_reverse_force": 4875.0,
-        "max_brake_force": 13264.078,
+        "max_brake_force": 25951.457,
         "handbrake_force": 7500.0,
         "brake_bias": 0.62,
         "drive_bias": 1.0,
         "front_differential": {
           "LimitedSlip": {
-            "power_lock": 0.6,
-            "coast_lock": 0.4,
-            "preload_nm": 70.0
+            "power_lock": 0.35,
+            "coast_lock": 0.2,
+            "preload_nm": 40.0
           }
         },
         "rear_differential": {
           "LimitedSlip": {
             "power_lock": 0.7,
-            "coast_lock": 0.5,
-            "preload_nm": 85.0
+            "coast_lock": 0.45,
+            "preload_nm": 80.0
           }
         },
         "top_speed_mps": 55.0,
@@ -17529,7 +17601,7 @@
         "engine_brake_front_share": 0.5,
         "downforce_coefficient": 0.24319999,
         "tire": {
-          "grip": 1.0810001,
+          "grip": 1.2972002,
           "peak_slip_angle_deg": 12.7,
           "peak_slip_ratio": 0.1,
           "slide_grip": 0.9,
@@ -17540,7 +17612,7 @@
           "skid_full_threshold": 0.35
         },
         "rear_axle": {
-          "grip_scale": 1.0,
+          "grip_scale": 0.92,
           "peak_slip_scale": 0.81
         },
         "assists": {
@@ -17579,7 +17651,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.0810001,
+              "base_grip": 1.2972002,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -17611,7 +17683,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.0810001,
+              "grip": 1.2972002,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -17631,7 +17703,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.0810001,
+              "base_grip": 1.2972002,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -17663,7 +17735,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.0810001,
+              "grip": 1.2972002,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -17683,7 +17755,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.0810001,
+              "base_grip": 1.1934242,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -17715,7 +17787,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.0810001,
+              "grip": 1.1934242,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -17735,7 +17807,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.0810001,
+              "base_grip": 1.1934242,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -17767,7 +17839,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.0810001,
+              "grip": 1.1934242,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -17876,22 +17948,22 @@
         "cg_height": 0.42,
         "max_engine_force": 5425.0,
         "max_reverse_force": 4875.0,
-        "max_brake_force": 13686.097,
+        "max_brake_force": 26777.145,
         "handbrake_force": 7500.0,
         "brake_bias": 0.62,
         "drive_bias": 0.3,
         "front_differential": {
           "LimitedSlip": {
-            "power_lock": 0.6,
-            "coast_lock": 0.4,
-            "preload_nm": 70.0
+            "power_lock": 0.35,
+            "coast_lock": 0.2,
+            "preload_nm": 40.0
           }
         },
         "rear_differential": {
           "LimitedSlip": {
             "power_lock": 0.7,
-            "coast_lock": 0.5,
-            "preload_nm": 85.0
+            "coast_lock": 0.45,
+            "preload_nm": 80.0
           }
         },
         "top_speed_mps": 56.944447,
@@ -17910,7 +17982,7 @@
         "engine_brake_front_share": 0.5,
         "downforce_coefficient": 0.494,
         "tire": {
-          "grip": 1.108,
+          "grip": 1.3296001,
           "peak_slip_angle_deg": 12.7,
           "peak_slip_ratio": 0.1,
           "slide_grip": 0.9,
@@ -17960,7 +18032,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.108,
+              "base_grip": 1.3296001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -17992,7 +18064,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.108,
+              "grip": 1.3296001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -18012,7 +18084,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.108,
+              "base_grip": 1.3296001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -18044,7 +18116,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.108,
+              "grip": 1.3296001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -18064,7 +18136,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.0193601,
+              "base_grip": 1.2232322,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -18096,7 +18168,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.0193601,
+              "grip": 1.2232322,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -18116,7 +18188,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.0193601,
+              "base_grip": 1.2232322,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -18148,7 +18220,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.0193601,
+              "grip": 1.2232322,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -18257,22 +18329,22 @@
         "cg_height": 0.42,
         "max_engine_force": 5425.0,
         "max_reverse_force": 4875.0,
-        "max_brake_force": 13686.097,
+        "max_brake_force": 26777.145,
         "handbrake_force": 7500.0,
         "brake_bias": 0.62,
         "drive_bias": 0.3,
         "front_differential": {
           "LimitedSlip": {
-            "power_lock": 0.6,
-            "coast_lock": 0.4,
-            "preload_nm": 70.0
+            "power_lock": 0.35,
+            "coast_lock": 0.2,
+            "preload_nm": 40.0
           }
         },
         "rear_differential": {
           "LimitedSlip": {
             "power_lock": 0.7,
-            "coast_lock": 0.5,
-            "preload_nm": 85.0
+            "coast_lock": 0.45,
+            "preload_nm": 80.0
           }
         },
         "top_speed_mps": 56.944447,
@@ -18291,7 +18363,7 @@
         "engine_brake_front_share": 0.5,
         "downforce_coefficient": 0.494,
         "tire": {
-          "grip": 1.108,
+          "grip": 1.3296001,
           "peak_slip_angle_deg": 12.7,
           "peak_slip_ratio": 0.1,
           "slide_grip": 0.9,
@@ -18341,7 +18413,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.108,
+              "base_grip": 1.3296001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -18373,7 +18445,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.108,
+              "grip": 1.3296001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -18393,7 +18465,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.108,
+              "base_grip": 1.3296001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -18425,7 +18497,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.108,
+              "grip": 1.3296001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -18445,7 +18517,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.0193601,
+              "base_grip": 1.2232322,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -18477,7 +18549,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.0193601,
+              "grip": 1.2232322,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -18497,7 +18569,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.0193601,
+              "base_grip": 1.2232322,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -18529,7 +18601,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.0193601,
+              "grip": 1.2232322,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -18638,22 +18710,22 @@
         "cg_height": 0.42,
         "max_engine_force": 5862.5,
         "max_reverse_force": 4875.0,
-        "max_brake_force": 16163.086,
+        "max_brake_force": 31623.43,
         "handbrake_force": 7500.0,
         "brake_bias": 0.62,
         "drive_bias": 0.3,
         "front_differential": {
           "LimitedSlip": {
-            "power_lock": 0.6,
-            "coast_lock": 0.4,
-            "preload_nm": 70.0
+            "power_lock": 0.35,
+            "coast_lock": 0.2,
+            "preload_nm": 40.0
           }
         },
         "rear_differential": {
           "LimitedSlip": {
             "power_lock": 0.7,
-            "coast_lock": 0.5,
-            "preload_nm": 85.0
+            "coast_lock": 0.45,
+            "preload_nm": 80.0
           }
         },
         "top_speed_mps": 58.333336,
@@ -18672,7 +18744,7 @@
         "engine_brake_front_share": 0.5,
         "downforce_coefficient": 0.532,
         "tire": {
-          "grip": 1.1110001,
+          "grip": 1.3332001,
           "peak_slip_angle_deg": 12.7,
           "peak_slip_ratio": 0.1,
           "slide_grip": 0.9,
@@ -18722,7 +18794,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.1110001,
+              "base_grip": 1.3332001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -18754,7 +18826,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.1110001,
+              "grip": 1.3332001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -18774,7 +18846,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.1110001,
+              "base_grip": 1.3332001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -18806,7 +18878,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.1110001,
+              "grip": 1.3332001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -18826,7 +18898,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.0221201,
+              "base_grip": 1.2265441,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -18858,7 +18930,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.0221201,
+              "grip": 1.2265441,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -18878,7 +18950,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.0221201,
+              "base_grip": 1.2265441,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -18910,7 +18982,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.0221201,
+              "grip": 1.2265441,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -19019,22 +19091,22 @@
         "cg_height": 0.42,
         "max_engine_force": 6650.0,
         "max_reverse_force": 4875.0,
-        "max_brake_force": 15753.905,
+        "max_brake_force": 30822.857,
         "handbrake_force": 7500.0,
         "brake_bias": 0.62,
         "drive_bias": 0.3,
         "front_differential": {
           "LimitedSlip": {
-            "power_lock": 0.6,
-            "coast_lock": 0.4,
-            "preload_nm": 70.0
+            "power_lock": 0.35,
+            "coast_lock": 0.2,
+            "preload_nm": 40.0
           }
         },
         "rear_differential": {
           "LimitedSlip": {
             "power_lock": 0.7,
-            "coast_lock": 0.5,
-            "preload_nm": 85.0
+            "coast_lock": 0.45,
+            "preload_nm": 80.0
           }
         },
         "top_speed_mps": 61.111115,
@@ -19053,7 +19125,7 @@
         "engine_brake_front_share": 0.5,
         "downforce_coefficient": 0.836,
         "tire": {
-          "grip": 1.126,
+          "grip": 1.3512001,
           "peak_slip_angle_deg": 12.7,
           "peak_slip_ratio": 0.1,
           "slide_grip": 0.9,
@@ -19103,7 +19175,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.126,
+              "base_grip": 1.3512001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -19135,7 +19207,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.126,
+              "grip": 1.3512001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -19155,7 +19227,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.126,
+              "base_grip": 1.3512001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -19187,7 +19259,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.126,
+              "grip": 1.3512001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -19207,7 +19279,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.03592,
+              "base_grip": 1.2431041,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -19239,7 +19311,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.03592,
+              "grip": 1.2431041,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -19259,7 +19331,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.03592,
+              "base_grip": 1.2431041,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -19291,7 +19363,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.03592,
+              "grip": 1.2431041,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -19400,22 +19472,22 @@
         "cg_height": 0.42,
         "max_engine_force": 6650.0,
         "max_reverse_force": 4875.0,
-        "max_brake_force": 15808.2295,
+        "max_brake_force": 30929.145,
         "handbrake_force": 7500.0,
         "brake_bias": 0.62,
         "drive_bias": 0.3,
         "front_differential": {
           "LimitedSlip": {
-            "power_lock": 0.6,
-            "coast_lock": 0.4,
-            "preload_nm": 70.0
+            "power_lock": 0.35,
+            "coast_lock": 0.2,
+            "preload_nm": 40.0
           }
         },
         "rear_differential": {
           "LimitedSlip": {
             "power_lock": 0.7,
-            "coast_lock": 0.5,
-            "preload_nm": 85.0
+            "coast_lock": 0.45,
+            "preload_nm": 80.0
           }
         },
         "top_speed_mps": 61.666668,
@@ -19434,7 +19506,7 @@
         "engine_brake_front_share": 0.5,
         "downforce_coefficient": 0.8512,
         "tire": {
-          "grip": 1.126,
+          "grip": 1.3512001,
           "peak_slip_angle_deg": 12.7,
           "peak_slip_ratio": 0.1,
           "slide_grip": 0.9,
@@ -19484,7 +19556,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.126,
+              "base_grip": 1.3512001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -19516,7 +19588,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.126,
+              "grip": 1.3512001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -19536,7 +19608,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.126,
+              "base_grip": 1.3512001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -19568,7 +19640,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.126,
+              "grip": 1.3512001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -19588,7 +19660,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.03592,
+              "base_grip": 1.2431041,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -19620,7 +19692,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.03592,
+              "grip": 1.2431041,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -19640,7 +19712,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.03592,
+              "base_grip": 1.2431041,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -19672,7 +19744,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.03592,
+              "grip": 1.2431041,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -19781,22 +19853,22 @@
         "cg_height": 0.42,
         "max_engine_force": 6650.0,
         "max_reverse_force": 4875.0,
-        "max_brake_force": 15626.856,
+        "max_brake_force": 30574.285,
         "handbrake_force": 7500.0,
         "brake_bias": 0.62,
         "drive_bias": 0.3,
         "front_differential": {
           "LimitedSlip": {
-            "power_lock": 0.6,
-            "coast_lock": 0.4,
-            "preload_nm": 70.0
+            "power_lock": 0.35,
+            "coast_lock": 0.2,
+            "preload_nm": 40.0
           }
         },
         "rear_differential": {
           "LimitedSlip": {
             "power_lock": 0.7,
-            "coast_lock": 0.5,
-            "preload_nm": 85.0
+            "coast_lock": 0.45,
+            "preload_nm": 80.0
           }
         },
         "top_speed_mps": 62.222225,
@@ -19815,7 +19887,7 @@
         "engine_brake_front_share": 0.5,
         "downforce_coefficient": 0.87399995,
         "tire": {
-          "grip": 1.1290001,
+          "grip": 1.3548001,
           "peak_slip_angle_deg": 12.7,
           "peak_slip_ratio": 0.1,
           "slide_grip": 0.9,
@@ -19865,7 +19937,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.1290001,
+              "base_grip": 1.3548001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -19897,7 +19969,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.1290001,
+              "grip": 1.3548001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -19917,7 +19989,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.1290001,
+              "base_grip": 1.3548001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -19949,7 +20021,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.1290001,
+              "grip": 1.3548001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -19969,7 +20041,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.0386801,
+              "base_grip": 1.2464161,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -20001,7 +20073,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.0386801,
+              "grip": 1.2464161,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -20021,7 +20093,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.0386801,
+              "base_grip": 1.2464161,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -20053,7 +20125,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.0386801,
+              "grip": 1.2464161,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -20162,22 +20234,22 @@
         "cg_height": 0.42,
         "max_engine_force": 10500.0,
         "max_reverse_force": 4875.0,
-        "max_brake_force": 16687.049,
+        "max_brake_force": 32648.574,
         "handbrake_force": 7500.0,
         "brake_bias": 0.62,
         "drive_bias": 0.3,
         "front_differential": {
           "LimitedSlip": {
-            "power_lock": 0.6,
-            "coast_lock": 0.4,
-            "preload_nm": 70.0
+            "power_lock": 0.35,
+            "coast_lock": 0.2,
+            "preload_nm": 40.0
           }
         },
         "rear_differential": {
           "LimitedSlip": {
             "power_lock": 0.7,
-            "coast_lock": 0.5,
-            "preload_nm": 85.0
+            "coast_lock": 0.45,
+            "preload_nm": 80.0
           }
         },
         "top_speed_mps": 63.88889,
@@ -20196,7 +20268,7 @@
         "engine_brake_front_share": 0.5,
         "downforce_coefficient": 0.95,
         "tire": {
-          "grip": 1.132,
+          "grip": 1.3584,
           "peak_slip_angle_deg": 12.7,
           "peak_slip_ratio": 0.1,
           "slide_grip": 0.9,
@@ -20246,7 +20318,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.132,
+              "base_grip": 1.3584,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -20278,7 +20350,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.132,
+              "grip": 1.3584,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -20298,7 +20370,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.132,
+              "base_grip": 1.3584,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -20330,7 +20402,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.132,
+              "grip": 1.3584,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -20350,7 +20422,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.04144,
+              "base_grip": 1.249728,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -20382,7 +20454,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.04144,
+              "grip": 1.249728,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -20402,7 +20474,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.04144,
+              "base_grip": 1.249728,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -20434,7 +20506,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.04144,
+              "grip": 1.249728,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -20543,22 +20615,22 @@
         "cg_height": 0.42,
         "max_engine_force": 10500.0,
         "max_reverse_force": 4875.0,
-        "max_brake_force": 16630.096,
+        "max_brake_force": 32537.145,
         "handbrake_force": 7500.0,
         "brake_bias": 0.62,
         "drive_bias": 0.3,
         "front_differential": {
           "LimitedSlip": {
-            "power_lock": 0.6,
-            "coast_lock": 0.4,
-            "preload_nm": 70.0
+            "power_lock": 0.35,
+            "coast_lock": 0.2,
+            "preload_nm": 40.0
           }
         },
         "rear_differential": {
           "LimitedSlip": {
             "power_lock": 0.7,
-            "coast_lock": 0.5,
-            "preload_nm": 85.0
+            "coast_lock": 0.45,
+            "preload_nm": 80.0
           }
         },
         "top_speed_mps": 64.44444,
@@ -20577,7 +20649,7 @@
         "engine_brake_front_share": 0.5,
         "downforce_coefficient": 0.97279996,
         "tire": {
-          "grip": 1.1290001,
+          "grip": 1.3548001,
           "peak_slip_angle_deg": 12.7,
           "peak_slip_ratio": 0.1,
           "slide_grip": 0.9,
@@ -20627,7 +20699,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.1290001,
+              "base_grip": 1.3548001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -20659,7 +20731,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.1290001,
+              "grip": 1.3548001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -20679,7 +20751,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.1290001,
+              "base_grip": 1.3548001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -20711,7 +20783,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.1290001,
+              "grip": 1.3548001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -20731,7 +20803,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.0386801,
+              "base_grip": 1.2464161,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -20763,7 +20835,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.0386801,
+              "grip": 1.2464161,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -20783,7 +20855,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.0386801,
+              "base_grip": 1.2464161,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -20815,7 +20887,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.0386801,
+              "grip": 1.2464161,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -20924,22 +20996,22 @@
         "cg_height": 0.42,
         "max_engine_force": 10500.0,
         "max_reverse_force": 4875.0,
-        "max_brake_force": 16630.096,
+        "max_brake_force": 32537.145,
         "handbrake_force": 7500.0,
         "brake_bias": 0.62,
         "drive_bias": 0.3,
         "front_differential": {
           "LimitedSlip": {
-            "power_lock": 0.6,
-            "coast_lock": 0.4,
-            "preload_nm": 70.0
+            "power_lock": 0.35,
+            "coast_lock": 0.2,
+            "preload_nm": 40.0
           }
         },
         "rear_differential": {
           "LimitedSlip": {
             "power_lock": 0.7,
-            "coast_lock": 0.5,
-            "preload_nm": 85.0
+            "coast_lock": 0.45,
+            "preload_nm": 80.0
           }
         },
         "top_speed_mps": 63.88889,
@@ -20958,7 +21030,7 @@
         "engine_brake_front_share": 0.5,
         "downforce_coefficient": 0.9272,
         "tire": {
-          "grip": 1.132,
+          "grip": 1.3584,
           "peak_slip_angle_deg": 12.7,
           "peak_slip_ratio": 0.1,
           "slide_grip": 0.9,
@@ -21008,7 +21080,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.132,
+              "base_grip": 1.3584,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -21040,7 +21112,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.132,
+              "grip": 1.3584,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -21060,7 +21132,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.132,
+              "base_grip": 1.3584,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -21092,7 +21164,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.132,
+              "grip": 1.3584,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -21112,7 +21184,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.04144,
+              "base_grip": 1.249728,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -21144,7 +21216,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.04144,
+              "grip": 1.249728,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -21164,7 +21236,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.04144,
+              "base_grip": 1.249728,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -21196,7 +21268,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.04144,
+              "grip": 1.249728,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -21305,15 +21377,15 @@
         "cg_height": 0.36,
         "max_engine_force": 11900.0,
         "max_reverse_force": 4875.0,
-        "max_brake_force": 13694.907,
+        "max_brake_force": 26794.385,
         "handbrake_force": 7500.0,
         "brake_bias": 0.62,
         "drive_bias": 0.3,
         "front_differential": {
           "LimitedSlip": {
-            "power_lock": 0.6,
-            "coast_lock": 0.4,
-            "preload_nm": 70.0
+            "power_lock": 0.3,
+            "coast_lock": 0.15,
+            "preload_nm": 35.0
           }
         },
         "rear_differential": {
@@ -21339,7 +21411,7 @@
         "engine_brake_front_share": 0.5,
         "downforce_coefficient": 0.87399995,
         "tire": {
-          "grip": 1.1290001,
+          "grip": 1.3548001,
           "peak_slip_angle_deg": 12.7,
           "peak_slip_ratio": 0.1,
           "slide_grip": 0.9,
@@ -21389,7 +21461,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.1290001,
+              "base_grip": 1.3548001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -21421,7 +21493,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.1290001,
+              "grip": 1.3548001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -21441,7 +21513,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.1290001,
+              "base_grip": 1.3548001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -21473,7 +21545,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.1290001,
+              "grip": 1.3548001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -21493,7 +21565,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.0386801,
+              "base_grip": 1.2464161,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -21525,7 +21597,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.0386801,
+              "grip": 1.2464161,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -21545,7 +21617,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.0386801,
+              "base_grip": 1.2464161,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -21577,7 +21649,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.0386801,
+              "grip": 1.2464161,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -21686,15 +21758,15 @@
         "cg_height": 0.36,
         "max_engine_force": 11900.0,
         "max_reverse_force": 4875.0,
-        "max_brake_force": 13694.907,
+        "max_brake_force": 26794.385,
         "handbrake_force": 7500.0,
         "brake_bias": 0.62,
         "drive_bias": 0.3,
         "front_differential": {
           "LimitedSlip": {
-            "power_lock": 0.6,
-            "coast_lock": 0.4,
-            "preload_nm": 70.0
+            "power_lock": 0.3,
+            "coast_lock": 0.15,
+            "preload_nm": 35.0
           }
         },
         "rear_differential": {
@@ -21720,7 +21792,7 @@
         "engine_brake_front_share": 0.5,
         "downforce_coefficient": 0.87399995,
         "tire": {
-          "grip": 1.132,
+          "grip": 1.3584,
           "peak_slip_angle_deg": 12.7,
           "peak_slip_ratio": 0.1,
           "slide_grip": 0.9,
@@ -21770,7 +21842,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.132,
+              "base_grip": 1.3584,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -21802,7 +21874,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.132,
+              "grip": 1.3584,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -21822,7 +21894,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.132,
+              "base_grip": 1.3584,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -21854,7 +21926,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.132,
+              "grip": 1.3584,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -21874,7 +21946,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.04144,
+              "base_grip": 1.249728,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -21906,7 +21978,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.04144,
+              "grip": 1.249728,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -21926,7 +21998,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.04144,
+              "base_grip": 1.249728,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -21958,7 +22030,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.04144,
+              "grip": 1.249728,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -22067,15 +22139,15 @@
         "cg_height": 0.36,
         "max_engine_force": 11900.0,
         "max_reverse_force": 4875.0,
-        "max_brake_force": 13647.845,
+        "max_brake_force": 26702.307,
         "handbrake_force": 7500.0,
         "brake_bias": 0.62,
         "drive_bias": 0.3,
         "front_differential": {
           "LimitedSlip": {
-            "power_lock": 0.6,
-            "coast_lock": 0.4,
-            "preload_nm": 70.0
+            "power_lock": 0.3,
+            "coast_lock": 0.15,
+            "preload_nm": 35.0
           }
         },
         "rear_differential": {
@@ -22101,7 +22173,7 @@
         "engine_brake_front_share": 0.5,
         "downforce_coefficient": 0.8512,
         "tire": {
-          "grip": 1.1290001,
+          "grip": 1.3548001,
           "peak_slip_angle_deg": 12.7,
           "peak_slip_ratio": 0.1,
           "slide_grip": 0.9,
@@ -22151,7 +22223,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.1290001,
+              "base_grip": 1.3548001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -22183,7 +22255,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.1290001,
+              "grip": 1.3548001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -22203,7 +22275,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.1290001,
+              "base_grip": 1.3548001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -22235,7 +22307,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.1290001,
+              "grip": 1.3548001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -22255,7 +22327,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.0386801,
+              "base_grip": 1.2464161,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -22287,7 +22359,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.0386801,
+              "grip": 1.2464161,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -22307,7 +22379,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.0386801,
+              "base_grip": 1.2464161,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -22339,7 +22411,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.0386801,
+              "grip": 1.2464161,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -22446,17 +22518,17 @@
         "cg_to_front": 1.22,
         "cg_to_rear": 1.23,
         "cg_height": 0.36,
-        "max_engine_force": 18725.0,
+        "max_engine_force": 15515.0,
         "max_reverse_force": 4875.0,
-        "max_brake_force": 12907.778,
+        "max_brake_force": 25254.35,
         "handbrake_force": 7500.0,
         "brake_bias": 0.62,
         "drive_bias": 0.3,
         "front_differential": {
           "LimitedSlip": {
-            "power_lock": 0.6,
-            "coast_lock": 0.4,
-            "preload_nm": 70.0
+            "power_lock": 0.3,
+            "coast_lock": 0.15,
+            "preload_nm": 35.0
           }
         },
         "rear_differential": {
@@ -22482,7 +22554,7 @@
         "engine_brake_front_share": 0.5,
         "downforce_coefficient": 0.95,
         "tire": {
-          "grip": 1.135,
+          "grip": 1.362,
           "peak_slip_angle_deg": 12.7,
           "peak_slip_ratio": 0.1,
           "slide_grip": 0.9,
@@ -22532,7 +22604,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.135,
+              "base_grip": 1.362,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -22564,7 +22636,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.135,
+              "grip": 1.362,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -22584,7 +22656,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.135,
+              "base_grip": 1.362,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -22616,7 +22688,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.135,
+              "grip": 1.362,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -22636,7 +22708,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.0442001,
+              "base_grip": 1.25304,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -22668,7 +22740,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.0442001,
+              "grip": 1.25304,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -22688,7 +22760,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.0442001,
+              "base_grip": 1.25304,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -22720,7 +22792,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.0442001,
+              "grip": 1.25304,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -22827,17 +22899,17 @@
         "cg_to_front": 1.22,
         "cg_to_rear": 1.23,
         "cg_height": 0.36,
-        "max_engine_force": 18725.0,
+        "max_engine_force": 15515.0,
         "max_reverse_force": 4875.0,
-        "max_brake_force": 12907.778,
+        "max_brake_force": 25254.35,
         "handbrake_force": 7500.0,
         "brake_bias": 0.62,
         "drive_bias": 0.3,
         "front_differential": {
           "LimitedSlip": {
-            "power_lock": 0.6,
-            "coast_lock": 0.4,
-            "preload_nm": 70.0
+            "power_lock": 0.3,
+            "coast_lock": 0.15,
+            "preload_nm": 35.0
           }
         },
         "rear_differential": {
@@ -22863,7 +22935,7 @@
         "engine_brake_front_share": 0.5,
         "downforce_coefficient": 0.95,
         "tire": {
-          "grip": 1.132,
+          "grip": 1.3584,
           "peak_slip_angle_deg": 12.7,
           "peak_slip_ratio": 0.1,
           "slide_grip": 0.9,
@@ -22913,7 +22985,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.132,
+              "base_grip": 1.3584,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -22945,7 +23017,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.132,
+              "grip": 1.3584,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -22965,7 +23037,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.132,
+              "base_grip": 1.3584,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -22997,7 +23069,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.132,
+              "grip": 1.3584,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -23017,7 +23089,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.04144,
+              "base_grip": 1.249728,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -23049,7 +23121,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.04144,
+              "grip": 1.249728,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -23069,7 +23141,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.04144,
+              "base_grip": 1.249728,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -23101,7 +23173,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.04144,
+              "grip": 1.249728,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -23208,17 +23280,17 @@
         "cg_to_front": 1.22,
         "cg_to_rear": 1.23,
         "cg_height": 0.36,
-        "max_engine_force": 18725.0,
+        "max_engine_force": 15515.0,
         "max_reverse_force": 4875.0,
-        "max_brake_force": 12863.724,
+        "max_brake_force": 25168.154,
         "handbrake_force": 7500.0,
         "brake_bias": 0.62,
         "drive_bias": 0.3,
         "front_differential": {
           "LimitedSlip": {
-            "power_lock": 0.6,
-            "coast_lock": 0.4,
-            "preload_nm": 70.0
+            "power_lock": 0.3,
+            "coast_lock": 0.15,
+            "preload_nm": 35.0
           }
         },
         "rear_differential": {
@@ -23244,7 +23316,7 @@
         "engine_brake_front_share": 0.5,
         "downforce_coefficient": 0.9424,
         "tire": {
-          "grip": 1.132,
+          "grip": 1.3584,
           "peak_slip_angle_deg": 12.7,
           "peak_slip_ratio": 0.1,
           "slide_grip": 0.9,
@@ -23294,7 +23366,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.132,
+              "base_grip": 1.3584,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -23326,7 +23398,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.132,
+              "grip": 1.3584,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -23346,7 +23418,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.132,
+              "base_grip": 1.3584,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -23378,7 +23450,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.132,
+              "grip": 1.3584,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -23398,7 +23470,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.04144,
+              "base_grip": 1.249728,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -23430,7 +23502,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.04144,
+              "grip": 1.249728,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -23450,7 +23522,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.04144,
+              "base_grip": 1.249728,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -23482,7 +23554,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.04144,
+              "grip": 1.249728,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -23589,17 +23661,17 @@
         "cg_to_front": 1.15,
         "cg_to_rear": 1.15,
         "cg_height": 0.38,
-        "max_engine_force": 9625.0,
+        "max_engine_force": 7975.0,
         "max_reverse_force": 4875.0,
-        "max_brake_force": 14937.542,
+        "max_brake_force": 29225.627,
         "handbrake_force": 7500.0,
         "brake_bias": 0.62,
         "drive_bias": 0.3,
         "front_differential": {
           "LimitedSlip": {
-            "power_lock": 0.6,
-            "coast_lock": 0.4,
-            "preload_nm": 70.0
+            "power_lock": 0.3,
+            "coast_lock": 0.15,
+            "preload_nm": 35.0
           }
         },
         "rear_differential": {
@@ -23625,7 +23697,7 @@
         "engine_brake_front_share": 0.5,
         "downforce_coefficient": 1.102,
         "tire": {
-          "grip": 1.1140001,
+          "grip": 1.3368001,
           "peak_slip_angle_deg": 12.7,
           "peak_slip_ratio": 0.1,
           "slide_grip": 0.9,
@@ -23675,7 +23747,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.1140001,
+              "base_grip": 1.3368001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -23707,7 +23779,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.1140001,
+              "grip": 1.3368001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -23727,7 +23799,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.1140001,
+              "base_grip": 1.3368001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -23759,7 +23831,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.1140001,
+              "grip": 1.3368001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -23779,7 +23851,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.02488,
+              "base_grip": 1.2298561,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -23811,7 +23883,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.02488,
+              "grip": 1.2298561,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -23831,7 +23903,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.02488,
+              "base_grip": 1.2298561,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -23863,7 +23935,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.02488,
+              "grip": 1.2298561,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -23970,17 +24042,17 @@
         "cg_to_front": 1.15,
         "cg_to_rear": 1.15,
         "cg_height": 0.38,
-        "max_engine_force": 9275.0,
+        "max_engine_force": 7685.0,
         "max_reverse_force": 4875.0,
-        "max_brake_force": 12514.396,
+        "max_brake_force": 24484.688,
         "handbrake_force": 7500.0,
         "brake_bias": 0.62,
         "drive_bias": 0.3,
         "front_differential": {
           "LimitedSlip": {
-            "power_lock": 0.6,
-            "coast_lock": 0.4,
-            "preload_nm": 70.0
+            "power_lock": 0.3,
+            "coast_lock": 0.15,
+            "preload_nm": 35.0
           }
         },
         "rear_differential": {
@@ -24006,7 +24078,7 @@
         "engine_brake_front_share": 0.5,
         "downforce_coefficient": 1.026,
         "tire": {
-          "grip": 1.12,
+          "grip": 1.3440001,
           "peak_slip_angle_deg": 12.7,
           "peak_slip_ratio": 0.1,
           "slide_grip": 0.9,
@@ -24056,7 +24128,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.12,
+              "base_grip": 1.3440001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -24088,7 +24160,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.12,
+              "grip": 1.3440001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -24108,7 +24180,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.12,
+              "base_grip": 1.3440001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -24140,7 +24212,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.12,
+              "grip": 1.3440001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -24160,7 +24232,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.0304,
+              "base_grip": 1.2364801,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -24192,7 +24264,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.0304,
+              "grip": 1.2364801,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -24212,7 +24284,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.0304,
+              "base_grip": 1.2364801,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -24244,7 +24316,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.0304,
+              "grip": 1.2364801,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -24351,17 +24423,17 @@
         "cg_to_front": 1.15,
         "cg_to_rear": 1.15,
         "cg_height": 0.38,
-        "max_engine_force": 9625.0,
+        "max_engine_force": 7975.0,
         "max_reverse_force": 4875.0,
-        "max_brake_force": 12239.354,
+        "max_brake_force": 23946.562,
         "handbrake_force": 7500.0,
         "brake_bias": 0.62,
         "drive_bias": 0.3,
         "front_differential": {
           "LimitedSlip": {
-            "power_lock": 0.6,
-            "coast_lock": 0.4,
-            "preload_nm": 70.0
+            "power_lock": 0.3,
+            "coast_lock": 0.15,
+            "preload_nm": 35.0
           }
         },
         "rear_differential": {
@@ -24387,7 +24459,7 @@
         "engine_brake_front_share": 0.5,
         "downforce_coefficient": 1.064,
         "tire": {
-          "grip": 1.1170001,
+          "grip": 1.3404002,
           "peak_slip_angle_deg": 12.7,
           "peak_slip_ratio": 0.1,
           "slide_grip": 0.9,
@@ -24437,7 +24509,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.1170001,
+              "base_grip": 1.3404002,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -24469,7 +24541,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.1170001,
+              "grip": 1.3404002,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -24489,7 +24561,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.1170001,
+              "base_grip": 1.3404002,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -24521,7 +24593,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.1170001,
+              "grip": 1.3404002,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -24541,7 +24613,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.0276401,
+              "base_grip": 1.2331682,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -24573,7 +24645,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.0276401,
+              "grip": 1.2331682,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -24593,7 +24665,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.0276401,
+              "base_grip": 1.2331682,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -24625,7 +24697,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.0276401,
+              "grip": 1.2331682,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -38879,7 +38951,7 @@
         "max_brake_force": 14352.001,
         "handbrake_force": 8200.0,
         "brake_bias": 0.58,
-        "drive_bias": 0.5,
+        "drive_bias": 0.35,
         "front_differential": "Open",
         "rear_differential": "Spool",
         "top_speed_mps": 62.5,
@@ -38909,7 +38981,7 @@
           "skid_full_threshold": 0.28
         },
         "rear_axle": {
-          "grip_scale": 1.0,
+          "grip_scale": 0.95,
           "peak_slip_scale": 0.85
         },
         "assists": {
@@ -38991,7 +39063,7 @@
               "skid_full_threshold": 0.28
             },
             "brake_bias_factor": 0.29,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.175
           },
           {
             "tire_radius": 0.46,
@@ -39043,7 +39115,7 @@
               "skid_full_threshold": 0.28
             },
             "brake_bias_factor": 0.29,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.175
           },
           {
             "tire_radius": 0.46,
@@ -39052,7 +39124,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.3224001,
+              "base_grip": 1.2562801,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -39084,7 +39156,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.3224001,
+              "grip": 1.2562801,
               "peak_slip_angle_deg": 12.75,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.94,
@@ -39095,7 +39167,7 @@
               "skid_full_threshold": 0.28
             },
             "brake_bias_factor": 0.21000001,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.325
           },
           {
             "tire_radius": 0.46,
@@ -39104,7 +39176,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.3224001,
+              "base_grip": 1.2562801,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -39136,7 +39208,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.3224001,
+              "grip": 1.2562801,
               "peak_slip_angle_deg": 12.75,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.94,
@@ -39147,7 +39219,7 @@
               "skid_full_threshold": 0.28
             },
             "brake_bias_factor": 0.21000001,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.325
           }
         ],
         "chassis": {
@@ -39617,7 +39689,7 @@
         "max_brake_force": 14651.001,
         "handbrake_force": 8200.0,
         "brake_bias": 0.58,
-        "drive_bias": 0.5,
+        "drive_bias": 0.35,
         "front_differential": "Open",
         "rear_differential": "Spool",
         "top_speed_mps": 63.333336,
@@ -39647,7 +39719,7 @@
           "skid_full_threshold": 0.28
         },
         "rear_axle": {
-          "grip_scale": 1.0,
+          "grip_scale": 0.95,
           "peak_slip_scale": 0.85
         },
         "assists": {
@@ -39729,7 +39801,7 @@
               "skid_full_threshold": 0.28
             },
             "brake_bias_factor": 0.29,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.175
           },
           {
             "tire_radius": 0.46,
@@ -39781,7 +39853,7 @@
               "skid_full_threshold": 0.28
             },
             "brake_bias_factor": 0.29,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.175
           },
           {
             "tire_radius": 0.46,
@@ -39790,7 +39862,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.3260001,
+              "base_grip": 1.2597001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -39822,7 +39894,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.3260001,
+              "grip": 1.2597001,
               "peak_slip_angle_deg": 12.75,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.94,
@@ -39833,7 +39905,7 @@
               "skid_full_threshold": 0.28
             },
             "brake_bias_factor": 0.21000001,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.325
           },
           {
             "tire_radius": 0.46,
@@ -39842,7 +39914,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.3260001,
+              "base_grip": 1.2597001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -39874,7 +39946,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.3260001,
+              "grip": 1.2597001,
               "peak_slip_angle_deg": 12.75,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.94,
@@ -39885,7 +39957,7 @@
               "skid_full_threshold": 0.28
             },
             "brake_bias_factor": 0.21000001,
-            "drive_torque_factor": 0.25
+            "drive_torque_factor": 0.325
           }
         ],
         "chassis": {
@@ -39983,22 +40055,22 @@
         "cg_height": 0.42,
         "max_engine_force": 8750.0,
         "max_reverse_force": 4875.0,
-        "max_brake_force": 15392.914,
+        "max_brake_force": 30116.57,
         "handbrake_force": 7500.0,
         "brake_bias": 0.62,
         "drive_bias": 0.5,
         "front_differential": {
           "LimitedSlip": {
-            "power_lock": 0.6,
-            "coast_lock": 0.4,
-            "preload_nm": 70.0
+            "power_lock": 0.35,
+            "coast_lock": 0.2,
+            "preload_nm": 40.0
           }
         },
         "rear_differential": {
           "LimitedSlip": {
             "power_lock": 0.7,
-            "coast_lock": 0.5,
-            "preload_nm": 85.0
+            "coast_lock": 0.45,
+            "preload_nm": 80.0
           }
         },
         "top_speed_mps": 63.88889,
@@ -40017,7 +40089,7 @@
         "engine_brake_front_share": 0.5,
         "downforce_coefficient": 0.68399996,
         "tire": {
-          "grip": 1.12,
+          "grip": 1.3440001,
           "peak_slip_angle_deg": 12.7,
           "peak_slip_ratio": 0.1,
           "slide_grip": 0.9,
@@ -40028,7 +40100,7 @@
           "skid_full_threshold": 0.35
         },
         "rear_axle": {
-          "grip_scale": 1.0,
+          "grip_scale": 0.92,
           "peak_slip_scale": 0.81
         },
         "assists": {
@@ -40067,7 +40139,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.12,
+              "base_grip": 1.3440001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -40099,7 +40171,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.12,
+              "grip": 1.3440001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -40119,7 +40191,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.12,
+              "base_grip": 1.3440001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -40151,7 +40223,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.12,
+              "grip": 1.3440001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -40171,7 +40243,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.12,
+              "base_grip": 1.2364801,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -40203,7 +40275,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.12,
+              "grip": 1.2364801,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -40223,7 +40295,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.12,
+              "base_grip": 1.2364801,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -40255,7 +40327,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.12,
+              "grip": 1.2364801,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -40364,22 +40436,22 @@
         "cg_height": 0.42,
         "max_engine_force": 8750.0,
         "max_reverse_force": 4875.0,
-        "max_brake_force": 14560.096,
+        "max_brake_force": 28487.145,
         "handbrake_force": 7500.0,
         "brake_bias": 0.62,
         "drive_bias": 0.5,
         "front_differential": {
           "LimitedSlip": {
-            "power_lock": 0.6,
-            "coast_lock": 0.4,
-            "preload_nm": 70.0
+            "power_lock": 0.35,
+            "coast_lock": 0.2,
+            "preload_nm": 40.0
           }
         },
         "rear_differential": {
           "LimitedSlip": {
             "power_lock": 0.7,
-            "coast_lock": 0.5,
-            "preload_nm": 85.0
+            "coast_lock": 0.45,
+            "preload_nm": 80.0
           }
         },
         "top_speed_mps": 64.44444,
@@ -40398,7 +40470,7 @@
         "engine_brake_front_share": 0.5,
         "downforce_coefficient": 0.6992,
         "tire": {
-          "grip": 1.123,
+          "grip": 1.3476001,
           "peak_slip_angle_deg": 12.7,
           "peak_slip_ratio": 0.1,
           "slide_grip": 0.9,
@@ -40409,7 +40481,7 @@
           "skid_full_threshold": 0.35
         },
         "rear_axle": {
-          "grip_scale": 1.0,
+          "grip_scale": 0.92,
           "peak_slip_scale": 0.81
         },
         "assists": {
@@ -40448,7 +40520,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.123,
+              "base_grip": 1.3476001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -40480,7 +40552,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.123,
+              "grip": 1.3476001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -40500,7 +40572,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.123,
+              "base_grip": 1.3476001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -40532,7 +40604,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.123,
+              "grip": 1.3476001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -40552,7 +40624,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.123,
+              "base_grip": 1.2397921,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -40584,7 +40656,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.123,
+              "grip": 1.2397921,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -40604,7 +40676,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.123,
+              "base_grip": 1.2397921,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -40636,7 +40708,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.123,
+              "grip": 1.2397921,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -40745,22 +40817,22 @@
         "cg_height": 0.42,
         "max_engine_force": 8750.0,
         "max_reverse_force": 4875.0,
-        "max_brake_force": 15140.571,
+        "max_brake_force": 29622.857,
         "handbrake_force": 7500.0,
         "brake_bias": 0.62,
         "drive_bias": 0.5,
         "front_differential": {
           "LimitedSlip": {
-            "power_lock": 0.6,
-            "coast_lock": 0.4,
-            "preload_nm": 70.0
+            "power_lock": 0.35,
+            "coast_lock": 0.2,
+            "preload_nm": 40.0
           }
         },
         "rear_differential": {
           "LimitedSlip": {
             "power_lock": 0.7,
-            "coast_lock": 0.5,
-            "preload_nm": 85.0
+            "coast_lock": 0.45,
+            "preload_nm": 80.0
           }
         },
         "top_speed_mps": 64.16667,
@@ -40779,7 +40851,7 @@
         "engine_brake_front_share": 0.5,
         "downforce_coefficient": 0.6764,
         "tire": {
-          "grip": 1.123,
+          "grip": 1.3476001,
           "peak_slip_angle_deg": 12.7,
           "peak_slip_ratio": 0.1,
           "slide_grip": 0.9,
@@ -40790,7 +40862,7 @@
           "skid_full_threshold": 0.35
         },
         "rear_axle": {
-          "grip_scale": 1.0,
+          "grip_scale": 0.92,
           "peak_slip_scale": 0.81
         },
         "assists": {
@@ -40829,7 +40901,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.123,
+              "base_grip": 1.3476001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -40861,7 +40933,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.123,
+              "grip": 1.3476001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -40881,7 +40953,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.123,
+              "base_grip": 1.3476001,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -40913,7 +40985,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.123,
+              "grip": 1.3476001,
               "peak_slip_angle_deg": 12.7,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -40933,7 +41005,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.123,
+              "base_grip": 1.2397921,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -40965,7 +41037,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.123,
+              "grip": 1.2397921,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,
@@ -40985,7 +41057,7 @@
             "compound": {
               "id": "AllTerrain",
               "name": "All-Terrain",
-              "base_grip": 1.123,
+              "base_grip": 1.2397921,
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
@@ -41017,7 +41089,7 @@
               }
             },
             "tire_model": {
-              "grip": 1.123,
+              "grip": 1.2397921,
               "peak_slip_angle_deg": 10.287,
               "peak_slip_ratio": 0.1,
               "slide_grip": 0.9,

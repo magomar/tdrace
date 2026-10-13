@@ -19,8 +19,8 @@ fn test_default_curriculum_structure() {
     assert_eq!(l1.silver_time_sec, 66.5);
     assert_eq!(l1.bronze_time_sec, 74.2);
     assert_eq!(l1.bronze_credit_bounty, 1_000);
-    assert_eq!(l1.silver_credit_bounty, 500);
-    assert_eq!(l1.gold_credit_bounty, 500);
+    assert_eq!(l1.silver_credit_bounty, 150);
+    assert_eq!(l1.gold_credit_bounty, 150);
 
     let l4 = &curriculum[3];
     assert_eq!(l4.id, AcademyLessonId::Lesson4GraduationSprint);
@@ -56,10 +56,10 @@ fn test_fresh_academy_initialization_and_lesson_unlock_progression() {
 fn test_idempotent_bounty_payouts_on_replay() {
     let mut academy = ClassicAcademyProgress::new();
 
-    // First attempt: Silver medal (gets Bronze 1000 + Silver 500 = 1500)
+    // First attempt: Silver medal (gets Bronze 1000 + Silver 150 = 1150)
     let (medal, credits, xp) = academy.record_attempt(AcademyLessonId::Lesson1ApexLine, 64.7, true);
     assert_eq!(medal, AcademyMedal::Silver);
-    assert_eq!(credits, 1_500);
+    assert_eq!(credits, 1_150);
     assert_eq!(xp, 150);
 
     // Replay with worse time: 0 credits, best time unchanged
@@ -74,10 +74,10 @@ fn test_idempotent_bounty_payouts_on_replay() {
     assert_eq!(credits_r2, 0);
     assert_eq!(xp_r2, 0);
 
-    // Replay with Gold: gets remaining Gold bounty (500 Cr)
+    // Replay with Gold: gets remaining Gold bounty (150 Cr)
     let (medal_r3, credits_r3, xp_r3) = academy.record_attempt(AcademyLessonId::Lesson1ApexLine, 58.9, true);
     assert_eq!(medal_r3, AcademyMedal::Gold);
-    assert_eq!(credits_r3, 500);
+    assert_eq!(credits_r3, 150);
     assert_eq!(xp_r3, 50);
 
     // Replay Gold again: 0 credits
@@ -88,7 +88,7 @@ fn test_idempotent_bounty_payouts_on_replay() {
 }
 
 #[test]
-fn test_all_bronze_curriculum_purse_totals_7000() {
+fn test_all_bronze_curriculum_purse_totals_5500() {
     let mut academy = ClassicAcademyProgress::new();
     let mut total_credits = 0u64;
 
@@ -108,13 +108,13 @@ fn test_all_bronze_curriculum_purse_totals_7000() {
     let (_, cr4, _) = academy.record_attempt(AcademyLessonId::Lesson4GraduationSprint, 125.3, true);
     total_credits += cr4;
 
-    assert_eq!(total_credits, 7_000);
+    assert_eq!(total_credits, 5_500);
     assert!(academy.is_graduated());
     assert!(academy.license_granted);
 }
 
 #[test]
-fn test_all_silver_curriculum_purse_totals_10750() {
+fn test_all_silver_curriculum_purse_totals_6250() {
     let mut academy = ClassicAcademyProgress::new();
     let mut total_credits = 0u64;
 
@@ -127,12 +127,12 @@ fn test_all_silver_curriculum_purse_totals_10750() {
     let (_, cr4, _) = academy.record_attempt(AcademyLessonId::Lesson4GraduationSprint, 112.2, true);
     total_credits += cr4;
 
-    assert_eq!(total_credits, 10_750);
+    assert_eq!(total_credits, 6_250);
     assert!(academy.is_graduated());
 }
 
 #[test]
-fn test_all_gold_curriculum_purse_totals_14500() {
+fn test_all_gold_curriculum_purse_totals_7000() {
     let mut academy = ClassicAcademyProgress::new();
     let mut total_credits = 0u64;
 
@@ -145,7 +145,7 @@ fn test_all_gold_curriculum_purse_totals_14500() {
     let (_, cr4, _) = academy.record_attempt(AcademyLessonId::Lesson4GraduationSprint, 103.3, true);
     total_credits += cr4;
 
-    assert_eq!(total_credits, 14_500);
+    assert_eq!(total_credits, 7_000);
     assert_eq!(academy.total_stars(), 12);
     assert!(academy.is_graduated());
 }
@@ -214,7 +214,7 @@ fn test_tier_curriculum_rules_objectives_and_purses() {
             .map(|l| l.bronze_credit_bounty + l.silver_credit_bounty + l.gold_credit_bounty)
             .sum()
     };
-    assert_eq!(purse(1), 14_500);
+    assert_eq!(purse(1), 7_000);
     assert_eq!(purse(2), 25_000);
     assert_eq!(purse(3), 50_000);
 

@@ -2720,16 +2720,16 @@
       },
       "front_differential": {
         "LimitedSlip": {
-          "power_lock": 0.6,
-          "coast_lock": 0.4,
-          "preload_nm": 70.0
+          "power_lock": 0.35,
+          "coast_lock": 0.2,
+          "preload_nm": 40.0
         }
       },
       "rear_differential": {
         "LimitedSlip": {
           "power_lock": 0.7,
-          "coast_lock": 0.5,
-          "preload_nm": 85.0
+          "coast_lock": 0.45,
+          "preload_nm": 80.0
         }
       },
       "engine_placement": "front_engine",
@@ -3110,29 +3110,29 @@
         {
           "position": "FL",
           "radius_m": 0.35,
-          "width_m": 0.24,
+          "width_m": 0.22,
           "inertia_kgm2": 1.2,
           "compound": "AllTerrain"
         },
         {
           "position": "FR",
           "radius_m": 0.35,
-          "width_m": 0.24,
+          "width_m": 0.22,
           "inertia_kgm2": 1.2,
           "compound": "AllTerrain"
         },
         {
           "position": "RL",
           "radius_m": 0.35,
-          "width_m": 0.24,
-          "inertia_kgm2": 1.2,
+          "width_m": 0.28,
+          "inertia_kgm2": 1.45,
           "compound": "AllTerrain"
         },
         {
           "position": "RR",
           "radius_m": 0.35,
-          "width_m": 0.24,
-          "inertia_kgm2": 1.2,
+          "width_m": 0.28,
+          "inertia_kgm2": 1.45,
           "compound": "AllTerrain"
         }
       ],
@@ -3163,8 +3163,20 @@
         "rear_roll_center_height": 0.18,
         "response_frequency_hz": 2.8
       },
-      "front_differential": "Open",
-      "rear_differential": "Spool",
+      "front_differential": {
+        "LimitedSlip": {
+          "power_lock": 0.3,
+          "coast_lock": 0.15,
+          "preload_nm": 35.0
+        }
+      },
+      "rear_differential": {
+        "LimitedSlip": {
+          "power_lock": 0.65,
+          "coast_lock": 0.4,
+          "preload_nm": 75.0
+        }
+      },
       "engine_placement": "mid_engine",
       "tire": {
         "peak_slip_angle_deg": 15.0,
@@ -5754,16 +5766,16 @@
       },
       "front_differential": {
         "LimitedSlip": {
-          "power_lock": 0.6,
-          "coast_lock": 0.4,
-          "preload_nm": 70.0
+          "power_lock": 0.35,
+          "coast_lock": 0.2,
+          "preload_nm": 40.0
         }
       },
       "rear_differential": {
         "LimitedSlip": {
           "power_lock": 0.7,
-          "coast_lock": 0.5,
-          "preload_nm": 85.0
+          "coast_lock": 0.45,
+          "preload_nm": 80.0
         }
       },
       "engine_placement": "front_engine",
@@ -6208,16 +6220,16 @@
       },
       "front_differential": {
         "LimitedSlip": {
-          "power_lock": 0.6,
-          "coast_lock": 0.4,
-          "preload_nm": 70.0
+          "power_lock": 0.35,
+          "coast_lock": 0.2,
+          "preload_nm": 40.0
         }
       },
       "rear_differential": {
         "LimitedSlip": {
           "power_lock": 0.7,
-          "coast_lock": 0.5,
-          "preload_nm": 85.0
+          "coast_lock": 0.45,
+          "preload_nm": 80.0
         }
       },
       "engine_placement": "front_engine",
@@ -6650,9 +6662,9 @@
       },
       "front_differential": {
         "LimitedSlip": {
-          "power_lock": 0.6,
-          "coast_lock": 0.4,
-          "preload_nm": 70.0
+          "power_lock": 0.3,
+          "coast_lock": 0.15,
+          "preload_nm": 35.0
         }
       },
       "rear_differential": {
@@ -7095,9 +7107,9 @@
       },
       "front_differential": {
         "LimitedSlip": {
-          "power_lock": 0.6,
-          "coast_lock": 0.4,
-          "preload_nm": 70.0
+          "power_lock": 0.3,
+          "coast_lock": 0.15,
+          "preload_nm": 35.0
         }
       },
       "rear_differential": {
