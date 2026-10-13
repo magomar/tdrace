@@ -3,7 +3,7 @@ type: Architecture Spec
 template: architecture
 title: "EvoRL Bot Performance Calibration on the Launch Circuits"
 description: "Offline EvoRL calibration pipeline, run on the blaze compute box, that tunes the existing bot controller gains and the five driver-tier quality settings so bots drive cleanly and keep a monotonic tier pace ladder on every Steam-launch circuit (Classic, Karting, Autocross, Rallycross)."
-status: in_progress
+status: implemented
 receipt: "docs/receipts/spec-083-receipt.md"
 verified: { by: human:mario, at: 2026-10-11T06:11:52Z, hash: "5303f6636105" }
 created: 2026-10-03
@@ -314,72 +314,72 @@ cargo run -p tdrace-app --release --bin bot_behaviour_benchmark
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 #### Scenario: Worker returns the same result as the Rust harness
-- [ ] **Given** a `bot_eval_worker` request for `gt_coastal_grand_prix`, 3 laps, seed 17, T4 Balanced against T4 Balanced
-- [ ] **When** the same race runs through `run_harness_race` directly in a Rust test
-- [ ] **Then** both give the same `controls_hash` and the same lap times
-- [ ] **And** two worker runs with the same request give the same `controls_hash`.
+- [x] **Given** a `bot_eval_worker` request for `gt_coastal_grand_prix`, 3 laps, seed 17, T4 Balanced against T4 Balanced
+- [x] **When** the same race runs through `run_harness_race` directly in a Rust test
+- [x] **Then** both give the same `controls_hash` and the same lap times
+- [x] **And** two worker runs with the same request give the same `controls_hash`.
 
 #### Scenario: Worker survives bad input
-- [ ] **Given** a running `bot_eval_worker`
-- [ ] **When** it receives malformed JSON, an unknown circuit, an unknown car, and a genome with a NaN value
-- [ ] **Then** it answers each line with a result whose `error` is set
-- [ ] **And** it answers the next valid request correctly.
+- [x] **Given** a running `bot_eval_worker`
+- [x] **When** it receives malformed JSON, an unknown circuit, an unknown car, and a genome with a NaN value
+- [x] **Then** it answers each line with a result whose `error` is set
+- [x] **And** it answers the next valid request correctly.
 
 #### Scenario: Throughput is measured and recorded
-- [ ] **Given** the release `bot_eval_worker` on blaze and on the Mac
-- [ ] **When** the throughput benchmark runs 3-lap 2-car races on the 13 training circuits
-- [ ] **Then** `reports/bot_calibration_report.md` records races/s and car-steps/s for 1 worker and for 28 workers on blaze, and for 1 worker on the Mac.
+- [x] **Given** the release `bot_eval_worker` on blaze and on the Mac
+- [x] **When** the throughput benchmark runs 3-lap 2-car races on the 13 training circuits
+- [x] **Then** `reports/bot_calibration_report.md` records races/s and car-steps/s for 1 worker and for 28 workers on blaze, and for 1 worker on the Mac.
 
 #### Scenario: Baseline audit covers every launch circuit
-- [ ] **Given** the current (pre-tuning) constants
-- [ ] **When** the audit runs all 5 tiers x 8 seeds on every closed-loop circuit of the classic, kart, autocross and rally modules
-- [ ] **Then** the report lists, per circuit, the tier pace deltas against T4, DNFs, spins and the longest no-progress time
-- [ ] **And** every excluded circuit is listed with a reason
-- [ ] **And** every circuit where an own-category car is stuck has a Beads issue.
+- [x] **Given** the current (pre-tuning) constants
+- [x] **When** the audit runs all 5 tiers x 8 seeds on every closed-loop circuit of the classic, kart, autocross and rally modules
+- [x] **Then** the report lists, per circuit, the tier pace deltas against T4, DNFs, spins and the longest no-progress time
+- [x] **And** every excluded circuit is listed with a reason
+- [x] **And** every circuit where an own-category car is stuck has a Beads issue.
 
 #### Scenario: Calibrated tiers hold the pace ladder on training circuits
-- [ ] **Given** the baked Stage A and Stage B constants
-- [ ] **When** 8 seeds x 3 laps run per tier on each of the 13 training circuits
-- [ ] **Then** the tier order T5 < T4 < T3 < T2 < T1 holds (by the 2-standard-error rule) on all 13 circuits
-- [ ] **And** each tier's mean delta against T4 is inside its band in the Stage B table on at least 11 of 13 circuits
-- [ ] **And** no T3–T5 bot goes more than 10 s without progress.
+- [x] **Given** the baked Stage A and Stage B constants
+- [x] **When** 8 seeds x 3 laps run per tier on each of the 13 training circuits
+- [x] **Then** the tier order T5 < T4 < T3 < T2 < T1 holds (by the 2-standard-error rule) on all 13 circuits
+- [x] **And** each tier's mean delta against T4 is inside its band in the Stage B table on at least 11 of 13 circuits
+- [x] **And** no T3–T5 bot goes more than 10 s without progress.
 
 #### Scenario: Calibration generalizes to held-out circuits
-- [ ] **Given** the baked constants
-- [ ] **When** the same sweep runs on every held-out launch circuit without an open circuit bug (see "Circuits and cars")
-- [ ] **Then** the tier order holds on at least 90 % of those circuits
-- [ ] **And** the T4 DNF count is no higher than the baseline audit on every circuit
-- [ ] **And** the T4 Stage A win rate against the old baseline, over all held-out circuits, is at least 50 %.
+- [x] **Given** the baked constants
+- [x] **When** the same sweep runs on every held-out launch circuit without an open circuit bug (see "Circuits and cars")
+- [x] **Then** the tier order holds on at least 90 % of those circuits
+- [x] **And** the T4 DNF count is no higher than the baseline audit on every circuit
+- [x] **And** the T4 Stage A win rate against the old baseline, over all held-out circuits, is at least 50 %.
 
 #### Scenario: Regression gate in cargo test
-- [ ] **Given** `bot_tier_ladder_tests` on the 4 `SAMPLE_TRACKS`
-- [ ] **When** `cargo test -p tdrace-app --release --test bot_tier_ladder_tests` runs
-- [ ] **Then** it fails if the tier order breaks, or if T5 is slower than T4, on any sample track
-- [ ] **And** it finishes in under 120 s on the Mac.
+- [x] **Given** `bot_tier_ladder_tests` on the 4 `SAMPLE_TRACKS`
+- [x] **When** `cargo test -p tdrace-app --release --test bot_tier_ladder_tests` runs
+- [x] **Then** it fails if the tier order breaks, or if T5 is slower than T4, on any sample track
+- [x] **And** it finishes in under 120 s on the Mac.
 
 #### Scenario: Existing bot behaviour stays intact
-- [ ] **Given** the baked constants
-- [ ] **When** `bot_humanlike_driving_tests`, `classic_circuits_bot_tests` and `bot_curb_cutting_tests` run
-- [ ] **Then** they all pass
-- [ ] **And** the 6 styles still show distinct mistake mixes in `bot_behaviour_benchmark` (each style's top mistake kind is unchanged).
+- [x] **Given** the baked constants
+- [x] **When** `bot_humanlike_driving_tests`, `classic_circuits_bot_tests` and `bot_curb_cutting_tests` run
+- [x] **Then** they all pass
+- [x] **And** the 6 styles still show distinct mistake mixes in `bot_behaviour_benchmark` (each style's top mistake kind is unchanged).
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Created/Modified Files
-- `[ ]` `crates/tdrace-app/src/bin/bot_eval_worker.rs` -> JSON-lines evaluation worker over `run_harness_race`.
-- `[ ]` `crates/tdrace-app/src/ai/bot_harness.rs` -> `launch_circuit_cars()` table and a genome-to-`BotProfile` helper with clamping.
-- `[ ]` `crates/tdrace-app/tests/bot_eval_worker_tests.rs` -> Determinism, parity and bad-input tests.
-- `[ ]` `crates/tdrace-app/tests/bot_tier_ladder_tests.rs` -> Fast tier-ladder regression gate.
-- `[ ]` `crates/race-kit/src/ai/mod.rs` -> Baked Stage A style tuple and Stage B `DriverQuality::for_tier` rows.
-- `[ ]` `tools/bot_tuning/harness.py` -> EvoRL `PlayFn` that drives a persistent `bot_eval_worker`.
-- `[ ]` `tools/bot_tuning/run_campaign.py` -> Throughput benchmark, baseline audit, Stage A, Stage B, held-out sweep.
-- `[ ]` `tools/bot_tuning/export.py` -> Prints the Rust constant table from `best.json` for review.
-- `[ ]` `tools/bot_tuning/runs/<run>.json` -> Seeds, commits and best genome of the baked run.
-- `[ ]` `reports/bot_calibration_report.md` -> Throughput, baseline audit, before/after and held-out results.
-- `[ ]` `specs/constitution/TECH_STACK.md` -> "Offline bot tuning (not shipped)" rows.
-- `[ ]` `specs/constitution/ROADMAP.md` -> Updated 083 entry; 107 and 108 entries.
+- [x] `crates/tdrace-app/src/bin/bot_eval_worker.rs` -> JSON-lines evaluation worker over `run_harness_race`.
+- [x] `crates/tdrace-app/src/ai/bot_harness.rs` -> `launch_circuit_cars()` table and a genome-to-`BotProfile` helper with clamping.
+- [x] `crates/tdrace-app/tests/bot_eval_worker_tests.rs` -> Determinism, parity and bad-input tests.
+- [x] `crates/tdrace-app/tests/bot_tier_ladder_tests.rs` -> Fast tier-ladder regression gate.
+- [x] `crates/race-kit/src/ai/mod.rs` -> Baked Stage A style tuple and Stage B `DriverQuality::for_tier` rows.
+- [x] `tools/bot_tuning/harness.py` -> EvoRL `PlayFn` that drives a persistent `bot_eval_worker`.
+- [x] `tools/bot_tuning/run_campaign.py` -> Throughput benchmark, baseline audit, Stage A, Stage B, held-out sweep.
+- [x] `tools/bot_tuning/export.py` -> Prints the Rust constant table from `best.json` for review.
+- [x] `tools/bot_tuning/runs/<run>.json` -> Seeds, commits and best genome of the baked run.
+- [x] `reports/bot_calibration_report.md` -> Throughput, baseline audit, before/after and held-out results.
+- [x] `specs/constitution/TECH_STACK.md` -> "Offline bot tuning (not shipped)" rows.
+- [x] `specs/constitution/ROADMAP.md` -> Updated 083 entry; 107 and 108 entries.
 
 ### Verification Assertions
 - `bot_eval_worker.rs`, `bot_tier_ladder_tests.rs` and `tools/bot_tuning/*.py` reference

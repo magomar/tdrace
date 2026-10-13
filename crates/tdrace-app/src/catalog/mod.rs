@@ -144,6 +144,8 @@ impl RealCarModel {
             "kart" => 38.0,
             "extreme_offroad" if (4..=5).contains(&self.tier) => 14.0,
             "classic" if self.id == "classic_rally" => 19.1,
+            "autocross" if self.tier == 5 => 14.5,
+            "rally" | "rallycross" if self.tier >= 6 => 14.5,
             _ => 17.5,
         };
         cfg.max_engine_force = (self.bhp as f32) * force_per_bhp;
@@ -275,15 +277,39 @@ impl RealCarModel {
             _ => TerrainInteractionConfig::default(),
         };
 
-        // Spec 043 & Spec 113: grip stat, drivetrain and brakes must reach the per-wheel assemblies.
-        // Spec 113: 4WD loose surface vehicles (Rallycross, Autocross, Off-Road) apply loose-surface balance
-        // (30:70 torque split and 0.92 rear grip scale) to eliminate severe turn-in push and power understeer.
+        // Spec 043, Spec 113, & Spec 114: grip stat, drivetrain and brakes must reach the per-wheel assemblies.
+        // Spec 114: 4WD loose surface competition vehicles calibrate AWD torque distribution and neutral rear grip:
+        // - Autocross T4 (TAX) and Rallycross T2–T7: 45:55 split (drive_bias = 0.45) with neutral rear grip (1.00)
+        // - Autocross T3 (Buggy 1600) and T5 (SuperBuggy): 42:58 split (drive_bias = 0.42) with neutral rear grip (1.00)
+        // - Classic loose-surface drift retains with_loose_surface_4wd_balance() (30:70 split, 0.92 rear grip)
         let cfg = cfg.finalized();
         match self.category() {
-            tdrace_core::CarCategory::Rallycross
-            | tdrace_core::CarCategory::Autocross => {
+            tdrace_core::CarCategory::Autocross => {
                 if self.drivetrain == "4WD" || self.drivetrain == "AWD" {
-                    cfg.with_loose_surface_4wd_balance()
+                    let mut c = cfg;
+                    if self.tier == 3 || self.tier == 5 {
+                        c.drive_bias = 0.42;
+                    } else {
+                        c.drive_bias = 0.45;
+                    }
+                    c.rear_axle.grip_scale = 1.00;
+                    c.finalized()
+                } else {
+                    cfg
+                }
+            }
+            tdrace_core::CarCategory::Rallycross => {
+                if self.module_id == "classic" {
+                    if self.drivetrain == "4WD" || self.drivetrain == "AWD" {
+                        cfg.with_loose_surface_4wd_balance()
+                    } else {
+                        cfg
+                    }
+                } else if self.drivetrain == "4WD" || self.drivetrain == "AWD" {
+                    let mut c = cfg;
+                    c.drive_bias = 0.45;
+                    c.rear_axle.grip_scale = 1.00;
+                    c.finalized()
                 } else {
                     cfg
                 }
