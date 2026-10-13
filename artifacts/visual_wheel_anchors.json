@@ -731,8 +731,8 @@
     "base_car": "SuperBuggy",
     "layering": "OverChassis",
     "archetype": "buggy_allterrain_front",
-    "axle_x_px": 446.5,
-    "track_width_px": 274.7,
+    "axle_x_px": 436.0,
+    "track_width_px": 258.7,
     "tire_len_px": 105.1,
     "tire_wid_px": 46.3
   },
