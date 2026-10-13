@@ -1150,7 +1150,9 @@ impl Track {
                         if let (Some(s0), Some(s1)) = (seg0, seg1) {
                             let medians = generate_adaptive_median_barriers(s0, s1, barrier_type);
                             for m in medians {
-                                walls.push(at_road_height(m));
+                                if wall_clear_of_roads(&net.segments, &m, f32::INFINITY, 0.0) && clear_of_main(&m, 0.0) {
+                                    walls.push(at_road_height(m));
+                                }
                             }
                         }
                     }

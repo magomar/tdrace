@@ -135,6 +135,7 @@ Table of contents providing progressive disclosure of project constitution and t
 | [112](112_junction_throat_wall_diagnostics_adaptive_median_barriers_and_runoff_consistency.md) | Junction Throat Wall Diagnostics, Adaptive Median Barriers, and Runoff Consistency | Architecture Spec | `implemented` | `human:mario` | [081](081_rallycross_joker_lap_segments_for_classic_and_openstreetmap_circuits.md), [085](085_bifurcation_pacenote_hud_driving_aids_and_decluttered_track_junctions.md), [102](102_predefined_junction_components_for_road_splits_and_joker_loops.md) | Establishes track editor diagnostics and warnings for walls pruned by road clearance conflicts, harmonizes runoff shoulder geometry by eliminating phantom gravel corridors where walls are pruned, and introduces adaptive median barriers and throat bridge connectors to close outer corner wall gaps across road bifurcations. |
 | [113](113_4wd_loose_surface_torque_split_differential_upgrades_and_turnin_dynamics.md) | 4WD Loose Surface Torque Split Differential Upgrades and Turn-In Dynamics | Architecture Spec | `implemented` | `human:mario` | [033](033_crossmodality_vehicle_turning_capabilities_and_benchmark_analysis.md), [034](034_explicit_drivetrain_differential_models_and_axle_coupling.md), [043](043_vehicle_dynamics_rebuild_and_simplified_handling_settings.md) | Resolves acute understeer and turning resistance on 4WD/AWD vehicles across Autocross, Extreme Off-Road, and Rally by replacing rigid 50:50 torque splits with rear-biased loose-surface distribution, upgrading locked spool differentials to motorsport limited-slip units, and harmonizing front differential locking characteristics. |
 | [114](114_realworld_homologation_telemetry_calibration_for_autocross_and_rallycross_highpower_4wd_drivetrains_competition_braking_and_mechanical_grip.md) | Real-World Homologation Telemetry Calibration for Autocross and Rallycross High-Power 4WD Drivetrains, Competition Braking, and Mechanical Grip | Architecture Spec | `implemented` | `human:mario` | [025](025_terrain_surface_bifurcation_and_category_tier_gating.md), [043](043_vehicle_dynamics_rebuild_and_simplified_handling_settings.md), [050](050_fia_autocross_championship_and_vehicle_roster.md), [113](113_4wd_loose_surface_torque_split_differential_upgrades_and_turnin_dynamics.md) | Calibrates high-power 4WD vehicle dynamics across Continental Autocross and FIA Rallycross against real-world manufacturer homologation telemetry, introducing 45:55/42:58 competition AWD torque distribution, 22.5 kN competition disc braking, 1.20 base competition compound grip, and staggered rear SuperBuggy wheels to resolve high-tier drivability decay and restore monotonic tier pace progression. |
+| [115](115_lowgrip_runoff_bot_recovery_and_wall_scraping_resistance_calibration.md) | Low-Grip Runoff Bot Recovery and Wall Scraping Resistance Calibration | Architecture Spec | `implemented` | `human:mario` | [046](046_humanlike_bot_driving_with_tiered_mistakes_and_varied_lines.md), [099](099_packed_and_deep_gravel_surfaces_and_asphaltcircuit_gravel_traps.md), [106](106_classic_autocross_launch_chutes_and_tencar_rallycross_chutes.md), [114](114_realworld_homologation_telemetry_calibration_for_autocross_and_rallycross_highpower_4wd_drivetrains_competition_braking_and_mechanical_grip.md) | Calibrates wall scraping deceleration so cars resting against barriers can pull away on low-grip runoff, extends three-point turn leg duration to prevent oscillating in place, and equips the bot AI with wall-aware recovery steering and escape velocity gating for the no-progress watchdog. |
 
 ### 🗺️ Specification Dependency Graph
 
@@ -196,6 +197,7 @@ flowchart LR
     096["096: Chassis-Conforming Dynamic Vehicle Ground Shadows"]
     097["097: Turn-Preserving Nonlinear Circuit Rescaling, 0.75x Scale Expansion, and Global Apex Smoothing"]
     098["098: GT Tyre Compound Choice in the Garage"]
+    099["099: Packed and Deep Gravel Surfaces and Asphalt-Circuit Gravel Traps"]
     100["100: DLC Architecture and Modular Base Game Content Packaging"]
     101["101: Parametric Pit Lane Kit Blocks on Spline Circuits"]
     102["102: Predefined Junction Components for Road Splits and Joker Loops"]
@@ -211,6 +213,7 @@ flowchart LR
     112["112: Junction Throat Wall Diagnostics, Adaptive Median Barriers, and Runoff Consistency"]
     113["113: 4WD Loose Surface Torque Split Differential Upgrades and Turn-In Dynamics"]
     114["114: Real-World Homologation Telemetry Calibration for Autocross and Rallycross High-Power 4WD Drivetrains, Competition Braking, and Mechanical Grip"]
+    115["115: Low-Grip Runoff Bot Recovery and Wall Scraping Resistance Calibration"]
     055 --> 047
     062 --> 063
     055 --> 064
@@ -311,4 +314,8 @@ flowchart LR
     043 --> 114
     050 --> 114
     113 --> 114
+    046 --> 115
+    099 --> 115
+    106 --> 115
+    114 --> 115
 ```

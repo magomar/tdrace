@@ -199,11 +199,21 @@ fn test_bots_race_three_laps_from_a_rallycross_chute() {
     assert!(failures.is_empty(), "{failures:#?}");
 }
 
+/// tdrace-bw6rb: bots that ran wide in the kouvola_rx joker stopped against its outer tyre wall and never got
+/// away; with 8 bots three of them stalled there after lap 1, with 10 before it.
+///
+/// Given kouvola_rx with a full chute grid of 10 Rallycross bots
+/// When they race 3 laps
+/// Then every bot finishes all 3 laps
+#[test]
+fn test_every_bot_finishes_three_laps_on_kouvola() {
+    let track = with_chute("rally", "kouvola_rx");
+    let r = race(&track, own_car("rally", &track), 10, 3, 400.0);
+    assert!(r.laps_completed.iter().all(|&l| l >= 3), "laps completed per bot: {:?}", r.laps_completed);
+}
+
 /// Circuits left out of the 43-circuit race until their bug is fixed, each with its Beads issue.
-/// kouvola_rx (tdrace-bw6rb): with 10 bots, 3 stop for good on the joker before lap 1; with 8 they stop after it. A bot
-/// that runs wide onto the grass or into deep gravel beside a wall rocks in place, because its three-point-turn legs
-/// are too short to get going there.
-const KNOWN_STALLS: [&str; 1] = ["kouvola_rx"];
+const KNOWN_STALLS: [&str; 0] = [];
 
 /// The same race on all 43 circuits but KNOWN_STALLS. About two minutes in release, far longer in a debug build:
 /// `cargo test --release -p tdrace-app --test launch_chute_race_tests -- --ignored`.
