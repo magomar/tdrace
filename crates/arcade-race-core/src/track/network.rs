@@ -1414,6 +1414,10 @@ pub fn generate_adaptive_median_barriers(
                     points.push(p_median);
                 }
             }
+        } else if !points.is_empty() && gap > 10.0 {
+            // Once the diverging gore exceeds 10 m, the gore wedge has ended and
+            // independent parallel walls can exist. Stop tracing the gore.
+            break;
         }
 
         s += step_m;
@@ -1425,6 +1429,7 @@ pub fn generate_adaptive_median_barriers(
 
     points
         .windows(2)
+        .filter(|w| w[0].distance(w[1]) <= step_m * 2.0)
         .map(|w| WallBarrier::new(w[0], w[1], barrier_type))
         .collect()
 }

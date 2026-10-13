@@ -212,52 +212,52 @@ To ensure absolute safety across all 43 launch chutes:
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 #### Scenario: Car resting against curved tire wall on grass drives away forward
-- [ ] **Given** a Rallycross car at rest on grass against the curved outer TireWall of `kouvola_rx` joker at pose `(48.7, 122.0)` with heading `-9°`
-- [ ] **When** full forward throttle is applied with steering straight (`steer = 0.0`)
-- [ ] **Then** the vehicle accelerates without locking and travels at least $6.0\text{ meters}$ away from the stall pose within $6.0\text{ seconds}$
+- [x] **Given** a Rallycross car at rest on grass against the curved outer TireWall of `kouvola_rx` joker at pose `(48.7, 122.0)` with heading `-9°`
+- [x] **When** full forward throttle is applied with steering straight (`steer = 0.0`)
+- [x] **Then** the vehicle accelerates without locking and travels at least $6.0\text{ meters}$ away from the stall pose within $6.0\text{ seconds}$
 
 #### Scenario: Car resting against curved tire wall on grass drives away in reverse
-- [ ] **Given** a Rallycross car at rest on grass against the curved outer TireWall of `kouvola_rx` joker at pose `(48.7, 122.0)` with heading `-9°`
-- [ ] **When** full reverse throttle is applied with steering straight (`steer = 0.0`)
-- [ ] **Then** the vehicle accelerates without locking and travels at least $6.0\text{ meters}$ away from the stall pose within $6.0\text{ seconds}$
+- [x] **Given** a Rallycross car at rest on grass against the curved outer TireWall of `kouvola_rx` joker at pose `(48.7, 122.0)` with heading `-9°`
+- [x] **When** full reverse throttle is applied with steering straight (`steer = 0.0`)
+- [x] **Then** the vehicle accelerates without locking and travels at least $6.0\text{ meters}$ away from the stall pose within $6.0\text{ seconds}$
 
 #### Scenario: Three-point turn on low-grip runoff does not rock in place
-- [ ] **Given** an AI bot vehicle on low-grip grass or deep gravel beside a barrier with forward speed $< 0.4\text{ m/s}$
-- [ ] **When** the bot initiates a three-point turn recovery leg
-- [ ] **Then** the leg duration remains active for at least $1.2\text{ seconds}$ without premature direction toggling
-- [ ] **And** the bot does not alternate forward and reverse gears in rapid $< 1.0\text{ s}$ cycles
+- [x] **Given** an AI bot vehicle on low-grip grass or deep gravel beside a barrier with forward speed $< 0.4\text{ m/s}$
+- [x] **When** the bot initiates a three-point turn recovery leg
+- [x] **Then** the leg duration remains active for at least $1.2\text{ seconds}$ without premature direction toggling
+- [x] **And** the bot does not alternate forward and reverse gears in rapid $< 1.0\text{ s}$ cycles
 
 #### Scenario: No-progress watchdog permits steady low-speed escape
-- [ ] **Given** an AI bot vehicle off-track traveling at speed $> 1.0\text{ m/s}$ oriented towards the track ribbon
-- [ ] **When** the bot sustains this escape trajectory for $3.5\text{ seconds}$ covering $4.0\text{ meters}$
-- [ ] **Then** the no-progress watchdog does not abort the escape or force a three-point turn reversal
-- [ ] **And** the bot successfully re-enters the active track surface
+- [x] **Given** an AI bot vehicle off-track traveling at speed $> 1.0\text{ m/s}$ oriented towards the track ribbon
+- [x] **When** the bot sustains this escape trajectory for $3.5\text{ seconds}$ covering $4.0\text{ meters}$
+- [x] **Then** the no-progress watchdog does not abort the escape or force a three-point turn reversal
+- [x] **And** the bot successfully re-enters the active track surface
 
 #### Scenario: Recovery steering always points away from adjacent barrier
-- [ ] **Given** an AI bot resting on runoff with a physical wall barrier along its left side
-- [ ] **When** the bot executes recovery attempt 2, 4, or any even-numbered attempt
-- [ ] **Then** `turn_steer` commands positive (rightward) steering away from the wall
-- [ ] **And** the bot never steers leftward directly into the barrier
+- [x] **Given** an AI bot resting on runoff with a physical wall barrier along its left side
+- [x] **When** the bot executes recovery attempt 2, 4, or any even-numbered attempt
+- [x] **Then** `turn_steer` commands positive (rightward) steering away from the wall
+- [x] **And** the bot never steers leftward directly into the barrier
 
 #### Scenario: 10 RX bots complete 3 laps on Kouvola RX without stalls
-- [ ] **Given** `kouvola_rx` configured with a 10-car Rallycross launch chute grid
-- [ ] **When** a 3-lap race is simulated with 10 AI bot vehicles taking standard and joker routes
-- [ ] **Then** all 10 bots complete 3 full laps (`laps_completed >= 3`)
-- [ ] **And** zero bots become stalled permanently against the joker tire wall or junction boundaries
+- [x] **Given** `kouvola_rx` configured with a 10-car Rallycross launch chute grid
+- [x] **When** a 3-lap race is simulated with 10 AI bot vehicles taking standard and joker routes
+- [x] **Then** all 10 bots complete 3 full laps (`laps_completed >= 3`)
+- [x] **And** zero bots become stalled permanently against the joker tire wall or junction boundaries
 
 #### Scenario: All 43 launch chutes pass the global race sweep
-- [ ] **Given** `kouvola_rx` is removed from `KNOWN_STALLS` in `launch_chute_race_tests.rs`
-- [ ] **When** `test_bots_race_from_every_launch_chute` runs across all 43 Autocross, Rallycross, and Classic circuits
-- [ ] **Then** all 43 circuits pass without timeouts, deadlocks, or chute regressions
+- [x] **Given** `kouvola_rx` is removed from `KNOWN_STALLS` in `launch_chute_race_tests.rs`
+- [x] **When** `test_bots_race_from_every_launch_chute` runs across all 43 Autocross, Rallycross, and Classic circuits
+- [x] **Then** all 43 circuits pass without timeouts, deadlocks, or chute regressions
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Created/Modified Files
-- `[ ]` `crates/arcade-race-core/src/collision/wall.rs` -> Implement `SCRAPE_BRAKE_START_MPS` ($2.0\text{ m/s}$) and `SCRAPE_BRAKE_FULL_MPS` ($4.0\text{ m/s}$) speed-scaled scraping deceleration ramp.
-- `[ ]` `crates/race-kit/src/ai/mod.rs` -> Low-grip three-point turn leg duration extension, watchdog escape speed gating, and wall-repulsive `turn_steer` direction resolution.
-- `[ ]` `crates/tdrace-app/tests/launch_chute_race_tests.rs` -> Remove `kouvola_rx` from `KNOWN_STALLS` and un-ignore `test_every_bot_finishes_three_laps_on_kouvola`.
-- `[ ]` `crates/tdrace-app/tests/wall_contact_escape_tests.rs` -> Regression test harness validating $\ge 6\text{ m}$ escape in $6\text{ s}$ forwards and in reverse against Kouvola joker tire wall.
-- `[ ]` `specs/constitution/ROADMAP.md` -> Register Spec 115 under Phase 2 / Phase 4 milestones.
-- `[ ]` `specs/index.md` -> Index Spec 115 in master OKF v0.2 table and dependency graph.
+- `[x]` `crates/arcade-race-core/src/collision/wall.rs` -> Implement `SCRAPE_BRAKE_START_MPS` ($2.0\text{ m/s}$) and `SCRAPE_BRAKE_FULL_MPS` ($4.0\text{ m/s}$) speed-scaled scraping deceleration ramp.
+- `[x]` `crates/race-kit/src/ai/mod.rs` -> Low-grip three-point turn leg duration extension, watchdog escape speed gating, and wall-repulsive `turn_steer` direction resolution.
+- `[x]` `crates/tdrace-app/tests/launch_chute_race_tests.rs` -> Remove `kouvola_rx` from `KNOWN_STALLS` and un-ignore `test_every_bot_finishes_three_laps_on_kouvola`.
+- `[x]` `crates/tdrace-app/tests/wall_contact_escape_tests.rs` -> Regression test harness validating $\ge 6\text{ m}$ escape in $6\text{ s}$ forwards and in reverse against Kouvola joker tire wall.
+- `[x]` `specs/constitution/ROADMAP.md` -> Register Spec 115 under Phase 2 / Phase 4 milestones.
+- `[x]` `specs/index.md` -> Index Spec 115 in master OKF v0.2 table and dependency graph.

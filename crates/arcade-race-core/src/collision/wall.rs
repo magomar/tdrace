@@ -45,6 +45,11 @@ impl WallCollisionEvent {
     }
 }
 
+/// Sliding speed along a wall below which it applies no scraping brake (m/s). Spec 115.
+pub const SCRAPE_BRAKE_START_MPS: f32 = 2.0;
+/// Sliding speed from which the wall's full scraping brake applies (m/s). Spec 115.
+pub const SCRAPE_BRAKE_FULL_MPS: f32 = 4.0;
+
 /// Resolves collision between a vehicle and a static line barrier.
 pub fn resolve_car_wall_collision<B: Body2D>(
     car: &mut B,
@@ -237,8 +242,11 @@ pub fn resolve_car_wall_collision<B: Body2D>(
         // Contact wall resistance acting as brakes when running next to or touching the wall
         let brake_decel = wall.barrier_type.scraping_deceleration();
         // resolve_all_wall_collisions runs 2 sub-iterations per 60Hz frame (dt_sub ~ 0.01667 / 2 = 0.00833s)
-        // Scale contact brake impulse at very low speed (< 1.0 m/s) to prevent velocity-lock at corners and rest
-        let speed_scale = (v_t_mag / 1.0).clamp(0.0, 1.0);
+        // No contact brake below SCRAPE_BRAKE_START_MPS (2.0 m/s), ramping linearly to full brake at SCRAPE_BRAKE_FULL_MPS (4.0 m/s):
+        // a car resting against a curved wall on grass/gravel scrapes whichever way it drives; starting at 0 m/s locked
+        // the car to ~0.2 m/s crawl. (Spec 115, tdrace-7eda5).
+        let speed_scale =
+            ((v_t_mag - SCRAPE_BRAKE_START_MPS) / (SCRAPE_BRAKE_FULL_MPS - SCRAPE_BRAKE_START_MPS)).clamp(0.0, 1.0);
         let contact_brake_impulse = mass * brake_decel * 0.00833 * speed_scale;
 
         let max_total_friction = max_impact_friction + contact_brake_impulse;
