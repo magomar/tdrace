@@ -49,6 +49,7 @@ default_car = "sports_car"
 default_laps = 5
 default_num_bots = 7
 default_assist_profile = "arcade"
+default_bot_difficulty = "rookie"
 car_damage = false
 
 [display]

@@ -618,5 +618,138 @@ affinities = [
     }
 }
 
+#[test]
+fn test_default_bot_difficulty_toml_variants_and_aliases() {
+    use race_kit::DriverTier;
+
+    // Default when omitted from TOML
+    let partial_toml = r#"
+[gameplay]
+default_track = "gt_coastal_grand_prix"
+"#;
+    let cfg: GameConfig = toml::from_str(partial_toml).expect("Partial TOML without bot difficulty");
+    assert_eq!(cfg.gameplay.default_bot_difficulty, DriverTier::Rookie);
+
+    // String variants
+    let variants = [
+        ("rookie", DriverTier::Rookie),
+        ("amateur", DriverTier::Amateur),
+        ("contender", DriverTier::Contender),
+        ("pro", DriverTier::Pro),
+        ("legend", DriverTier::Legend),
+        ("Tier 1: Rookie", DriverTier::Rookie),
+        ("Tier 4: Pro", DriverTier::Pro),
+        ("PRO", DriverTier::Pro),
+        ("t5", DriverTier::Legend),
+    ];
+    for (val, expected) in variants {
+        let toml_str = format!("[gameplay]\ndefault_bot_difficulty = \"{}\"\n", val);
+        let loaded: GameConfig = toml::from_str(&toml_str).expect("Deserialize bot difficulty string");
+        assert_eq!(loaded.gameplay.default_bot_difficulty, expected, "Failed for {}", val);
+    }
+
+    // Integer variants 1..=5
+    for (int_val, expected) in [
+        (1, DriverTier::Rookie),
+        (2, DriverTier::Amateur),
+        (3, DriverTier::Contender),
+        (4, DriverTier::Pro),
+        (5, DriverTier::Legend),
+    ] {
+        let toml_str = format!("[gameplay]\ndefault_bot_difficulty = {}\n", int_val);
+        let loaded: GameConfig = toml::from_str(&toml_str).expect("Deserialize bot difficulty int");
+        assert_eq!(loaded.gameplay.default_bot_difficulty, expected, "Failed for integer {}", int_val);
+    }
+
+    // Aliases: preferred_bot_difficulty, bot_difficulty, default_bot_tier, preferred_bot_tier, bot_tier
+    let aliases = [
+        "preferred_bot_difficulty",
+        "bot_difficulty",
+        "default_bot_tier",
+        "preferred_bot_tier",
+        "bot_tier",
+    ];
+    for alias in aliases {
+        let toml_str = format!("[gameplay]\n{} = \"legend\"\n", alias);
+        let loaded: GameConfig = toml::from_str(&toml_str).expect("Deserialize alias");
+        assert_eq!(loaded.gameplay.default_bot_difficulty, DriverTier::Legend, "Failed for alias {}", alias);
+    }
+
+    // Roundtrip serialization
+    let mut original = GameConfig::default();
+    original.gameplay.default_bot_difficulty = DriverTier::Pro;
+    let serialized = toml::to_string_pretty(&original).expect("Serialize to TOML");
+    assert!(serialized.contains("default_bot_difficulty = \"pro\""));
+    let restored: GameConfig = toml::from_str(&serialized).expect("Deserialize roundtrip");
+    assert_eq!(restored.gameplay.default_bot_difficulty, DriverTier::Pro);
+}
+
+#[test]
+fn test_session_initialization_with_preferred_bot_difficulty() {
+    use race_kit::DriverTier;
+
+    let mut cfg = GameConfig::default();
+    cfg.gameplay.default_bot_difficulty = DriverTier::Contender;
+
+    let mut session = RaceSession::new_with_config(cfg);
+    assert_eq!(session.config.gameplay.default_bot_difficulty, DriverTier::Contender);
+    assert_eq!(session.base_config.gameplay.default_bot_difficulty, DriverTier::Contender);
+    assert_eq!(session.casual_ai_difficulty, DriverTier::Contender);
+
+    session.init_race();
+    assert_eq!(session.casual_ai_difficulty, DriverTier::Contender);
+
+    let pref = session.modality_preference(tdrace_app::ui::menu::GameMode::StandardRace)
+        .expect("Preference must be recorded");
+    assert_eq!(pref.difficulty, DriverTier::Contender);
+}
+
+#[test]
+fn test_settings_modal_bot_difficulty_sync_and_persistence() {
+    use race_kit::DriverTier;
+
+    let mut cfg = GameConfig::default();
+    cfg.gameplay.default_bot_difficulty = DriverTier::Amateur;
+
+    let mut session = RaceSession::new_with_config(cfg);
+    assert_eq!(session.casual_ai_difficulty, DriverTier::Amateur);
+
+    // 1. Open settings modal: verify bot_difficulty_dropdown reflects Amateur (index 1)
+    session.open_settings_modal();
+    assert!(session.is_settings_modal_open());
+    {
+        let modal = session.settings_modal.as_ref().unwrap();
+        assert_eq!(modal.bot_difficulty_idx(), DriverTier::Amateur.to_index());
+    }
+
+    // 2. Select Legend (index 4) and close with save=true
+    if let Some(ref mut modal) = session.settings_modal {
+        modal.set_bot_difficulty_idx(DriverTier::Legend.to_index());
+        assert_eq!(modal.bot_difficulty_idx(), 4);
+    }
+    session.close_settings_modal(true);
+    assert!(!session.is_settings_modal_open());
+
+    // 3. Verify session configs and casual_ai_difficulty updated
+    assert_eq!(session.config.gameplay.default_bot_difficulty, DriverTier::Legend);
+    assert_eq!(session.base_config.gameplay.default_bot_difficulty, DriverTier::Legend);
+    assert_eq!(session.casual_ai_difficulty, DriverTier::Legend);
+
+    // 4. Open modal again: verify it now reflects Legend (index 4)
+    session.open_settings_modal();
+    {
+        let modal = session.settings_modal.as_ref().unwrap();
+        assert_eq!(modal.bot_difficulty_idx(), DriverTier::Legend.to_index());
+    }
+    // Cancel without saving should preserve Legend
+    if let Some(ref mut modal) = session.settings_modal {
+        modal.set_bot_difficulty_idx(DriverTier::Rookie.to_index());
+    }
+    session.close_settings_modal(false);
+    assert_eq!(session.config.gameplay.default_bot_difficulty, DriverTier::Legend);
+    assert_eq!(session.casual_ai_difficulty, DriverTier::Legend);
+}
+
+
 
 

@@ -11,6 +11,7 @@ pub mod events;
 pub mod vehicle;
 pub mod world;
 
+pub use ai::{DriverTier, DrivingStyle};
 pub use events::{DnfCause, RaceEvent};
 pub use vehicle::{CanopyBrush, DriveControls, Vehicle};
 pub use world::{

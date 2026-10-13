@@ -12,7 +12,7 @@ pub use rng::LcgRng;
 use arcade_race_core::Body2D;
 use arcade_race_core::track::{LineSegment, Track, TrackLayout, TrackNetwork, TrackSpline};
 use glam::Vec2;
-use serde::{Deserialize, Serialize};
+use serde::{de, Deserialize, Deserializer, Serialize};
 use wheelbase::{normalize_angle, Car, CarControls};
 
 /// What the bot driver needs from a vehicle besides its [`Body2D`] state. Spec 065.
@@ -119,7 +119,7 @@ impl DrivingStyle {
 }
 
 /// 5-tier experience and performance ladder matching vehicle tiers 1..=5.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
 #[repr(u8)]
 #[serde(rename_all = "snake_case")]
 pub enum DriverTier {
@@ -130,7 +130,35 @@ pub enum DriverTier {
     Legend = 5,
 }
 
+impl Default for DriverTier {
+    fn default() -> Self {
+        Self::Rookie
+    }
+}
+
 impl DriverTier {
+    pub const ALL: [Self; 5] = [
+        Self::Rookie,
+        Self::Amateur,
+        Self::Contender,
+        Self::Pro,
+        Self::Legend,
+    ];
+
+    pub const fn to_index(self) -> usize {
+        (self as usize).saturating_sub(1)
+    }
+
+    pub const fn from_index(idx: usize) -> Self {
+        match idx {
+            0 => Self::Rookie,
+            1 => Self::Amateur,
+            2 => Self::Contender,
+            3 => Self::Pro,
+            _ => Self::Legend,
+        }
+    }
+
     pub const fn from_u8(val: u8) -> Self {
         match val {
             1 => Self::Rookie,
@@ -225,6 +253,62 @@ impl DriverTier {
         tiers
     }
 }
+
+impl<'de> Deserialize<'de> for DriverTier {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct DriverTierVisitor;
+
+        impl<'de> de::Visitor<'de> for DriverTierVisitor {
+            type Value = DriverTier;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("a driver tier (1..=5, 'rookie', 'amateur', 'contender', 'pro', 'legend')")
+            }
+
+            fn visit_i64<E>(self, v: i64) -> Result<DriverTier, E>
+            where
+                E: de::Error,
+            {
+                if (1..=5).contains(&v) {
+                    Ok(DriverTier::from_u8(v as u8))
+                } else {
+                    Err(E::custom(format!("invalid driver tier: {}, expected 1..=5", v)))
+                }
+            }
+
+            fn visit_u64<E>(self, v: u64) -> Result<DriverTier, E>
+            where
+                E: de::Error,
+            {
+                if (1..=5).contains(&v) {
+                    Ok(DriverTier::from_u8(v as u8))
+                } else {
+                    Err(E::custom(format!("invalid driver tier: {}, expected 1..=5", v)))
+                }
+            }
+
+            fn visit_str<E>(self, v: &str) -> Result<DriverTier, E>
+            where
+                E: de::Error,
+            {
+                match v.to_ascii_lowercase().trim() {
+                    "1" | "rookie" | "novice" | "tier 1" | "tier 1: rookie" | "t1" => Ok(DriverTier::Rookie),
+                    "2" | "amateur" | "club" | "clubman" | "tier 2" | "tier 2: amateur" | "t2" => Ok(DriverTier::Amateur),
+                    "3" | "contender" | "semipro" | "semi_pro" | "national" | "tier 3" | "tier 3: contender" | "t3" => Ok(DriverTier::Contender),
+                    "4" | "pro" | "veteran" | "tier 4" | "tier 4: pro" | "t4" => Ok(DriverTier::Pro),
+                    "5" | "legend" | "elite" | "alien" | "champion" | "tier 5" | "tier 5: legend" | "t5" => Ok(DriverTier::Legend),
+                    _ => Err(E::custom(format!("unknown driver tier '{}'", v))),
+                }
+            }
+        }
+
+        deserializer.deserialize_any(DriverTierVisitor)
+    }
+}
+
 
 /// Operationalized performance attributes of a driver quality level.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -1680,3 +1764,18 @@ impl BotAiDriver {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_driver_tier_indexing() {
+        for (idx, &tier) in DriverTier::ALL.iter().enumerate() {
+            assert_eq!(tier.to_index(), idx);
+            assert_eq!(DriverTier::from_index(idx), tier);
+        }
+        assert_eq!(DriverTier::from_index(99), DriverTier::Legend);
+    }
+}
+

@@ -9,6 +9,7 @@ use tdrace_core::physics::config::PlayerHandling;
 use tdrace_core::physics::CarConfig;
 
 // Camera settings moved to race-ui (spec 058); re-exported so `crate::config::` paths keep working.
+pub use race_kit::DriverTier;
 pub use race_ui::camera::{
     CameraConfig, ZoomLevelConfig, REFERENCE_SCREEN_HEIGHT, REFERENCE_SCREEN_WIDTH,
 };
@@ -146,6 +147,16 @@ pub struct GameplayConfig {
     pub default_num_bots: usize,
     /// Default driver assist profile: "arcade", "sport", "pro".
     pub default_assist_profile: String,
+    /// Default AI bot difficulty tier (Rookie, Amateur, Contender, Pro, Legend).
+    #[serde(
+        default,
+        alias = "preferred_bot_difficulty",
+        alias = "bot_difficulty",
+        alias = "default_bot_tier",
+        alias = "preferred_bot_tier",
+        alias = "bot_tier"
+    )]
+    pub default_bot_difficulty: DriverTier,
     /// Default cockpit telemetry HUD mode: "kinematic_damage", "dynamic_telemetry" (Spec 079).
     pub default_cockpit_telemetry_mode: String,
     /// Whether vehicle collision, bottom-out, and jump damage is enabled.
@@ -162,6 +173,7 @@ impl Default for GameplayConfig {
             default_laps: 3,
             default_num_bots: 7,
             default_assist_profile: "arcade".to_string(),
+            default_bot_difficulty: DriverTier::Rookie,
             default_cockpit_telemetry_mode: "kinematic_damage".to_string(),
             car_damage: false,
             dev_mode: crate::storage::is_dev_mode(),

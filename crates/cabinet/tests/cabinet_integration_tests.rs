@@ -982,7 +982,8 @@ fn test_arcade_settings_modal_helpers_tab_integration() {
     assert_eq!(modal.tab_bar.tabs[3], "GAMEPLAY");
     assert_eq!(modal.nav.column_lengths.len(), 4);
     assert_eq!(modal.gameplay_sub_tab, 0); // General
-    assert_eq!(modal.nav.column_lengths[3], 7);
+    assert_eq!(modal.nav.column_lengths[3], 8);
+    assert_eq!(modal.bot_difficulty_idx(), 0);
 
     // 2. Switch to subtabs and verify column lengths
     modal.switch_gameplay_subtab(1); // CAR AIDS
@@ -1223,7 +1224,7 @@ fn test_arcade_settings_modal_gameplay_subtab_navigation() {
     modal.update(&mut ctx);
     assert!(modal.is_subtab_focused);
     assert_eq!(modal.gameplay_sub_tab, 0);
-    assert_eq!(modal.nav.column_lengths[3], 7);
+    assert_eq!(modal.nav.column_lengths[3], 8);
 
     // 11. Press Up Arrow from Subtab Bar -> returns to Main Tab Bar
     ctx.gamepad = &gp_up;

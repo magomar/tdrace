@@ -875,6 +875,7 @@ impl RaceSession {
         let editor_camera = EditorCamera::from_config_with_viewport(&config.camera, sw, sh);
         let crt_overlay = config.display.to_crt_overlay();
         let default_num_bots = config.gameplay.default_num_bots;
+        let default_bot_difficulty = config.gameplay.default_bot_difficulty;
         let bot_nameplates_pref = config.display.bot_nameplates;
         crate::render::track::set_surface_texture_quality(config.display.surface_texture_quality);
 
@@ -928,10 +929,10 @@ impl RaceSession {
             ai_drivers: Vec::new(),
             opponent_drivers: Vec::new(),
             opponent_tiers: Vec::new(),
-            casual_ai_difficulty: DriverTier::Rookie,
+            casual_ai_difficulty: default_bot_difficulty,
             modality_preferences: std::collections::HashMap::new(),
             prev_num_bots: default_num_bots,
-            prev_casual_ai_difficulty: DriverTier::Rookie,
+            prev_casual_ai_difficulty: default_bot_difficulty,
             grid_participants: Vec::new(),
             driver_cards_idx: 0,
 
@@ -1416,6 +1417,7 @@ impl RaceSession {
         modal.scanlines_dropdown.set_selected(self.crt_overlay.config.mode.to_index());
         modal.set_vehicle_shadows(self.config.display.vehicle_shadows);
         modal.set_car_damage(self.config.gameplay.car_damage);
+        modal.set_bot_difficulty_idx(self.config.gameplay.default_bot_difficulty.to_index());
 
         let (w, h) = if self.config.display.window_width > 0 && self.config.display.window_height > 0 {
             (self.config.display.window_width, self.config.display.window_height)
@@ -1589,6 +1591,11 @@ impl RaceSession {
                 self.config.gameplay.car_damage = car_damage;
                 self.base_config.gameplay.car_damage = car_damage;
                 self.apply_car_damage_setting();
+
+                let chosen_tier = DriverTier::from_index(modal.bot_difficulty_idx());
+                self.config.gameplay.default_bot_difficulty = chosen_tier;
+                self.base_config.gameplay.default_bot_difficulty = chosen_tier;
+                self.set_casual_ai_difficulty(chosen_tier);
 
                 self.base_config.player_helpers = self.config.player_helpers.clone();
                 self.base_config.display = self.config.display.clone();
@@ -5010,7 +5017,7 @@ impl RaceSession {
                 } else if let Some(pref) = self.modality_preferences.get(&self.game_mode) {
                     pref.difficulty
                 } else {
-                    DriverTier::Rookie
+                    self.config.gameplay.default_bot_difficulty
                 };
                 let target_racers = if let Some(bots) = explicit_bots {
                     (human_count + bots).clamp(human_count, max_grid)
@@ -5039,8 +5046,8 @@ impl RaceSession {
                 self.num_bots = target_racers.saturating_sub(human_count).max(min_bots);
                 self.casual_ai_difficulty = pref.difficulty;
             } else {
-                // First initialization of this modality: initialize roster with slots available in grid and difficulty T1 (Rookie)
-                let target_difficulty = explicit_difficulty.unwrap_or(DriverTier::Rookie);
+                // First initialization of this modality: initialize roster with slots available in grid and preferred bot difficulty
+                let target_difficulty = explicit_difficulty.unwrap_or(self.config.gameplay.default_bot_difficulty);
                 let target_racers = explicit_bots
                     .map(|b| human_count + b)
                     .unwrap_or(max_grid)
