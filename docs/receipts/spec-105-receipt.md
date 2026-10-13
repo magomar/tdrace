@@ -3,18 +3,18 @@ type: validation_receipt
 schema_version: "1.0"
 spec: "specs/105_redrawing_the_23_official_rallycross_jokers_to_fit_junction_components.md"
 epic: "tdrace-dic8l"
-candidate_commit: "13e9b41c8fe2ff302941d91ea741eb3755cb1901"
+candidate_commit: "257e3b0733ec097f08b037807d54b8ef8c0f09d3"
 verifier: "local-user"
-evaluated_at: "2026-10-13T09:43:58Z"
+evaluated_at: "2026-10-13T09:46:32Z"
 command: "cargo test -p tdrace-app --test branch_junction_circuit_tests"
 exit_code: 0
-duration_ms: 75661
+duration_ms: 75753
 status: passed
 ---
 
 # 🧾 Validation Receipt: Spec 105
 
-- **Candidate Commit**: `13e9b41c8fe2ff302941d91ea741eb3755cb1901`
+- **Candidate Commit**: `257e3b0733ec097f08b037807d54b8ef8c0f09d3`
 - **Spec**: `specs/105_redrawing_the_23_official_rallycross_jokers_to_fit_junction_components.md`
 - **Command**: `cargo test -p tdrace-app --test branch_junction_circuit_tests`
 - **Result**: `passed` (exit code: 0)
@@ -39,11 +39,11 @@ test test_branch_circuits_keep_the_main_route ... ok
 test test_branch_circuits_validate_without_error_or_junction_warning ... ok
 test test_car_driving_the_branch_route_gets_its_lap_and_its_joker ... ok
 
-test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 75.60s
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 75.69s
 
 
 stderr:
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.05s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.04s
      Running tests/branch_junction_circuit_tests.rs (target/debug/deps/branch_junction_circuit_tests-e595209e45c93993)
 
 ```
