@@ -141,7 +141,7 @@ fn test_modality_chassis_platforms_spec_094() {
     assert_eq!(rally_jr.suspension.front.archetype, SuspensionArchetype::MacPhersonStrut);
 
     let group_b = CarConfig::rally_group_b();
-    assert_eq!(group_b.drive_bias, 0.45);
+    assert_eq!(group_b.drive_bias, 0.30);
     assert_eq!(group_b.engine_placement, EnginePlacement::MidEngine);
 
     let superkart = CarConfig::superkart_gp();

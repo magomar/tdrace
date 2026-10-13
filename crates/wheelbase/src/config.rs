@@ -1762,10 +1762,10 @@ impl CarConfig {
         let mut cfg = Self::sports_car();
         cfg.chassis = ChassisSkeleton::new(0.76, 0.68, 1.82, -0.35, 0.25, 0.65, 0.70, 0.05);
         cfg.suspension = SuspensionConfig::for_archetype(SuspensionArchetype::LongTravelOffRoad);
-        cfg.drive_bias = 0.45; // 45:55 competition AWD torque split
+        cfg.drive_bias = 0.30; // 30:70 competition AWD torque split
         cfg.max_brake_force = 22500.0; // Competition 4-piston disc brakes
         cfg.tire.grip = 1.20; // Competition loose-surface compound baseline
-        cfg.rear_axle.grip_scale = 1.00; // Neutral rear grip
+        cfg.rear_axle.grip_scale = 0.92; // 0.92 rear grip for agile loose-surface rotation
         cfg.angular_damping = 126.0;
         cfg.engine_brake_front_share = 0.50;
         cfg.weight_transfer_hz = 2.5;
@@ -2062,10 +2062,10 @@ impl CarConfig {
         cfg.cg_height = 0.39;
         cfg.max_engine_force = 10500.0;
         cfg.top_speed_mps = 58.0;
-        cfg.drive_bias = 0.45; // 45:55 competition Sadev AWD
+        cfg.drive_bias = 0.30; // 30:70 competition Sadev AWD
         cfg.max_brake_force = 22500.0;
         cfg.tire.grip = 1.20;
-        cfg.rear_axle.grip_scale = 1.00;
+        cfg.rear_axle.grip_scale = 0.92;
         cfg.front_differential = DifferentialType::LimitedSlip {
             power_lock: 0.35,
             coast_lock: 0.20,
@@ -2090,7 +2090,7 @@ impl CarConfig {
 
     /// 4WD Dirt SuperBuggy & Buggy 1600 (Continental Autocross T3/T5).
     /// Mid-engine 4WD spaceframe dirt buggy combining long suspension travel with
-    /// high power-to-weight and authentic 42:58 competition all-wheel-drive traction.
+    /// high power-to-weight and balanced 30:70 competition all-wheel-drive traction.
     pub fn super_buggy() -> Self {
         let mut cfg = Self::sand_rail();
         cfg.mass = 680.0;
@@ -2104,8 +2104,8 @@ impl CarConfig {
         cfg.top_speed_mps = 56.0;
         cfg.max_brake_force = 18000.0;
         cfg.tire.grip = 1.20;
-        cfg.drive_bias = 0.42; // 42:58 mid-engine AWD transfer
-        cfg.rear_axle.grip_scale = 1.00;
+        cfg.drive_bias = 0.30; // 30:70 mid-engine AWD transfer
+        cfg.rear_axle.grip_scale = 0.92;
         cfg.front_differential = DifferentialType::LimitedSlip {
             power_lock: 0.30,
             coast_lock: 0.15,
@@ -2292,10 +2292,10 @@ impl CarConfig {
         cfg.cg_height = 0.38;
         cfg.max_engine_force = 11000.0;
         cfg.top_speed_mps = 64.0;
-        cfg.drive_bias = 0.45;
+        cfg.drive_bias = 0.30;
         cfg.max_brake_force = 22500.0;
         cfg.tire.grip = 1.20;
-        cfg.rear_axle.grip_scale = 1.00;
+        cfg.rear_axle.grip_scale = 0.92;
         cfg.front_differential = DifferentialType::LimitedSlip {
             power_lock: 0.30,
             coast_lock: 0.15,
@@ -2320,7 +2320,7 @@ impl CarConfig {
 
     /// RX1e / Group E Dual-Motor Electric RX Platform (Rallycross T5/T6).
     /// Low-center-of-gravity battery chassis with instantaneous dual-motor torque (500 kW / 680 BHP),
-    /// seamless electronic torque distribution, and aggressive 45:55 AWD corner exit traction.
+    /// seamless electronic torque distribution, and aggressive 30:70 AWD corner exit traction.
     pub fn rally_electric_rx() -> Self {
         let mut cfg = Self::rally_car();
         cfg.mass = 1300.0;
@@ -2332,10 +2332,10 @@ impl CarConfig {
         cfg.cg_height = 0.36; // Lower CG from underfloor battery pack
         cfg.max_engine_force = 12500.0;
         cfg.top_speed_mps = 62.0;
-        cfg.drive_bias = 0.45;
+        cfg.drive_bias = 0.30;
         cfg.max_brake_force = 22500.0;
         cfg.tire.grip = 1.20;
-        cfg.rear_axle.grip_scale = 1.00;
+        cfg.rear_axle.grip_scale = 0.92;
         cfg.front_differential = DifferentialType::LimitedSlip {
             power_lock: 0.30,
             coast_lock: 0.15,
@@ -2431,7 +2431,7 @@ mod tests {
         let sand = CarConfig::sand_rail();
 
         assert_eq!(sports.drive_bias, 0.0);
-        assert_eq!(rally.drive_bias, 0.45);
+        assert_eq!(rally.drive_bias, 0.30);
         assert!(drift.max_steer_angle > sports.max_steer_angle);
         assert!(kart.mass < sports.mass);
 

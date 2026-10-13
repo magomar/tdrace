@@ -277,39 +277,22 @@ impl RealCarModel {
             _ => TerrainInteractionConfig::default(),
         };
 
-        // Spec 043, Spec 113, & Spec 114: grip stat, drivetrain and brakes must reach the per-wheel assemblies.
-        // Spec 114: 4WD loose surface competition vehicles calibrate AWD torque distribution and neutral rear grip:
-        // - Autocross T4 (TAX) and Rallycross T2–T7: 45:55 split (drive_bias = 0.45) with neutral rear grip (1.00)
-        // - Autocross T3 (Buggy 1600) and T5 (SuperBuggy): 42:58 split (drive_bias = 0.42) with neutral rear grip (1.00)
-        // - Classic loose-surface drift retains with_loose_surface_4wd_balance() (30:70 split, 0.92 rear grip)
+        // Option C Uniform Spec 113 Loose-Surface 4WD Handling:
+        // All 4WD loose-surface vehicles use 30:70 torque split (drive_bias = 0.30)
+        // and 0.92 rear grip scale for maximum turn-in agility and throttle steering,
+        // while retaining calibrated competition disc brakes and tire compound grip.
         let cfg = cfg.finalized();
         match self.category() {
             tdrace_core::CarCategory::Autocross => {
                 if self.drivetrain == "4WD" || self.drivetrain == "AWD" {
-                    let mut c = cfg;
-                    if self.tier == 3 || self.tier == 5 {
-                        c.drive_bias = 0.42;
-                    } else {
-                        c.drive_bias = 0.45;
-                    }
-                    c.rear_axle.grip_scale = 1.00;
-                    c.finalized()
+                    cfg.with_loose_surface_4wd_balance()
                 } else {
                     cfg
                 }
             }
             tdrace_core::CarCategory::Rallycross => {
-                if self.module_id == "classic" {
-                    if self.drivetrain == "4WD" || self.drivetrain == "AWD" {
-                        cfg.with_loose_surface_4wd_balance()
-                    } else {
-                        cfg
-                    }
-                } else if self.drivetrain == "4WD" || self.drivetrain == "AWD" {
-                    let mut c = cfg;
-                    c.drive_bias = 0.45;
-                    c.rear_axle.grip_scale = 1.00;
-                    c.finalized()
+                if self.drivetrain == "4WD" || self.drivetrain == "AWD" {
+                    cfg.with_loose_surface_4wd_balance()
                 } else {
                     cfg
                 }
