@@ -1762,7 +1762,10 @@ impl CarConfig {
         let mut cfg = Self::sports_car();
         cfg.chassis = ChassisSkeleton::new(0.76, 0.68, 1.82, -0.35, 0.25, 0.65, 0.70, 0.05);
         cfg.suspension = SuspensionConfig::for_archetype(SuspensionArchetype::LongTravelOffRoad);
-        cfg.drive_bias = 0.5; // AWD
+        cfg.drive_bias = 0.45; // 45:55 competition AWD torque split
+        cfg.max_brake_force = 22500.0; // Competition 4-piston disc brakes
+        cfg.tire.grip = 1.20; // Competition loose-surface compound baseline
+        cfg.rear_axle.grip_scale = 1.00; // Neutral rear grip
         cfg.angular_damping = 126.0;
         cfg.engine_brake_front_share = 0.50;
         cfg.weight_transfer_hz = 2.5;
@@ -2046,7 +2049,7 @@ impl CarConfig {
     }
 
     /// 550+ BHP Touring AX Saloon (Continental Autocross T4).
-    /// High-downforce closed-cockpit silhouette touring saloon with 50:50 AWD traction,
+    /// High-downforce closed-cockpit silhouette touring saloon with 45:55 competition Sadev AWD traction,
     /// front splitter, double wishbone geometry, and explosive gravel acceleration.
     pub fn touring_ax() -> Self {
         let mut cfg = Self::rally_car();
@@ -2059,7 +2062,10 @@ impl CarConfig {
         cfg.cg_height = 0.39;
         cfg.max_engine_force = 10500.0;
         cfg.top_speed_mps = 58.0;
-        cfg.drive_bias = 0.5; // AWD
+        cfg.drive_bias = 0.45; // 45:55 competition Sadev AWD
+        cfg.max_brake_force = 22500.0;
+        cfg.tire.grip = 1.20;
+        cfg.rear_axle.grip_scale = 1.00;
         cfg.front_differential = DifferentialType::LimitedSlip {
             power_lock: 0.35,
             coast_lock: 0.20,
@@ -2084,7 +2090,7 @@ impl CarConfig {
 
     /// 4WD Dirt SuperBuggy & Buggy 1600 (Continental Autocross T3/T5).
     /// Mid-engine 4WD spaceframe dirt buggy combining long suspension travel with
-    /// high power-to-weight and balanced 50:50 all-wheel-drive traction.
+    /// high power-to-weight and authentic 42:58 competition all-wheel-drive traction.
     pub fn super_buggy() -> Self {
         let mut cfg = Self::sand_rail();
         cfg.mass = 680.0;
@@ -2096,7 +2102,10 @@ impl CarConfig {
         cfg.cg_height = 0.40;
         cfg.max_engine_force = 9200.0;
         cfg.top_speed_mps = 56.0;
-        cfg.drive_bias = 0.5; // 4WD
+        cfg.max_brake_force = 18000.0;
+        cfg.tire.grip = 1.20;
+        cfg.drive_bias = 0.42; // 42:58 mid-engine AWD transfer
+        cfg.rear_axle.grip_scale = 1.00;
         cfg.front_differential = DifferentialType::LimitedSlip {
             power_lock: 0.30,
             coast_lock: 0.15,
@@ -2110,11 +2119,20 @@ impl CarConfig {
         cfg.chassis = ChassisSkeleton::new(0.24, 0.48, 1.90, -0.40, 0.30, 0.65, 0.70, 0.05);
         cfg.suspension = SuspensionConfig::for_archetype(SuspensionArchetype::LongTravelOffRoad);
         cfg.engine_placement = EnginePlacement::MidEngine;
-        for w in &mut cfg.wheels {
-            w.tire_radius = 0.35;
-            w.tire_width = 0.24;
-            w.rotational_inertia = 1.20;
-        }
+        // Front wheels: 215/220mm competition steering tires
+        cfg.wheels[0].tire_radius = 0.35;
+        cfg.wheels[0].tire_width = 0.22;
+        cfg.wheels[0].rotational_inertia = 1.20;
+        cfg.wheels[1].tire_radius = 0.35;
+        cfg.wheels[1].tire_width = 0.22;
+        cfg.wheels[1].rotational_inertia = 1.20;
+        // Rear wheels: 280mm staggered competition traction tires
+        cfg.wheels[2].tire_radius = 0.35;
+        cfg.wheels[2].tire_width = 0.28;
+        cfg.wheels[2].rotational_inertia = 1.45;
+        cfg.wheels[3].tire_radius = 0.35;
+        cfg.wheels[3].tire_width = 0.28;
+        cfg.wheels[3].rotational_inertia = 1.45;
         cfg.set_compound(CompoundId::AllTerrain);
         cfg.finalized()
     }
@@ -2262,7 +2280,7 @@ impl CarConfig {
 
     /// 500+ BHP Group B Rally Monster (Rallycross T7).
     /// Ultra-lightweight mid-engine silhouette monster with explosive turbo boost,
-    /// 50:50 AWD mechanical lock, high aerodynamic rear wing, and hair-trigger handling dynamics.
+    /// 45:55 competition AWD mechanical lock, high aerodynamic rear wing, and hair-trigger handling dynamics.
     pub fn rally_group_b() -> Self {
         let mut cfg = Self::rally_car();
         cfg.mass = 960.0;
@@ -2274,7 +2292,10 @@ impl CarConfig {
         cfg.cg_height = 0.38;
         cfg.max_engine_force = 11000.0;
         cfg.top_speed_mps = 64.0;
-        cfg.drive_bias = 0.5;
+        cfg.drive_bias = 0.45;
+        cfg.max_brake_force = 22500.0;
+        cfg.tire.grip = 1.20;
+        cfg.rear_axle.grip_scale = 1.00;
         cfg.front_differential = DifferentialType::LimitedSlip {
             power_lock: 0.30,
             coast_lock: 0.15,
@@ -2299,7 +2320,7 @@ impl CarConfig {
 
     /// RX1e / Group E Dual-Motor Electric RX Platform (Rallycross T5/T6).
     /// Low-center-of-gravity battery chassis with instantaneous dual-motor torque (500 kW / 680 BHP),
-    /// seamless electronic torque distribution, and aggressive AWD corner exit traction.
+    /// seamless electronic torque distribution, and aggressive 45:55 AWD corner exit traction.
     pub fn rally_electric_rx() -> Self {
         let mut cfg = Self::rally_car();
         cfg.mass = 1300.0;
@@ -2311,7 +2332,10 @@ impl CarConfig {
         cfg.cg_height = 0.36; // Lower CG from underfloor battery pack
         cfg.max_engine_force = 12500.0;
         cfg.top_speed_mps = 62.0;
-        cfg.drive_bias = 0.5;
+        cfg.drive_bias = 0.45;
+        cfg.max_brake_force = 22500.0;
+        cfg.tire.grip = 1.20;
+        cfg.rear_axle.grip_scale = 1.00;
         cfg.front_differential = DifferentialType::LimitedSlip {
             power_lock: 0.30,
             coast_lock: 0.15,
@@ -2407,7 +2431,7 @@ mod tests {
         let sand = CarConfig::sand_rail();
 
         assert_eq!(sports.drive_bias, 0.0);
-        assert_eq!(rally.drive_bias, 0.5);
+        assert_eq!(rally.drive_bias, 0.45);
         assert!(drift.max_steer_angle > sports.max_steer_angle);
         assert!(kart.mass < sports.mass);
 
