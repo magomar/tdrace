@@ -4,6 +4,7 @@ template: architecture
 title: "Redrawing the 23 Official Rallycross Jokers to Fit Junction Components"
 description: "Moves the 23 official rallycross jokers onto the junction components of spec 102. The old jokers do not fit (0 of 23 convert within 2.0 m), so each one is redrawn: same anchors and side, a new first and last stretch that a Taper or TurnOff can hold, and a free road that keeps the old route. Each redrawn circuit then gets closed junction walls, a collidable nose and a bake that never clips a wall."
 status: in_progress
+receipt: "docs/receipts/spec-105-receipt.md"
 verified: { by: human:mario, at: 2026-10-11T16:38:59Z, hash: "d4325b626f7c" }
 created: 2026-10-09
 generated: { by: agent/claude-sonnet-5-5, at: 2026-10-09T16:20:00Z }
@@ -143,60 +144,60 @@ Not applicable. No network access, accounts or secrets. Circuit JSON is first-pa
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Every official joker is redrawn or its reason is recorded**
-  - [ ] **Given** the 20 World RX circuits and the 3 Classic RX circuits
-  - [ ] **When** the redraw runs on each
-  - [ ] **Then** each circuit carries a `branch_layout` that passes every guard of spec 102, or keeps its legacy network with a reason in `docs/circuits/branch_junction_migration.md`
-  - [ ] **And** the report lists, per circuit, the shape, length, deviation and lap cost, and the number of converted circuits
+  - [x] **Given** the 20 World RX circuits and the 3 Classic RX circuits
+  - [x] **When** the redraw runs on each
+  - [x] **Then** each circuit carries a `branch_layout` that passes every guard of spec 102, or keeps its legacy network with a reason in `docs/circuits/branch_junction_migration.md`
+  - [x] **And** the report lists, per circuit, the shape, length, deviation and lap cost, and the number of converted circuits
 
 - **Scenario: A redrawn joker keeps the character of the old one**
-  - [ ] **Given** a redrawn circuit
-  - [ ] **When** its joker is compared with the old joker
-  - [ ] **Then** the anchors and the side are the same, the free road stays within 2.0 m of the old route beyond the junction spans, and the lap cost is within the range that spec 088 accepts
+  - [x] **Given** a redrawn circuit
+  - [x] **When** its joker is compared with the old joker
+  - [x] **Then** the anchors and the side are the same, the free road stays within 2.0 m of the old route beyond the junction spans, and the lap cost is within the range that spec 088 accepts
 
 - **Scenario: The main route does not change**
-  - [ ] **Given** a converted circuit
-  - [ ] **When** its main waypoints and main spline samples are compared with the previous `tracks` commit
-  - [ ] **Then** they are identical
+  - [x] **Given** a converted circuit
+  - [x] **When** its main waypoints and main spline samples are compared with the previous `tracks` commit
+  - [x] **Then** they are identical
 
 - **Scenario: Validation finds today's wall holes and then none**
-  - [ ] **Given** `tracks/rally/kouvola_rx.json` from the `tracks` commit before this spec
-  - [ ] **When** `validate_track` runs on it before and after the redraw
-  - [ ] **Then** it reports `WARN_JUNCTION_WALL_GAP` at the joker merge before
-  - [ ] **And** the same circuit, after conversion, reports no junction warning and no junction error
+  - [x] **Given** `tracks/rally/kouvola_rx.json` from the `tracks` commit before this spec
+  - [x] **When** `validate_track` runs on it before and after the redraw
+  - [x] **Then** it reports `WARN_JUNCTION_WALL_GAP` at the joker merge before
+  - [x] **And** the same circuit, after conversion, reports no junction warning and no junction error
 
 - **Scenario: Bake is deterministic and walls are never saved**
-  - [ ] **Given** all converted circuits
-  - [ ] **When** `track_bake --rebuild` runs two times
-  - [ ] **Then** the second run makes no change in the `tracks` submodule
-  - [ ] **And** no circuit JSON contains island or outer chain walls
+  - [x] **Given** all converted circuits
+  - [x] **When** `track_bake --rebuild` runs two times
+  - [x] **Then** the second run makes no change in the `tracks` submodule
+  - [x] **And** no circuit JSON contains island or outer chain walls
 
 - **Scenario: Bots take the joker once and do not stall on converted circuits**
-  - [ ] **Given** each converted circuit in a race with RX bots and the joker rule on
-  - [ ] **When** the race runs to the end
-  - [ ] **Then** every bot finishes with exactly one joker, and the bot stall sweep reports no stall
+  - [x] **Given** each converted circuit in a race with RX bots and the joker rule on
+  - [x] **When** the race runs to the end
+  - [x] **Then** every bot finishes with exactly one joker, and the bot stall sweep reports no stall
 
 - **Scenario: Track Studio keeps the branch layout**
-  - [ ] **Given** a converted circuit open in Track Studio
-  - [ ] **When** the author saves it without an edit
-  - [ ] **Then** `branch_layout` in the saved JSON is identical to the loaded one
+  - [x] **Given** a converted circuit open in Track Studio
+  - [x] **When** the author saves it without an edit
+  - [x] **Then** `branch_layout` in the saved JSON is identical to the loaded one
 
 - **Scenario: The launch chute survives the conversion**
-  - [ ] **Given** a converted circuit with its launch chute (spec 103)
-  - [ ] **When** the circuit is baked
-  - [ ] **Then** the chute, its grid and its walls are as before, and the chute tests of spec 103 pass
+  - [x] **Given** a converted circuit with its launch chute (spec 103)
+  - [x] **When** the circuit is baked
+  - [x] **Then** the chute, its grid and its walls are as before, and the chute tests of spec 103 pass
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Created/Modified Files
-- `[ ]` `crates/tdrace-app/src/bin/build_world_rx_joker.rs` -> Per-circuit redraw configuration for the 20 World RX circuits.
-- `[ ]` `crates/tdrace-app/src/bin/build_classic_rx_joker.rs` -> Per-circuit redraw configuration for the 3 Classic RX circuits.
-- `[ ]` `crates/tdrace-app/src/bin/rx_joker_fit/mod.rs` -> Redraw step (explicit layouts) next to the fit; report columns.
-- `[ ]` `crates/tdrace-app/tests/rally_tracks_tests.rs` -> Remove the 4 m throat skip from the wall-ray tests for converted circuits; main route unchanged.
-- `[ ]` `crates/tdrace-app/tests/branch_junction_circuit_tests.rs` -> Converted circuits take the place of the synthetic joker where a circuit converts.
-- `[ ]` `docs/circuits/branch_junction_migration.md` -> Regenerated: the result per circuit.
-- `[ ]` `tracks/rally/*.json`, `tracks/classic/rx_*.json` (submodule) -> `branch_layout` and re-baked `network` on converted circuits.
+- `[x]` `crates/tdrace-app/src/bin/build_world_rx_joker.rs` -> Per-circuit redraw configuration for the 20 World RX circuits.
+- `[x]` `crates/tdrace-app/src/bin/build_classic_rx_joker.rs` -> Per-circuit redraw configuration for the 3 Classic RX circuits.
+- `[x]` `crates/tdrace-app/src/bin/rx_joker_fit/mod.rs` -> Redraw step (explicit layouts) next to the fit; report columns.
+- `[x]` `crates/tdrace-app/tests/rally_tracks_tests.rs` -> Remove the 4 m throat skip from the wall-ray tests for converted circuits; main route unchanged.
+- `[x]` `crates/tdrace-app/tests/branch_junction_circuit_tests.rs` -> Converted circuits take the place of the synthetic joker where a circuit converts.
+- `[x]` `docs/circuits/branch_junction_migration.md` -> Regenerated: the result per circuit.
+- `[x]` `tracks/rally/*.json`, `tracks/classic/rx_*.json` (submodule) -> `branch_layout` and re-baked `network` on converted circuits.
 
 ### Verification Assertions
 - No file outside the list above, and the kit of spec 102, changes `TrackNetwork`, `RoadJunction`, `SplineSocket` or the multi-route tracker.
