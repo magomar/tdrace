@@ -4,6 +4,7 @@ template: architecture
 title: "Real-World Homologation Telemetry Calibration for Autocross and Rallycross High-Power 4WD Drivetrains, Competition Braking, and Mechanical Grip"
 description: "Calibrates high-power 4WD vehicle dynamics across Continental Autocross and FIA Rallycross against real-world manufacturer homologation telemetry, introducing 45:55/42:58 competition AWD torque distribution, 22.5 kN competition disc braking, 1.20 base competition compound grip, and staggered rear SuperBuggy wheels to resolve high-tier drivability decay and restore monotonic tier pace progression."
 status: in_progress
+receipt: "docs/receipts/spec-114-receipt.md"
 verified: { by: "human:mario", at: "2026-10-13T08:35:40Z", hash: "dad277c17223" }
 created: 2026-10-13
 generated: { by: agent/antigravity, at: 2026-10-13T08:20:33Z }
@@ -227,45 +228,45 @@ Empirical simulation results captured across 11 competition venues in [`rallycro
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 #### Scenario: Autocross high-power 4WD braking deceleration matches real homologation
-- [ ] **Given** a calibrated Autocross Tier 4 Touring AX car (`autocross_bohemia_veloce_t4`, 1180 kg)
-- [ ] **When** braking from $100\text{ km/h}$ to a complete stop on dirt
-- [ ] **Then** the deceleration must be at least $1.25\text{ G}$
-- [ ] **And** the stopping distance must be less than $32.0\text{ meters}$ (down from $39.5\text{ meters}$).
+- [x] **Given** a calibrated Autocross Tier 4 Touring AX car (`autocross_bohemia_veloce_t4`, 1180 kg)
+- [x] **When** braking from $100\text{ km/h}$ to a complete stop on dirt
+- [x] **Then** the deceleration must be at least $1.25\text{ G}$
+- [x] **And** the stopping distance must be less than $32.0\text{ meters}$ (down from $39.5\text{ meters}$).
 
 #### Scenario: Rallycross high-power supercar braking deceleration matches real homologation
-- [ ] **Given** a calibrated Rallycross Tier 4 WRX Supercar (`rally_gallia_lyon_t4`, 1300 kg)
-- [ ] **When** braking from $100\text{ km/h}$ to a complete stop on asphalt and on dirt
-- [ ] **Then** the asphalt deceleration must be at least $1.80\text{ G}$ with stopping distance under $22.0\text{ meters}$
-- [ ] **And** the dirt deceleration must be at least $1.25\text{ G}$ with stopping distance under $32.0\text{ meters}$.
+- [x] **Given** a calibrated Rallycross Tier 4 WRX Supercar (`rally_gallia_lyon_t4`, 1300 kg)
+- [x] **When** braking from $100\text{ km/h}$ to a complete stop on asphalt and on dirt
+- [x] **Then** the asphalt deceleration must be at least $1.80\text{ G}$ with stopping distance under $22.0\text{ meters}$
+- [x] **And** the dirt deceleration must be at least $1.25\text{ G}$ with stopping distance under $32.0\text{ meters}$.
 
 #### Scenario: Autocross Tier 4 outpaces Tier 3 across competition circuits
-- [ ] **Given** calibrated Tier 3 (`autocross_petersen_buggy1600_t3`) and Tier 4 (`autocross_bohemia_veloce_t4`) cars
-- [ ] **When** simulated on Matschenberg AX and Seelow AX
-- [ ] **Then** the Tier 4 flying lap time must be faster than Tier 3 by at least $0.50\text{ seconds}$
-- [ ] **And** wall contact count must be zero.
+- [x] **Given** calibrated Tier 3 (`autocross_petersen_buggy1600_t3`) and Tier 4 (`autocross_bohemia_veloce_t4`) cars
+- [x] **When** simulated on Matschenberg AX and Seelow AX
+- [x] **Then** the Tier 4 flying lap time must be faster than Tier 3 by at least $0.50\text{ seconds}$
+- [x] **And** wall contact count must be zero.
 
 #### Scenario: Rallycross Tier 6 outpaces Tier 4 by over one second per lap
-- [ ] **Given** calibrated Tier 4 Gallia Lyon (600 BHP) and Tier 6 Nordic Valkyrie (1070 BHP)
-- [ ] **When** simulated on Höljes RX, Estering RX, Lohéac RX, Lydden Hill, and Hell RX
-- [ ] **Then** Tier 6 flying lap time must be at least $1.00\text{ second}$ faster than Tier 4 on every circuit
-- [ ] **And** full-throttle corner exit rear slip angle must remain under $20.0^\circ$.
+- [x] **Given** calibrated Tier 4 Gallia Lyon (600 BHP) and Tier 6 Nordic Valkyrie (1070 BHP)
+- [x] **When** simulated on Höljes RX, Estering RX, Lohéac RX, Lydden Hill, and Hell RX
+- [x] **Then** Tier 6 flying lap time must be at least $1.00\text{ second}$ faster than Tier 4 on every circuit
+- [x] **And** full-throttle corner exit rear slip angle must remain under $20.0^\circ$.
 
 #### Scenario: SuperBuggy staggered rear wheel geometry
-- [ ] **Given** a calibrated Autocross Tier 5 SuperBuggy (`autocross_petersen_superbuggy_t5`)
-- [ ] **When** inspect wheel assembly configuration
-- [ ] **Then** rear tire width must be $0.28\text{ m}$ (compared to $0.22\text{ m}$ front)
-- [ ] **And** rear wheel rotational inertia must be $1.45\text{ kg}\cdot\text{m}^2$.
+- [x] **Given** a calibrated Autocross Tier 5 SuperBuggy (`autocross_petersen_superbuggy_t5`)
+- [x] **When** inspect wheel assembly configuration
+- [x] **Then** rear tire width must be $0.28\text{ m}$ (compared to $0.22\text{ m}$ front)
+- [x] **And** rear wheel rotational inertia must be $1.45\text{ kg}\cdot\text{m}^2$.
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Created/Modified Files
-- `[x]` `specs/114_realworld_homologation_telemetry_calibration_for_autocross_and_rallycross_highpower_4wd_drivetrains_competition_braking_and_mechanical_grip.md` -> Formal specification.
-- `[ ]` `crates/wheelbase/src/config.rs` -> Upgrades base braking force ($22.5\text{ kN}$), base grip ($1.20$), and SuperBuggy staggered wheel assembly.
-- `[ ]` `crates/tdrace-app/src/catalog/mod.rs` -> Calibrates $45:55$ and $42:58$ competition AWD splits, neutral rear grip scale, and electric tractive force scaling.
-- `[ ]` `crates/tdrace-app/tests/autocross_catalog_tests.rs` -> Updates parity tests to assert calibrated homologation parameters.
-- `[ ]` `crates/tdrace-app/tests/rallycross_and_autocross_simulation_tests.rs` -> Permanent regression and multi-circuit benchmark suite.
+- [x] `specs/114_realworld_homologation_telemetry_calibration_for_autocross_and_rallycross_highpower_4wd_drivetrains_competition_braking_and_mechanical_grip.md` -> Formal specification.
+- [x] `crates/wheelbase/src/config.rs` -> Upgrades base braking force ($22.5\text{ kN}$), base grip ($1.20$), and SuperBuggy staggered wheel assembly.
+- [x] `crates/tdrace-app/src/catalog/mod.rs` -> Calibrates $45:55$ and $42:58$ competition AWD splits, neutral rear grip scale, and electric tractive force scaling.
+- [x] `crates/tdrace-app/tests/autocross_catalog_tests.rs` -> Updates parity tests to assert calibrated homologation parameters.
+- [x] `crates/tdrace-app/tests/rallycross_and_autocross_simulation_tests.rs` -> Permanent regression and multi-circuit benchmark suite.
 
 ### Verification Assertions
 - `cargo test -p tdrace-app --test rallycross_and_autocross_simulation_tests` passes with zero compiler warnings and zero test failures.
