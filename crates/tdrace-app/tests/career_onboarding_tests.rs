@@ -422,7 +422,7 @@ fn test_grassroots_pricing_calibration_and_affordability() {
     use tdrace_app::profile::ModuleCareerProgress;
 
     // 1. Verify pricing matches Grassroots Pricing Reference Table (Spec 060 Section 2.1 & 2.2)
-    assert_eq!(ModuleCareerProgress::car_credit_cost_for_module("kart", 1), 5_000);
+    assert_eq!(ModuleCareerProgress::car_credit_cost_for_module("kart", 1), 19_500);
     assert_eq!(ModuleCareerProgress::car_credit_cost_for_module("autocross", 1), 12_000);
     assert_eq!(ModuleCareerProgress::car_credit_cost_for_module("rally", 1), 16_000);
     assert_eq!(ModuleCareerProgress::car_credit_cost_for_module("gt", 1), 70_000);
@@ -430,7 +430,15 @@ fn test_grassroots_pricing_calibration_and_affordability() {
     // Specific catalog vehicle cost resolutions
     assert_eq!(
         ModuleCareerProgress::car_credit_cost_for_car("kart_blackline_cadet_t1", "kart", 1),
-        5_000
+        19_500
+    );
+    assert_eq!(
+        ModuleCareerProgress::car_credit_cost_for_car("kart_rosso_junior_t1", "kart", 1),
+        19_500
+    );
+    assert_eq!(
+        ModuleCareerProgress::car_credit_cost_for_car("kart_verde_sprout_t1", "kart", 1),
+        19_500
     );
     assert_eq!(
         ModuleCareerProgress::car_credit_cost_for_car("autocross_lifelive_tn5", "autocross", 1),
@@ -445,27 +453,28 @@ fn test_grassroots_pricing_calibration_and_affordability() {
         70_000
     );
 
-    // 2. Affordability with all-Bronze purse (7,000 Cr)
-    let bronze_purse = 7_000u64;
+    // 2. Affordability with all-Bronze total purse (10,000 Cr seed + 7,000 Cr bronze = 17,000 Cr)
+    let bronze_purse = 17_000u64;
     let kart_progress = ModuleCareerProgress::default_for_module(1, "kart");
     let ax_progress = ModuleCareerProgress::default_for_module(1, "autocross");
     let rally_progress = ModuleCareerProgress::default_for_module(1, "rally");
     let gt_progress = ModuleCareerProgress::default_for_module(1, "gt");
 
-    // Cadet Kart is affordable immediately
-    assert!(kart_progress.can_buy_car("kart_blackline_cadet_t1", 1, bronze_purse));
-    // Cross Car, Rally4, and GT4 are unaffordable with Bronze purse
-    assert!(!ax_progress.can_buy_car("autocross_lifelive_tn5", 1, bronze_purse));
-    assert!(!rally_progress.can_buy_car("rally_gallia_200_t1", 1, bronze_purse));
+    // Cross Car and Rally4 are affordable with 17,000 Cr wallet
+    assert!(ax_progress.can_buy_car("autocross_lifelive_tn5", 1, bronze_purse));
+    assert!(rally_progress.can_buy_car("rally_gallia_200_t1", 1, bronze_purse));
+    // Cadet Kart (19,500 Cr) and GT4 (70,000 Cr) require Gold medals
+    assert!(!kart_progress.can_buy_car("kart_blackline_cadet_t1", 1, bronze_purse));
     assert!(!gt_progress.can_buy_car("gt_vandorn_stratus_t1", 1, bronze_purse));
 
-    // 3. Affordability with all-Gold purse (14,500 Cr)
-    let gold_purse = 14_500u64;
-    // Cadet Kart and Cross Car Junior are affordable
+    // 3. Affordability with all-Gold graduation wallet (10,000 Cr seed + 14,500 Cr gold = 24,500 Cr)
+    let gold_purse = 24_500u64;
+    // Any of the three Cadet Karts and Cross Car Junior are affordable
     assert!(kart_progress.can_buy_car("kart_blackline_cadet_t1", 1, gold_purse));
+    assert!(kart_progress.can_buy_car("kart_rosso_junior_t1", 1, gold_purse));
+    assert!(kart_progress.can_buy_car("kart_verde_sprout_t1", 1, gold_purse));
     assert!(ax_progress.can_buy_car("autocross_lifelive_tn5", 1, gold_purse));
-    // Rally4 (16,000 Cr) and GT4 (70,000 Cr) are still unaffordable
-    assert!(!rally_progress.can_buy_car("rally_gallia_200_t1", 1, gold_purse));
+    // GT4 (70,000 Cr) is still unaffordable
     assert!(!gt_progress.can_buy_car("gt_vandorn_stratus_t1", 1, gold_purse));
 }
 
@@ -478,10 +487,12 @@ fn test_starter_car_purchase_adds_to_owned_cars_and_unlocks_career() {
     let mut session = RaceSession::new();
     let mut rookie = PlayerProfile::new_rookie("Sebastian");
 
-    // 1. Graduate Academy (grants license and holds 10,000 Cr starting wallet)
+    // 1. Graduate Academy (grants license and holds 24,500 Cr total starting + gold wallet)
     rookie.academy_progress.license_granted = true;
     rookie.license_grade = LicenseGrade::ClassD;
-    assert_eq!(rookie.credits, 10_000);
+    rookie.credits = 24_500;
+    rookie.lifetime_credits = 24_500;
+    assert_eq!(rookie.credits, 24_500);
     assert!(rookie.has_racing_license());
     assert!(rookie.owned_cars.is_empty());
     assert!(!rookie.can_access_career(), "Licensed rookie without a car cannot access career");
@@ -506,14 +517,14 @@ fn test_starter_car_purchase_adds_to_owned_cars_and_unlocks_career() {
         other => panic!("Expected ModalitySelect with VehicleRequired modal, got {:?}", other),
     }
 
-    // 3. Purchase Cadet Kart in Kart module (5,000 Cr)
+    // 3. Purchase Cadet Kart in Kart module (19,500 Cr)
     let mut kart_progress = ModuleCareerProgress::default_for_module(1, "kart");
     assert!(kart_progress.can_buy_car("kart_blackline_cadet_t1", 1, session.active_profile.credits));
     kart_progress
         .buy_car(&mut session.active_profile, "kart_blackline_cadet_t1", 1)
         .expect("Purchase Cadet Kart");
 
-    // Verify credits deducted: 10,000 - 5,000 = 5,000 Cr reserve preserved!
+    // Verify credits deducted: 24,500 - 19,500 = 5,000 Cr reserve preserved!
     assert_eq!(session.active_profile.credits, 5_000);
     // Verify car added to owned_cars
     assert_eq!(session.active_profile.owned_cars, vec!["kart_blackline_cadet_t1".to_string()]);
@@ -535,6 +546,60 @@ fn test_starter_car_purchase_adds_to_owned_cars_and_unlocks_career() {
             // Career mode successfully accessed!
         }
         other => panic!("Expected CareerSelect state after unlocking, got {:?}", other),
+    }
+}
+
+#[test]
+fn test_garage_allows_choosing_any_t1_kart_and_drives_it_in_championship() {
+    use tdrace_app::game::RaceSession;
+    use tdrace_app::profile::{LicenseGrade, ModuleCareerProgress, PlayerProfile};
+
+    let mut session = RaceSession::new();
+    let mut rookie = PlayerProfile::new_rookie("Max");
+    rookie.academy_progress.license_granted = true;
+    rookie.license_grade = LicenseGrade::ClassD;
+    rookie.credits = 24_500;
+    rookie.lifetime_credits = 24_500;
+
+    session.active_profile = rookie;
+    assert!(session.active_profile.owned_cars.is_empty());
+
+    // 1. In garage, Blackline Cadet is NOT pre-owned
+    assert!(!session.active_profile.is_car_owned("kart_blackline_cadet_t1"));
+    assert!(!session.active_profile.is_car_owned("kart_rosso_junior_t1"));
+    assert!(!session.active_profile.is_car_owned("kart_verde_sprout_t1"));
+
+    // 2. All three T1 karts cost 19,500 Cr and are affordable with 24,500 Cr wallet
+    let mut kart_progress = ModuleCareerProgress::default_for_module(1, "kart");
+    assert!(kart_progress.can_buy_car_for_profile(&session.active_profile, "kart_rosso_junior_t1", 1));
+    assert!(kart_progress.can_buy_car_for_profile(&session.active_profile, "kart_blackline_cadet_t1", 1));
+    assert!(kart_progress.can_buy_car_for_profile(&session.active_profile, "kart_verde_sprout_t1", 1));
+
+    // 3. Purchase Rosso Kart Junior 60cc T1 (19,500 Cr)
+    kart_progress
+        .buy_car(&mut session.active_profile, "kart_rosso_junior_t1", 1)
+        .expect("Purchase Rosso Kart Junior");
+    session.selected_car_model_id = Some("kart_rosso_junior_t1");
+
+    // 4. Verify wallet balance is 5,000 Cr reserve and only Rosso is owned
+    assert_eq!(session.active_profile.credits, 5_000);
+    assert_eq!(session.active_profile.owned_cars, vec!["kart_rosso_junior_t1".to_string()]);
+    assert!(session.active_profile.is_car_owned("kart_rosso_junior_t1"));
+    assert!(!session.active_profile.is_car_owned("kart_blackline_cadet_t1"));
+    assert!(!session.active_profile.is_car_owned("kart_verde_sprout_t1"));
+
+    // 5. Verify other karts are now unaffordable (5,000 < 19,500)
+    assert!(!kart_progress.can_buy_car_for_profile(&session.active_profile, "kart_blackline_cadet_t1", 1));
+    assert!(!kart_progress.can_buy_car_for_profile(&session.active_profile, "kart_verde_sprout_t1", 1));
+
+    // 6. Launch Kart World Cup championship and verify the player drives Rosso Junior, NOT Blackline Cadet!
+    let def = session.championship_manager.get("kart_world_cup").cloned().expect("Kart World Cup preset");
+    session.launch_or_resume_championship(&def);
+
+    assert_eq!(session.selected_car_model_id, Some("kart_rosso_junior_t1"));
+    if let Some(champ) = &session.championship_session {
+        let player_standing = champ.standings.iter().find(|s| s.driver_id == "player").expect("Player standing");
+        assert_eq!(player_standing.car_model_id.as_deref(), Some("kart_rosso_junior_t1"));
     }
 }
 

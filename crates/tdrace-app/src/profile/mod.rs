@@ -166,6 +166,11 @@ impl PlayerProfile {
         self.has_racing_license() && !self.owned_cars.is_empty()
     }
 
+    /// Checks whether the driver profile owns the specified car in their permanent fleet.
+    pub fn is_car_owned(&self, car_id: &str) -> bool {
+        self.owned_cars.iter().any(|c| c == car_id)
+    }
+
     pub fn has_racing_license(&self) -> bool {
         self.license_grade >= LicenseGrade::ClassD || self.academy_progress.is_graduated()
     }
@@ -677,13 +682,13 @@ impl ModuleCareerProgress {
     pub fn car_credit_cost_for_module(module_id: &str, tier: u8) -> u64 {
         match module_id {
             "kart" => match tier {
-                1 => 5_000,
-                2 => 8_500,
-                3 => 12_000,
-                4 => 18_000,
-                5 => 26_000,
-                6 => 38_000,
-                _ => (tier as u64) * 10_000,
+                1 => 19_500,
+                2 => 28_500,
+                3 => 42_000,
+                4 => 58_000,
+                5 => 76_000,
+                6 => 98_000,
+                _ => (tier as u64) * 20_000,
             },
             "autocross" | "ax" => match tier {
                 1 => 12_000,

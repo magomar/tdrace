@@ -2735,7 +2735,16 @@ impl RaceSession {
             exposed_driver: true,
             side_bumpers: true,
         };
-        self.selected_car_model_id = Some("kart_blackline_cadet_t1");
+        let preferred_kart = self.selected_car_model_id
+            .and_then(crate::catalog::find_model_by_id)
+            .filter(|m| m.module_id == "kart")
+            .map(|m| m.id)
+            .or_else(|| {
+                self.active_profile.owned_cars.iter()
+                    .find_map(|id| crate::catalog::find_model_by_id(id).filter(|m| m.module_id == "kart").map(|m| m.id))
+            })
+            .unwrap_or("kart_blackline_cadet_t1");
+        self.selected_car_model_id = Some(preferred_kart);
         let tracks = self.active_module_tracks();
         if let Some((idx, choice)) = tracks
             .iter()
@@ -3442,11 +3451,16 @@ impl RaceSession {
 
         let selected_model = prev_selected
             .and_then(crate::catalog::find_model_by_id)
-            .filter(|m| m.module_id == "kart" && m.tier == tier as u8 && self.active_career_progress.is_car_unlocked(m.id, self.is_dev_mode()))
+            .filter(|m| m.module_id == "kart" && m.tier == tier as u8 && (self.is_dev_mode() || self.active_profile.is_car_owned(m.id) || self.active_career_progress.is_car_unlocked(m.id, false)))
+            .or_else(|| {
+                self.active_profile.owned_cars.iter()
+                    .filter_map(|id| crate::catalog::find_model_by_id(id))
+                    .find(|m| m.module_id == "kart" && m.tier == tier as u8)
+            })
             .or_else(|| {
                 crate::catalog::get_models_for_module_and_tier("kart", tier as u8)
                     .into_iter()
-                    .find(|m| self.active_career_progress.is_car_unlocked(m.id, self.is_dev_mode()))
+                    .find(|m| self.is_dev_mode() || self.active_profile.is_car_owned(m.id) || self.active_career_progress.is_car_unlocked(m.id, false))
             })
             .or_else(|| {
                 crate::catalog::get_models_for_module_and_tier("kart", tier as u8)
@@ -3454,20 +3468,21 @@ impl RaceSession {
                     .next()
             });
 
+        let mut champ = champ.with_tier(tier);
         if let Some(model) = selected_model {
             self.active_career_progress.ensure_car(model.id);
-            if let Some(db) = &self.hof_db {
-                let _ = db.save_module_progress(&self.active_career_progress);
-            }
             self.selected_car_model_id = Some(model.id);
             self.car_choice = model.base_car_choice;
             self.current_visual_type = model.visual_type;
             self.free_car_selection = true;
+            if let Some(st) = champ.standings.iter_mut().find(|s| s.driver_id == "player") {
+                st.car_model_id = Some(model.id.to_string());
+            }
         } else {
             self.car_choice = CarChoice::Kart;
         }
-        self.championship_session = Some(champ.with_tier(tier));
-        self.active_career_progress.active_championship = self.championship_session.clone();
+        self.championship_session = Some(champ.clone());
+        self.active_career_progress.active_championship = Some(champ);
         if let Some(db) = &self.hof_db {
             let _ = db.save_module_progress(&self.active_career_progress);
         }
@@ -10931,9 +10946,11 @@ impl RaceSession {
 
         if buy_pressed || confirm_pressed {
             if let Some(active_car) = models.get(self.garage_car_idx) {
+                let is_car_heritage = (self.active_module_id == "rallycross" || self.active_module_id == "rally" || self.active_module_id == "rx") && active_car.tier == 7;
                 let is_unlocked = self.active_module_id == "classic"
-                    || self.active_career_progress.is_car_unlocked(active_car.id, self.is_dev_mode())
-                    || self.is_dev_mode();
+                    || is_car_heritage
+                    || self.is_dev_mode()
+                    || self.active_profile.is_car_owned(active_car.id);
 
                 if is_unlocked {
                     if confirm_pressed {
@@ -11023,9 +11040,12 @@ impl RaceSession {
                             }
                         }
                     }
-                } else if self.active_career_progress.can_buy_car(active_car.id, active_car.tier, self.active_profile.credits) {
+                } else if self.active_career_progress.can_buy_car_for_profile(&self.active_profile, active_car.id, active_car.tier) {
                     let cost = ModuleCareerProgress::car_credit_cost_for_car(active_car.id, self.active_module_id, active_car.tier);
                     if let Ok(()) = self.active_career_progress.buy_car(&mut self.active_profile, active_car.id, active_car.tier) {
+                        self.selected_car_model_id = Some(active_car.id);
+                        self.car_choice = active_car.base_car_choice;
+                        self.current_visual_type = active_car.visual_type;
                         if let Some(db) = &self.hof_db {
                             let _ = db.save_module_progress(&self.active_career_progress);
                             let _ = db.update_profile(&self.active_profile);
@@ -14334,6 +14354,7 @@ impl RaceSession {
                     module_locked,
                     car_change_allowed,
                     crate::ui::garage_tyres(self.resolve_active_car_model(), &self.active_profile, car_change_allowed),
+                    &self.active_profile.owned_cars,
                 );
             }
             GameState::CircuitViewer(_) => {
@@ -14959,17 +14980,22 @@ impl RaceSession {
         let tier = def.series.tier as u8;
         let chosen_model = prev_selected
             .and_then(crate::catalog::find_model_by_id)
-            .filter(|m| m.module_id == def.series.module_id && m.tier == tier && self.active_career_progress.is_car_unlocked(m.id, self.is_dev_mode()))
+            .filter(|m| m.module_id == def.series.module_id && m.tier == tier && (self.is_dev_mode() || self.active_profile.is_car_owned(m.id) || self.active_career_progress.is_car_unlocked(m.id, false)))
+            .or_else(|| {
+                self.active_profile.owned_cars.iter()
+                    .filter_map(|id| crate::catalog::find_model_by_id(id))
+                    .find(|m| m.module_id == def.series.module_id && m.tier == tier)
+            })
             .or_else(|| {
                 player_car_model_id
                     .and_then(crate::catalog::find_model_by_id)
-                    .filter(|m| self.active_career_progress.is_car_unlocked(m.id, self.is_dev_mode()))
+                    .filter(|m| self.is_dev_mode() || self.active_profile.is_car_owned(m.id) || self.active_career_progress.is_car_unlocked(m.id, false))
             })
             .or_else(|| {
                 let models = crate::catalog::get_models_for_module_and_tier(&def.series.module_id, tier);
                 models
                     .into_iter()
-                    .find(|m| self.active_career_progress.is_car_unlocked(m.id, self.is_dev_mode()))
+                    .find(|m| self.is_dev_mode() || self.active_profile.is_car_owned(m.id) || self.active_career_progress.is_car_unlocked(m.id, false))
             })
             .or_else(|| {
                 player_car_model_id.and_then(crate::catalog::find_model_by_id)
@@ -14977,13 +15003,23 @@ impl RaceSession {
 
         if let Some(m) = chosen_model {
             self.active_career_progress.ensure_car(m.id);
-            if let Some(db) = &self.hof_db {
-                let _ = db.save_module_progress(&self.active_career_progress);
-            }
             self.selected_car_model_id = Some(m.id);
             self.car_choice = m.base_car_choice;
             self.current_visual_type = m.visual_type;
             self.free_car_selection = true;
+            if let Some(ref mut champ) = self.championship_session {
+                if let Some(st) = champ.standings.iter_mut().find(|s| s.driver_id == "player") {
+                    st.car_model_id = Some(m.id.to_string());
+                }
+            }
+            if let Some(ref mut champ) = self.active_career_progress.active_championship {
+                if let Some(st) = champ.standings.iter_mut().find(|s| s.driver_id == "player") {
+                    st.car_model_id = Some(m.id.to_string());
+                }
+            }
+            if let Some(db) = &self.hof_db {
+                let _ = db.save_module_progress(&self.active_career_progress);
+            }
         }
 
         if let Some(track_id) = self.championship_session.as_ref().and_then(|c| c.current_track_id()) {

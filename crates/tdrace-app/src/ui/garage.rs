@@ -138,6 +138,7 @@ pub fn render_garage_screen(
     module_locked: bool,
     car_change_allowed: bool,
     tyres: GarageTyres,
+    owned_cars: &[String],
 ) {
     let sw = screen_width();
     let sh = screen_height();
@@ -411,35 +412,35 @@ pub fn render_garage_screen(
         fonts.draw_ui_bold(&num_str, cx + scaler.s(8.0), cy + scaler.s(15.0), scaler.font_s(9.5), Palette::NEON_CYAN);
 
         let is_rx_tier7 = (active_module_id == "rallycross" || active_module_id == "rally" || active_module_id == "rx") && model.tier == 7;
-        if active_module_id == "classic" || is_rx_tier7 {
+        let is_owned = active_module_id == "classic"
+            || is_dev_mode
+            || is_rx_tier7
+            || owned_cars.iter().any(|c| c == model.id);
+
+        if is_owned {
             fonts.draw_ui_bold(
                 if is_rx_tier7 { "HERITAGE" } else { "OWNED" },
-                cx + cw - scaler.s(58.0),
+                cx + cw - scaler.s(if is_rx_tier7 { 58.0 } else { 48.0 }),
                 cy + scaler.s(15.0),
                 scaler.font_s(8.5),
-                Palette::NEON_GOLD,
+                if is_rx_tier7 { Palette::NEON_GOLD } else { Palette::NEON_GREEN },
             );
         } else if let Some(cp) = career_progress {
-            let is_unlocked = is_dev_mode || cp.is_car_unlocked(model.id, is_dev_mode);
-            if is_unlocked {
-                fonts.draw_ui_bold("OWNED", cx + cw - scaler.s(48.0), cy + scaler.s(15.0), scaler.font_s(8.5), Palette::NEON_GREEN);
+            let cost = ModuleCareerProgress::car_credit_cost_for_car(model.id, active_module_id, model.tier);
+            let is_affordable = available_credits >= cost;
+            let is_recommended = model.id == "kart_blackline_cadet_t1";
+            let is_grassroots_starter = (active_module_id == "kart" || active_module_id == "autocross" || active_module_id == "rallycross" || active_module_id == "rally") && model.tier == 1;
+            let tag = if is_recommended && is_affordable {
+                format!("${} CR (RECOMMENDED)", cost)
+            } else if is_grassroots_starter && is_affordable {
+                format!("${} CR (AFFORDABLE)", cost)
+            } else if is_grassroots_starter {
+                format!("${} CR (UNAFFORDABLE)", cost)
             } else {
-                let cost = ModuleCareerProgress::car_credit_cost_for_car(model.id, active_module_id, model.tier);
-                let is_affordable = available_credits >= cost;
-                let is_recommended = active_module_id == "kart" && model.tier == 1;
-                let is_grassroots_starter = (active_module_id == "kart" || active_module_id == "autocross" || active_module_id == "rallycross" || active_module_id == "rally") && model.tier == 1;
-                let tag = if is_recommended && is_affordable {
-                    format!("${} CR (RECOMMENDED)", cost)
-                } else if is_grassroots_starter && is_affordable {
-                    format!("${} CR (AFFORDABLE)", cost)
-                } else if is_grassroots_starter {
-                    format!("${} CR (UNAFFORDABLE)", cost)
-                } else {
-                    format!("${} CR", cost)
-                };
-                let col = if is_affordable && cp.level >= model.tier as u32 { Palette::NEON_GOLD } else { Palette::RED };
-                fonts.draw_ui_bold(&tag, cx + cw - scaler.s(75.0), cy + scaler.s(15.0), scaler.font_s(7.5), col);
-            }
+                format!("${} CR", cost)
+            };
+            let col = if is_affordable && cp.level >= model.tier as u32 { Palette::NEON_GOLD } else { Palette::RED };
+            fonts.draw_ui_bold(&tag, cx + cw - scaler.s(75.0), cy + scaler.s(15.0), scaler.font_s(7.5), col);
         }
 
         fonts.draw_ui_bold(
@@ -642,12 +643,10 @@ pub fn render_garage_screen(
     let active_car_id = active_model.map(|m| m.id).unwrap_or("");
     let active_car_tier = active_model.map(|m| m.tier).unwrap_or(garage_tier);
     let is_car_heritage = (active_module_id == "rallycross" || active_module_id == "rally" || active_module_id == "rx") && active_car_tier == 7;
-    let is_car_unlocked = active_module_id == "classic"
+    let is_car_owned = active_module_id == "classic"
         || is_dev_mode
         || is_car_heritage
-        || career_progress
-            .map(|cp| cp.is_car_unlocked(active_car_id, is_dev_mode))
-            .unwrap_or(is_tier_unlocked);
+        || owned_cars.iter().any(|c| c == active_car_id);
 
     let cost = ModuleCareerProgress::car_credit_cost_for_car(active_car_id, active_module_id, active_car_tier);
     let can_afford = available_credits >= cost;
@@ -659,7 +658,7 @@ pub fn render_garage_screen(
     // Hero CTA frame (platform HeroActionButton, via ScreenFooter)
     let (hero_label, hero_focused, hero_disabled) = if !car_change_allowed {
         ("VEHICLE PRESET FOR RACE".to_string(), false, true)
-    } else if is_car_unlocked {
+    } else if is_car_owned {
         ("SELECT VEHICLE FOR RACE".to_string(), true, false)
     } else if !tier_eligible {
         (format!("VEHICLE LOCKED — TIER {} REQUIRED", active_car_tier), false, true)
@@ -690,7 +689,7 @@ pub fn render_garage_screen(
             scaler.font_s(10.0),
             Palette::UI_TEXT_MUTED,
         );
-    } else if is_car_unlocked {
+    } else if is_car_owned {
         fonts.draw_ui_bold_centered(
             "▶ SELECT VEHICLE FOR RACE  [ENTER / SPACE]",
             btn_x + btn_w * 0.5,
