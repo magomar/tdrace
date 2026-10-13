@@ -1295,7 +1295,9 @@ impl TrackNetwork {
                         let p1 = p_apex + v1 * gore_len;
                         // The gore keeps the ingress road's own surface; an artificial asphalt island
                         // would give a dirt car tarmac grip.
-                        if point_in_triangle_2d(point, p_apex, p0, p1) {
+                        if point_in_triangle_2d(point, p_apex, p0, p1)
+                            || point_in_triangle_2d(point, p_apex, gore.nose_barrier.segment.start, gore.nose_barrier.segment.end)
+                        {
                             return Some(ingress_socket.surface);
                         }
                     }
