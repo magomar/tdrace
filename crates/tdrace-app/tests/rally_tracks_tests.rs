@@ -1304,8 +1304,11 @@ fn test_rx_gore_keeps_the_ingress_surface() {
                 continue;
             };
             let gore_len = gore.gore_length.max(6.0);
-            let p0 = gore.apex_point + egress_sockets[0].tangent * gore_len;
-            let p1 = gore.apex_point + egress_sockets[1].tangent * gore_len;
+            let (p0, p1) = if track.branch_layout.is_some() {
+                (gore.nose_barrier.segment.start, gore.nose_barrier.segment.end)
+            } else {
+                (gore.apex_point + egress_sockets[0].tangent * gore_len, gore.apex_point + egress_sockets[1].tangent * gore_len)
+            };
             // Probe the gore triangle on a barycentric grid. Points that a road or curb covers are answered
             // by that road; only the others are answered by the gore itself.
             for i in 0..=12 {

@@ -1083,6 +1083,9 @@ impl Track {
                     .filter(|w| wall_clear_of_roads(&net.segments, w, f32::INFINITY, 0.3) && clear_of_main(w, main_gap))
                     .collect();
                 for w in merge_collinear_walls(kept) {
+                    if !wall_clear_of_roads(&net.segments, &w, f32::INFINITY, 0.0) {
+                        continue;
+                    }
                     let shares_endpoint = |a: &WallBarrier, b: &WallBarrier| {
                         (a.segment.start - b.segment.start).length_squared() < 0.01
                             || (a.segment.start - b.segment.end).length_squared() < 0.01
