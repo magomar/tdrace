@@ -275,12 +275,28 @@ impl RealCarModel {
             _ => TerrainInteractionConfig::default(),
         };
 
-        // Spec 043: grip stat, drivetrain and brakes must reach the per-wheel assemblies.
+        // Spec 043 & Spec 113: grip stat, drivetrain and brakes must reach the per-wheel assemblies.
+        // Spec 113: 4WD loose surface vehicles (Rallycross, Autocross, Off-Road) apply loose-surface balance
+        // (30:70 torque split and 0.92 rear grip scale) to eliminate severe turn-in push and power understeer.
         let cfg = cfg.finalized();
-        if self.category() == tdrace_core::CarCategory::Rallycross {
-            cfg.with_rally_balance()
-        } else {
-            cfg
+        match self.category() {
+            tdrace_core::CarCategory::Rallycross
+            | tdrace_core::CarCategory::Autocross => {
+                if self.drivetrain == "4WD" || self.drivetrain == "AWD" {
+                    cfg.with_loose_surface_4wd_balance()
+                } else {
+                    cfg
+                }
+            }
+            tdrace_core::CarCategory::OffRoad
+                if self.tier == 2 && (self.drivetrain == "4WD" || self.drivetrain == "AWD") =>
+            {
+                let mut c = cfg;
+                c.drive_bias = 0.35;
+                c.rear_axle.grip_scale = 0.95;
+                c.finalized()
+            }
+            _ => cfg,
         }
     }
 

@@ -241,7 +241,7 @@ fn score(def: &AcademyLessonDef, r: &Reference) -> (AcademyMedal, bool) {
 /// The scripted drift the reference driver takes in the drift mission: found by `search_drift_script`
 /// (the best clean banked drift of the lap on `ax_clay_bowl`).
 const DRIFT_REFERENCE_SCRIPT: DriftScript =
-    DriftScript { start_m: 480.0, handbrake_s: 0.5, hold_s: 8.0, steer_gain: 1.0, pd: Some((0.9, 3.0)) };
+    DriftScript { start_m: 480.0, handbrake_s: 0.5, hold_s: 14.0, steer_gain: 1.0, pd: Some((0.3, 0.0)) };
 
 /// The reference run of a mission: the line follower, with the scripted drift in the drift mission.
 fn run_mission_reference(def: &AcademyLessonDef) -> Reference {

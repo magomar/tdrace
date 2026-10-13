@@ -351,7 +351,7 @@ impl AcademyLessonDef {
                 "Hold a long controlled slide on the dirt and bank it.",
                 "ax_clay_bowl",
                 "classic_ax_brawler",
-                (16.0, 12.0, 8.0),
+                (31.0, 23.25, 15.5),
                 250,
                 AcademySessionRules::basics(),
                 AcademyObjective::DriftScore,

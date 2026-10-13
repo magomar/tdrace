@@ -1,5 +1,7 @@
 use macroquad::color::Color;
-use tdrace_core::physics::config::{CarConfig, DriverAssistsConfig, SuspensionConfig, TireConfig};
+use tdrace_core::physics::config::{
+    CarConfig, DifferentialType, DriverAssistsConfig, SuspensionConfig, TireConfig,
+};
 use tdrace_core::physics::surface::SurfaceType;
 use super::{EngineAudioProfile, GameModule, ModuleTheme, TrackDefinition, VehicleModelDefinition, VehicleVisualType};
 use crate::ai::{DriverCharacter, DriverFavoriteCar, DriverPersonalityOffsets, DrivingStyle};
@@ -49,9 +51,19 @@ impl RallycrossGameModule {
             skid_full_threshold: 0.28,
             ..TireConfig::default()
         };
+        cfg.front_differential = DifferentialType::LimitedSlip {
+            power_lock: 0.35,
+            coast_lock: 0.20,
+            preload_nm: 40.0,
+        };
+        cfg.rear_differential = DifferentialType::LimitedSlip {
+            power_lock: 0.70,
+            coast_lock: 0.45,
+            preload_nm: 80.0,
+        };
         cfg.assists = DriverAssistsConfig::sport();
         cfg.suspension = SuspensionConfig::long_travel_offroad();
-        cfg
+        cfg.finalized().with_loose_surface_4wd_balance()
     }
 
     /// Group B Legend: 500+ BHP Lightweight Turbo Monster
@@ -62,8 +74,18 @@ impl RallycrossGameModule {
         cfg.max_engine_force = 12500.0;
         cfg.top_speed_mps = 75.0; // ~270 km/h
         cfg.counter_steer_assist = 1.6;
+        cfg.front_differential = DifferentialType::LimitedSlip {
+            power_lock: 0.30,
+            coast_lock: 0.15,
+            preload_nm: 35.0,
+        };
+        cfg.rear_differential = DifferentialType::LimitedSlip {
+            power_lock: 0.70,
+            coast_lock: 0.50,
+            preload_nm: 85.0,
+        };
         cfg.assists = DriverAssistsConfig::raw();
-        cfg
+        cfg.finalized().with_loose_surface_4wd_balance()
     }
 }
 

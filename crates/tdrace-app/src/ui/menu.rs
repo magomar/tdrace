@@ -909,9 +909,9 @@ impl CarChoice {
             Self::Kart => CarConfig::kart(),
             Self::SuperkartGP => CarConfig::superkart_gp(),
             Self::RallyJuniorFWD => CarConfig::rally_junior_fwd(),
-            Self::RallyCar => CarConfig::rally_car(),
-            Self::RallyGroupB => CarConfig::rally_group_b(),
-            Self::RallyElectricRX => CarConfig::rally_electric_rx(),
+            Self::RallyCar => CarConfig::rally_car().with_loose_surface_4wd_balance(),
+            Self::RallyGroupB => CarConfig::rally_group_b().with_loose_surface_4wd_balance(),
+            Self::RallyElectricRX => CarConfig::rally_electric_rx().with_loose_surface_4wd_balance(),
             Self::GT4Clubsport => crate::module::gt::GtWorldChallengeModule::car_gt4_clubsport(),
             Self::GT3Car => crate::module::gt::GtWorldChallengeModule::car_gt3_evo(),
             Self::GT2Biturbo => crate::module::gt::GtWorldChallengeModule::car_gt2_biturbo(),
@@ -927,8 +927,8 @@ impl CarChoice {
             Self::MudBoggerHeavy => CarConfig::mud_bogger(),
             Self::MonsterTruck => CarConfig::monster_truck(),
             Self::CrossCar => CarConfig::cross_car(),
-            Self::TouringAX => CarConfig::touring_ax(),
-            Self::SuperBuggy => CarConfig::super_buggy(),
+            Self::TouringAX => CarConfig::touring_ax().with_loose_surface_4wd_balance(),
+            Self::SuperBuggy => CarConfig::super_buggy().with_loose_surface_4wd_balance(),
         }
     }
 

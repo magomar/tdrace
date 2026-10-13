@@ -621,11 +621,13 @@ impl Default for DifferentialType {
 /// Default load transfer response (Hz). The pre-043 filter `alpha = dt * 15` was ~2.4 Hz.
 pub const DEFAULT_WEIGHT_TRANSFER_HZ: f32 = 3.0;
 
-/// Most torque an all-wheel-drive rally car sends to the front axle (see [`CarConfig::with_rally_balance`]).
+/// Most torque an all-wheel-drive rally or loose-surface car sends to the front axle (see [`CarConfig::with_loose_surface_4wd_balance`]).
 pub const RALLY_FRONT_TORQUE_SHARE: f32 = 0.30;
+pub const LOOSE_SURFACE_FRONT_TORQUE_SHARE: f32 = RALLY_FRONT_TORQUE_SHARE;
 
-/// Rear grip / front grip of an all-wheel-drive rally car (see [`CarConfig::with_rally_balance`]).
+/// Rear grip / front grip of an all-wheel-drive rally or loose-surface car (see [`CarConfig::with_loose_surface_4wd_balance`]).
 pub const RALLY_REAR_GRIP_SCALE: f32 = 0.92;
+pub const LOOSE_SURFACE_REAR_GRIP_SCALE: f32 = RALLY_REAR_GRIP_SCALE;
 
 pub fn default_front_differential() -> DifferentialType {
     DifferentialType::Open
@@ -1730,8 +1732,8 @@ impl CarConfig {
         Self::kart()
     }
 
-    /// Rally handling balance: an all-wheel-drive car sends most torque to the rear axle and runs a
-    /// rear tire with 8% less grip than the front.
+    /// Loose-surface (dirt, gravel, clay, sand, mud) 4WD balance: an all-wheel-drive car sends most
+    /// torque to the rear axle and runs a rear tire with 8% less grip than the front.
     ///
     /// A 50:50 or 45:55 AWD car grips with all four tires, so under throttle it pushes wide: at
     /// 30-40 m/s on dirt its nose rotated at 0.24-0.29 rad/s against 0.44-0.47 for the rear-drive
@@ -1739,14 +1741,20 @@ impl CarConfig {
     /// at 0.37-0.43 rad/s and the car slides on the throttle. Rear-drive and front-drive cars keep
     /// their own balance.
     #[must_use]
-    pub fn with_rally_balance(mut self) -> Self {
-        if self.drive_bias > RALLY_FRONT_TORQUE_SHARE && self.drive_bias < 1.0 {
-            self.drive_bias = RALLY_FRONT_TORQUE_SHARE;
+    pub fn with_loose_surface_4wd_balance(mut self) -> Self {
+        if self.drive_bias > LOOSE_SURFACE_FRONT_TORQUE_SHARE && self.drive_bias < 1.0 {
+            self.drive_bias = LOOSE_SURFACE_FRONT_TORQUE_SHARE;
         }
         if self.drive_bias > 0.0 && self.drive_bias < 1.0 {
-            self.rear_axle.grip_scale = RALLY_REAR_GRIP_SCALE;
+            self.rear_axle.grip_scale = LOOSE_SURFACE_REAR_GRIP_SCALE;
         }
         self.finalized()
+    }
+
+    /// Backward-compatible alias for [`Self::with_loose_surface_4wd_balance`].
+    #[must_use]
+    pub fn with_rally_balance(self) -> Self {
+        self.with_loose_surface_4wd_balance()
     }
 
     /// Rally spec: AWD traction, softened tire curve for loose surfaces, high ride height.
@@ -1760,14 +1768,14 @@ impl CarConfig {
         cfg.weight_transfer_hz = 2.5;
         cfg.brake_bias = 0.62;
         cfg.front_differential = DifferentialType::LimitedSlip {
-            power_lock: 0.60,
-            coast_lock: 0.40,
-            preload_nm: 70.0,
+            power_lock: 0.35,
+            coast_lock: 0.20,
+            preload_nm: 40.0,
         };
         cfg.rear_differential = DifferentialType::LimitedSlip {
             power_lock: 0.70,
-            coast_lock: 0.50,
-            preload_nm: 85.0,
+            coast_lock: 0.45,
+            preload_nm: 80.0,
         };
         cfg.cg_height = 0.42;
         cfg.max_engine_force = 7500.0;
@@ -2052,6 +2060,16 @@ impl CarConfig {
         cfg.max_engine_force = 10500.0;
         cfg.top_speed_mps = 58.0;
         cfg.drive_bias = 0.5; // AWD
+        cfg.front_differential = DifferentialType::LimitedSlip {
+            power_lock: 0.35,
+            coast_lock: 0.20,
+            preload_nm: 40.0,
+        };
+        cfg.rear_differential = DifferentialType::LimitedSlip {
+            power_lock: 0.70,
+            coast_lock: 0.45,
+            preload_nm: 80.0,
+        };
         cfg.chassis = ChassisSkeleton::new(0.85, 0.78, 1.92, -0.40, 0.30, 0.65, 0.70, 0.05);
         cfg.suspension = SuspensionConfig::for_archetype(SuspensionArchetype::DoubleWishbone);
         cfg.engine_placement = EnginePlacement::FrontEngine;
@@ -2079,6 +2097,16 @@ impl CarConfig {
         cfg.max_engine_force = 9200.0;
         cfg.top_speed_mps = 56.0;
         cfg.drive_bias = 0.5; // 4WD
+        cfg.front_differential = DifferentialType::LimitedSlip {
+            power_lock: 0.30,
+            coast_lock: 0.15,
+            preload_nm: 35.0,
+        };
+        cfg.rear_differential = DifferentialType::LimitedSlip {
+            power_lock: 0.65,
+            coast_lock: 0.40,
+            preload_nm: 75.0,
+        };
         cfg.chassis = ChassisSkeleton::new(0.24, 0.48, 1.90, -0.40, 0.30, 0.65, 0.70, 0.05);
         cfg.suspension = SuspensionConfig::for_archetype(SuspensionArchetype::LongTravelOffRoad);
         cfg.engine_placement = EnginePlacement::MidEngine;
@@ -2247,6 +2275,16 @@ impl CarConfig {
         cfg.max_engine_force = 11000.0;
         cfg.top_speed_mps = 64.0;
         cfg.drive_bias = 0.5;
+        cfg.front_differential = DifferentialType::LimitedSlip {
+            power_lock: 0.30,
+            coast_lock: 0.15,
+            preload_nm: 35.0,
+        };
+        cfg.rear_differential = DifferentialType::LimitedSlip {
+            power_lock: 0.70,
+            coast_lock: 0.50,
+            preload_nm: 85.0,
+        };
         cfg.chassis = ChassisSkeleton::new(0.78, 0.75, 1.85, -0.40, 0.30, 0.65, 0.70, 0.05);
         cfg.suspension = SuspensionConfig::for_archetype(SuspensionArchetype::DoubleWishbone);
         cfg.engine_placement = EnginePlacement::MidEngine;
@@ -2274,6 +2312,16 @@ impl CarConfig {
         cfg.max_engine_force = 12500.0;
         cfg.top_speed_mps = 62.0;
         cfg.drive_bias = 0.5;
+        cfg.front_differential = DifferentialType::LimitedSlip {
+            power_lock: 0.30,
+            coast_lock: 0.15,
+            preload_nm: 35.0,
+        };
+        cfg.rear_differential = DifferentialType::LimitedSlip {
+            power_lock: 0.70,
+            coast_lock: 0.50,
+            preload_nm: 85.0,
+        };
         cfg.chassis = ChassisSkeleton::new(0.74, 0.60, 1.80, -0.40, 0.30, 0.65, 0.70, 0.05);
         cfg.suspension = SuspensionConfig::for_archetype(SuspensionArchetype::DoubleWishbone);
         cfg.engine_placement = EnginePlacement::MidEngine;

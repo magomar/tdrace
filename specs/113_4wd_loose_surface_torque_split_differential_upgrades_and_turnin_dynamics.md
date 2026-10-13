@@ -3,10 +3,15 @@ type: Architecture Spec
 template: architecture
 title: "4WD Loose Surface Torque Split Differential Upgrades and Turn-In Dynamics"
 description: "Resolves acute understeer and turning resistance on 4WD/AWD vehicles across Autocross, Extreme Off-Road, and Rally by replacing rigid 50:50 torque splits with rear-biased loose-surface distribution, upgrading locked spool differentials to motorsport limited-slip units, and harmonizing front differential locking characteristics."
-status: draft
+status: in_progress
 created: 2026-10-12
 generated: { by: agent/antigravity, at: 2026-10-12T21:13:06Z }
+verified: { by: human:mario, at: 2026-10-13T06:05:13Z, hash: "d0bbfaa5ca38" }
 epic: "tdrace-yjnu0"
+depends_on:
+  - "033"
+  - "034"
+  - "043"
 ---
 
 # Architecture Spec: 4WD Loose Surface Torque Split Differential Upgrades and Turn-In Dynamics ⚙️🏎️🛞
@@ -153,45 +158,45 @@ Update the base constructors in [`crates/wheelbase/src/config.rs`](../crates/whe
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Autocross Tier 3 Buggy 1600 Low-Speed Turning Circle Halved**
-  - [ ] **Given** an Autocross Tier 3 vehicle (`autocross_petersen_buggy1600_t3`) initialized at $12\text{ km/h}$ on loose dirt
-  - [ ] **When** full steering lock ($1.0$) is applied for $2.0$ seconds with maintenance throttle
-  - [ ] **Then** the geometric turning circle diameter $D_{\min}$ must be $\le 8.0\text{ m}$ (down from $14.33\text{ m}$)
-  - [ ] **And** the rear wheels must differentiate in angular velocity without spool binding
+  - [x] **Given** an Autocross Tier 3 vehicle (`autocross_petersen_buggy1600_t3`) initialized at $12\text{ km/h}$ on loose dirt
+  - [x] **When** full steering lock ($1.0$) is applied for $2.0$ seconds with maintenance throttle
+  - [x] **Then** the geometric turning circle diameter $D_{\min}$ must be $\le 8.0\text{ m}$ (down from $14.33\text{ m}$)
+  - [x] **And** the rear wheels must differentiate in angular velocity without spool binding
 
 - **Scenario: Autocross Tier 3 Eliminates Understeer Push in Sweeper Corners**
-  - [ ] **Given** an Autocross Tier 3 Buggy 1600 entering a dirt sweeper corner at $70\text{ km/h}$ under sustained full steering lock
-  - [ ] **When** the cornering maneuver is held for $3.0$ seconds under throttle
-  - [ ] **Then** the vehicle heading change must exceed $90.0^\circ$ (up from $79.9^\circ$)
-  - [ ] **And** the effective turning radius must be $\le 39.0\text{ m}$ (down from $46.02\text{ m}$)
-  - [ ] **And** the understeer slip delta ($\text{slip}_{\text{front}} - \text{slip}_{\text{rear}}$) must remain $\le 14.5^\circ$ (down from $17.87^\circ$)
+  - [x] **Given** an Autocross Tier 3 Buggy 1600 entering a dirt sweeper corner at $70\text{ km/h}$ under sustained full steering lock
+  - [x] **When** the cornering maneuver is held for $3.0$ seconds under throttle
+  - [x] **Then** the vehicle heading change must exceed $90.0^\circ$ (up from $79.9^\circ$)
+  - [x] **And** the effective turning radius must be $\le 39.0\text{ m}$ (down from $46.02\text{ m}$)
+  - [x] **And** the understeer slip delta ($\text{slip}_{\text{front}} - \text{slip}_{\text{rear}}$) must remain $\le 14.5^\circ$ (down from $17.87^\circ$)
 
 - **Scenario: Autocross Tier 3 Flying Lap Superiority on Technical Dirt Tracks**
-  - [ ] **Given** a solo Time Trial session on `nova_paka_ax` with a Pro bot driver
-  - [ ] **When** comparing the best flying lap of Tier 3 Buggy 1600 (265 BHP) against Tier 2 Cross Car (145 BHP)
-  - [ ] **Then** the Tier 3 Buggy 1600 best flying lap time must be at least $1.5\text{ s}$ faster than the Tier 2 Cross Car ($< 47.25\text{ s}$)
-  - [ ] **And** the vehicle must record zero wall impacts and zero slow stalls
+  - [x] **Given** a solo Time Trial session on `nova_paka_ax` with a Pro bot driver
+  - [x] **When** comparing the best flying lap of Tier 3 Buggy 1600 (265 BHP) against Tier 2 Cross Car (145 BHP)
+  - [x] **Then** the Tier 3 Buggy 1600 best flying lap time must be at least $1.5\text{ s}$ faster than the Tier 2 Cross Car ($< 47.25\text{ s}$)
+  - [x] **And** the vehicle must record zero wall impacts and zero slow stalls
 
 - **Scenario: S-Chicane Transient Direction Reversal Latency Under 135 ms**
-  - [ ] **Given** a 4WD vehicle navigating an S-chicane on dirt at $65\text{ km/h}$
-  - [ ] **When** steering snaps from full left to full right
-  - [ ] **Then** the yaw reversal latency must be $\le 135\text{ ms}$ (down from $166.7\text{ ms}$)
-  - [ ] **And** the outcome must be classified as `CrispTransition` with no sluggish delay
+  - [x] **Given** a 4WD vehicle navigating an S-chicane on dirt at $65\text{ km/h}$
+  - [x] **When** steering snaps from full left to full right
+  - [x] **Then** the yaw reversal latency must be $\le 135\text{ ms}$ (down from $166.7\text{ ms}$)
+  - [x] **And** the outcome must be classified as `CrispTransition` with no sluggish delay
 
 - **Scenario: CarChoice Direct Instantiation Parity**
-  - [ ] **Given** `CarChoice::SuperBuggy.config()` and `CarChoice::RallyCar.config()`
-  - [ ] **When** inspecting their default `drive_bias` and `rear_axle.grip_scale`
-  - [ ] **Then** `drive_bias` must equal $0.30$ and `rear_axle.grip_scale` must equal $0.92$
-  - [ ] **And** `CarChoice::SuperBuggy` rear differential must be `LimitedSlip` rather than `Spool`
+  - [x] **Given** `CarChoice::SuperBuggy.config()` and `CarChoice::RallyCar.config()`
+  - [x] **When** inspecting their default `drive_bias` and `rear_axle.grip_scale`
+  - [x] **Then** `drive_bias` must equal $0.30$ and `rear_axle.grip_scale` must equal $0.92$
+  - [x] **And** `CarChoice::SuperBuggy` rear differential must be `LimitedSlip` rather than `Spool`
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Created/Modified Files
-- `[ ]` `crates/wheelbase/src/config.rs` -> Updates `super_buggy()`, `touring_ax()`, and `rally_car()` constructors with LSD differentials and rear-biased torque split; generalizes `with_rally_balance()` into `with_loose_surface_4wd_balance()`.
-- `[ ]` `crates/tdrace-app/src/catalog/mod.rs` -> Updates `RealCarModel::to_car_config()` to apply loose-surface 4WD balance across Autocross, Extreme Off-Road, and Rallycross.
-- `[ ]` `crates/tdrace-app/src/module/classic.rs` -> Harmonizes `classic_ax_brawler` and `classic_ax_talon` 4WD configurations.
-- `[ ]` `specs/constitution/ROADMAP.md` -> Links Spec 113 under Section 3 (Vehicle Dynamics & Powertrain Architecture).
+- [x] `crates/wheelbase/src/config.rs` -> Updates `super_buggy()`, `touring_ax()`, and `rally_car()` constructors with LSD differentials and rear-biased torque split; generalizes `with_rally_balance()` into `with_loose_surface_4wd_balance()`.
+- [x] `crates/tdrace-app/src/catalog/mod.rs` -> Updates `RealCarModel::to_car_config()` to apply loose-surface 4WD balance across Autocross, Extreme Off-Road, and Rallycross.
+- [x] `crates/tdrace-app/src/module/classic.rs` -> Harmonizes `classic_ax_brawler` and `classic_ax_talon` 4WD configurations.
+- [x] `specs/constitution/ROADMAP.md` -> Links Spec 113 under Section 3 (Vehicle Dynamics & Powertrain Architecture).
 
 ### Verification Assertions
 - `crates/tdrace-app/tests/autocross_catalog_tests.rs` validates that all 4WD catalog vehicles derive compliant configurations.

@@ -258,18 +258,19 @@ fn test_5000_step_fuzzed_replay_determinism_all_tracks_and_cars() {
     ];
 
     let cars = [
-        (CarChoice::SportsCar, CarConfig::sports_car()),
-        (CarChoice::DriftCar, CarConfig::drift_car()),
-        (CarChoice::Kart, CarConfig::kart()),
-        (CarChoice::RallyCar, CarConfig::rally_car()),
+        CarChoice::SportsCar,
+        CarChoice::DriftCar,
+        CarChoice::Kart,
+        CarChoice::RallyCar,
     ];
 
     let dt = 1.0 / 120.0;
 
     for (t_choice, track) in &tracks {
-        for (c_choice, config) in &cars {
+        for c_choice in &cars {
+            let config = c_choice.config();
             let init_pose = track.grid_positions[0];
-            let mut car = Car::new(*config).with_pose(init_pose.position, init_pose.angle);
+            let mut car = Car::new(config).with_pose(init_pose.position, init_pose.angle);
             let mut tracker = TrackProgressTracker::new(track.checkpoints.len(), 3);
             let mut recorder = ReplayRecorder::new(t_choice.clone(), *c_choice, 42, dt);
 

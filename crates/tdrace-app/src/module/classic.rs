@@ -148,11 +148,10 @@ impl ClassicGameModule {
         cfg.steer_speed = 8.0;
         cfg.steer_return_speed = 11.0;
         cfg.downforce_coefficient = 0.75;
-        cfg.drive_bias = 0.5; // AWD
         cfg.tire.slide_grip = 0.93;
         cfg.tire.peak_slip_angle_deg = 9.8;
         cfg.assists = tdrace_core::physics::config::DriverAssistsConfig::arcade();
-        cfg.finalized()
+        cfg.finalized().with_loose_surface_4wd_balance()
     }
 
     /// 210 BHP Corsica '73 RS: classic 1973 air-cooled GT coupe, light rear-engine RWD balance, communicative slip.
@@ -260,10 +259,20 @@ impl ClassicGameModule {
         cfg.steer_return_speed = 12.0;
         cfg.downforce_coefficient = 0.80;
         cfg.drive_bias = 0.5; // AWD
+        cfg.front_differential = tdrace_core::physics::config::DifferentialType::LimitedSlip {
+            power_lock: 0.30,
+            coast_lock: 0.15,
+            preload_nm: 35.0,
+        };
+        cfg.rear_differential = tdrace_core::physics::config::DifferentialType::LimitedSlip {
+            power_lock: 0.65,
+            coast_lock: 0.40,
+            preload_nm: 75.0,
+        };
         cfg.tire.slide_grip = 0.94;
         cfg.tire.peak_slip_angle_deg = 10.5;
         cfg.assists = tdrace_core::physics::config::DriverAssistsConfig::arcade();
-        cfg.finalized()
+        cfg.finalized().with_loose_surface_4wd_balance()
     }
 }
 

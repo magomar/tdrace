@@ -649,7 +649,7 @@ mod tests {
         assert_eq!(rally.default_off_track_surface(), tdrace_core::physics::surface::SurfaceType::Dirt);
 
         let rally_car = RallycrossGameModule::car_wrc_rally();
-        assert_eq!(rally_car.drive_bias, 0.5);
+        assert_eq!(rally_car.drive_bias, tdrace_core::physics::config::LOOSE_SURFACE_FRONT_TORQUE_SHARE);
     }
 
     #[test]
@@ -751,12 +751,12 @@ mod tests {
 
         let brawler = ClassicGameModule::car_classic_ax_brawler();
         assert_eq!(brawler.mass, 1150.0);
-        assert_eq!(brawler.drive_bias, 0.5);
+        assert_eq!(brawler.drive_bias, tdrace_core::physics::config::LOOSE_SURFACE_FRONT_TORQUE_SHARE);
         assert!(brawler.assists.counter_steer_assist_enabled);
 
         let talon = ClassicGameModule::car_classic_ax_talon();
         assert_eq!(talon.mass, 800.0);
-        assert_eq!(talon.drive_bias, 0.5);
+        assert_eq!(talon.drive_bias, tdrace_core::physics::config::LOOSE_SURFACE_FRONT_TORQUE_SHARE);
         assert!(talon.assists.counter_steer_assist_enabled);
     }
 
