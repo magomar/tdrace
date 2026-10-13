@@ -4,6 +4,7 @@ template: architecture
 title: "Low-Grip Runoff Bot Recovery and Wall Scraping Resistance Calibration"
 description: "Calibrates wall scraping deceleration so cars resting against barriers can pull away on low-grip runoff, extends three-point turn leg duration to prevent oscillating in place, and equips the bot AI with wall-aware recovery steering and escape velocity gating for the no-progress watchdog."
 status: in_progress
+receipt: "docs/receipts/spec-115-receipt.md"
 verified: { by: "human:mario", at: "2026-10-13T10:02:37Z", hash: "9f423aecf31c" }
 created: 2026-10-13
 generated: { by: agent/antigravity, at: 2026-10-13T08:39:38Z }
