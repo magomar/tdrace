@@ -1090,4 +1090,35 @@ mod multitier_ui {
         let (_, detail) = academy_result_summary(&last.unwrap());
         assert!(detail.contains("DAILY STIPEND LIMIT"), "{detail}");
     }
+
+    #[test]
+    fn test_academy_setup_spawns_on_track_without_stale_vehicles() {
+        use tdrace_app::game::academy::setup_academy_session;
+        let mut session = RaceSession::new();
+        // Simulate playing on a different track earlier, e.g. kart on lonato
+        session.switch_to_kart();
+        assert_eq!(session.world.vehicles.len(), 8); // Kart grid with 7 bots
+
+        // Now user enters academy and selects Lesson 1
+        setup_academy_session(&mut session, AcademyLessonId::Lesson1ApexLine).expect("Setup Lesson 1");
+
+        // The session should be on gt_velocity_park
+        assert_eq!(session.track_choice.track_id(), "gt_velocity_park");
+        assert_eq!(session.track.name, "Velocity Park");
+        // Exactly 1 vehicle (player only, 0 bots)
+        assert_eq!(session.num_bots, 0);
+        assert_eq!(session.world.vehicles.len(), 1);
+        assert_eq!(session.total_laps, 1);
+
+        // Car must be on-track at the starting line, NOT in the grass
+        let pos = session.world.vehicles[0].state.position;
+        // On gt_velocity_park, grid position 0 is [145.00012, 2.5]
+        assert!((pos.x - 145.0).abs() < 1.0, "Car X position should be at grid slot 0, got {}", pos.x);
+        assert!((pos.y - 2.5).abs() < 1.0, "Car Y position should be at grid slot 0, got {}", pos.y);
+
+        // Off track timer must be 0.0
+        assert_eq!(session.world.trackers[0].off_track_timer, 0.0);
+        assert!(!session.academy_challenge.as_ref().unwrap().disqualified);
+    }
 }
+

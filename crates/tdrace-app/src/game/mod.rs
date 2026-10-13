@@ -1906,7 +1906,7 @@ impl RaceSession {
 
     /// Returns the active vehicle model for the player, respecting track enforcement or free selection.
     pub fn active_player_car_choice(&self) -> CarChoice {
-        if self.free_car_selection {
+        if self.free_car_selection || self.active_academy_lesson.is_some() {
             self.car_choice
         } else {
             self.resolve_predefined_car()
@@ -4282,7 +4282,7 @@ impl RaceSession {
                         })
                 })
         } else {
-            if self.free_car_selection {
+            if self.free_car_selection || self.active_academy_lesson.is_some() {
                 self.selected_car_model_id
                     .and_then(crate::catalog::find_model_by_id)
                     .filter(|m| m.module_id == "classic" && m.base_car_choice == player_car_choice)
@@ -4912,6 +4912,16 @@ impl RaceSession {
                 } else {
                     self.track = self.load_track_for_session(&self.track_choice);
                 }
+            } else if let Some(lesson_id) = self.active_academy_lesson {
+                if let Some(def) = academy::AcademyLessonDef::find(lesson_id) {
+                    if let Ok(t) = self.track_manager.load_track_by_slug(&def.track_slug) {
+                        self.track = t;
+                    } else {
+                        self.track = self.load_track_for_session(&self.track_choice);
+                    }
+                } else {
+                    self.track = self.load_track_for_session(&self.track_choice);
+                }
             } else {
                 self.track = self.load_track_for_session(&self.track_choice);
             }
@@ -4979,6 +4989,22 @@ impl RaceSession {
             }
         }
 
+        // Synchronize vehicle choice for Academy lessons
+        if let Some(lesson_id) = self.active_academy_lesson {
+            if let Some(def) = academy::AcademyLessonDef::find(lesson_id) {
+                let (car_choice, model_id) = match def.car_slug.as_str() {
+                    "classic_rally" => (CarChoice::RallyCar, "classic_rally"),
+                    "classic_ax_mudlark" => (CarChoice::CrossCar, "classic_ax_mudlark"),
+                    "classic_ax_brawler" => (CarChoice::TouringAX, "classic_ax_brawler"),
+                    "classic_offroad" => (CarChoice::SandRail, "classic_offroad"),
+                    "classic_nascar" => (CarChoice::StockCar, "classic_nascar"),
+                    _ => (CarChoice::SportsCar, "classic_gt"),
+                };
+                self.car_choice = car_choice;
+                self.selected_car_model_id = Some(model_id);
+            }
+        }
+
         // Predefined balanced lap count from track (or championship override)
         self.total_laps = if let Some(champ) = &self.championship_session {
             if let Some(round_laps) = champ.current_round_laps() {
@@ -4988,6 +5014,8 @@ impl RaceSession {
             } else {
                 self.track.default_laps
             }
+        } else if let Some(rules) = self.academy_rules() {
+            rules.laps
         } else {
             self.track.default_laps
         };
@@ -4998,7 +5026,12 @@ impl RaceSession {
 
         // Apply or initialize modality user preferences (for non-career races with grid participants)
         let is_career = self.game_mode == GameMode::Career || self.championship_session.is_some();
-        if !is_career && !self.is_time_attack {
+        let is_academy = self.active_academy_lesson.is_some();
+        if is_academy {
+            if let Some(rules) = self.academy_rules() {
+                self.num_bots = rules.bots;
+            }
+        } else if !is_career && !self.is_time_attack {
             let human_count = if self.is_split_screen() { 2 } else { 1 };
             let max_grid = self.max_grid_participants();
 
@@ -5118,12 +5151,23 @@ impl RaceSession {
         let sound_config = self.resolve_active_sound_config();
         self.audio.set_engine_type_with_config(sound_type, &sound_config);
 
-        // Show Starting Grid with selected race participants
+        if let Some(lesson_id) = self.active_academy_lesson {
+            self.academy_challenge = Some(academy::AcademyChallengeState::new(lesson_id));
+            self.academy_last_evaluation = None;
+        }
+
+        // Show Starting Grid with selected race participants (or Countdown for Academy)
         self.starting_grid_focus = StartingGridFocus::LeftSetup;
         self.starting_grid_card_idx = 0;
         self.starting_grid_roster_idx = 0;
         self.starting_grid_config_idx = 0;
-        self.state = GameState::StartingGrid;
+        if self.active_academy_lesson.is_some() {
+            if !matches!(self.state, GameState::ClassicAcademy { .. }) {
+                self.state = GameState::Countdown(3.5);
+            }
+        } else {
+            self.state = GameState::StartingGrid;
+        }
     }
 
     /// Pauses the race session and activates the static full-circuit overview camera.
@@ -7065,6 +7109,7 @@ impl RaceSession {
     /// and the circuit selector otherwise.
     pub fn race_exit_target(&mut self) -> GameState {
         if let Some(lesson_id) = self.active_academy_lesson.take() {
+            self.academy_challenge = None;
             let newly_graduated = self.academy_last_evaluation.as_ref().map(|e| e.newly_graduated).unwrap_or(false);
             return GameState::ClassicAcademy {
                 selected_idx: lesson_id.index(),

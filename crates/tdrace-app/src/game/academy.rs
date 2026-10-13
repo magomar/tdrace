@@ -337,7 +337,7 @@ pub fn setup_academy_session(
     let (car_choice, model_id) = match def.car_slug.as_str() {
         "classic_rally" => (CarChoice::RallyCar, "classic_rally"),
         "classic_ax_mudlark" => (CarChoice::CrossCar, "classic_ax_mudlark"),
-        "classic_ax_brawler" => (CarChoice::CrossCar, "classic_ax_brawler"),
+        "classic_ax_brawler" => (CarChoice::TouringAX, "classic_ax_brawler"),
         "classic_offroad" => (CarChoice::SandRail, "classic_offroad"),
         "classic_nascar" => (CarChoice::StockCar, "classic_nascar"),
         _ => (CarChoice::SportsCar, "classic_gt"),
@@ -353,6 +353,8 @@ pub fn setup_academy_session(
     session.active_academy_lesson = Some(lesson_id);
     session.academy_challenge = Some(AcademyChallengeState::new(lesson_id));
     session.academy_last_evaluation = None;
+
+    session.init_race();
 
     Ok(())
 }
