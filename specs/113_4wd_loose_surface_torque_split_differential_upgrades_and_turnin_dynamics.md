@@ -3,7 +3,7 @@ type: Architecture Spec
 template: architecture
 title: "4WD Loose Surface Torque Split Differential Upgrades and Turn-In Dynamics"
 description: "Resolves acute understeer and turning resistance on 4WD/AWD vehicles across Autocross, Extreme Off-Road, and Rally by replacing rigid 50:50 torque splits with rear-biased loose-surface distribution, upgrading locked spool differentials to motorsport limited-slip units, and harmonizing front differential locking characteristics."
-status: in_progress
+status: implemented
 receipt: "docs/receipts/spec-113-receipt.md"
 created: 2026-10-12
 generated: { by: agent/antigravity, at: 2026-10-12T21:13:06Z }
