@@ -165,7 +165,9 @@ impl Track {
         let rear = segment.samples.first()?.point;
         let beside = self.spline.project_point(rear);
         let side = if (rear - beside.closest_point).dot(beside.normal) > 0.0 { ChuteSide::Left } else { ChuteSide::Right };
-        let pad_length = (segment.length - RAMP_LENGTH_M).clamp(PAD_LENGTH_RANGE.0, PAD_LENGTH_RANGE.1);
+        let merge_dist = self.spline.project_point(self.spline.waypoints[merge_waypoint].point).progress_distance;
+        let u_rear = (merge_dist - beside.progress_distance).rem_euclid(self.spline.total_length());
+        let pad_length = (u_rear - RAMP_LENGTH_M).clamp(PAD_LENGTH_RANGE.0, PAD_LENGTH_RANGE.1);
         Some(LaunchChuteSpec {
             merge_waypoint,
             side,

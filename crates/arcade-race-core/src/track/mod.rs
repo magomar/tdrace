@@ -1137,27 +1137,29 @@ impl Track {
             chute_walls.extend(bridges);
         }
 
-        // Spec 112: Adaptive median barriers in diverging gore wedges
-        for j in &net.junctions {
-            if let JunctionKind::Split { egress_sockets, .. } = &j.kind {
-                if egress_sockets.len() >= 2 {
-                    let seg0 = net.segments.iter().find(|s| s.entry_junction == Some(SocketId::new(j.id, 0)));
-                    let seg1 = net.segments.iter().find(|s| s.entry_junction == Some(SocketId::new(j.id, 1)));
-                    if let (Some(s0), Some(s1)) = (seg0, seg1) {
-                        let medians = generate_adaptive_median_barriers(s0, s1, barrier_type);
-                        for m in medians {
-                            walls.push(at_road_height(m));
+        if !compiled {
+            // Spec 112: Adaptive median barriers in diverging gore wedges
+            for j in &net.junctions {
+                if let JunctionKind::Split { egress_sockets, .. } = &j.kind {
+                    if egress_sockets.len() >= 2 {
+                        let seg0 = net.segments.iter().find(|s| s.entry_junction == Some(SocketId::new(j.id, 0)));
+                        let seg1 = net.segments.iter().find(|s| s.entry_junction == Some(SocketId::new(j.id, 1)));
+                        if let (Some(s0), Some(s1)) = (seg0, seg1) {
+                            let medians = generate_adaptive_median_barriers(s0, s1, barrier_type);
+                            for m in medians {
+                                walls.push(at_road_height(m));
+                            }
                         }
                     }
                 }
             }
-        }
 
-        // Spec 112: Branch throat funnel bridges closing outer corner gaps
-        let main_walls_iter = self.geometry.inner_walls.iter().chain(&self.geometry.outer_walls);
-        let throat_bridges = branch_throat_bridges(&walls, main_walls_iter, &net.segments, barrier_type);
-        for b in throat_bridges {
-            walls.push(at_road_height(b));
+            // Spec 112: Branch throat funnel bridges closing outer corner gaps
+            let main_walls_iter = self.geometry.inner_walls.iter().chain(&self.geometry.outer_walls);
+            let throat_bridges = branch_throat_bridges(&walls, main_walls_iter, &net.segments, barrier_type);
+            for b in throat_bridges {
+                walls.push(at_road_height(b));
+            }
         }
 
         if let Some(chute) = self.network.as_mut().and_then(|n| n.launch_chute.as_mut()) {
