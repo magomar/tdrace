@@ -226,3 +226,37 @@ fn test_handling_gate_competition_braking_efficiency() {
         );
     }
 }
+
+#[test]
+fn test_handling_gate_all_awd_loose_surface_balance_parity() {
+    use tdrace_app::catalog::ALL_REAL_CARS;
+    use tdrace_core::CarCategory;
+
+    let mut audited_cars = 0;
+    for car in ALL_REAL_CARS {
+        let cat = car.category();
+        if (cat == CarCategory::Autocross || cat == CarCategory::Rallycross)
+            && (car.drivetrain == "4WD" || car.drivetrain == "AWD")
+        {
+            let cfg = car.to_car_config();
+            assert!(
+                (cfg.drive_bias - 0.30).abs() < 1e-4,
+                "AWD car {} (module: {}, name: {}) drive_bias ({:.2}) must be 0.30",
+                car.id, car.module_id, car.name, cfg.drive_bias
+            );
+            assert!(
+                (cfg.rear_axle.grip_scale - 0.92).abs() < 1e-4,
+                "AWD car {} (module: {}, name: {}) rear grip ({:.2}) must be 0.92",
+                car.id, car.module_id, car.name, cfg.rear_axle.grip_scale
+            );
+            audited_cars += 1;
+        }
+    }
+
+    println!(
+        "[Handling Gate] Successfully audited {} loose-surface AWD vehicles (AX, RX, and Classic)",
+        audited_cars
+    );
+    assert!(audited_cars >= 25, "Expected at least 25 AWD loose-surface cars, found {}", audited_cars);
+}
+
