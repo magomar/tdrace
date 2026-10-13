@@ -732,14 +732,46 @@ impl ModuleCareerProgress {
         }
     }
 
-    /// Resolves the authentic vehicle credit cost for a car model ID, falling back to module/tier.
+    /// Resolves the authentic vehicle credit cost for a car model ID based on the Spec 116
+    /// Aggregated Performance Index (API) with intra-tier spread and 250 Cr rounding,
+    /// falling back to base module/tier pricing if the model is uncatalogued.
     pub fn car_credit_cost_for_car(car_id: &str, module_id: &str, tier: u8) -> u64 {
-        if let Some(m) = crate::catalog::find_model_by_id(car_id) {
-            Self::car_credit_cost_for_module(m.module_id, m.tier)
-        } else if module_id == "kart" || module_id == "autocross" || module_id == "ax" || module_id == "rally" || module_id == "rallycross" || module_id == "rx" {
-            Self::car_credit_cost_for_module(module_id, tier)
+        let model = crate::catalog::find_model_by_id(car_id);
+        let (mod_id, car_tier) = if let Some(m) = model {
+            (m.module_id, m.tier)
         } else {
-            Self::car_credit_cost(tier)
+            (module_id, tier)
+        };
+
+        let base_price = if mod_id == "kart"
+            || mod_id == "autocross"
+            || mod_id == "ax"
+            || mod_id == "rally"
+            || mod_id == "rallycross"
+            || mod_id == "rx"
+            || mod_id == "gt"
+            || mod_id == "gt_challenge"
+            || mod_id == "nascar"
+            || mod_id == "extreme_offroad"
+        {
+            Self::car_credit_cost_for_module(mod_id, car_tier)
+        } else {
+            Self::car_credit_cost(car_tier)
+        };
+
+        if let Some(m) = model {
+            let i_rel = m.cohort_relative_performance_index();
+            let spread_coeff = match car_tier {
+                1 => 0.20,
+                2 => 0.25,
+                3 => 0.30,
+                _ => 0.35,
+            };
+            let spread = (base_price as f64) * spread_coeff * (i_rel as f64);
+            let spread_rounded = (((spread + 125.0) / 250.0).floor() as u64) * 250;
+            base_price + spread_rounded
+        } else {
+            base_price
         }
     }
 
@@ -748,33 +780,51 @@ impl ModuleCareerProgress {
         Self::car_credit_cost(tier)
     }
 
-    /// Cumulative discipline XP threshold required to unlock each tier license (Spec 053).
-    pub fn tier_license_xp(tier: u32) -> u64 {
-        match tier {
-            1 => 0,
-            2 => 3_000,
-            3 => 7_500,
-            4 => 15_000,
-            5 => 30_000,
-            _ => u64::MAX,
+    /// Minimal XP earned by completing all rounds of a championship in the given tier (finishing last, no clean/first-visit bonuses).
+    pub fn minimum_championship_xp(module_id: &str, tier: u32) -> u64 {
+        match (module_id, tier) {
+            ("kart", 1) => 2_500,
+            ("kart", 2) => 3_000,
+            ("kart", 3) => 3_500,
+            ("kart", 4) => 4_000,
+            ("kart", 5) => 4_500,
+            ("kart", 6) => 5_000,
+
+            ("rally" | "rallycross" | "rx", 1) => 2_500,
+            ("rally" | "rallycross" | "rx", 2) => 3_000,
+            ("rally" | "rallycross" | "rx", 3) => 3_500,
+            ("rally" | "rallycross" | "rx", 4) => 4_000,
+            ("rally" | "rallycross" | "rx", 5) => 5_000,
+            ("rally" | "rallycross" | "rx", 6) => 6_000,
+
+            // GT, NASCAR, Extreme Offroad, Autocross:
+            (_, 1) => 3_000,
+            (_, 2) => 4_000,
+            (_, 3) => 5_000,
+            (_, 4) => 6_000,
+            (_, 5) => 7_500,
+            _ => 5_000,
         }
     }
 
-    /// Cumulative discipline XP threshold required to unlock each tier license for a specific module (Spec 052, 053).
-    pub fn tier_license_xp_for_module(module_id: &str, tier: u32) -> u64 {
-        if module_id == "kart" {
-            match tier {
-                1 => 0,
-                2 => 1_500,
-                3 => 3_500,
-                4 => 6_000,
-                5 => 9_000,
-                6 => 13_000,
-                _ => u64::MAX,
-            }
-        } else {
-            Self::tier_license_xp(tier)
+    /// Cumulative discipline XP threshold required to unlock each tier license (Spec 053).
+    pub fn tier_license_xp(tier: u32) -> u64 {
+        Self::tier_license_xp_for_module("default", tier)
+    }
+
+    /// Cumulative discipline XP threshold required for alternative tier advancement without a podium finish.
+    /// Each tier step requires double the minimal XP earned from completing that tier's championship, compounding cumulatively:
+    /// Tier 2 = 2 * min_xp(1)
+    /// Tier 3 = Tier 2 + 2 * min_xp(2), etc.
+    pub fn tier_license_xp_for_module(module_id: &str, target_tier: u32) -> u64 {
+        if target_tier <= 1 {
+            return 0;
         }
+        let mut total = 0u64;
+        for t in 1..target_tier {
+            total = total.saturating_add(2 * Self::minimum_championship_xp(module_id, t));
+        }
+        total
     }
 
     /// Base round prize purse (Credits) per career tier (Spec 053).
@@ -866,9 +916,11 @@ impl ModuleCareerProgress {
         }
     }
 
-    /// Progress ratio [0.0..1.0] towards acquiring the next tier's license.
+    /// Progress ratio [0.0..1.0] towards advancing to the next tier.
+    /// If the driver has earned a championship podium in the current tier, returns 1.0 (promotion ready).
+    /// Otherwise returns progress towards the alternative cumulative XP threshold.
     pub fn level_progress_ratio(&self) -> f32 {
-        if self.level >= self.max_tier() {
+        if self.level >= self.max_tier() || self.has_podium_in_tier(self.level) {
             return 1.0;
         }
         let target = self.next_tier_target_xp().unwrap_or(3_000);
@@ -994,9 +1046,9 @@ impl ModuleCareerProgress {
         }
     }
 
-    /// Checks whether the driver satisfies both conditions to advance to the next tier:
-    /// 1. Earned at least one championship podium in any championship of the current tier.
-    /// 2. Accumulated cumulative discipline XP at or above the next tier's license threshold.
+    /// Checks whether the driver satisfies the conditions to advance to the next tier:
+    /// - Primary path: Earned at least one championship podium (top 3) in any championship of the current tier.
+    /// - Alternative path: Accumulated cumulative discipline XP at or above the alternative XP threshold (double compounding championship XP).
     pub fn can_advance_tier(&self) -> bool {
         if self.level >= self.max_tier() {
             return false;
@@ -1004,7 +1056,7 @@ impl ModuleCareerProgress {
         let next_tier = self.level + 1;
         let has_podium = self.has_podium_in_tier(self.level);
         let has_xp = self.xp >= Self::tier_license_xp_for_module(&self.module_id, next_tier);
-        has_podium && has_xp
+        has_podium || has_xp
     }
 
     /// Ensures career rivals are initialized for this module progress record.
@@ -1047,7 +1099,7 @@ impl ModuleCareerProgress {
         if !self.can_advance_tier() {
             let next_tier = self.level + 1;
             return Err(format!(
-                "Cannot advance to Tier {}: Requires at least 1 championship podium in Tier {} and {} cumulative XP (current: {})",
+                "Cannot advance to Tier {}: Requires at least 1 championship podium in Tier {} or {} cumulative XP (current: {})",
                 next_tier,
                 self.level,
                 Self::tier_license_xp_for_module(&self.module_id, next_tier),
@@ -1066,15 +1118,9 @@ impl ModuleCareerProgress {
         self.advance_tier_with_seed(seed).map(|(lvl, _)| lvl)
     }
 
-    /// Ensures unlocked tracks and starter cars match or exceed current level.
+    /// Ensures unlocked tracks match or exceed current level.
+    /// Note: Vehicles are no longer gifted upon tier advancement; players acquire higher tier vehicles in the Showroom using Credits.
     pub fn sync_unlocks_for_level(&mut self) {
-        let max_tier = self.max_tier();
-        let cap = self.level.clamp(1, max_tier);
-        for t in 1..=cap {
-            for car in Self::starter_cars_for_module_and_tier(&self.module_id, t) {
-                self.ensure_car(&car);
-            }
-        }
         match self.module_id.as_str() {
             "gt" | "gt_challenge" => {
                 // Tier 1 (5 circuits)

@@ -3,7 +3,8 @@ type: Architecture Spec
 template: architecture
 title: "Performance-Based Individual Vehicle Pricing and Dynamic Catalog Valuation"
 description: "Establishes a data-driven Aggregated Performance Index (API) for vehicle models across all motorsport categories and scales individual credit purchase prices with intra-tier valuation spreads while anchoring entry grassroots karts at 5,000 Cr."
-status: draft
+status: implemented
+verified: { by: human:mario, at: 2026-10-13T22:27:40Z, hash: "5ddb146052f3" }
 created: 2026-10-13
 generated: { by: agent/antigravity, at: 2026-10-13T21:47:25Z }
 epic: "tdrace-sp116-j05xz"
@@ -226,41 +227,41 @@ In [`crates/tdrace-app/src/ui/garage.rs`](../crates/tdrace-app/src/ui/garage.rs)
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 #### Scenario: Tier 1 Kart models have differentiated performance-based pricing
-- [ ] **Given** the three Tier 1 Kart models (`kart_blackline_cadet_t1`, `kart_rosso_junior_t1`, `kart_verde_sprout_t1`)
-- [ ] **When** `car_credit_cost_for_car` is evaluated for each model at Tier 1
-- [ ] **Then** the baseline model (`kart_blackline_cadet_t1`) evaluates to exactly 5,000 Cr
-- [ ] **And** the baseline model (`kart_rosso_junior_t1`) evaluates to exactly 5,000 Cr
-- [ ] **And** the higher-performing model (`kart_verde_sprout_t1`) evaluates to a premium price strictly greater than 5,000 Cr (e.g. 6,000 Cr)
-- [ ] **And** all prices are multiples of 250 Cr
+- [x] **Given** the three Tier 1 Kart models (`kart_blackline_cadet_t1`, `kart_rosso_junior_t1`, `kart_verde_sprout_t1`)
+- [x] **When** `car_credit_cost_for_car` is evaluated for each model at Tier 1
+- [x] **Then** the baseline model (`kart_blackline_cadet_t1`) evaluates to exactly 5,000 Cr
+- [x] **And** the baseline model (`kart_rosso_junior_t1`) evaluates to exactly 5,000 Cr
+- [x] **And** the higher-performing model (`kart_verde_sprout_t1`) evaluates to a premium price strictly greater than 5,000 Cr (e.g. 6,000 Cr)
+- [x] **And** all prices are multiples of 250 Cr
 
 #### Scenario: Academy graduate can purchase any Tier 1 kart with earned gold purse
-- [ ] **Given** a new player profile who graduated the Classic Academy with gold medals and has 7,000 Cr
-- [ ] **When** inspecting the garage showroom for Tier 1 Karting
-- [ ] **Then** all three Tier 1 karts are marked as affordable (`can_buy_car_for_profile == true`)
-- [ ] **And** purchasing the cheapest kart leaves a 2,000 Cr safety reserve
-- [ ] **And** purchasing the highest-spec kart leaves at least a 1,000 Cr safety reserve
-- [ ] **And** the profile cannot purchase a second kart with remaining credits
+- [x] **Given** a new player profile who graduated the Classic Academy with gold medals and has 7,000 Cr
+- [x] **When** inspecting the garage showroom for Tier 1 Karting
+- [x] **Then** all three Tier 1 karts are marked as affordable (`can_buy_car_for_profile == true`)
+- [x] **And** purchasing the cheapest kart leaves a 2,000 Cr safety reserve
+- [x] **And** purchasing the highest-spec kart leaves at least a 1,000 Cr safety reserve
+- [x] **And** the profile cannot purchase a second kart with remaining credits
 
 #### Scenario: Intra-tier pricing monotonically aligns with performance index
-- [ ] **Given** any two models $A$ and $B$ in the same discipline module and tier
-- [ ] **When** model $A$ has a strictly higher composite performance index $I_{\text{rel}}(A) > I_{\text{rel}}(B)$ by at least $0.15$
-- [ ] **Then** the credit purchase price of model $A$ is greater than or equal to the credit purchase price of model $B$
-- [ ] **And** model $A$ is never cheaper than model $B$
+- [x] **Given** any two models $A$ and $B$ in the same discipline module and tier
+- [x] **When** model $A$ has a strictly higher composite performance index $I_{\text{rel}}(A) > I_{\text{rel}}(B)$ by at least $0.15$
+- [x] **Then** the credit purchase price of model $A$ is greater than or equal to the credit purchase price of model $B$
+- [x] **And** model $A$ is never cheaper than model $B$
 
 #### Scenario: Garage UI displays model-specific price and performance index
-- [ ] **Given** the player viewing the Garage Showroom screen
-- [ ] **When** navigating between different car models within the same tier
-- [ ] **Then** the purchase button and hero card update immediately to show each model's distinct credit price
-- [ ] **And** the performance index and stat radar reflect the selected model's specifications
+- [x] **Given** the player viewing the Garage Showroom screen
+- [x] **When** navigating between different car models within the same tier
+- [x] **Then** the purchase button and hero card update immediately to show each model's distinct credit price
+- [x] **And** the performance index and stat radar reflect the selected model's specifications
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Created/Modified Files
-- `[ ]` `crates/tdrace-app/src/catalog/mod.rs` -> Implement `RealCarModel::performance_index(&self) -> f32` and precomputed cohort normalization.
-- `[ ]` `crates/tdrace-app/src/profile/mod.rs` -> Implement dynamic `car_credit_cost_for_car(car_id, module, tier) -> u64` with intra-tier spread.
-- `[ ]` `crates/tdrace-app/src/ui/garage.rs` -> Render individual model price, performance index badge, and affordability state.
-- `[ ]` `crates/tdrace-app/tests/career_onboarding_tests.rs` -> Unit and integration tests for intra-tier pricing, affordability gates, and Academy purse sufficiency.
-- `[ ]` `specs/constitution/ROADMAP.md` -> Register Spec 116 under Phase 5.
-- `[ ]` `specs/index.md` -> Index Spec 116 in master OKF v0.2 table and dependency graph.
+- `[x]` `crates/tdrace-app/src/catalog/mod.rs` -> Implement `RealCarModel::performance_index(&self) -> f32` and precomputed cohort normalization.
+- `[x]` `crates/tdrace-app/src/profile/mod.rs` -> Implement dynamic `car_credit_cost_for_car(car_id, module, tier) -> u64` with intra-tier spread.
+- `[x]` `crates/tdrace-app/src/ui/garage.rs` -> Render individual model price, performance index badge, and affordability state.
+- `[x]` `crates/tdrace-app/tests/career_onboarding_tests.rs` -> Unit and integration tests for intra-tier pricing, affordability gates, and Academy purse sufficiency.
+- `[x]` `specs/constitution/ROADMAP.md` -> Register Spec 116 under Phase 5.
+- `[x]` `specs/index.md` -> Index Spec 116 in master OKF v0.2 table and dependency graph.

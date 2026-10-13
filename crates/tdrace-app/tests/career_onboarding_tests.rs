@@ -438,7 +438,7 @@ fn test_grassroots_pricing_calibration_and_affordability() {
     );
     assert_eq!(
         ModuleCareerProgress::car_credit_cost_for_car("kart_verde_sprout_t1", "kart", 1),
-        5_000
+        6_000
     );
     assert_eq!(
         ModuleCareerProgress::car_credit_cost_for_car("autocross_lifelive_tn5", "autocross", 1),
@@ -449,8 +449,12 @@ fn test_grassroots_pricing_calibration_and_affordability() {
         16_000
     );
     assert_eq!(
-        ModuleCareerProgress::car_credit_cost_for_car("gt_vandorn_stratus_t1", "gt", 1),
+        ModuleCareerProgress::car_credit_cost_for_car("gt_bmr_bavaria_t1", "gt", 1),
         70_000
+    );
+    assert_eq!(
+        ModuleCareerProgress::car_credit_cost_for_car("gt_vandorn_stratus_t1", "gt", 1),
+        84_000
     );
 
     // 2. Affordability with all-Bronze total purse (5,500 Cr)
@@ -1184,6 +1188,85 @@ mod multitier_ui {
         // Off track timer must be 0.0
         assert_eq!(session.world.trackers[0].off_track_timer, 0.0);
         assert!(!session.academy_challenge.as_ref().unwrap().disqualified);
+    }
+
+    #[test]
+    fn test_spec_116_performance_based_pricing_and_showroom_valuation() {
+        use tdrace_app::catalog::get_all_models;
+        use tdrace_app::profile::{LicenseGrade, ModuleCareerProgress, PlayerProfile};
+
+        // Scenario: Tier 1 Kart models have differentiated performance-based pricing
+        let blackline_cost = ModuleCareerProgress::car_credit_cost_for_car("kart_blackline_cadet_t1", "kart", 1);
+        let rosso_cost = ModuleCareerProgress::car_credit_cost_for_car("kart_rosso_junior_t1", "kart", 1);
+        let verde_cost = ModuleCareerProgress::car_credit_cost_for_car("kart_verde_sprout_t1", "kart", 1);
+
+        assert_eq!(blackline_cost, 5_000, "Blackline cadet must be base 5,000 Cr");
+        assert_eq!(rosso_cost, 5_000, "Rosso junior must be base 5,000 Cr");
+        assert_eq!(verde_cost, 6_000, "Verde sprout must evaluate to 6,000 Cr");
+        assert!(verde_cost > blackline_cost, "Verde sprout premium must exceed base");
+        assert_eq!(blackline_cost % 250, 0);
+        assert_eq!(rosso_cost % 250, 0);
+        assert_eq!(verde_cost % 250, 0);
+
+        // Scenario: Academy graduate can purchase any Tier 1 kart with earned gold purse
+        let mut gold_profile = PlayerProfile::new_rookie("GoldGraduate");
+        gold_profile.academy_progress.license_granted = true;
+        gold_profile.license_grade = LicenseGrade::ClassD;
+        gold_profile.credits = 7_000;
+        gold_profile.lifetime_credits = 7_000;
+
+        let kart_progress = ModuleCareerProgress::default_for_module(1, "kart");
+        assert!(kart_progress.can_buy_car_for_profile(&gold_profile, "kart_blackline_cadet_t1", 1));
+        assert!(kart_progress.can_buy_car_for_profile(&gold_profile, "kart_rosso_junior_t1", 1));
+        assert!(kart_progress.can_buy_car_for_profile(&gold_profile, "kart_verde_sprout_t1", 1));
+
+        // Purchasing cheapest kart leaves 2,000 Cr reserve and prevents double-buy
+        let mut profile_a = gold_profile.clone();
+        let mut progress_a = kart_progress.clone();
+        progress_a.buy_car(&mut profile_a, "kart_blackline_cadet_t1", 1).expect("Buy blackline");
+        assert_eq!(profile_a.credits, 2_000, "Cheapest kart leaves 2,000 Cr reserve");
+        assert!(!progress_a.can_buy_car_for_profile(&profile_a, "kart_rosso_junior_t1", 1), "Cannot afford second kart");
+        assert!(!progress_a.can_buy_car_for_profile(&profile_a, "kart_verde_sprout_t1", 1), "Cannot afford second kart");
+
+        // Purchasing premium Verde Sprout leaves 1,000 Cr reserve and prevents double-buy
+        let mut profile_b = gold_profile.clone();
+        let mut progress_b = kart_progress.clone();
+        progress_b.buy_car(&mut profile_b, "kart_verde_sprout_t1", 1).expect("Buy verde");
+        assert_eq!(profile_b.credits, 1_000, "Premium kart leaves 1,000 Cr reserve");
+        assert!(!progress_b.can_buy_car_for_profile(&profile_b, "kart_blackline_cadet_t1", 1), "Cannot afford second kart");
+
+        // Bronze graduate with 5,500 Cr
+        let mut bronze_profile = PlayerProfile::new_rookie("BronzeGraduate");
+        bronze_profile.academy_progress.license_granted = true;
+        bronze_profile.license_grade = LicenseGrade::ClassD;
+        bronze_profile.credits = 5_500;
+        bronze_profile.lifetime_credits = 5_500;
+        assert!(kart_progress.can_buy_car_for_profile(&bronze_profile, "kart_blackline_cadet_t1", 1));
+        assert!(kart_progress.can_buy_car_for_profile(&bronze_profile, "kart_rosso_junior_t1", 1));
+        assert!(!kart_progress.can_buy_car_for_profile(&bronze_profile, "kart_verde_sprout_t1", 1), "Verde sprout unaffordable for bronze");
+
+        // Scenario: Intra-tier pricing monotonically aligns with performance index
+        let models = get_all_models();
+        for m_a in models.iter() {
+            for m_b in models.iter() {
+                if m_a.module_id == m_b.module_id && m_a.tier == m_b.tier {
+                    let irel_a = m_a.cohort_relative_performance_index();
+                    let irel_b = m_b.cohort_relative_performance_index();
+                    if irel_a > irel_b + 0.15 {
+                        let cost_a = ModuleCareerProgress::car_credit_cost_for_car(m_a.id, m_a.module_id, m_a.tier);
+                        let cost_b = ModuleCareerProgress::car_credit_cost_for_car(m_b.id, m_b.module_id, m_b.tier);
+                        assert!(cost_a >= cost_b, "Car {} with higher index ({}) must not cost less than {} ({})", m_a.id, irel_a, m_b.id, irel_b);
+                    }
+                }
+            }
+        }
+
+        // Check all catalog vehicles have valid positive performance valuation
+        for model in models.iter() {
+            let cost = ModuleCareerProgress::car_credit_cost_for_car(model.id, model.module_id, model.tier);
+            assert!(cost > 0, "Cost for {} must be positive", model.id);
+            assert_eq!(cost % 250, 0, "Cost for {} must be a multiple of 250 Cr", model.id);
+        }
     }
 }
 

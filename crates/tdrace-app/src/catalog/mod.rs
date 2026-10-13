@@ -1,3 +1,5 @@
+use std::collections::{HashMap, HashSet};
+use std::sync::OnceLock;
 use macroquad::color::Color;
 use tdrace_core::physics::config::TerrainInteractionConfig;
 use tdrace_core::physics::surface::SurfaceType;
@@ -35,6 +37,52 @@ pub struct RealCarModel {
 }
 
 impl RealCarModel {
+    /// Raw power-to-weight ratio in bhp / tonne.
+    #[inline]
+    pub fn raw_power_to_weight(&self) -> f32 {
+        (self.bhp as f32) / (self.weight_kg.max(1) as f32) * 1000.0
+    }
+
+    /// Raw torque-to-weight ratio in Nm / tonne.
+    #[inline]
+    pub fn raw_torque_to_weight(&self) -> f32 {
+        (self.torque_nm as f32) / (self.weight_kg.max(1) as f32) * 1000.0
+    }
+
+    /// Raw acceleration responsiveness (10.0 / 0-100s).
+    #[inline]
+    pub fn raw_accel_responsiveness(&self) -> f32 {
+        10.0 / self.accel_0_100.max(1.0)
+    }
+
+    /// Raw top speed index in km/h.
+    #[inline]
+    pub fn raw_top_speed_index(&self) -> f32 {
+        self.top_speed_kmh as f32
+    }
+
+    /// Weighted aggregate of the 6 normalized radar stats.
+    #[inline]
+    pub fn raw_radar_aggregate(&self) -> f32 {
+        0.20 * self.stats.0
+            + 0.25 * self.stats.1
+            + 0.25 * self.stats.2
+            + 0.15 * self.stats.3
+            + 0.10 * self.stats.4
+            + 0.05 * self.stats.5
+    }
+
+    /// Relative performance index within this car's discipline module and tier cohort, in [0.0, 1.0].
+    /// Evaluates to 0.0 for the cohort baseline and 1.0 for the cohort performance leader.
+    pub fn cohort_relative_performance_index(&self) -> f32 {
+        get_cached_car_indices(self.id).0
+    }
+
+    /// Global aggregated performance index on a normalized 0–100 scale across the entire game catalog.
+    pub fn performance_index(&self) -> f32 {
+        get_cached_car_indices(self.id).1
+    }
+
     /// Checks whether this vehicle is eligible for a race with a required category/tier.
     /// Rule: Selectable iff car.tier <= race_required_tier || dev_mode.
     #[inline]
@@ -3934,6 +3982,151 @@ pub fn is_car_eligible(car_tier: u8, race_required_tier: u8, dev_mode: bool) -> 
     dev_mode || car_tier <= race_required_tier
 }
 
+static CAR_PERFORMANCE_CACHE: OnceLock<HashMap<&'static str, (f32, f32)>> = OnceLock::new();
+
+fn get_cached_car_indices(id: &str) -> (f32, f32) {
+    let map = CAR_PERFORMANCE_CACHE.get_or_init(build_car_performance_cache);
+    map.get(id).copied().unwrap_or((0.0, 50.0))
+}
+
+fn build_car_performance_cache() -> HashMap<&'static str, (f32, f32)> {
+    let mut map: HashMap<&'static str, (f32, f32)> = HashMap::new();
+
+    let all_cars: Vec<&'static RealCarModel> = CLASSIC_ARCADE_CARS
+        .iter()
+        .chain(ALL_REAL_CARS.iter())
+        .chain(VAULT_ARCHIVE_CARS.iter())
+        .collect();
+
+    if all_cars.is_empty() {
+        return map;
+    }
+
+    // 1. Compute global bounds for 0-100 catalog performance rating
+    let mut min_p2w = f32::INFINITY;
+    let mut max_p2w = f32::NEG_INFINITY;
+    let mut min_t2w = f32::INFINITY;
+    let mut max_t2w = f32::NEG_INFINITY;
+    let mut min_accel = f32::INFINITY;
+    let mut max_accel = f32::NEG_INFINITY;
+    let mut min_speed = f32::INFINITY;
+    let mut max_speed = f32::NEG_INFINITY;
+    let mut min_radar = f32::INFINITY;
+    let mut max_radar = f32::NEG_INFINITY;
+
+    for &car in &all_cars {
+        let p2w = car.raw_power_to_weight();
+        let t2w = car.raw_torque_to_weight();
+        let a = car.raw_accel_responsiveness();
+        let v = car.raw_top_speed_index();
+        let s = car.raw_radar_aggregate();
+
+        if p2w < min_p2w { min_p2w = p2w; }
+        if p2w > max_p2w { max_p2w = p2w; }
+        if t2w < min_t2w { min_t2w = t2w; }
+        if t2w > max_t2w { max_t2w = t2w; }
+        if a < min_accel { min_accel = a; }
+        if a > max_accel { max_accel = a; }
+        if v < min_speed { min_speed = v; }
+        if v > max_speed { max_speed = v; }
+        if s < min_radar { min_radar = s; }
+        if s > max_radar { max_radar = s; }
+    }
+
+    // Compute global performance rating for each car
+    let mut global_ratings: HashMap<&'static str, f32> = HashMap::new();
+    for &car in &all_cars {
+        let norm_p2w = if max_p2w > min_p2w { (car.raw_power_to_weight() - min_p2w) / (max_p2w - min_p2w) } else { 0.5 };
+        let norm_t2w = if max_t2w > min_t2w { (car.raw_torque_to_weight() - min_t2w) / (max_t2w - min_t2w) } else { 0.5 };
+        let norm_accel = if max_accel > min_accel { (car.raw_accel_responsiveness() - min_accel) / (max_accel - min_accel) } else { 0.5 };
+        let norm_speed = if max_speed > min_speed { (car.raw_top_speed_index() - min_speed) / (max_speed - min_speed) } else { 0.5 };
+        let norm_radar = if max_radar > min_radar { (car.raw_radar_aggregate() - min_radar) / (max_radar - min_radar) } else { 0.5 };
+
+        let g: f32 = 0.30 * norm_p2w + 0.10 * norm_t2w + 0.25 * norm_accel + 0.15 * norm_speed + 0.20 * norm_radar;
+        let score = (g * 100.0f32).clamp(1.0f32, 100.0f32);
+        global_ratings.insert(car.id, score);
+    }
+
+    // 2. Compute cohort-relative index (I_rel) for each cohort (module_id, tier)
+    let mut cohorts: HashSet<(&'static str, u8)> = HashSet::new();
+    for &car in &all_cars {
+        cohorts.insert((car.module_id, car.tier));
+    }
+
+    for (module_id, tier) in cohorts {
+        let cohort_cars = get_models_for_module_and_tier(module_id, tier);
+        if cohort_cars.is_empty() {
+            continue;
+        }
+
+        if cohort_cars.len() == 1 {
+            let car = cohort_cars[0];
+            let glob = global_ratings.get(car.id).copied().unwrap_or(50.0);
+            map.insert(car.id, (0.0, glob));
+            continue;
+        }
+
+        let mut c_min_p2w = f32::INFINITY;
+        let mut c_max_p2w = f32::NEG_INFINITY;
+        let mut c_min_t2w = f32::INFINITY;
+        let mut c_max_t2w = f32::NEG_INFINITY;
+        let mut c_min_acc = f32::INFINITY;
+        let mut c_max_acc = f32::NEG_INFINITY;
+        let mut c_min_spd = f32::INFINITY;
+        let mut c_max_spd = f32::NEG_INFINITY;
+        let mut c_min_rad = f32::INFINITY;
+        let mut c_max_rad = f32::NEG_INFINITY;
+
+        for &car in &cohort_cars {
+            let p2w = car.raw_power_to_weight();
+            let t2w = car.raw_torque_to_weight();
+            let a = car.raw_accel_responsiveness();
+            let v = car.raw_top_speed_index();
+            let s = car.raw_radar_aggregate();
+
+            if p2w < c_min_p2w { c_min_p2w = p2w; }
+            if p2w > c_max_p2w { c_max_p2w = p2w; }
+            if t2w < c_min_t2w { c_min_t2w = t2w; }
+            if t2w > c_max_t2w { c_max_t2w = t2w; }
+            if a < c_min_acc { c_min_acc = a; }
+            if a > c_max_acc { c_max_acc = a; }
+            if v < c_min_spd { c_min_spd = v; }
+            if v > c_max_spd { c_max_spd = v; }
+            if s < c_min_rad { c_min_rad = s; }
+            if s > c_max_rad { c_max_rad = s; }
+        }
+
+        let mut r_scores: Vec<(&'static str, f32)> = Vec::with_capacity(cohort_cars.len());
+        let mut min_r = f32::INFINITY;
+        let mut max_r = f32::NEG_INFINITY;
+
+        for &car in &cohort_cars {
+            let np2w = if c_max_p2w > c_min_p2w { (car.raw_power_to_weight() - c_min_p2w) / (c_max_p2w - c_min_p2w) } else { 0.5 };
+            let nt2w = if c_max_t2w > c_min_t2w { (car.raw_torque_to_weight() - c_min_t2w) / (c_max_t2w - c_min_t2w) } else { 0.5 };
+            let nacc = if c_max_acc > c_min_acc { (car.raw_accel_responsiveness() - c_min_acc) / (c_max_acc - c_min_acc) } else { 0.5 };
+            let nspd = if c_max_spd > c_min_spd { (car.raw_top_speed_index() - c_min_spd) / (c_max_spd - c_min_spd) } else { 0.5 };
+            let nrad = if c_max_rad > c_min_rad { (car.raw_radar_aggregate() - c_min_rad) / (c_max_rad - c_min_rad) } else { 0.5 };
+
+            let r: f32 = 0.30 * np2w + 0.10 * nt2w + 0.25 * nacc + 0.15 * nspd + 0.20 * nrad;
+            if r < min_r { min_r = r; }
+            if r > max_r { max_r = r; }
+            r_scores.push((car.id, r));
+        }
+
+        for (car_id, r) in r_scores {
+            let i_rel = if max_r > min_r {
+                ((r - min_r) / (max_r - min_r)).clamp(0.0f32, 1.0f32)
+            } else {
+                0.0
+            };
+            let glob = global_ratings.get(car_id).copied().unwrap_or(50.0);
+            map.insert(car_id, (i_rel, glob));
+        }
+    }
+
+    map
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -4105,5 +4298,27 @@ mod tests {
         assert!(!gt_porsche.is_eligible_for_surface(SurfaceType::PackedSand, false));
         assert!(!gt_porsche.is_eligible_for_surface(SurfaceType::SheetIce, false));
         assert!(gt_porsche.surface_warning(SurfaceType::PackedSand).is_some());
+    }
+
+    #[test]
+    fn test_spec_116_performance_index_and_cohort_normalization() {
+        let blackline = find_model_by_id("kart_blackline_cadet_t1").expect("blackline cadet exists");
+        let rosso = find_model_by_id("kart_rosso_junior_t1").expect("rosso junior exists");
+        let verde = find_model_by_id("kart_verde_sprout_t1").expect("verde sprout exists");
+
+        // Relative cohort indices in Tier 1 Karting
+        assert_eq!(blackline.cohort_relative_performance_index(), 0.0);
+        assert_eq!(rosso.cohort_relative_performance_index(), 0.0);
+        assert_eq!(verde.cohort_relative_performance_index(), 1.0);
+
+        // Global performance indices (0-100 range)
+        assert!(blackline.performance_index() > 0.0 && blackline.performance_index() <= 100.0);
+        assert!(verde.performance_index() >= blackline.performance_index());
+
+        // GT Tier 1 cohort relative index monotonicity
+        let bavaria = find_model_by_id("gt_bmr_bavaria_t1").expect("bavaria exists");
+        let stratus = find_model_by_id("gt_vandorn_stratus_t1").expect("stratus exists");
+        assert!(stratus.cohort_relative_performance_index() >= bavaria.cohort_relative_performance_index());
+        assert!(stratus.performance_index() > blackline.performance_index());
     }
 }

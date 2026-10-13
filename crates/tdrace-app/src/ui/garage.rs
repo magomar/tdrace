@@ -428,11 +428,8 @@ pub fn render_garage_screen(
         } else if let Some(cp) = career_progress {
             let cost = ModuleCareerProgress::car_credit_cost_for_car(model.id, active_module_id, model.tier);
             let is_affordable = available_credits >= cost;
-            let is_recommended = model.id == "kart_blackline_cadet_t1";
             let is_grassroots_starter = (active_module_id == "kart" || active_module_id == "autocross" || active_module_id == "rallycross" || active_module_id == "rally") && model.tier == 1;
-            let tag = if is_recommended && is_affordable {
-                format!("${} CR (RECOMMENDED)", cost)
-            } else if is_grassroots_starter && is_affordable {
+            let tag = if is_grassroots_starter && is_affordable {
                 format!("${} CR (AFFORDABLE)", cost)
             } else if is_grassroots_starter {
                 format!("${} CR (UNAFFORDABLE)", cost)
@@ -440,7 +437,8 @@ pub fn render_garage_screen(
                 format!("${} CR", cost)
             };
             let col = if is_affordable && cp.level >= model.tier as u32 { Palette::NEON_GOLD } else { Palette::RED };
-            fonts.draw_ui_bold(&tag, cx + cw - scaler.s(75.0), cy + scaler.s(15.0), scaler.font_s(7.5), col);
+            let tag_w = fonts.measure_ui_bold(&tag, scaler.font_s(7.5)).width;
+            fonts.draw_ui_bold(&tag, cx + cw - tag_w - scaler.s(8.0), cy + scaler.s(15.0), scaler.font_s(7.5), col);
         }
 
         fonts.draw_ui_bold(
@@ -451,7 +449,8 @@ pub fn render_garage_screen(
             Palette::WHITE,
         );
 
-        let sub_info = format!("{} BHP • {}", model.bhp, model.drivetrain);
+        let pi = model.performance_index().round() as u32;
+        let sub_info = format!("{} BHP • {} • PI {}", model.bhp, model.drivetrain, pi);
         fonts.draw_ui_regular(
             &sub_info,
             cx + scaler.s(8.0),
@@ -487,7 +486,7 @@ pub fn render_garage_screen(
         );
         cur_ry += scaler.s(22.0);
 
-        // Car Title
+        // Car Title & Dynamic Price
         fonts.draw_ui_bold(
             model.name,
             right_x + scaler.s(14.0),
@@ -495,7 +494,107 @@ pub fn render_garage_screen(
             scaler.font_s(14.5),
             Palette::WHITE,
         );
-        cur_ry += scaler.s(16.0);
+
+        let model_cost = ModuleCareerProgress::car_credit_cost_for_car(model.id, active_module_id, model.tier);
+        let is_owned_active = active_module_id == "classic"
+            || is_dev_mode
+            || is_heritage_tier
+            || owned_cars.iter().any(|c| c == model.id);
+        if !is_owned_active {
+            let price_str = format!("${} CR", model_cost);
+            let price_w = fonts.measure_ui_bold(&price_str, scaler.font_s(13.0)).width;
+            let price_col = if available_credits >= model_cost { Palette::NEON_GREEN } else { Palette::RED };
+            fonts.draw_ui_bold(
+                &price_str,
+                right_x + right_w - scaler.s(14.0) - price_w,
+                cur_ry,
+                scaler.font_s(13.0),
+                price_col,
+            );
+        } else {
+            let owned_str = if is_heritage_tier { "HERITAGE" } else { "OWNED" };
+            let owned_w = fonts.measure_ui_bold(owned_str, scaler.font_s(12.0)).width;
+            fonts.draw_ui_bold(
+                owned_str,
+                right_x + right_w - scaler.s(14.0) - owned_w,
+                cur_ry,
+                scaler.font_s(12.0),
+                if is_heritage_tier { Palette::NEON_GOLD } else { Palette::NEON_GREEN },
+            );
+        }
+        cur_ry += scaler.s(18.0);
+
+        // Performance Index & Valuation Badge row
+        let pi = model.performance_index().round() as u32;
+        let irel = model.cohort_relative_performance_index();
+        let tier_text = format!("TIER {}", model.tier);
+        let tier_font_size = scaler.font_s(8.5);
+        let tier_text_w = fonts.measure_ui_bold(&tier_text, tier_font_size).width;
+        let tier_pill_w = tier_text_w + scaler.s(12.0);
+        let pill_h = scaler.s(16.0);
+        let mut pill_x = right_x + scaler.s(14.0);
+        let pill_y = cur_ry;
+
+        // Tier pill
+        draw_rectangle(pill_x, pill_y, tier_pill_w, pill_h, Color::new(0.95, 0.70, 0.05, 0.15));
+        draw_rectangle_lines(pill_x, pill_y, tier_pill_w, pill_h, 1.0, Palette::NEON_GOLD);
+        fonts.draw_ui_bold(
+            &tier_text,
+            pill_x + scaler.s(6.0),
+            pill_y + scaler.s(11.5),
+            tier_font_size,
+            Palette::NEON_GOLD,
+        );
+        pill_x += tier_pill_w + scaler.s(6.0);
+
+        // Perf Index pill
+        let pi_text = format!("PERF INDEX: {}", pi);
+        let pi_font_size = scaler.font_s(8.5);
+        let pi_text_w = fonts.measure_ui_bold(&pi_text, pi_font_size).width;
+        let pi_pill_w = pi_text_w + scaler.s(12.0);
+        draw_rectangle(pill_x, pill_y, pi_pill_w, pill_h, Color::new(0.0, 0.90, 0.95, 0.15));
+        draw_rectangle_lines(pill_x, pill_y, pi_pill_w, pill_h, 1.0, Palette::NEON_CYAN);
+        fonts.draw_ui_bold(
+            &pi_text,
+            pill_x + scaler.s(6.0),
+            pill_y + scaler.s(11.5),
+            pi_font_size,
+            Palette::NEON_CYAN,
+        );
+        pill_x += pi_pill_w + scaler.s(6.0);
+
+        // Valuation Badge
+        if irel <= 0.15 {
+            let badge_text = "[VALUE STARTER]";
+            let badge_font_size = scaler.font_s(8.5);
+            let badge_text_w = fonts.measure_ui_bold(badge_text, badge_font_size).width;
+            let badge_w = badge_text_w + scaler.s(10.0);
+            draw_rectangle(pill_x, pill_y, badge_w, pill_h, Color::new(0.05, 0.85, 0.40, 0.15));
+            draw_rectangle_lines(pill_x, pill_y, badge_w, pill_h, 1.0, Palette::NEON_GREEN);
+            fonts.draw_ui_bold(
+                badge_text,
+                pill_x + scaler.s(5.0),
+                pill_y + scaler.s(11.5),
+                badge_font_size,
+                Palette::NEON_GREEN,
+            );
+        } else if irel >= 0.85 {
+            let badge_text = "[COMPETITION SPEC]";
+            let badge_font_size = scaler.font_s(8.5);
+            let badge_text_w = fonts.measure_ui_bold(badge_text, badge_font_size).width;
+            let badge_w = badge_text_w + scaler.s(10.0);
+            draw_rectangle(pill_x, pill_y, badge_w, pill_h, Color::new(0.95, 0.70, 0.05, 0.15));
+            draw_rectangle_lines(pill_x, pill_y, badge_w, pill_h, 1.0, Palette::NEON_GOLD);
+            fonts.draw_ui_bold(
+                badge_text,
+                pill_x + scaler.s(5.0),
+                pill_y + scaler.s(11.5),
+                badge_font_size,
+                Palette::NEON_GOLD,
+            );
+        }
+
+        cur_ry += scaler.s(22.0);
 
         // Key Engine / Spec telemetry lines
         let t_spec = format!("Engine: {}  •  Power: {} BHP @ {} Nm", model.engine_desc, model.bhp, model.torque_nm);
@@ -665,7 +764,7 @@ pub fn render_garage_screen(
     } else if can_afford {
         (format!("BUY VEHICLE: ${} CR", cost), true, false)
     } else {
-        (format!("VEHICLE PRICE: ${} CR", cost), false, true)
+        (format!("INSUFFICIENT FUNDS (${} CR)", cost), false, true)
     };
     let mut cta_footer = ScreenFooter::new(btn_x, btn_y, btn_w, btn_h);
     let mut hero_btn = HeroActionButton::new(hero_label, btn_w - 32.0, btn_h);
@@ -736,12 +835,13 @@ pub fn render_garage_screen(
             Palette::UI_TEXT_MUTED,
         );
     } else if can_afford {
-        let is_recommended = active_module_id == "kart" && active_car_tier == 1;
+        if let Some(rect) = cta_footer.hero_button_rect() {
+            draw_rectangle(rect.x, rect.y, rect.w, rect.h, Color::new(0.05, 0.25, 0.10, 0.35));
+            draw_rectangle_lines(rect.x, rect.y, rect.w, rect.h, 2.0, Palette::NEON_GREEN);
+        }
         let is_starter = (active_module_id == "kart" || active_module_id == "autocross" || active_module_id == "rallycross" || active_module_id == "rally") && active_car_tier == 1;
-        let buy_title = if is_recommended {
-            format!("🛒 BUY STARTER CAR: ${} CR  [B / ENTER]  ★ AFFORDABLE (RECOMMENDED ENTRY)", cost)
-        } else if is_starter {
-            format!("🛒 BUY STARTER CAR: ${} CR  [B / ENTER]  ★ AFFORDABLE", cost)
+        let buy_title = if is_starter {
+            format!("🛒 BUY VEHICLE: ${} CR  [B / ENTER]  ★ AFFORDABLE", cost)
         } else {
             format!("🛒 BUY VEHICLE: ${} CR  [B / ENTER]", cost)
         };
@@ -750,7 +850,7 @@ pub fn render_garage_screen(
             btn_x + btn_w * 0.5,
             btn_y + scaler.s(22.0),
             scaler.font_s(11.5),
-            Palette::WHITE,
+            Palette::NEON_GREEN,
         );
         let buy_sub = format!(
             "Wallet Balance: ${} Cr  →  ${} Cr remaining  (Discipline XP: {} XP)",
@@ -766,18 +866,17 @@ pub fn render_garage_screen(
             Palette::WHITE,
         );
     } else {
-        let is_grassroots_starter = (active_module_id == "kart" || active_module_id == "autocross" || active_module_id == "rallycross" || active_module_id == "rally") && active_car_tier == 1;
-        let lock_title = if is_grassroots_starter {
-            format!("🛒 VEHICLE PRICE: ${} CR (WALLET: ${} CR) — CURRENTLY UNAFFORDABLE", cost, available_credits)
-        } else {
-            format!("🛒 VEHICLE PRICE: ${} CR (WALLET: ${} CR)", cost, available_credits)
-        };
+        if let Some(rect) = cta_footer.hero_button_rect() {
+            draw_rectangle(rect.x, rect.y, rect.w, rect.h, Color::new(0.35, 0.05, 0.05, 0.40));
+            draw_rectangle_lines(rect.x, rect.y, rect.w, rect.h, 1.5, Palette::RED);
+        }
+        let lock_title = format!("🛒 INSUFFICIENT FUNDS (${} CR) — WALLET: ${} CR", cost, available_credits);
         fonts.draw_ui_bold_centered(
             &lock_title,
             btn_x + btn_w * 0.5,
             btn_y + scaler.s(22.0),
             scaler.font_s(11.0),
-            Palette::NEON_GOLD,
+            Palette::RED,
         );
         let need_cr = cost.saturating_sub(available_credits);
         let lock_sub = if (active_module_id == "gt" || active_module_id == "nascar") && active_car_tier == 1 {
