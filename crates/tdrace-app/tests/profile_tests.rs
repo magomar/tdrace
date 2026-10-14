@@ -830,29 +830,25 @@ fn test_two_condition_tier_advancement_gates() {
     let mut progress = ModuleCareerProgress::default_for_gt(1);
     assert_eq!(progress.level, 1);
 
-    // Spec 053: Target license XP for Tier 2: 3,000 XP
-    assert_eq!(progress.next_tier_target_xp(), Some(3000));
+    // Target alternative license XP for Tier 2: 2 * 6,380 = 12,760 XP (including 1st-visit bonuses)
+    assert_eq!(progress.next_tier_target_xp(), Some(12760));
 
     // Case 1: Neither condition met
     assert!(!progress.can_advance_tier());
 
-    // Case 2: Only XP condition met (5,000 XP, 0 trophies, 0 completed championships)
-    progress.add_xp(5000);
-    assert_eq!(progress.xp, 5000);
+    // Case 2: Only XP condition met (12,760 XP, 0 trophies, 0 completed championships)
+    progress.add_xp(12760);
+    assert_eq!(progress.xp, 12760);
     assert_eq!(progress.trophies_gold + progress.trophies_silver + progress.trophies_bronze, 0);
-    assert!(!progress.can_advance_tier(), "Must not advance without championship podium");
-    assert!(progress.advance_tier().is_err());
+    assert!(progress.can_advance_tier(), "Alternative path: can advance with sufficient cumulative XP alone");
 
-    // Case 3: Only Podium condition met (has podium record, but XP < 3000)
+    // Case 3: Only Podium condition met (has podium record, but XP < 12,760)
     progress.xp = 1500;
     progress.record_championship_finish("gt_challenger_cup", 1, 3, 40, "2026-09-29 10:00");
-    assert!(progress.has_podium_in_tier(1), "P3 finish qualifies as tier podium in Spec 053");
-    assert!(!progress.can_advance_tier(), "Must not advance without meeting 3,000 XP license threshold");
-    assert!(progress.advance_tier().is_err());
+    assert!(progress.has_podium_in_tier(1), "P3 finish qualifies as tier podium");
+    assert!(progress.can_advance_tier(), "Primary path: can advance with championship podium even with lower XP");
 
-    // Case 4: Both conditions met (Podium in tier + >= 3000 XP)
-    progress.xp = 3000;
-    assert!(progress.can_advance_tier(), "Can advance with tier podium and sufficient cumulative XP");
+    // Case 4: Advance tier to Tier 2
     let next_lvl = progress.advance_tier().expect("Advance tier");
     assert_eq!(next_lvl, 2);
     assert_eq!(progress.level, 2);
@@ -862,8 +858,8 @@ fn test_two_condition_tier_advancement_gates() {
     assert!(progress.is_track_unlocked("silverstone", false));
     assert!(progress.is_track_unlocked("catalunya", false));
 
-    // Next tier license target is Tier 3: 7,500 XP (Spec 053)
-    assert_eq!(progress.next_tier_target_xp(), Some(7500));
+    // Next tier license target is Tier 3: 12,760 + 2 * 9,300 = 31,360 XP
+    assert_eq!(progress.next_tier_target_xp(), Some(31360));
 }
 
 #[test]
@@ -2532,75 +2528,80 @@ fn test_kart_career_6_tier_progression_and_20_track_unlocks() {
         progress.unlocked_tracks,
         vec!["lonato", "genk", "wackersdorf", "laval_kart", "whilton_mill"]
     );
-    assert_eq!(progress.next_tier_target_xp(), Some(1_500));
+    // Alternative XP target for Tier 2: 2 * 4,100 = 8,200 XP
+    assert_eq!(progress.next_tier_target_xp(), Some(8_200));
 
     // Try advancing without podium or XP
     assert!(!progress.can_advance_tier());
 
-    // Add podium in tier 1, check insufficient XP
-    progress.record_championship_finish("kart_world_cup", 1, 1, 100, "2026-09-29");
-    assert!(!progress.can_advance_tier());
+    // Alternative XP route: reaches 8,200 XP -> can advance even with 0 podiums
+    progress.add_xp(8_200);
+    assert!(progress.can_advance_tier(), "Can advance via alternative XP route without podium");
 
-    // Add XP to 1,500
-    progress.add_xp(1_500);
-    assert!(progress.can_advance_tier());
+    // Primary route: Add podium in tier 1
+    progress.xp = 0; // reset XP to verify podium alone is sufficient
+    assert!(!progress.can_advance_tier());
+    progress.record_championship_finish("kart_world_cup", 1, 1, 100, "2026-09-29");
+    assert!(progress.can_advance_tier(), "Primary path: can advance with podium finish alone");
+
     assert_eq!(progress.advance_tier().unwrap(), 2);
     assert_eq!(progress.level, 2);
-    assert_eq!(progress.next_tier_target_xp(), Some(3_500));
-    assert!(progress.is_car_unlocked("kart_verde_sprint_t2", false));
+    // Tier 3 alternative target: 8,200 + 2 * 5,150 = 18,500 XP
+    assert_eq!(progress.next_tier_target_xp(), Some(18_500));
+    // Verify cars are NOT automatically gifted on tier promotion
+    assert!(!progress.is_car_unlocked("kart_verde_sprint_t2", false), "No free starter car gifted on tier promotion");
     assert_eq!(progress.unlocked_tracks.len(), 8);
     assert!(progress.unlocked_tracks.contains(&"sarno".to_string()));
     assert!(progress.unlocked_tracks.contains(&"kristianstad".to_string()));
     assert!(progress.unlocked_tracks.contains(&"seven_laghi".to_string()));
 
-    // Tier 2 -> 3: 3,500 XP required
+    // Tier 2 -> 3: Primary podium path
     progress.record_championship_finish("kart_junior_trophy", 2, 2, 85, "2026-09-29");
-    progress.add_xp(2_000); // total 3,500 XP
     assert!(progress.can_advance_tier());
     assert_eq!(progress.advance_tier().unwrap(), 3);
     assert_eq!(progress.level, 3);
-    assert_eq!(progress.next_tier_target_xp(), Some(6_000));
-    assert!(progress.is_car_unlocked("kart_verde_apex_t3", false));
+    // Tier 4 alternative target: 18,500 + 2 * 6,400 = 31,300 XP
+    assert_eq!(progress.next_tier_target_xp(), Some(31_300));
+    assert!(!progress.is_car_unlocked("kart_verde_apex_t3", false));
     assert_eq!(progress.unlocked_tracks.len(), 11);
     assert!(progress.unlocked_tracks.contains(&"pfi".to_string()));
     assert!(progress.unlocked_tracks.contains(&"franciacorta".to_string()));
     assert!(progress.unlocked_tracks.contains(&"ampfing".to_string()));
 
-    // Tier 3 -> 4: 6,000 XP required
+    // Tier 3 -> 4: Primary podium path
     progress.record_championship_finish("kart_national_championship", 3, 3, 70, "2026-09-29");
-    progress.add_xp(2_500); // total 6,000 XP
     assert!(progress.can_advance_tier());
     assert_eq!(progress.advance_tier().unwrap(), 4);
     assert_eq!(progress.level, 4);
-    assert_eq!(progress.next_tier_target_xp(), Some(9_000));
-    assert!(progress.is_car_unlocked("kart_rosso_corsa_t4", false));
+    // Tier 5 alternative target: 31,300 + 2 * 7,650 = 46,600 XP
+    assert_eq!(progress.next_tier_target_xp(), Some(46_600));
+    assert!(!progress.is_car_unlocked("kart_rosso_corsa_t4", false));
     assert_eq!(progress.unlocked_tracks.len(), 14);
     assert!(progress.unlocked_tracks.contains(&"zuera".to_string()));
     assert!(progress.unlocked_tracks.contains(&"silverstone_national_kart".to_string()));
     assert!(progress.unlocked_tracks.contains(&"aunay_kart".to_string()));
 
-    // Tier 4 -> 5: 9,000 XP required
+    // Tier 4 -> 5: Primary podium path
     progress.record_championship_finish("kart_continental_trophy", 4, 1, 100, "2026-09-29");
-    progress.add_xp(3_000); // total 9,000 XP
     assert!(progress.can_advance_tier());
     assert_eq!(progress.advance_tier().unwrap(), 5);
     assert_eq!(progress.level, 5);
-    assert_eq!(progress.next_tier_target_xp(), Some(13_000));
-    assert!(progress.is_car_unlocked("kart_highland_hawk_t5", false));
+    // Tier 6 alternative target: 46,600 + 2 * 9,400 = 65,400 XP
+    assert_eq!(progress.next_tier_target_xp(), Some(65_400));
+    assert!(!progress.is_car_unlocked("kart_highland_hawk_t5", false));
     assert_eq!(progress.unlocked_tracks.len(), 17);
     assert!(progress.unlocked_tracks.contains(&"le_mans_kart".to_string()));
     assert!(progress.unlocked_tracks.contains(&"campillos".to_string()));
     assert!(progress.unlocked_tracks.contains(&"muelsen_kart".to_string()));
 
-    // Tier 5 -> 6: 13,000 XP required
+    // Tier 5 -> 6: Primary podium path
     progress.record_championship_finish("kart_superkart_div2_challenge", 5, 2, 85, "2026-09-29");
-    progress.add_xp(4_000); // total 13,000 XP
     assert!(progress.can_advance_tier());
     assert_eq!(progress.advance_tier().unwrap(), 6);
     assert_eq!(progress.level, 6);
     assert_eq!(progress.next_tier_target_xp(), None);
     assert_eq!(progress.level_progress_ratio(), 1.0);
-    assert!(progress.is_car_unlocked("kart_highland_eagle_t6", false));
+    assert!(!progress.is_car_unlocked("kart_highland_eagle_t6", false));
     assert_eq!(progress.unlocked_tracks.len(), 20);
     assert!(progress.unlocked_tracks.contains(&"portimao_kart".to_string()));
     assert!(progress.unlocked_tracks.contains(&"valencia_kart".to_string()));

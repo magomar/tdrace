@@ -1493,9 +1493,9 @@ pub fn render_track_select_menu(
             Palette::NEON_GOLD,
         );
 
-        // Spendable XP text
+        // Career XP text
         let xp_str = if let Some(target) = cp.next_tier_target_xp() {
-            format!("XP: {} / {} (NEXT TIER CAR)", cp.xp, target)
+            format!("XP: {} / {} (ALT PROMOTION)", cp.xp, target)
         } else {
             format!("XP: {} (MAX TIER)", cp.xp)
         };

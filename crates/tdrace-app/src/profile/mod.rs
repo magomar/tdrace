@@ -737,31 +737,10 @@ impl ModuleCareerProgress {
     /// falling back to base module/tier pricing if the model is uncatalogued.
     pub fn car_credit_cost_for_car(car_id: &str, module_id: &str, tier: u8) -> u64 {
         let model = crate::catalog::find_model_by_id(car_id);
-        let (mod_id, car_tier) = if let Some(m) = model {
-            (m.module_id, m.tier)
-        } else {
-            (module_id, tier)
-        };
-
-        let base_price = if mod_id == "kart"
-            || mod_id == "autocross"
-            || mod_id == "ax"
-            || mod_id == "rally"
-            || mod_id == "rallycross"
-            || mod_id == "rx"
-            || mod_id == "gt"
-            || mod_id == "gt_challenge"
-            || mod_id == "nascar"
-            || mod_id == "extreme_offroad"
-        {
-            Self::car_credit_cost_for_module(mod_id, car_tier)
-        } else {
-            Self::car_credit_cost(car_tier)
-        };
-
         if let Some(m) = model {
+            let base_price = Self::car_credit_cost_for_module(m.module_id, m.tier);
             let i_rel = m.cohort_relative_performance_index();
-            let spread_coeff = match car_tier {
+            let spread_coeff = match m.tier {
                 1 => 0.20,
                 2 => 0.25,
                 3 => 0.30,
@@ -770,8 +749,16 @@ impl ModuleCareerProgress {
             let spread = (base_price as f64) * spread_coeff * (i_rel as f64);
             let spread_rounded = (((spread + 125.0) / 250.0).floor() as u64) * 250;
             base_price + spread_rounded
+        } else if module_id == "kart"
+            || module_id == "autocross"
+            || module_id == "ax"
+            || module_id == "rally"
+            || module_id == "rallycross"
+            || module_id == "rx"
+        {
+            Self::car_credit_cost_for_module(module_id, tier)
         } else {
-            base_price
+            Self::car_credit_cost(tier)
         }
     }
 
@@ -780,30 +767,54 @@ impl ModuleCareerProgress {
         Self::car_credit_cost(tier)
     }
 
-    /// Minimal XP earned by completing all rounds of a championship in the given tier (finishing last, no clean/first-visit bonuses).
+    /// Minimal XP earned by completing all rounds of a championship in the given tier
+    /// on a first-time playthrough (finishing last, no clean bonus, including the 1st-visit circuit bonuses).
     pub fn minimum_championship_xp(module_id: &str, tier: u32) -> u64 {
         match (module_id, tier) {
-            ("kart", 1) => 2_500,
-            ("kart", 2) => 3_000,
-            ("kart", 3) => 3_500,
-            ("kart", 4) => 4_000,
-            ("kart", 5) => 4_500,
-            ("kart", 6) => 5_000,
+            ("kart", 1) => 4_100,
+            ("kart", 2) => 5_150,
+            ("kart", 3) => 6_400,
+            ("kart", 4) => 7_650,
+            ("kart", 5) => 9_400,
+            ("kart", 6) => 10_850,
 
-            ("rally" | "rallycross" | "rx", 1) => 2_500,
-            ("rally" | "rallycross" | "rx", 2) => 3_000,
-            ("rally" | "rallycross" | "rx", 3) => 3_500,
-            ("rally" | "rallycross" | "rx", 4) => 4_000,
-            ("rally" | "rallycross" | "rx", 5) => 5_000,
-            ("rally" | "rallycross" | "rx", 6) => 6_000,
+            ("rally" | "rallycross" | "rx", 1) => 4_100,
+            ("rally" | "rallycross" | "rx", 2) => 5_250,
+            ("rally" | "rallycross" | "rx", 3) => 7_350,
+            ("rally" | "rallycross" | "rx", 4) => 8_200,
+            ("rally" | "rallycross" | "rx", 5) => 6_500,
+            ("rally" | "rallycross" | "rx", 6) => 7_700,
 
-            // GT, NASCAR, Extreme Offroad, Autocross:
-            (_, 1) => 3_000,
-            (_, 2) => 4_000,
-            (_, 3) => 5_000,
-            (_, 4) => 6_000,
-            (_, 5) => 7_500,
-            _ => 5_000,
+            ("gt" | "gt_challenge", 1) => 6_380,
+            ("gt" | "gt_challenge", 2) => 9_300,
+            ("gt" | "gt_challenge", 3) => 13_080,
+            ("gt" | "gt_challenge", 4) => 15_300,
+            ("gt" | "gt_challenge", 5) => 19_800,
+
+            ("nascar", 1) => 2_850,
+            ("nascar", 2) => 4_900,
+            ("nascar", 3) => 9_330,
+            ("nascar", 4) => 12_680,
+            ("nascar", 5) => 15_990,
+
+            ("extreme_offroad" | "offroad", 1) => 4_710,
+            ("extreme_offroad" | "offroad", 2) => 5_850,
+            ("extreme_offroad" | "offroad", 3) => 6_880,
+            ("extreme_offroad" | "offroad", 4) => 7_810,
+            ("extreme_offroad" | "offroad", 5) => 9_240,
+
+            ("autocross" | "ax", 1) => 2_030,
+            ("autocross" | "ax", 2) => 4_250,
+            ("autocross" | "ax", 3) => 5_350,
+            ("autocross" | "ax", 4) => 6_250,
+            ("autocross" | "ax", 5) => 5_860,
+
+            (_, 1) => 4_100,
+            (_, 2) => 5_500,
+            (_, 3) => 7_000,
+            (_, 4) => 8_500,
+            (_, 5) => 10_000,
+            _ => 10_000,
         }
     }
 

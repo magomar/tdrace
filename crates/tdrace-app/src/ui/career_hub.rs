@@ -381,8 +381,16 @@ pub fn render_career_hub_screen(
             let has_podium = career.has_podium_in_tier(career.level);
             let has_xp = career.xp >= req_xp;
 
-            let podium_check = if has_podium { "✓ Tier Podium Earned" } else { "✗ Requires 1+ Tier Championship Podium" };
-            let xp_check = format!("{}/{} XP (License Threshold: {} XP)", format_number(career.xp), format_number(req_xp), format_number(req_xp));
+            let podium_check = if has_podium {
+                "✓ Primary: Tier Championship Podium Earned"
+            } else {
+                "• Primary: Earn 1+ Tier Championship Podium (Top 3)"
+            };
+            let xp_check = if has_xp {
+                format!("✓ Alternative: XP Threshold Met ({}/{} XP)", format_number(career.xp), format_number(req_xp))
+            } else {
+                format!("• Alternative: Reach {} XP ({}/{} XP)", format_number(req_xp), format_number(career.xp), format_number(req_xp))
+            };
 
             let pod_col = if has_podium { Palette::NEON_GREEN } else { Palette::UI_TEXT_MUTED };
             let xp_col = if has_xp { Palette::NEON_GREEN } else { Palette::NEON_GOLD };
@@ -392,12 +400,12 @@ pub fn render_career_hub_screen(
             ly += scaler.s(42.0);
 
             // Progress Bar towards tier promotion (platform MetricBar)
-            let progress_ratio = (career.xp as f32 / req_xp as f32).clamp(0.0, 1.0);
+            let progress_ratio = career.level_progress_ratio();
             let license_bar = MetricBar::progress(
-                "LICENSE XP",
+                if has_podium { "PROMOTION READY" } else { "ALT PROMOTION XP" },
                 progress_ratio,
                 format!("{:.0}%", progress_ratio * 100.0),
-                Palette::NEON_CYAN,
+                if has_podium { Palette::NEON_GREEN } else { Palette::NEON_CYAN },
             );
             license_bar.draw(&scaler, fonts, LayoutRect::new(left_inner_x, ly, left_inner_w, scaler.s(18.0)));
             ly += scaler.s(22.0);
