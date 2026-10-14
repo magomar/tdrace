@@ -6,7 +6,13 @@ export const collections = {
   docs: defineCollection({
     loader: glob({
       base: './src/content/docs',
-      pattern: ['**/[^_]*.{md,mdx}', '!**/receipts/**', '!receipts/**'],
+      pattern: [
+        '**/[^_]*.{md,mdx}',
+        '!**/receipts/**',
+        '!receipts/**',
+        '!**/design/**',
+        '!design/**',
+      ],
     }),
     schema: docsSchema(),
   }),
