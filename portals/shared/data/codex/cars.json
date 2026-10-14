@@ -16788,9 +16788,9 @@
       "sound": "CrossCarMotorcycle",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/rallycross/rally_gallia_200_t1.png",
+        "thumb": "/textures/vehicles/laterals/rallycross/rally_gallia_200_t1_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rallycross/rally_gallia_200_t1.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -17169,9 +17169,9 @@
       "sound": "CrossCarMotorcycle",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/rallycross/rally_forge_spark_t1.png",
+        "thumb": "/textures/vehicles/laterals/rallycross/rally_forge_spark_t1_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rallycross/rally_forge_spark_t1.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -17550,9 +17550,9 @@
       "sound": "CrossCarMotorcycle",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/rallycross/rally_rouen_dauphine_t1.png",
+        "thumb": "/textures/vehicles/laterals/rallycross/rally_rouen_dauphine_t1_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rallycross/rally_rouen_dauphine_t1.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -17931,9 +17931,9 @@
       "sound": "Super1600Atmo",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/rallycross/rally_nordic_rx_lites_t2.png",
+        "thumb": "/textures/vehicles/laterals/rallycross/rally_nordic_rx_lites_t2_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rallycross/rally_nordic_rx_lites_t2.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -18312,9 +18312,9 @@
       "sound": "Super1600Atmo",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/rallycross/rally_aerotech_rx_lites_t2.png",
+        "thumb": "/textures/vehicles/laterals/rallycross/rally_aerotech_rx_lites_t2_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rallycross/rally_aerotech_rx_lites_t2.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -18693,9 +18693,9 @@
       "sound": "Super1600Atmo",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/rallycross/rally_volttech_electrocross_t2.png",
+        "thumb": "/textures/vehicles/laterals/rallycross/rally_volttech_electrocross_t2_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rallycross/rally_volttech_electrocross_t2.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -19074,9 +19074,9 @@
       "sound": "Rally2Turbo",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/rallycross/rally_hanguk_apex_t3.png",
+        "thumb": "/textures/vehicles/laterals/rallycross/rally_hanguk_apex_t3_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rallycross/rally_hanguk_apex_t3.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -19455,9 +19455,9 @@
       "sound": "Rally2Turbo",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/rallycross/rally_volkskraft_strassen_t3.png",
+        "thumb": "/textures/vehicles/laterals/rallycross/rally_volkskraft_strassen_t3_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rallycross/rally_volkskraft_strassen_t3.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -19836,9 +19836,9 @@
       "sound": "Rally2Turbo",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/rallycross/rally_vortek_quattro_rx_t3.png",
+        "thumb": "/textures/vehicles/laterals/rallycross/rally_vortek_quattro_rx_t3_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rallycross/rally_vortek_quattro_rx_t3.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -20217,9 +20217,9 @@
       "sound": "SupercarRx1",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/rallycross/rally_gallia_lyon_t4.png",
+        "thumb": "/textures/vehicles/laterals/rallycross/rally_gallia_lyon_t4_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rallycross/rally_gallia_lyon_t4.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -20598,9 +20598,9 @@
       "sound": "SupercarRx1",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/rallycross/rally_forge_comet_t4.png",
+        "thumb": "/textures/vehicles/laterals/rallycross/rally_forge_comet_t4_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rallycross/rally_forge_comet_t4.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -20979,9 +20979,9 @@
       "sound": "SupercarRx1",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/rallycross/rally_sixstar_vortex_t4.png",
+        "thumb": "/textures/vehicles/laterals/rallycross/rally_sixstar_vortex_t4_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rallycross/rally_sixstar_vortex_t4.png"
       },
       "physics": {
         "engine_placement": "front_engine",
@@ -21360,9 +21360,9 @@
       "sound": "GroupBInline5",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/rallycross/rally_gallia_volt_t5.png",
+        "thumb": "/textures/vehicles/laterals/rallycross/rally_gallia_volt_t5_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rallycross/rally_gallia_volt_t5.png"
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -21741,9 +21741,9 @@
       "sound": "GroupBInline5",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/rallycross/rally_volkskraft_electro_t5.png",
+        "thumb": "/textures/vehicles/laterals/rallycross/rally_volkskraft_electro_t5_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rallycross/rally_volkskraft_electro_t5.png"
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -22122,9 +22122,9 @@
       "sound": "GroupBInline5",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/rallycross/rally_torino_integrale_e_t5.png",
+        "thumb": "/textures/vehicles/laterals/rallycross/rally_torino_integrale_e_t5_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rallycross/rally_torino_integrale_e_t5.png"
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -22503,9 +22503,9 @@
       "sound": "CrossCarMotorcycle",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/rallycross/rally_nordic_valkyrie_t6.png",
+        "thumb": "/textures/vehicles/laterals/rallycross/rally_nordic_valkyrie_t6_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rallycross/rally_nordic_valkyrie_t6.png"
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -22884,9 +22884,9 @@
       "sound": "CrossCarMotorcycle",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/rallycross/rally_green_mountain_titan_t6.png",
+        "thumb": "/textures/vehicles/laterals/rallycross/rally_green_mountain_titan_t6_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rallycross/rally_green_mountain_titan_t6.png"
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -23265,9 +23265,9 @@
       "sound": "CrossCarMotorcycle",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/rallycross/rally_rampart_wasp_t6.png",
+        "thumb": "/textures/vehicles/laterals/rallycross/rally_rampart_wasp_t6_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rallycross/rally_rampart_wasp_t6.png"
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -23646,9 +23646,9 @@
       "sound": "CrossCarMotorcycle",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/rallycross/rally_vortek_turbo_quattro_t7.png",
+        "thumb": "/textures/vehicles/laterals/rallycross/rally_vortek_turbo_quattro_t7_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rallycross/rally_vortek_turbo_quattro_t7.png"
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -24027,9 +24027,9 @@
       "sound": "CrossCarMotorcycle",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/rallycross/rally_gallia_corsica_t7.png",
+        "thumb": "/textures/vehicles/laterals/rallycross/rally_gallia_corsica_t7_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rallycross/rally_gallia_corsica_t7.png"
       },
       "physics": {
         "engine_placement": "mid_engine",
@@ -24408,9 +24408,9 @@
       "sound": "CrossCarMotorcycle",
       "images": {
         "reference": null,
-        "lateral": null,
-        "thumb": null,
-        "topdown": null
+        "lateral": "/textures/vehicles/laterals/rallycross/rally_torino_stradale_t7.png",
+        "thumb": "/textures/vehicles/laterals/rallycross/rally_torino_stradale_t7_thumb.png",
+        "topdown": "/textures/vehicles/topdown/rallycross/rally_torino_stradale_t7.png"
       },
       "physics": {
         "engine_placement": "mid_engine",

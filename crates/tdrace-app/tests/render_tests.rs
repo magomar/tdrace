@@ -294,14 +294,14 @@ fn test_all_80_motorsport_cars_catalog_integrity() {
 
     assert_eq!(ALL_REAL_CARS.len(), 110, "Catalog must contain exactly 110 authentic motorsport vehicles");
 
-    let modules = ["gt", "nascar", "rally", "extreme_offroad", "kart", "autocross"];
+    let modules = ["gt", "nascar", "rallycross", "extreme_offroad", "kart", "autocross"];
     for m in modules {
         let count = ALL_REAL_CARS.iter().filter(|c| c.module_id == m).count();
         if m == "gt" {
             assert_eq!(count, 20, "GT module must contain 20 vehicles (4 per tier)");
         } else if m == "extreme_offroad" {
             assert_eq!(count, 21, "Extreme Off-Road must contain 15 tiered + 6 unranked vehicles");
-        } else if m == "rally" {
+        } else if m == "rallycross" {
             assert_eq!(count, 21, "Rallycross must contain 18 ranked (3 x 6 tiers) + 3 heritage vehicles");
         } else if m == "kart" {
             assert_eq!(count, 18, "Kart module must contain 18 authentic vehicles (3 per tier x 6 tiers)");
@@ -316,7 +316,7 @@ fn test_all_80_motorsport_cars_catalog_integrity() {
     for car in ALL_REAL_CARS {
         assert!(!car.id.is_empty(), "Car ID cannot be empty");
         assert!(!car.name.is_empty(), "Car name cannot be empty");
-        let max_tier = if car.module_id == "extreme_offroad" || car.module_id == "rally" {
+        let max_tier = if car.module_id == "extreme_offroad" || car.module_id == "rallycross" {
             7
         } else if car.module_id == "kart" {
             6
@@ -1933,7 +1933,7 @@ fn test_spec_031_all_catalog_cars_lighting_by_modality() {
             "gt" => {
                 assert_eq!(cfg, VehicleLightingConfig::gt_touring(), "Car {} in 'gt' must have GT touring lighting", car.id);
             }
-            "rally" => {
+            "rally" | "rallycross" => {
                 assert_eq!(cfg, VehicleLightingConfig::rally(), "Car {} in 'rally' must have rally lighting", car.id);
             }
             "extreme_offroad" => {
