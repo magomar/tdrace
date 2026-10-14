@@ -11,15 +11,15 @@ const repair = career.repair_economy;
 
 <Layout
   title="Career Progression & Economy — TDRace Codex"
-  description="Comprehensive reference for TDRace career architecture: decoupled disciplines, 5-tier ladders, promotion gates, XP formulas, and repair economy."
+  description="Comprehensive reference for TDRace career architecture: decoupled disciplines, dual-path promotion gates, credit vehicle purchases, compounding XP formulas, and repair economy."
 >
   <div class="py-6 border-b border-racing-border max-w-5xl">
     <p class="text-xs font-mono text-racing-cyan"><a href="/racing" class="hover:underline">Racing</a> / Career</p>
     <h1 class="text-3xl font-extrabold text-white tracking-tight mt-1">Career Progression &amp; Economy</h1>
     <p class="text-sm text-racing-muted mt-3 leading-relaxed max-w-3xl">
       TDRace features an authentic, decoupled career progression engine backed by SQLite local persistence. Each motorsport
-      discipline operates as an independent sandbox with five distinct tier levels, stringent promotion gates, mathematical
-      XP lap rewards, and an anti-bankruptcy garage repair economy.
+      discipline operates as an independent sandbox with up to six tier levels, dual promotion gates (podium finish or compounding discipline XP),
+      zero starter car gifting on promotion (all cars acquired with Credits), and an anti-bankruptcy garage repair economy.
     </p>
 
     <!-- Quick Stats -->
@@ -31,8 +31,8 @@ const repair = career.repair_economy;
       </div>
       <div class="p-3 rounded-lg border border-racing-border bg-racing-surface">
         <div class="text-[11px] font-mono text-racing-muted uppercase">Ladder Depth</div>
-        <div class="text-2xl font-bold text-white mt-0.5">5 Tiers</div>
-        <div class="text-[11px] text-racing-muted font-mono mt-0.5">Grassroots to Apex</div>
+        <div class="text-2xl font-bold text-white mt-0.5">Up to 6 Tiers</div>
+        <div class="text-[11px] text-racing-muted font-mono mt-0.5">Grassroots to World Apex</div>
       </div>
       <div class="p-3 rounded-lg border border-racing-border bg-racing-surface">
         <div class="text-[11px] font-mono text-racing-muted uppercase">Max Repair Deduct</div>
@@ -50,8 +50,8 @@ const repair = career.repair_economy;
   <!-- Section 1: Architecture & Promotion Gates -->
   <section class="py-8 max-w-5xl">
     <div class="mb-4">
-      <h2 class="text-xl font-bold text-white tracking-tight">Career Architecture &amp; The Dual Promotion Gate</h2>
-      <p class="text-xs text-racing-muted mt-1 font-mono">Modality decoupling and the mathematical requirements to advance tiers.</p>
+      <h2 class="text-xl font-bold text-white tracking-tight">Career Architecture &amp; The Dual-Path Promotion System</h2>
+      <p class="text-xs text-racing-muted mt-1 font-mono">Modality decoupling, championship podiums, compounding XP gates, and Credit showroom purchasing.</p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
@@ -61,30 +61,32 @@ const repair = career.repair_economy;
           <p>
             Career progression is tracked independently for each discipline in <code class="text-racing-cyan font-mono text-[11px]">ModuleCareerProgress</code>.
             Advancing your level, earning trophies, or buying cars in <strong class="text-white">Karting</strong> or <strong class="text-white">Rallycross</strong>
-            never alters vehicle availability, circuit access, or wallet balances in <strong class="text-white">GT Challenge</strong> or <strong class="text-white">NASCAR</strong>.
+            never alters vehicle availability, circuit access, or credit balances in <strong class="text-white">GT Challenge</strong> or <strong class="text-white">NASCAR</strong>.
           </p>
         </div>
 
         <div class="p-4 rounded-xl border border-amber-500/30 bg-amber-500/5">
-          <h3 class="text-sm font-bold text-amber-300 mb-2">The Dual Promotion Gate Criteria</h3>
+          <h3 class="text-sm font-bold text-amber-300 mb-2">Dual-Path Promotion Gates (Either / Or)</h3>
           <p>
-            Advancing from <code class="text-white font-mono">Tier N</code> to <code class="text-white font-mono">Tier N+1</code> requires fulfilling
-            <strong>both</strong> conditions simultaneously:
+            Advancing from <code class="text-white font-mono">Tier N</code> to <code class="text-white font-mono">Tier N+1</code> is unlocked whenever the driver satisfies <strong>either</strong> of two criteria:
           </p>
-          <ol class="mt-2 space-y-2 pl-4 list-decimal text-slate-200">
+          <ul class="mt-2 space-y-2 pl-4 list-disc text-slate-200">
             <li>
-              <strong class="text-white">Championship Podium:</strong> The driver must finish in the top 3 (Gold, Silver, or Bronze trophy)
-              of at least one official series championship in that discipline.
+              <strong class="text-white">Primary Path — Championship Podium:</strong> The driver finishes in the top 3 (Gold, Silver, or Bronze trophy)
+              of at least one official series championship in the current tier.
             </li>
             <li>
-              <strong class="text-white">Spendable Wallet XP Target:</strong> The driver must possess sufficient spendable XP balance
-              to afford the entry car of the next tier:
-              <code class="text-amber-400 font-mono block mt-1">Wallet XP &ge; (Tier + 1) &times; 1,000 XP</code>
+              <strong class="text-white">Alternative Path — Compounding Discipline XP:</strong> If a driver is unable to achieve a top-3 podium finish, they can still advance by accumulating sufficient cumulative XP. The required threshold is double the minimal XP awarded for completing all rounds of the tier's championship (<code class="text-amber-300 font-mono">2 &times; M_min</code>), compounding cumulatively across tiers.
             </li>
-          </ol>
-          <div class="mt-3 pt-2 border-t border-amber-500/20 text-[11px] text-amber-200/80">
-            <strong>Important:</strong> Advancing tier verifies financial capability but <em>does not deduct</em> XP! You keep your wallet XP to spend in the garage.
-          </div>
+          </ul>
+        </div>
+
+        <div class="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5">
+          <h3 class="text-sm font-bold text-emerald-300 mb-2">Zero Starter Car Gifting on Promotion</h3>
+          <p>
+            Higher tier vehicles are <strong class="text-white">never automatically gifted</strong> upon advancing tiers. Only Tier 1 provides an initial grassroots starter vehicle.
+            To race in Tier 2 and beyond, drivers must purchase suitable vehicles in the <strong class="text-white">Showroom</strong> using <strong class="text-emerald-400">Credits (Cr)</strong> earned from race purses.
+          </p>
         </div>
       </div>
 
@@ -94,38 +96,44 @@ const repair = career.repair_economy;
           <thead class="bg-racing-card/80 text-[10px] text-racing-muted uppercase border-b border-racing-border">
             <tr>
               <th class="py-3 px-3 font-semibold">Tier Advancement</th>
-              <th class="py-3 px-3 font-semibold">Podium Trophy</th>
-              <th class="py-3 px-3 font-semibold text-right">Required XP</th>
-              <th class="py-3 px-3 font-semibold">Content Unlocked</th>
+              <th class="py-3 px-3 font-semibold">Primary Gate</th>
+              <th class="py-3 px-3 font-semibold text-right">Alt Gate (Kart / RX XP)</th>
+              <th class="py-3 px-3 font-semibold">Vehicle Acquisition</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-racing-border/40">
             <tr>
               <td class="py-3 px-3 font-bold text-white">Tier 1 &rarr; Tier 2</td>
-              <td class="py-3 px-3 text-cyan-300">&ge; 1 Podium</td>
-              <td class="py-3 px-3 text-right text-amber-400 font-bold">2,000 XP</td>
-              <td class="py-3 px-3 text-slate-300">+3 Tracks, T2 Car, T2 AI</td>
+              <td class="py-3 px-3 text-cyan-300">Top 3 Podium</td>
+              <td class="py-3 px-3 text-right text-amber-400 font-bold">8,200 XP</td>
+              <td class="py-3 px-3 text-slate-300">Buy in Showroom (Cr)</td>
             </tr>
             <tr>
               <td class="py-3 px-3 font-bold text-white">Tier 2 &rarr; Tier 3</td>
-              <td class="py-3 px-3 text-cyan-300">&ge; 1 Podium</td>
-              <td class="py-3 px-3 text-right text-amber-400 font-bold">3,000 XP</td>
-              <td class="py-3 px-3 text-slate-300">+3 Tracks, T3 Car, T3 AI</td>
+              <td class="py-3 px-3 text-cyan-300">Top 3 Podium</td>
+              <td class="py-3 px-3 text-right text-amber-400 font-bold">18,500 / 18,700 XP</td>
+              <td class="py-3 px-3 text-slate-300">Buy in Showroom (Cr)</td>
             </tr>
             <tr>
               <td class="py-3 px-3 font-bold text-white">Tier 3 &rarr; Tier 4</td>
-              <td class="py-3 px-3 text-cyan-300">&ge; 1 Podium</td>
-              <td class="py-3 px-3 text-right text-amber-400 font-bold">4,000 XP</td>
-              <td class="py-3 px-3 text-slate-300">+3 Tracks, T4 Car, T4 AI</td>
+              <td class="py-3 px-3 text-cyan-300">Top 3 Podium</td>
+              <td class="py-3 px-3 text-right text-amber-400 font-bold">31,300 / 33,400 XP</td>
+              <td class="py-3 px-3 text-slate-300">Buy in Showroom (Cr)</td>
             </tr>
             <tr>
               <td class="py-3 px-3 font-bold text-white">Tier 4 &rarr; Tier 5</td>
-              <td class="py-3 px-3 text-cyan-300">&ge; 1 Podium</td>
-              <td class="py-3 px-3 text-right text-amber-400 font-bold">5,000 XP</td>
-              <td class="py-3 px-3 text-slate-300">+3 Tracks, T5 Car, T5 AI</td>
+              <td class="py-3 px-3 text-cyan-300">Top 3 Podium</td>
+              <td class="py-3 px-3 text-right text-amber-400 font-bold">46,600 / 49,800 XP</td>
+              <td class="py-3 px-3 text-slate-300">Buy in Showroom (Cr)</td>
+            </tr>
+            <tr>
+              <td class="py-3 px-3 font-bold text-white">Tier 5 &rarr; Tier 6</td>
+              <td class="py-3 px-3 text-cyan-300">Top 3 Podium</td>
+              <td class="py-3 px-3 text-right text-amber-400 font-bold">65,400 / 62,800 XP</td>
+              <td class="py-3 px-3 text-slate-300">Buy in Showroom (Cr)</td>
             </tr>
             <tr class="bg-racing-card/40">
-              <td class="py-3 px-3 font-bold text-emerald-400">Tier 5 (Apex)</td>
+              <td class="py-3 px-3 font-bold text-emerald-400">Pinnacle Tier</td>
               <td class="py-3 px-3 text-slate-400">Pinnacle</td>
               <td class="py-3 px-3 text-right text-slate-400">—</td>
               <td class="py-3 px-3 text-emerald-300">World Grand Prix Status</td>
@@ -148,7 +156,7 @@ const repair = career.repair_economy;
           </span>
         </div>
         <p class="text-xs text-racing-muted mt-3 leading-relaxed">
-          XP measures cumulative driver prestige (<code class="text-slate-300">lifetime_xp</code>) and serves as spendable currency (<code class="text-slate-300">xp</code>) in the garage.
+          XP measures cumulative driver prestige and serves as the non-spendable driver progression metric per discipline. Drivers never spend XP—it continuously compounds and unlocks alternative tier advancement without requiring a podium finish.
         </p>
 
         <div class="mt-4 space-y-2">
@@ -165,7 +173,7 @@ const repair = career.repair_economy;
             <code class="text-amber-400 font-mono">tier &times; {xp.first_time_bonus_per_tier} XP</code> (e.g. +750 XP at Tier 3).
           </p>
           <p>
-            <strong class="text-white">Car Purchase Formula:</strong> Vehicles in the Garage cost strictly <code class="text-amber-400 font-mono">tier &times; {xp.car_cost_per_tier} XP</code>.
+            <strong class="text-white">Car Acquisition:</strong> Vehicles are purchased strictly with <strong class="text-emerald-400">Credits (Cr)</strong> in the Showroom/Garage. XP is never spent to purchase cars.
           </p>
         </div>
       </div>
@@ -209,7 +217,7 @@ const repair = career.repair_economy;
   <section class="py-8 border-t border-racing-border max-w-5xl">
     <div class="mb-6">
       <h2 class="text-xl font-bold text-white tracking-tight">Discipline Tier Ladders &amp; Unlocks</h2>
-      <p class="text-xs text-racing-muted font-mono mt-1">Five-tier career ladders, starter vehicles, and circuit unlock schedules.</p>
+      <p class="text-xs text-racing-muted font-mono mt-1">Multi-tier career ladders, starter vehicles, and circuit unlock schedules.</p>
     </div>
 
     <div class="space-y-8">
@@ -224,7 +232,7 @@ const repair = career.repair_economy;
                 </span>
                 <h3 class="text-lg font-bold text-white tracking-tight">{ladder.module_name}</h3>
               </div>
-              <span class="text-xs font-mono text-racing-muted">5 Career Tiers</span>
+              <span class="text-xs font-mono text-racing-muted">{ladder.tiers.length} Career Tiers</span>
             </div>
 
             <!-- Tiers Table -->
@@ -234,8 +242,9 @@ const repair = career.repair_economy;
                   <tr>
                     <th class="py-2.5 px-3 font-semibold">Tier</th>
                     <th class="py-2.5 px-3 font-semibold">Tier Name &amp; Promotion Criteria</th>
-                    <th class="py-2.5 px-3 font-semibold">Starter Vehicle</th>
-                    <th class="py-2.5 px-3 font-semibold text-right">Car XP</th>
+                    <th class="py-2.5 px-3 font-semibold">Vehicle Acquisition</th>
+                    <th class="py-2.5 px-3 font-semibold text-right">Base Car Cost</th>
+                    <th class="py-2.5 px-3 font-semibold text-right">Alt Gate XP</th>
                     <th class="py-2.5 px-3 font-semibold text-right">Round Purse</th>
                     <th class="py-2.5 px-3 font-semibold">Track Unlocks</th>
                   </tr>
@@ -250,17 +259,21 @@ const repair = career.repair_economy;
                       </td>
                       <td class="py-3 px-3">
                         {t.starter_car_name ? (
-                          <a
-                            href={`/showroom/cars#${t.starter_car_id}`}
-                            class="text-amber-300 hover:text-amber-200 transition-colors font-medium"
-                          >
-                            {t.starter_car_name}
-                          </a>
+                          <div>
+                            <span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 mr-1.5">Free Starter</span>
+                            <a
+                              href={`/showroom/cars#${t.starter_car_id}`}
+                              class="text-amber-300 hover:text-amber-200 transition-colors font-medium"
+                            >
+                              {t.starter_car_name}
+                            </a>
+                          </div>
                         ) : (
-                          <span class="text-racing-muted italic">Purchase via Garage</span>
+                          <span class="text-racing-muted italic">Showroom Purchase (Cr)</span>
                         )}
                       </td>
-                      <td class="py-3 px-3 text-right text-amber-400 font-bold">{t.car_cost_xp.toLocaleString('en-US')} XP</td>
+                      <td class="py-3 px-3 text-right text-amber-400 font-bold">{(t.car_cost_credits ?? t.car_cost_xp).toLocaleString('en-US')} Cr</td>
+                      <td class="py-3 px-3 text-right text-racing-cyan font-bold">{t.alt_promotion_xp ? `${t.alt_promotion_xp.toLocaleString('en-US')} XP` : 'Starter'}</td>
                       <td class="py-3 px-3 text-right text-emerald-400 font-bold">{t.round_base_purse.toLocaleString('en-US')} Cr</td>
                       <td class="py-3 px-3">
                         <div class="flex flex-wrap gap-1">

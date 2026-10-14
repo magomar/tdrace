@@ -19,7 +19,9 @@
               "tier": 1,
               "name": "Open Competition",
               "required_licence": "Class D (National Grassroots)",
-              "car_cost_xp": 1000,
+              "car_cost_credits": 5000,
+              "alt_promotion_xp": 0,
+              "car_cost_xp": 0,
               "base_purse": 5000
             }
           ]
@@ -38,42 +40,54 @@
               "tier": 1,
               "name": "Cadet 60cc",
               "required_licence": "Class D (National Grassroots)",
-              "car_cost_xp": 1000,
+              "car_cost_credits": 5000,
+              "alt_promotion_xp": 0,
+              "car_cost_xp": 0,
               "base_purse": 5000
             },
             {
               "tier": 2,
               "name": "Junior OK-J",
               "required_licence": "Class D (National Grassroots)",
-              "car_cost_xp": 2000,
+              "car_cost_credits": 8500,
+              "alt_promotion_xp": 8200,
+              "car_cost_xp": 8200,
               "base_purse": 12000
             },
             {
               "tier": 3,
               "name": "Senior OK / Shifter",
               "required_licence": "Class D (National Grassroots)",
-              "car_cost_xp": 3000,
+              "car_cost_credits": 12000,
+              "alt_promotion_xp": 18500,
+              "car_cost_xp": 18500,
               "base_purse": 25000
             },
             {
               "tier": 4,
               "name": "KZ2 Shifter Pro",
               "required_licence": "Class D (National Grassroots)",
-              "car_cost_xp": 4000,
+              "car_cost_credits": 18000,
+              "alt_promotion_xp": 31300,
+              "car_cost_xp": 31300,
               "base_purse": 55000
             },
             {
               "tier": 5,
               "name": "Superkart Div 2",
               "required_licence": "Class D (National Grassroots)",
-              "car_cost_xp": 5000,
+              "car_cost_credits": 26000,
+              "alt_promotion_xp": 46600,
+              "car_cost_xp": 46600,
               "base_purse": 120000
             },
             {
               "tier": 6,
               "name": "Superkart World Series",
               "required_licence": "Class D (National Grassroots)",
-              "car_cost_xp": 6000,
+              "car_cost_credits": 38000,
+              "alt_promotion_xp": 65400,
+              "car_cost_xp": 65400,
               "base_purse": 150000
             }
           ]
@@ -92,35 +106,45 @@
               "tier": 1,
               "name": "Cross Car Junior",
               "required_licence": "Class C (Junior Competition)",
-              "car_cost_xp": 1000,
+              "car_cost_credits": 12000,
+              "alt_promotion_xp": 0,
+              "car_cost_xp": 0,
               "base_purse": 5000
             },
             {
               "tier": 2,
               "name": "Cross Car Senior",
               "required_licence": "Class C (Junior Competition)",
-              "car_cost_xp": 2000,
+              "car_cost_credits": 24000,
+              "alt_promotion_xp": 4060,
+              "car_cost_xp": 4060,
               "base_purse": 12000
             },
             {
               "tier": 3,
               "name": "Buggy 1600",
               "required_licence": "Class C (Junior Competition)",
-              "car_cost_xp": 3000,
+              "car_cost_credits": 45000,
+              "alt_promotion_xp": 12560,
+              "car_cost_xp": 12560,
               "base_purse": 25000
             },
             {
               "tier": 4,
               "name": "Touring Autocross",
               "required_licence": "Class C (Junior Competition)",
-              "car_cost_xp": 4000,
+              "car_cost_credits": 70000,
+              "alt_promotion_xp": 23260,
+              "car_cost_xp": 23260,
               "base_purse": 55000
             },
             {
               "tier": 5,
               "name": "SuperBuggy World Series",
               "required_licence": "Class C (Junior Competition)",
-              "car_cost_xp": 5000,
+              "car_cost_credits": 95000,
+              "alt_promotion_xp": 35760,
+              "car_cost_xp": 35760,
               "base_purse": 120000
             }
           ]
@@ -139,50 +163,55 @@
               "tier": 1,
               "name": "Rally4 Grassroots Cup",
               "required_licence": "Class C (Junior Competition)",
-              "car_cost_xp": 1000,
+              "car_cost_credits": 16000,
+              "alt_promotion_xp": 0,
+              "car_cost_xp": 0,
               "base_purse": 5000
             },
             {
               "tier": 2,
               "name": "Supercar Lites Trophy",
               "required_licence": "Class C (Junior Competition)",
-              "car_cost_xp": 2000,
+              "car_cost_credits": 48000,
+              "alt_promotion_xp": 8200,
+              "car_cost_xp": 8200,
               "base_purse": 12000
             },
             {
               "tier": 3,
               "name": "Continental RX Supercars",
               "required_licence": "Class C (Junior Competition)",
-              "car_cost_xp": 3000,
+              "car_cost_credits": 85000,
+              "alt_promotion_xp": 18700,
+              "car_cost_xp": 18700,
               "base_purse": 25000
             },
             {
               "tier": 4,
               "name": "World Rallycross Supercars",
               "required_licence": "Class C (Junior Competition)",
-              "car_cost_xp": 4000,
+              "car_cost_credits": 150000,
+              "alt_promotion_xp": 33400,
+              "car_cost_xp": 33400,
               "base_purse": 55000
             },
             {
               "tier": 5,
               "name": "RX1e Electric Championship",
               "required_licence": "Class C (Junior Competition)",
-              "car_cost_xp": 5000,
+              "car_cost_credits": 190000,
+              "alt_promotion_xp": 49800,
+              "car_cost_xp": 49800,
               "base_purse": 120000
             },
             {
               "tier": 6,
-              "name": "Apex Group E Electric Trophy",
+              "name": "Apex Group E / Supercar Pro",
               "required_licence": "Class C (Junior Competition)",
-              "car_cost_xp": 6000,
+              "car_cost_credits": 240000,
+              "alt_promotion_xp": 62800,
+              "car_cost_xp": 62800,
               "base_purse": 150000
-            },
-            {
-              "tier": 7,
-              "name": "Group B Masters",
-              "required_licence": "Class C (Junior Competition)",
-              "car_cost_xp": 7000,
-              "base_purse": 180000
             }
           ]
         },
@@ -200,35 +229,45 @@
               "tier": 1,
               "name": "GT4 Clubman Sprint",
               "required_licence": "Class A (International GT)",
-              "car_cost_xp": 1000,
+              "car_cost_credits": 70000,
+              "alt_promotion_xp": 0,
+              "car_cost_xp": 0,
               "base_purse": 5000
             },
             {
               "tier": 2,
               "name": "Continental GT3 Sprint Challenge",
               "required_licence": "Class A (International GT)",
-              "car_cost_xp": 2000,
+              "car_cost_credits": 160000,
+              "alt_promotion_xp": 12760,
+              "car_cost_xp": 12760,
               "base_purse": 12000
             },
             {
               "tier": 3,
               "name": "Grand Touring Biturbo Masters",
               "required_licence": "Class A (International GT)",
-              "car_cost_xp": 3000,
+              "car_cost_credits": 200000,
+              "alt_promotion_xp": 31360,
+              "car_cost_xp": 31360,
               "base_purse": 25000
             },
             {
               "tier": 4,
               "name": "Endurance 90s Heritage Trophy",
               "required_licence": "Class A (International GT)",
-              "car_cost_xp": 4000,
+              "car_cost_credits": 280000,
+              "alt_promotion_xp": 57520,
+              "car_cost_xp": 57520,
               "base_purse": 55000
             },
             {
               "tier": 5,
               "name": "Hypercar World GP",
               "required_licence": "Class S (World Superlicense)",
-              "car_cost_xp": 5000,
+              "car_cost_credits": 450000,
+              "alt_promotion_xp": 88120,
+              "car_cost_xp": 88120,
               "base_purse": 120000
             }
           ]
@@ -247,35 +286,45 @@
               "tier": 1,
               "name": "Street Stock Bullring",
               "required_licence": "Class B (National Pro-Am)",
-              "car_cost_xp": 1000,
+              "car_cost_credits": 25000,
+              "alt_promotion_xp": 0,
+              "car_cost_xp": 0,
               "base_purse": 5000
             },
             {
               "tier": 2,
               "name": "Late Model Challenge",
               "required_licence": "Class B (National Pro-Am)",
-              "car_cost_xp": 2000,
+              "car_cost_credits": 48000,
+              "alt_promotion_xp": 5700,
+              "car_cost_xp": 5700,
               "base_purse": 12000
             },
             {
               "tier": 3,
               "name": "National Stock Car Tour",
               "required_licence": "Class B (National Pro-Am)",
-              "car_cost_xp": 3000,
+              "car_cost_credits": 85000,
+              "alt_promotion_xp": 15500,
+              "car_cost_xp": 15500,
               "base_purse": 25000
             },
             {
               "tier": 4,
               "name": "Pro Super Truck V8 Series",
               "required_licence": "Class B (National Pro-Am)",
-              "car_cost_xp": 4000,
+              "car_cost_credits": 130000,
+              "alt_promotion_xp": 34160,
+              "car_cost_xp": 34160,
               "base_purse": 55000
             },
             {
               "tier": 5,
               "name": "Premier Stock Car Cup",
               "required_licence": "Class B (National Pro-Am)",
-              "car_cost_xp": 5000,
+              "car_cost_credits": 180000,
+              "alt_promotion_xp": 59520,
+              "car_cost_xp": 59520,
               "base_purse": 120000
             }
           ]
@@ -294,35 +343,45 @@
               "tier": 1,
               "name": "Desert Sand Sprint",
               "required_licence": "Class B (National Pro-Am)",
-              "car_cost_xp": 1000,
+              "car_cost_credits": 28000,
+              "alt_promotion_xp": 0,
+              "car_cost_xp": 0,
               "base_purse": 5000
             },
             {
               "tier": 2,
               "name": "Canyon Raid",
               "required_licence": "Class B (National Pro-Am)",
-              "car_cost_xp": 2000,
+              "car_cost_credits": 120000,
+              "alt_promotion_xp": 9420,
+              "car_cost_xp": 9420,
               "base_purse": 12000
             },
             {
               "tier": 3,
               "name": "Extreme Offroad Cup",
               "required_licence": "Class B (National Pro-Am)",
-              "car_cost_xp": 3000,
+              "car_cost_credits": 180000,
+              "alt_promotion_xp": 21120,
+              "car_cost_xp": 21120,
               "base_purse": 25000
             },
             {
               "tier": 4,
               "name": "Mud Masters",
               "required_licence": "Class B (National Pro-Am)",
-              "car_cost_xp": 4000,
+              "car_cost_credits": 240000,
+              "alt_promotion_xp": 34880,
+              "car_cost_xp": 34880,
               "base_purse": 55000
             },
             {
               "tier": 5,
               "name": "Ultimate Monster Championship",
               "required_licence": "Class B (National Pro-Am)",
-              "car_cost_xp": 5000,
+              "car_cost_credits": 300000,
+              "alt_promotion_xp": 50500,
+              "car_cost_xp": 50500,
               "base_purse": 120000
             }
           ]
@@ -5453,7 +5512,9 @@
                 "promotion_criteria": "Available immediately at career launch.",
                 "starter_car_id": "gt_yamato_hayate_t1",
                 "starter_car_name": "Yamato Hayate GT T1",
-                "car_cost_xp": 1000,
+                "car_cost_credits": 70000,
+                "alt_promotion_xp": 0,
+                "car_cost_xp": 0,
                 "first_time_exploration_xp": 250,
                 "round_base_purse": 5000,
                 "unlocked_tracks": [
@@ -5467,10 +5528,12 @@
               {
                 "tier": 2,
                 "name": "Tier 2: Continental GT3 Sprint Challenge",
-                "promotion_criteria": "Finish top 3 in GT4 championship + 2,000 XP in wallet.",
-                "starter_car_id": "gt_vandorn_arrowhead_t2",
-                "starter_car_name": "Vandorn Arrowhead R T2",
-                "car_cost_xp": 2000,
+                "promotion_criteria": "Primary: Top 3 finish in Tier 1 championship. Alternative: Reach 12,760 cumulative XP.",
+                "starter_car_id": null,
+                "starter_car_name": null,
+                "car_cost_credits": 160000,
+                "alt_promotion_xp": 12760,
+                "car_cost_xp": 12760,
                 "first_time_exploration_xp": 500,
                 "round_base_purse": 12000,
                 "unlocked_tracks": [
@@ -5482,10 +5545,12 @@
               {
                 "tier": 3,
                 "name": "Tier 3: Grand Touring Biturbo Masters",
-                "promotion_criteria": "Finish top 3 in GT3 championship + 3,000 XP in wallet.",
-                "starter_car_id": "gt_aquila_strale_t3",
-                "starter_car_name": "Aquila Strale GT2 T3",
-                "car_cost_xp": 3000,
+                "promotion_criteria": "Primary: Top 3 finish in Tier 2 championship. Alternative: Reach 31,360 cumulative XP.",
+                "starter_car_id": null,
+                "starter_car_name": null,
+                "car_cost_credits": 200000,
+                "alt_promotion_xp": 31360,
+                "car_cost_xp": 31360,
                 "first_time_exploration_xp": 750,
                 "round_base_purse": 25000,
                 "unlocked_tracks": [
@@ -5497,10 +5562,12 @@
               {
                 "tier": 4,
                 "name": "Tier 4: Endurance 90s Heritage Trophy",
-                "promotion_criteria": "Finish top 3 in GT2 championship + 4,000 XP in wallet.",
-                "starter_car_id": "gt_vandorn_aeromax_t4",
-                "starter_car_name": "Vandorn Aeromax GT1 T4",
-                "car_cost_xp": 4000,
+                "promotion_criteria": "Primary: Top 3 finish in Tier 3 championship. Alternative: Reach 57,520 cumulative XP.",
+                "starter_car_id": null,
+                "starter_car_name": null,
+                "car_cost_credits": 280000,
+                "alt_promotion_xp": 57520,
+                "car_cost_xp": 57520,
                 "first_time_exploration_xp": 1000,
                 "round_base_purse": 55000,
                 "unlocked_tracks": [
@@ -5512,16 +5579,19 @@
               {
                 "tier": 5,
                 "name": "Tier 5: Hypercar World GP",
-                "promotion_criteria": "Finish top 3 in GT1 championship + 5,000 XP in wallet.",
-                "starter_car_id": "gt_vandorn_kronos_t5",
-                "starter_car_name": "Vandorn Kronos Hypercar T5",
-                "car_cost_xp": 5000,
+                "promotion_criteria": "Primary: Top 3 finish in Tier 4 championship. Alternative: Reach 88,120 cumulative XP.",
+                "starter_car_id": null,
+                "starter_car_name": null,
+                "car_cost_credits": 450000,
+                "alt_promotion_xp": 88120,
+                "car_cost_xp": 88120,
                 "first_time_exploration_xp": 1250,
                 "round_base_purse": 120000,
                 "unlocked_tracks": [
                   "le_mans_sarthe",
                   "monaco",
-                  "marina_bay"
+                  "marina_bay",
+                  "madring"
                 ]
               }
             ]
@@ -5536,7 +5606,9 @@
                 "promotion_criteria": "Available immediately at career launch.",
                 "starter_car_id": "nascar_crossbow_montego_t1",
                 "starter_car_name": "Crossbow Montego Street Stock T1",
-                "car_cost_xp": 1000,
+                "car_cost_credits": 25000,
+                "alt_promotion_xp": 0,
+                "car_cost_xp": 0,
                 "first_time_exploration_xp": 250,
                 "round_base_purse": 5000,
                 "unlocked_tracks": [
@@ -5550,10 +5622,12 @@
               {
                 "tier": 2,
                 "name": "Tier 2: Late Model Challenge",
-                "promotion_criteria": "Finish top 3 in Street Stock championship + 2,000 XP in wallet.",
-                "starter_car_id": "nascar_crossbow_saber_t2",
-                "starter_car_name": "Crossbow Saber Late Model T2",
-                "car_cost_xp": 2000,
+                "promotion_criteria": "Primary: Top 3 finish in Tier 1 championship. Alternative: Reach 5,700 cumulative XP.",
+                "starter_car_id": null,
+                "starter_car_name": null,
+                "car_cost_credits": 48000,
+                "alt_promotion_xp": 5700,
+                "car_cost_xp": 5700,
                 "first_time_exploration_xp": 500,
                 "round_base_purse": 12000,
                 "unlocked_tracks": [
@@ -5565,10 +5639,12 @@
               {
                 "tier": 3,
                 "name": "Tier 3: National Stock Car Tour",
-                "promotion_criteria": "Finish top 3 in Late Model championship + 3,000 XP in wallet.",
-                "starter_car_id": "nascar_crossbow_predator_t3",
-                "starter_car_name": "Crossbow Predator Stock T3",
-                "car_cost_xp": 3000,
+                "promotion_criteria": "Primary: Top 3 finish in Tier 2 championship. Alternative: Reach 15,500 cumulative XP.",
+                "starter_car_id": null,
+                "starter_car_name": null,
+                "car_cost_credits": 85000,
+                "alt_promotion_xp": 15500,
+                "car_cost_xp": 15500,
                 "first_time_exploration_xp": 750,
                 "round_base_purse": 25000,
                 "unlocked_tracks": [
@@ -5580,10 +5656,12 @@
               {
                 "tier": 4,
                 "name": "Tier 4: Pro Super Truck V8 Series",
-                "promotion_criteria": "Finish top 3 in National Stock Car championship + 4,000 XP in wallet.",
-                "starter_car_id": "nascar_crossbow_sierra_t4",
-                "starter_car_name": "Crossbow Sierra Super Truck T4",
-                "car_cost_xp": 4000,
+                "promotion_criteria": "Primary: Top 3 finish in Tier 3 championship. Alternative: Reach 34,160 cumulative XP.",
+                "starter_car_id": null,
+                "starter_car_name": null,
+                "car_cost_credits": 130000,
+                "alt_promotion_xp": 34160,
+                "car_cost_xp": 34160,
                 "first_time_exploration_xp": 1000,
                 "round_base_purse": 55000,
                 "unlocked_tracks": [
@@ -5595,10 +5673,12 @@
               {
                 "tier": 5,
                 "name": "Tier 5: Premier Stock Car Cup",
-                "promotion_criteria": "Finish top 3 in Truck championship + 5,000 XP in wallet.",
-                "starter_car_id": "nascar_crossbow_manta_t5",
-                "starter_car_name": "Crossbow Manta Silhouette T5",
-                "car_cost_xp": 5000,
+                "promotion_criteria": "Primary: Top 3 finish in Tier 4 championship. Alternative: Reach 59,520 cumulative XP.",
+                "starter_car_id": null,
+                "starter_car_name": null,
+                "car_cost_credits": 180000,
+                "alt_promotion_xp": 59520,
+                "car_cost_xp": 59520,
                 "first_time_exploration_xp": 1250,
                 "round_base_purse": 120000,
                 "unlocked_tracks": [
@@ -5619,7 +5699,9 @@
                 "promotion_criteria": "Available immediately at career launch.",
                 "starter_car_id": "rally_gallia_200_t1",
                 "starter_car_name": "Gallia 200 Rally4 T1",
-                "car_cost_xp": 1000,
+                "car_cost_credits": 16000,
+                "alt_promotion_xp": 0,
+                "car_cost_xp": 0,
                 "first_time_exploration_xp": 250,
                 "round_base_purse": 5000,
                 "unlocked_tracks": [
@@ -5633,61 +5715,86 @@
               {
                 "tier": 2,
                 "name": "Tier 2: Supercar Lites Trophy",
-                "promotion_criteria": "Finish top 3 in Rally4 championship + 2,000 XP in wallet.",
-                "starter_car_id": "rally_nordic_rx_lites_t2",
-                "starter_car_name": "Nordic RX Supercar Lites T2",
-                "car_cost_xp": 2000,
+                "promotion_criteria": "Primary: Top 3 finish in Tier 1 championship. Alternative: Reach 8,200 cumulative XP.",
+                "starter_car_id": null,
+                "starter_car_name": null,
+                "car_cost_credits": 48000,
+                "alt_promotion_xp": 8200,
+                "car_cost_xp": 8200,
                 "first_time_exploration_xp": 500,
                 "round_base_purse": 12000,
                 "unlocked_tracks": [
-                  "hell_rx",
-                  "loheac_rx",
+                  "lessay_rx",
+                  "essay_rx",
                   "lavare_rx"
                 ]
               },
               {
                 "tier": 3,
                 "name": "Tier 3: Continental RX Supercars",
-                "promotion_criteria": "Finish top 3 in Supercar Lites championship + 3,000 XP in wallet.",
-                "starter_car_id": "rally_vortek_turbo_quattro_t7",
-                "starter_car_name": "Vortek Turbo Quattro Legend T7",
-                "car_cost_xp": 3000,
+                "promotion_criteria": "Primary: Top 3 finish in Tier 2 championship. Alternative: Reach 18,700 cumulative XP.",
+                "starter_car_id": null,
+                "starter_car_name": null,
+                "car_cost_credits": 85000,
+                "alt_promotion_xp": 18700,
+                "car_cost_xp": 18700,
                 "first_time_exploration_xp": 750,
                 "round_base_purse": 25000,
                 "unlocked_tracks": [
-                  "estering_rx",
+                  "kouvola_rx",
                   "montalegre_rx",
-                  "riga_rx"
+                  "nyirad_rx"
                 ]
               },
               {
                 "tier": 4,
                 "name": "Tier 4: World Rallycross Supercars",
-                "promotion_criteria": "Finish top 3 in Continental RX championship + 4,000 XP in wallet.",
-                "starter_car_id": "rally_gallia_lyon_t4",
-                "starter_car_name": "Gallia Lyon WRX Supercar T4",
-                "car_cost_xp": 4000,
+                "promotion_criteria": "Primary: Top 3 finish in Tier 3 championship. Alternative: Reach 33,400 cumulative XP.",
+                "starter_car_id": null,
+                "starter_car_name": null,
+                "car_cost_credits": 150000,
+                "alt_promotion_xp": 33400,
+                "car_cost_xp": 33400,
                 "first_time_exploration_xp": 1000,
                 "round_base_purse": 55000,
                 "unlocked_tracks": [
-                  "nyirad_rx",
-                  "kouvola_rx",
-                  "killarney_rx"
+                  "estering_rx",
+                  "hell_rx",
+                  "loheac_rx"
                 ]
               },
               {
                 "tier": 5,
-                "name": "Tier 5: RX1e / Group E / Heritage",
-                "promotion_criteria": "Finish top 3 in World Rallycross championship + 5,000 XP in wallet.",
-                "starter_car_id": "rally_gallia_volt_t5",
-                "starter_car_name": "Gallia Volt RX1e Supercar T5",
-                "car_cost_xp": 5000,
+                "name": "Tier 5: RX1e Electric Championship",
+                "promotion_criteria": "Primary: Top 3 finish in Tier 4 championship. Alternative: Reach 49,800 cumulative XP.",
+                "starter_car_id": null,
+                "starter_car_name": null,
+                "car_cost_credits": 190000,
+                "alt_promotion_xp": 49800,
+                "car_cost_xp": 49800,
                 "first_time_exploration_xp": 1250,
                 "round_base_purse": 120000,
                 "unlocked_tracks": [
-                  "catalunya_rx",
-                  "lessay_rx",
-                  "essay_rx"
+                  "riga_rx",
+                  "killarney_rx",
+                  "catalunya_rx"
+                ]
+              },
+              {
+                "tier": 6,
+                "name": "Tier 6: Apex Group E / Supercar Pro",
+                "promotion_criteria": "Primary: Top 3 finish in Tier 5 championship. Alternative: Reach 62,800 cumulative XP.",
+                "starter_car_id": null,
+                "starter_car_name": null,
+                "car_cost_credits": 240000,
+                "alt_promotion_xp": 62800,
+                "car_cost_xp": 62800,
+                "first_time_exploration_xp": 1500,
+                "round_base_purse": 150000,
+                "unlocked_tracks": [
+                  "spa_rx",
+                  "silverstone_rx",
+                  "erx_motor_park"
                 ]
               }
             ]
@@ -5702,7 +5809,9 @@
                 "promotion_criteria": "Available immediately at career launch.",
                 "starter_car_id": "kart_blackline_cadet_t1",
                 "starter_car_name": "Blackline Cadet 60 T1",
-                "car_cost_xp": 1000,
+                "car_cost_credits": 5000,
+                "alt_promotion_xp": 0,
+                "car_cost_xp": 0,
                 "first_time_exploration_xp": 250,
                 "round_base_purse": 5000,
                 "unlocked_tracks": [
@@ -5716,10 +5825,12 @@
               {
                 "tier": 2,
                 "name": "Tier 2: Junior OK-J National",
-                "promotion_criteria": "Finish top 3 in Cadet championship + 2,000 XP in wallet.",
-                "starter_car_id": "kart_verde_apex_t3",
-                "starter_car_name": "Verde Kart Apex 125 OK T3",
-                "car_cost_xp": 2000,
+                "promotion_criteria": "Primary: Top 3 finish in Tier 1 championship. Alternative: Reach 8,200 cumulative XP.",
+                "starter_car_id": null,
+                "starter_car_name": null,
+                "car_cost_credits": 8500,
+                "alt_promotion_xp": 8200,
+                "car_cost_xp": 8200,
                 "first_time_exploration_xp": 500,
                 "round_base_purse": 12000,
                 "unlocked_tracks": [
@@ -5730,11 +5841,13 @@
               },
               {
                 "tier": 3,
-                "name": "Tier 3: KZ2 Shifter Pro",
-                "promotion_criteria": "Finish top 3 in Junior OK championship + 3,000 XP in wallet.",
-                "starter_car_id": "kart_rosso_corsa_t4",
-                "starter_car_name": "Rosso Kart Corsa 125 KZ2 T4",
-                "car_cost_xp": 3000,
+                "name": "Tier 3: Senior OK / Shifter",
+                "promotion_criteria": "Primary: Top 3 finish in Tier 2 championship. Alternative: Reach 18,500 cumulative XP.",
+                "starter_car_id": null,
+                "starter_car_name": null,
+                "car_cost_credits": 12000,
+                "alt_promotion_xp": 18500,
+                "car_cost_xp": 18500,
                 "first_time_exploration_xp": 750,
                 "round_base_purse": 25000,
                 "unlocked_tracks": [
@@ -5745,32 +5858,53 @@
               },
               {
                 "tier": 4,
-                "name": "Tier 4: Superkart Division 2",
-                "promotion_criteria": "Finish top 3 in KZ2 championship + 4,000 XP in wallet.",
-                "starter_car_id": "vault_asahi_blade_runner",
-                "starter_car_name": "Asahi Blade Runner Mower",
-                "car_cost_xp": 4000,
+                "name": "Tier 4: KZ2 Shifter Pro",
+                "promotion_criteria": "Primary: Top 3 finish in Tier 3 championship. Alternative: Reach 31,300 cumulative XP.",
+                "starter_car_id": null,
+                "starter_car_name": null,
+                "car_cost_credits": 18000,
+                "alt_promotion_xp": 31300,
+                "car_cost_xp": 31300,
                 "first_time_exploration_xp": 1000,
                 "round_base_purse": 55000,
                 "unlocked_tracks": [
                   "zuera",
                   "silverstone_national_kart",
-                  "le_mans_kart"
+                  "aunay_kart"
                 ]
               },
               {
                 "tier": 5,
-                "name": "Tier 5: Superkart World Series",
-                "promotion_criteria": "Finish top 3 in Superkart Div 2 championship + 5,000 XP in wallet.",
-                "starter_car_id": "kart_highland_eagle_t6",
-                "starter_car_name": "Highland Eagle Superkart T6",
-                "car_cost_xp": 5000,
+                "name": "Tier 5: Superkart Division 2",
+                "promotion_criteria": "Primary: Top 3 finish in Tier 4 championship. Alternative: Reach 46,600 cumulative XP.",
+                "starter_car_id": null,
+                "starter_car_name": null,
+                "car_cost_credits": 26000,
+                "alt_promotion_xp": 46600,
+                "car_cost_xp": 46600,
                 "first_time_exploration_xp": 1250,
                 "round_base_purse": 120000,
                 "unlocked_tracks": [
+                  "le_mans_kart",
+                  "campillos",
+                  "muelsen_kart"
+                ]
+              },
+              {
+                "tier": 6,
+                "name": "Tier 6: Superkart World Series",
+                "promotion_criteria": "Primary: Top 3 finish in Tier 5 championship. Alternative: Reach 65,400 cumulative XP.",
+                "starter_car_id": null,
+                "starter_car_name": null,
+                "car_cost_credits": 38000,
+                "alt_promotion_xp": 65400,
+                "car_cost_xp": 65400,
+                "first_time_exploration_xp": 1500,
+                "round_base_purse": 150000,
+                "unlocked_tracks": [
                   "portimao_kart",
                   "valencia_kart",
-                  "campillos"
+                  "adria_kart"
                 ]
               }
             ]
@@ -5785,7 +5919,9 @@
                 "promotion_criteria": "Available immediately at career launch.",
                 "starter_car_id": "offroad_laurentian_nomad_t1",
                 "starter_car_name": "Laurentian Nomad Trophy Buggy T1",
-                "car_cost_xp": 1000,
+                "car_cost_credits": 28000,
+                "alt_promotion_xp": 0,
+                "car_cost_xp": 0,
                 "first_time_exploration_xp": 250,
                 "round_base_purse": 5000,
                 "unlocked_tracks": [
@@ -5793,16 +5929,21 @@
                   "dirt_figure_eight",
                   "atacama_sand_basin",
                   "glamis_dunes",
-                  "crandon_short_course"
+                  "crandon_short_course",
+                  "mint400_short_course",
+                  "mint400_qualifying_loop",
+                  "mint400_grand_loop"
                 ]
               },
               {
                 "tier": 2,
                 "name": "Tier 2: Canyon Raid",
-                "promotion_criteria": "Finish top 3 in Sand Sprint championship + 2,000 XP in wallet.",
-                "starter_car_id": "offroad_desert_forge_truck_t2",
-                "starter_car_name": "Desert Forge AWD Trophy Truck T2",
-                "car_cost_xp": 2000,
+                "promotion_criteria": "Primary: Top 3 finish in Tier 1 championship. Alternative: Reach 9,420 cumulative XP.",
+                "starter_car_id": null,
+                "starter_car_name": null,
+                "car_cost_credits": 120000,
+                "alt_promotion_xp": 9420,
+                "car_cost_xp": 9420,
                 "first_time_exploration_xp": 500,
                 "round_base_purse": 12000,
                 "unlocked_tracks": [
@@ -5814,10 +5955,12 @@
               {
                 "tier": 3,
                 "name": "Tier 3: Arctic Ice Challenge",
-                "promotion_criteria": "Finish top 3 in Canyon Raid championship + 3,000 XP in wallet.",
-                "starter_car_id": "offroad_sixstar_blizzard_t3",
-                "starter_car_name": "Sixstar Blizzard Ice Racer T3",
-                "car_cost_xp": 3000,
+                "promotion_criteria": "Primary: Top 3 finish in Tier 2 championship. Alternative: Reach 21,120 cumulative XP.",
+                "starter_car_id": null,
+                "starter_car_name": null,
+                "car_cost_credits": 180000,
+                "alt_promotion_xp": 21120,
+                "car_cost_xp": 21120,
                 "first_time_exploration_xp": 750,
                 "round_base_purse": 25000,
                 "unlocked_tracks": [
@@ -5829,10 +5972,12 @@
               {
                 "tier": 4,
                 "name": "Tier 4: Pro4 Mud Masters",
-                "promotion_criteria": "Finish top 3 in Arctic Challenge championship + 4,000 XP in wallet.",
-                "starter_car_id": "offroad_crossbow_ridge_t4",
-                "starter_car_name": "Crossbow Ridge Heavy Mud Bogger T4",
-                "car_cost_xp": 4000,
+                "promotion_criteria": "Primary: Top 3 finish in Tier 3 championship. Alternative: Reach 34,880 cumulative XP.",
+                "starter_car_id": null,
+                "starter_car_name": null,
+                "car_cost_credits": 240000,
+                "alt_promotion_xp": 34880,
+                "car_cost_xp": 34880,
                 "first_time_exploration_xp": 1000,
                 "round_base_purse": 55000,
                 "unlocked_tracks": [
@@ -5844,10 +5989,12 @@
               {
                 "tier": 5,
                 "name": "Tier 5: Monster Colosseum",
-                "promotion_criteria": "Finish top 3 in Mud Masters championship + 5,000 XP in wallet.",
-                "starter_car_id": "offroad_havoc_tomb_raider_t5",
-                "starter_car_name": "Havoc Tomb Raider Monster Crusher T5",
-                "car_cost_xp": 5000,
+                "promotion_criteria": "Primary: Top 3 finish in Tier 4 championship. Alternative: Reach 50,500 cumulative XP.",
+                "starter_car_id": null,
+                "starter_car_name": null,
+                "car_cost_credits": 300000,
+                "alt_promotion_xp": 50500,
+                "car_cost_xp": 50500,
                 "first_time_exploration_xp": 1250,
                 "round_base_purse": 120000,
                 "unlocked_tracks": [
@@ -5866,71 +6013,87 @@
                 "tier": 1,
                 "name": "Tier 1: Cross Car Junior",
                 "promotion_criteria": "Available immediately at career launch.",
-                "starter_car_id": "classic_ax_mudlark",
-                "starter_car_name": "Mudlark Cross Car 600",
-                "car_cost_xp": 1000,
+                "starter_car_id": "autocross_ardennes_junior_t1",
+                "starter_car_name": "Ardennes Junior Cross Car T1",
+                "car_cost_credits": 12000,
+                "alt_promotion_xp": 0,
+                "car_cost_xp": 0,
                 "first_time_exploration_xp": 250,
                 "round_base_purse": 5000,
                 "unlocked_tracks": [
-                  "ax_meadow_sprint",
-                  "ax_quarry_loop",
-                  "ax_forest_dash"
+                  "seelow_ax",
+                  "bazaigues_ax",
+                  "vilkyciai_ax"
                 ]
               },
               {
                 "tier": 2,
                 "name": "Tier 2: Cross Car Senior",
-                "promotion_criteria": "Finish top 3 in Junior Cross Car championship + 2,000 XP in wallet.",
-                "starter_car_id": "classic_ax_mudlark",
-                "starter_car_name": "Mudlark Cross Car 600",
-                "car_cost_xp": 2000,
+                "promotion_criteria": "Primary: Top 3 finish in Tier 1 championship. Alternative: Reach 4,060 cumulative XP.",
+                "starter_car_id": null,
+                "starter_car_name": null,
+                "car_cost_credits": 24000,
+                "alt_promotion_xp": 4060,
+                "car_cost_xp": 4060,
                 "first_time_exploration_xp": 500,
                 "round_base_purse": 12000,
                 "unlocked_tracks": [
-                  "ax_nova_paka",
-                  "ax_matschenberg"
+                  "arteixo_ax",
+                  "uelzen_ax",
+                  "musa_ax",
+                  "castelo_branco_ax"
                 ]
               },
               {
                 "tier": 3,
                 "name": "Tier 3: Buggy 1600 Championship",
-                "promotion_criteria": "Finish top 3 in Senior Cross Car championship + 3,000 XP in wallet.",
-                "starter_car_id": "classic_ax_mudlark",
-                "starter_car_name": "Mudlark Cross Car 600",
-                "car_cost_xp": 3000,
+                "promotion_criteria": "Primary: Top 3 finish in Tier 2 championship. Alternative: Reach 12,560 cumulative XP.",
+                "starter_car_id": null,
+                "starter_car_name": null,
+                "car_cost_credits": 45000,
+                "alt_promotion_xp": 12560,
+                "car_cost_xp": 12560,
                 "first_time_exploration_xp": 750,
                 "round_base_purse": 25000,
                 "unlocked_tracks": [
-                  "ax_seelow",
-                  "ax_vilkyciai"
+                  "prerov_ax",
+                  "humpolec_ax",
+                  "maggiora_ax",
+                  "st_junien_ax"
                 ]
               },
               {
                 "tier": 4,
                 "name": "Tier 4: Touring Autocross Masters",
-                "promotion_criteria": "Finish top 3 in Buggy 1600 championship + 4,000 XP in wallet.",
-                "starter_car_id": "classic_ax_mudlark",
-                "starter_car_name": "Mudlark Cross Car 600",
-                "car_cost_xp": 4000,
+                "promotion_criteria": "Primary: Top 3 finish in Tier 3 championship. Alternative: Reach 23,260 cumulative XP.",
+                "starter_car_id": null,
+                "starter_car_name": null,
+                "car_cost_credits": 70000,
+                "alt_promotion_xp": 23260,
+                "car_cost_xp": 23260,
                 "first_time_exploration_xp": 1000,
                 "round_base_purse": 55000,
                 "unlocked_tracks": [
-                  "ax_st_georges",
-                  "ax_maggiore"
+                  "carballo_ax",
+                  "faleyras_ax",
+                  "schluechtern_ax",
+                  "matschenberg_ax"
                 ]
               },
               {
                 "tier": 5,
                 "name": "Tier 5: SuperBuggy World Series",
-                "promotion_criteria": "Finish top 3 in Touring Autocross championship + 5,000 XP in wallet.",
-                "starter_car_id": "classic_ax_mudlark",
-                "starter_car_name": "Mudlark Cross Car 600",
-                "car_cost_xp": 5000,
+                "promotion_criteria": "Primary: Top 3 finish in Tier 4 championship. Alternative: Reach 35,760 cumulative XP.",
+                "starter_car_id": null,
+                "starter_car_name": null,
+                "car_cost_credits": 95000,
+                "alt_promotion_xp": 35760,
+                "car_cost_xp": 35760,
                 "first_time_exploration_xp": 1250,
                 "round_base_purse": 120000,
                 "unlocked_tracks": [
-                  "ax_mollerussa",
-                  "ax_prerov"
+                  "nova_paka_ax",
+                  "st_georges_ax"
                 ]
               }
             ]
@@ -5945,7 +6108,9 @@
                 "promotion_criteria": "Available immediately at career launch.",
                 "starter_car_id": "classic_gt",
                 "starter_car_name": "Apex GT Coupe",
-                "car_cost_xp": 1000,
+                "car_cost_credits": 5000,
+                "alt_promotion_xp": 0,
+                "car_cost_xp": 0,
                 "first_time_exploration_xp": 250,
                 "round_base_purse": 5000,
                 "unlocked_tracks": [
@@ -5969,7 +6134,9 @@
             "completion_bonus = lap_xp (duplicates lap XP on race finish)",
             "first_time_exploration_bonus = round_to_10(tier * 250 XP)",
             "total_race_xp = lap_xp + completion_bonus + first_time_exploration_bonus",
-            "car_purchase_cost = tier * 1,000 XP"
+            "car_purchase = purchased with Credits in the Showroom (never gifted upon promotion)",
+            "tier_promotion_primary = finish top 3 (Gold, Silver, Bronze) in any current tier championship",
+            "tier_promotion_alt = reach cumulative discipline XP: Tier 2 = 2 * min_xp(1); Tier N = Tier(N-1) + 2 * min_xp(N-1)"
           ]
         },
         "repair_economy": {

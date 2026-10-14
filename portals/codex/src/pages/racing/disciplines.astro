@@ -118,9 +118,19 @@ const totalSeries = disciplines.reduce((acc, d) => acc + d.series_count, 0);
                       Required: <span class="text-slate-300 font-mono">{t.required_licence}</span>
                     </p>
                   </div>
-                  <div class="mt-3 pt-2 border-t border-racing-border/40 flex items-center justify-between text-[11px] font-mono text-racing-muted">
-                    <span>Entry: <strong class="text-amber-400">{t.car_cost_xp.toLocaleString('en-US')} XP</strong></span>
-                    <span>Purse: <strong class="text-emerald-400">{t.base_purse.toLocaleString('en-US')} Cr</strong></span>
+                  <div class="mt-3 pt-2 border-t border-racing-border/40 space-y-1 text-[11px] font-mono text-racing-muted">
+                    <div class="flex items-center justify-between">
+                      <span>Base Car:</span>
+                      <strong class="text-amber-400">{(t.car_cost_credits ?? t.car_cost_xp).toLocaleString('en-US')} Cr</strong>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span>Alt Gate:</span>
+                      <strong class="text-racing-cyan">{t.alt_promotion_xp ? `${t.alt_promotion_xp.toLocaleString('en-US')} XP` : 'Starter'}</strong>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span>Base Purse:</span>
+                      <strong class="text-emerald-400">{t.base_purse.toLocaleString('en-US')} Cr</strong>
+                    </div>
                   </div>
                 </div>
               ))}
