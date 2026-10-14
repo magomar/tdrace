@@ -1626,7 +1626,41 @@ def print_gt_summary(data):
 
 # ---------------------------------------------------------------------------
 # Kart circuits (1:1 CIK-FIA length)
-# ---------------------------------------------------------------------------
+PORTIMAO_KART_WAYPOINTS = [
+    {"x":    0.00, "y":    0.00, "width":  9.5, "left_curb": False, "right_curb": False, "elevation": 0.0},
+    {"x":   49.81, "y":    0.00, "width":  9.5, "left_curb": False, "right_curb": False, "elevation": 0.0},
+    {"x":   95.66, "y":   -9.90, "width":  8.5, "left_curb": True,  "right_curb": False, "elevation": 0.0},
+    {"x":   86.17, "y":  -58.04, "width":  8.5, "left_curb": False, "right_curb": False, "elevation": 0.0},
+    {"x":   72.63, "y": -106.08, "width":  8.5, "left_curb": False, "right_curb": False, "elevation": 0.0},
+    {"x":   58.25, "y": -153.70, "width":  8.5, "left_curb": True,  "right_curb": False, "elevation": 0.0},
+    {"x":   15.94, "y": -176.10, "width":  8.5, "left_curb": False, "right_curb": False, "elevation": 0.0},
+    {"x":  -32.61, "y": -187.14, "width":  8.5, "left_curb": False, "right_curb": False, "elevation": 0.0},
+    {"x":  -81.28, "y": -198.29, "width":  8.5, "left_curb": False, "right_curb": False, "elevation": 0.0},
+    {"x": -130.04, "y": -201.52, "width":  8.5, "left_curb": True,  "right_curb": False, "elevation": 0.0},
+    {"x": -169.74, "y": -171.72, "width":  8.5, "left_curb": False, "right_curb": False, "elevation": 0.0},
+    {"x": -207.98, "y": -139.73, "width":  8.5, "left_curb": False, "right_curb": False, "elevation": 0.0},
+    {"x": -246.33, "y": -107.85, "width":  8.5, "left_curb": False, "right_curb": False, "elevation": 0.0},
+    {"x": -283.84, "y":  -75.13, "width":  8.5, "left_curb": True,  "right_curb": False, "elevation": 0.0},
+    {"x": -270.50, "y":  -31.68, "width":  8.5, "left_curb": True,  "right_curb": False, "elevation": 0.0},
+    {"x": -233.93, "y":   -1.04, "width":  8.5, "left_curb": True,  "right_curb": False, "elevation": 0.0},
+    {"x": -193.60, "y":  -29.91, "width":  8.5, "left_curb": False, "right_curb": False, "elevation": 0.0},
+    {"x": -154.63, "y":  -61.06, "width":  8.5, "left_curb": False, "right_curb": True,  "elevation": 0.0},
+    {"x": -132.23, "y":  -35.74, "width":  8.5, "left_curb": False, "right_curb": True,  "elevation": 0.0},
+    {"x": -136.06, "y":   -2.11, "width":  8.0, "left_curb": True,  "right_curb": False, "elevation": 0.0},
+    {"x":  -93.68, "y":  -16.78, "width":  8.5, "left_curb": True,  "right_curb": False, "elevation": 0.0},
+    {"x":  -55.85, "y":  -49.29, "width":  8.5, "left_curb": True,  "right_curb": False, "elevation": 0.0},
+    {"x":  -67.52, "y":  -88.15, "width":  8.5, "left_curb": True,  "right_curb": False, "elevation": 0.0},
+    {"x": -109.10, "y": -115.87, "width":  8.5, "left_curb": True,  "right_curb": False, "elevation": 0.0},
+    {"x": -151.40, "y": -100.24, "width":  8.5, "left_curb": False, "right_curb": False, "elevation": 0.0},
+    {"x": -193.33, "y":  -95.36, "width":  8.0, "left_curb": False, "right_curb": True,  "elevation": 0.0},
+    {"x": -167.76, "y": -133.27, "width":  8.5, "left_curb": False, "right_curb": True,  "elevation": 0.0},
+    {"x": -128.90, "y": -164.43, "width":  8.5, "left_curb": False, "right_curb": True,  "elevation": 0.0},
+    {"x":  -82.01, "y": -153.49, "width":  8.5, "left_curb": False, "right_curb": False, "elevation": 0.0},
+    {"x":  -36.57, "y": -133.17, "width":  8.5, "left_curb": False, "right_curb": True,  "elevation": 0.0},
+    {"x":  -17.71, "y":  -89.61, "width":  8.5, "left_curb": False, "right_curb": True,  "elevation": 0.0},
+    {"x":  -17.71, "y":  -39.70, "width":  8.5, "left_curb": True,  "right_curb": False, "elevation": 0.0},
+]
+
 
 KART_TRACKS = {
     "lonato": {
@@ -1697,6 +1731,7 @@ KART_TRACKS = {
         "elevation_fn": None,
         "reverse": True,
     },
+
     "portimao_kart": {
         "name": "Kartodromo Internacional do Algarve",
         "description": "Undulating Portuguese rollercoaster circuit with dramatic elevation drops, sweeping downhill turns, and Curva do Sol.",
@@ -1706,6 +1741,7 @@ KART_TRACKS = {
         "default_width": 8.5,
         "straight_width": 9.5,
         "num_waypoints": 32,
+        "custom_waypoints": PORTIMAO_KART_WAYPOINTS,
         "elevation_fn": None,
         "reverse": True,
     },
@@ -1892,6 +1928,18 @@ def find_longest_straight(points):
 
 def process_kart_track(track_id, cache_dir):
     spec = KART_TRACKS[track_id]
+    if "custom_waypoints" in spec:
+        wps = spec["custom_waypoints"]
+        final_len = polyline_length([(w["x"], w["y"]) for w in wps], closed=True)
+        return {
+            "id": track_id,
+            "name": spec["name"],
+            "description": spec["description"],
+            "waypoints": wps,
+            "total_length": round(final_len, 1),
+            "fia_length": spec["fia_length"],
+        }
+
     data = load_osm_elements(cache_dir, track_id)
 
     nodes = {e["id"]: (e["lat"], e["lon"]) for e in data["elements"] if e["type"] == "node"}
@@ -3477,12 +3525,12 @@ def source_waypoint(w, discipline):
     """One importer waypoint as a Track JSON waypoint (the fields the Rust code used to set)."""
     surface = w.get("surface") or ("Asphalt" if discipline == "gt" else None)
     wp = {
-        "point": [round(w["x"], 1), round(w["y"], 1)],
-        "width": round(w["width"], 1),
+        "point": [round(w["x"], 2), round(w["y"], 2)],
+        "width": round(w["width"], 2),
         "left_curb": bool(w["left_curb"]),
         "right_curb": bool(w["right_curb"]),
         "surface": surface,
-        "elevation": round(w.get("elevation", 0.0), 1),
+        "elevation": round(w.get("elevation", 0.0), 2),
     }
     bank = w.get("bank_angle", w.get("bank", 0.0))
     if bank:
@@ -3521,6 +3569,7 @@ def write_source_json(discipline, data, tracks_dir=None, pit_lane_only=False):
             track["spline"]["waypoints"] = waypoints
             track["spline"]["closed"] = True
             track["spline"]["samples"] = []
+            track["grid_positions"] = []
             if "geometry" in track:
                 track["geometry"]["inner_walls"] = []
                 track["geometry"]["outer_walls"] = []
