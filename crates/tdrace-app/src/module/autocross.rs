@@ -199,6 +199,66 @@ impl GameModule for AutocrossGameModule {
                 style: DrivingStyle::Aggressive,
                 favorite_cars: JIRI_NEMEC_FAVORITES,
             },
+            DriverCharacter {
+                id: "stanislav_brousek",
+                name: "Stanislav Brousek",
+                alias: "The Moravian Prodigy",
+                bio: "Czech Junior Buggy sensation with lightning reflexes, balanced car control, and flawless weight transfer through rutted switchbacks.",
+                preferred_car: crate::ui::menu::CarChoice::SandRail,
+                color_scheme: CarColorScheme::new(
+                    macroquad::color::Color::new(0.95, 0.95, 0.98, 1.0),
+                    macroquad::color::Color::new(0.12, 0.35, 0.80, 1.0),
+                    macroquad::color::Color::new(0.88, 0.15, 0.15, 1.0),
+                ),
+                offsets: DriverPersonalityOffsets::new(0.00, 0.2, 0.00, -0.01, 0.04, -0.2, 0.02),
+                style: DrivingStyle::Balanced,
+                favorite_cars: STANISLAV_BROUSEK_FAVORITES,
+            },
+            DriverCharacter {
+                id: "kobe_pauwels",
+                name: "Kobe Pauwels",
+                alias: "The Ardennes Metronome",
+                bio: "Belgian Cross Car prodigy whose silky steering inputs and millimeter-accurate lines preserve maximum momentum on loose clay.",
+                preferred_car: crate::ui::menu::CarChoice::SandRail,
+                color_scheme: CarColorScheme::new(
+                    macroquad::color::Color::new(0.15, 0.15, 0.18, 1.0),
+                    macroquad::color::Color::new(0.95, 0.75, 0.10, 1.0),
+                    macroquad::color::Color::new(0.90, 0.20, 0.20, 1.0),
+                ),
+                offsets: DriverPersonalityOffsets::new(0.01, 0.2, 0.00, 0.01, 0.02, -0.1, 0.02),
+                style: DrivingStyle::Smooth,
+                favorite_cars: KOBE_PAUWELS_FAVORITES,
+            },
+            DriverCharacter {
+                id: "arjen_boele",
+                name: "Arjen Boele",
+                alias: "The Dutch Bulldozer",
+                bio: "Veteran TouringAutocross brawler who wrestles heavyweight 550+ BHP saloons through deep ruts with stubborn, unyielding defense.",
+                preferred_car: crate::ui::menu::CarChoice::RallyCar,
+                color_scheme: CarColorScheme::new(
+                    macroquad::color::Color::new(0.98, 0.45, 0.08, 1.0),
+                    macroquad::color::Color::new(0.10, 0.20, 0.45, 1.0),
+                    macroquad::color::Color::new(0.95, 0.95, 0.95, 1.0),
+                ),
+                offsets: DriverPersonalityOffsets::new(-0.01, 0.1, 0.00, -0.02, 0.05, -0.3, 0.01),
+                style: DrivingStyle::Tenacious,
+                favorite_cars: ARJEN_BOELE_FAVORITES,
+            },
+            DriverCharacter {
+                id: "marten_bartelen",
+                name: "Marten Bartelen",
+                alias: "The Dutch Tactician",
+                bio: "Meticulous SuperBuggy contender who studies telemetry like a science, engineering optimal tire traction through high-speed dirt bowls.",
+                preferred_car: crate::ui::menu::CarChoice::SandRail,
+                color_scheme: CarColorScheme::new(
+                    macroquad::color::Color::new(0.10, 0.65, 0.60, 1.0),
+                    macroquad::color::Color::new(0.12, 0.14, 0.16, 1.0),
+                    macroquad::color::Color::new(0.90, 0.90, 0.95, 1.0),
+                ),
+                offsets: DriverPersonalityOffsets::new(-0.01, 0.1, 0.01, 0.00, 0.03, -0.2, 0.02),
+                style: DrivingStyle::Calculating,
+                favorite_cars: MARTEN_BARTELEN_FAVORITES,
+            },
         ]
     }
 
@@ -268,3 +328,24 @@ const JIRI_NEMEC_FAVORITES: &[DriverFavoriteCar] = &[
     DriverFavoriteCar::new("autocross", 3, "autocross_bologna_buggy1600_t3"),
     DriverFavoriteCar::new("autocross", 5, "autocross_bologna_superbuggy_t5"),
 ];
+
+const STANISLAV_BROUSEK_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("autocross", 1, "autocross_iberian_furia_t1"),
+    DriverFavoriteCar::new("autocross", 3, "autocross_bologna_buggy1600_t3"),
+];
+
+const KOBE_PAUWELS_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("autocross", 2, "autocross_ardennes_pro_t2"),
+    DriverFavoriteCar::new("autocross", 1, "autocross_ardennes_junior_t1"),
+];
+
+const ARJEN_BOELE_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("autocross", 4, "autocross_bohemia_veloce_t4"),
+    DriverFavoriteCar::new("autocross", 4, "autocross_vortek_quattro_t4"),
+];
+
+const MARTEN_BARTELEN_FAVORITES: &[DriverFavoriteCar] = &[
+    DriverFavoriteCar::new("autocross", 5, "autocross_rapid_superbuggy_t5"),
+    DriverFavoriteCar::new("autocross", 3, "autocross_rapid_buggy1600_t3"),
+];
+

@@ -86,9 +86,11 @@ fn test_autocross_tracks_count_and_zero_joker_ruleset() {
 
 #[test]
 fn test_autocross_driver_roster() {
+    use tdrace_app::ai::DrivingStyle;
+
     let ax = AutocrossGameModule::new();
     let drivers = ax.drivers();
-    assert_eq!(drivers.len(), 8, "Expected 8 Autocross driver characters");
+    assert_eq!(drivers.len(), 12, "Expected 12 Autocross driver characters");
 
     let driver_names: Vec<&str> = drivers.iter().map(|d| d.name).collect();
     assert!(driver_names.contains(&"Pavel Urban"));
@@ -99,7 +101,12 @@ fn test_autocross_driver_roster() {
     assert!(driver_names.contains(&"Viktor Fiala"));
     assert!(driver_names.contains(&"Valentin Moreau"));
     assert!(driver_names.contains(&"Jiří Němec"));
+    assert!(driver_names.contains(&"Stanislav Brousek"));
+    assert!(driver_names.contains(&"Kobe Pauwels"));
+    assert!(driver_names.contains(&"Arjen Boele"));
+    assert!(driver_names.contains(&"Marten Bartelen"));
 
+    let mut style_counts = std::collections::HashMap::new();
     for driver in &drivers {
         assert!(!driver.alias.is_empty());
         assert!(!driver.bio.is_empty());
@@ -107,6 +114,16 @@ fn test_autocross_driver_roster() {
         for fav in driver.favorite_cars {
             assert_eq!(fav.discipline, "autocross");
         }
+        *style_counts.entry(driver.style).or_insert(0) += 1;
+    }
+
+    for style in DrivingStyle::ALL {
+        assert_eq!(
+            style_counts.get(&style).copied().unwrap_or(0),
+            2,
+            "Autocross module must have exactly 2 drivers with style {:?}",
+            style
+        );
     }
 }
 

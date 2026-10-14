@@ -853,7 +853,7 @@ mod tests {
         assert_eq!(ax.default_track_id(), "nova_paka_ax");
         assert_eq!(ax.default_off_track_surface(), tdrace_core::physics::surface::SurfaceType::Dirt);
         assert_eq!(ax.tracks().len(), 17);
-        assert_eq!(ax.drivers().len(), 8);
+        assert_eq!(ax.drivers().len(), 12);
         assert!(!ax.vehicles().is_empty());
 
         for track_def in ax.tracks() {
