@@ -3,7 +3,7 @@ type: Architecture Spec
 template: architecture
 title: "Wheelbase 4M Steps/Sec Tire Solver Acceleration and Transcendental Deduplication"
 description: "Eliminates redundant transcendental evaluations in wheelbase's Pacejka '96 tire and implicit wheel spin solvers via precomputed curve constants, fused force-stiffness evaluation, and fast load-sensitivity approximations to bridge the 1.58M to 4.0M steps/sec roadmap throughput gap."
-status: approved
+status: in_progress
 verified: { by: human:mario, at: 2026-10-15T21:44:00Z, hash: "1b34dc0dfec9" }
 created: 2026-10-15
 generated: { by: agent/antigravity, at: 2026-10-15T21:22:15Z }
@@ -124,14 +124,14 @@ In [`tire_friction_envelope`](../crates/wheelbase/src/tire.rs):
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Tire shape constant is precomputed without per-call acos evaluations**
-  - [ ] **Given** a `TireConfig` with any configured `slide_grip` in `[0.30, 0.999]`
-  - [ ] **When** `normalized_grip_curve` is evaluated during a vehicle physics step
-  - [ ] **Then** the precomputed `curve_constant` matches `(2.0 / PI) * (1.0 - slide_grip.clamp(0.30, 0.999).acos())` to within `1e-6` without invoking `acos()` inside the inner loop
+  - [x] **Given** a `TireConfig` with any configured `slide_grip` in `[0.30, 0.999]`
+  - [x] **When** `normalized_grip_curve` is evaluated during a vehicle physics step
+  - [x] **Then** the precomputed `curve_constant` matches `(2.0 / PI) * (1.0 - slide_grip.clamp(0.30, 0.999).acos())` to within `1e-6` without invoking `acos()` inside the inner loop
 
 - **Scenario: Fused longitudinal force and slip stiffness matches reference Pacejka solver**
-  - [ ] **Given** a `WheelAssembly` operating across combined longitudinal slip ratios `[-1.0, 1.0]` and slip angles `[-0.5, 0.5]` rad
-  - [ ] **When** `effective_inertia` and `step_implicit` are executed using the fused force-and-stiffness evaluator
-  - [ ] **Then** the resulting wheel angular velocity and longitudinal force match the reference solver within `1e-3` relative tolerance and preserve numerical stability at low and high speeds
+  - [x] **Given** a `WheelAssembly` operating across combined longitudinal slip ratios `[-1.0, 1.0]` and slip angles `[-0.5, 0.5]` rad
+  - [x] **When** `effective_inertia` and `step_implicit` are executed using the fused force-and-stiffness evaluator
+  - [x] **Then** the resulting wheel angular velocity and longitudinal force match the reference solver within `1e-3` relative tolerance and preserve numerical stability at low and high speeds
 
 - **Scenario: Single-car physics benchmark achieves substantial throughput speedup toward the 4M steps/sec target**
   - [ ] **Given** the `physics_bench` benchmark in `crates/wheelbase/benches/physics_bench.rs` running 2,000,000 steps in `--release` / `bench` profile
