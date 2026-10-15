@@ -3,7 +3,8 @@ type: Architecture Spec
 template: architecture
 title: "Chassis-Guided Wheel Surface Sampling, PyEngine RaceWorld Unification, and FastRasterizer Culling"
 description: "Reduces per-car spline projections from 6-10 down to 1-2 via chassis-guided wheel surface sampling, aligns PyEngine's physics loop with RaceWorld::step (restoring banking, grade, ramps, and zero-copy LIDAR), and accelerates FastRasterizer with camera AABB culling and incremental scanline edge stepping."
-status: in_progress
+status: implemented
+receipt: "docs/receipts/spec-118-receipt.md"
 verified: { by: human:mario, at: 2026-10-15T21:44:00Z, hash: "e3e0c0ed5898" }
 created: 2026-10-15
 generated: { by: agent/antigravity, at: 2026-10-15T21:22:15Z }
