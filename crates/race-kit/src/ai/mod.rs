@@ -997,13 +997,14 @@ impl BotAiDriver {
 
         // Sample nearby barriers along the car's lateral perimeter (Spec 115 Section 2D):
         let mut nearest_wall_side: Option<(f32, f32)> = None; // (side_gap, side_sign: >0 is right, <0 is left)
-        for w in track.geometry.all_walls() {
+        let r = Vec2::splat(3.5);
+        track.geometry.for_each_wall_in_aabb(car_pos - r, car_pos + r, |w| {
             if !w.is_physical() {
-                continue;
+                return;
             }
             let d = w.segment.distance_to_point(car_pos);
             if d > 3.5 {
-                continue;
+                return;
             }
             let p = w.segment.closest_point(car_pos);
             let rel = p - car_pos;
@@ -1017,7 +1018,7 @@ impl BotAiDriver {
                     }
                 }
             }
-        }
+        });
 
         if let Some((_, wall_side)) = nearest_wall_side {
             // Wall on right (wall_side > 0) -> steer left (-1.0) away from barrier
@@ -1126,7 +1127,15 @@ impl BotAiDriver {
         let off_route = proj.distance_to_spline > proj.track_width * 0.5 + OFF_ROUTE_MARGIN_M;
         let walled_off = || {
             let to_route = LineSegment::new(car_pos, proj.closest_point);
-            track.geometry.all_walls().any(|w| w.segment.intersect_segment(&to_route).is_some())
+            let aabb_min = car_pos.min(proj.closest_point);
+            let aabb_max = car_pos.max(proj.closest_point);
+            let mut hit = false;
+            track.geometry.for_each_wall_in_aabb(aabb_min, aabb_max, |w| {
+                if !hit && w.segment.intersect_segment(&to_route).is_some() {
+                    hit = true;
+                }
+            });
+            hit
         };
         if off_route && (self.recovery_attempts > 0 || walled_off()) {
             let network = track.network.as_ref();
@@ -1165,12 +1174,25 @@ impl BotAiDriver {
         let close_wall = |on: bool, d: Option<f32>| on && d.is_some_and(|d| d < WALL_CLEARANCE_M);
         let walled = close_wall(near.left_wall, near.left_wall_distance) || close_wall(near.right_wall, near.right_wall_distance);
         let max_turn_cos = MAX_TARGET_TURN_RAD.cos();
-        while walled && lookahead_dist > MIN_TIGHT_LOOKAHEAD_M {
-            let ahead = spline.sample_at_distance((curr_dist + lookahead_dist) % spline.total_length());
-            if ahead.tangent.dot(proj.tangent) >= max_turn_cos {
-                break;
+        if walled && lookahead_dist > MIN_TIGHT_LOOKAHEAD_M {
+            let total_len = spline.total_length();
+            let ahead = spline.sample_at_distance((curr_dist + lookahead_dist) % total_len);
+            if ahead.tangent.dot(proj.tangent) < max_turn_cos {
+                let max_steps = ((lookahead_dist - MIN_TIGHT_LOOKAHEAD_M).ceil() as i32).max(1);
+                let mut lo = 1i32;
+                let mut hi = max_steps;
+                while lo < hi {
+                    let mid = (lo + hi) / 2;
+                    let d = (lookahead_dist - mid as f32).max(MIN_TIGHT_LOOKAHEAD_M);
+                    let sample = spline.sample_at_distance((curr_dist + d) % total_len);
+                    if sample.tangent.dot(proj.tangent) >= max_turn_cos {
+                        hi = mid;
+                    } else {
+                        lo = mid + 1;
+                    }
+                }
+                lookahead_dist = (lookahead_dist - lo as f32).max(MIN_TIGHT_LOOKAHEAD_M);
             }
-            lookahead_dist -= 1.0;
         }
         let target_dist = (curr_dist + lookahead_dist) % spline.total_length();
         let prev_target_dist = self.current_target_dist;
@@ -1361,7 +1383,8 @@ impl BotAiDriver {
             if len > 1.0 {
                 // The wall end nearest the way the car points that lies within reach of its body.
                 let mut worst: Option<(f32, f32)> = None; // (gap, side of the car it lies on)
-                for w in track.geometry.all_walls() {
+                let r = Vec2::splat(len + clear);
+                track.geometry.for_each_wall_in_aabb(car_pos - r, car_pos + r, |w| {
                     for p in [w.segment.start, w.segment.end] {
                         let rel = p - car_pos;
                         let along = rel.dot(car_fwd);
@@ -1370,7 +1393,7 @@ impl BotAiDriver {
                             worst = Some((off_car.abs(), off_car.signum()));
                         }
                     }
-                }
+                });
                 if let Some((_, wall_side)) = worst {
                     // Aim away from the end: to the other side of the car, the full push, so the lock saturates.
                     target_point -= car_right * wall_side * WALL_END_PUSH_M;
@@ -1403,9 +1426,22 @@ impl BotAiDriver {
         let nose_on_wall = || {
             let hull = car.hull();
             let front = car_pos + car_fwd * hull.front;
-            [front + car_right * hull.half_width, front - car_right * hull.half_width].iter().any(|&corner| {
-                track.geometry.all_walls().any(|w| w.is_physical() && w.segment.distance_to_point(corner) < NOSE_ON_WALL_M)
-            })
+            let c1 = front + car_right * hull.half_width;
+            let c2 = front - car_right * hull.half_width;
+            let r = Vec2::splat(NOSE_ON_WALL_M);
+            let aabb_min = c1.min(c2) - r;
+            let aabb_max = c1.max(c2) + r;
+            let mut hit = false;
+            track.geometry.for_each_wall_in_aabb(aabb_min, aabb_max, |w| {
+                if !hit
+                    && w.is_physical()
+                    && (w.segment.distance_to_point(c1) < NOSE_ON_WALL_M
+                        || w.segment.distance_to_point(c2) < NOSE_ON_WALL_M)
+                {
+                    hit = true;
+                }
+            });
+            hit
         };
         // Only a car that hardly moves is stuck: a slow car on low-grip run-off is still pulling away.
         let stuck = || (car_speed < STUCK_SPEED && is_stuck_situation) || (car_speed < WALL_GRIND_SPEED && nose_on_wall());
@@ -1496,7 +1532,16 @@ impl BotAiDriver {
                 };
                 let at_edge = proj.is_on_track && turn.leg_time > min_leg_s && past_edge(probe) > past_edge(car_pos).max(0.0);
                 let nose = car_pos + car_fwd * hull.front;
-                let nose_clear_of_walls = || track.geometry.all_walls().all(|w| w.segment.distance_to_point(nose) > TURN_NOSE_CLEAR_M);
+                let nose_clear_of_walls = || {
+                    let r = Vec2::splat(TURN_NOSE_CLEAR_M);
+                    let mut clear = true;
+                    track.geometry.for_each_wall_in_aabb(nose - r, nose + r, |w| {
+                        if clear && w.segment.distance_to_point(nose) <= TURN_NOSE_CLEAR_M {
+                            clear = false;
+                        }
+                    });
+                    clear
+                };
                 let forward_progressing = !turn.reversing && !proj.is_on_track && car_speed > STUCK_SPEED;
                 let leg_done = at_edge
                     || turn.blocked_time > blocked_threshold

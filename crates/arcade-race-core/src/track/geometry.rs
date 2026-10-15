@@ -654,6 +654,41 @@ impl Obstacle {
         }
     }
 
+    /// Computes the world-space axis-aligned bounding box `(min, max)` of this obstacle.
+    #[inline]
+    pub fn aabb(&self) -> (Vec2, Vec2) {
+        match &self.shape {
+            ObstacleShape::Circle { center, radius } => {
+                let r = Vec2::splat(*radius);
+                (*center - r, *center + r)
+            }
+            ObstacleShape::Box {
+                center,
+                half_extents,
+                angle,
+            } => {
+                let (sin_a, cos_a) = angle.sin_cos();
+                let rx = half_extents.x * cos_a.abs() + half_extents.y * sin_a.abs();
+                let ry = half_extents.x * sin_a.abs() + half_extents.y * cos_a.abs();
+                let r = Vec2::new(rx, ry);
+                (*center - r, *center + r)
+            }
+            ObstacleShape::Polygon { vertices } => {
+                if vertices.is_empty() {
+                    (Vec2::ZERO, Vec2::ZERO)
+                } else {
+                    let mut min = Vec2::splat(f32::INFINITY);
+                    let mut max = Vec2::splat(f32::NEG_INFINITY);
+                    for &v in vertices {
+                        min = min.min(v);
+                        max = max.max(v);
+                    }
+                    (min, max)
+                }
+            }
+        }
+    }
+
     /// Intersects a ray against this obstacle.
     pub fn intersect_ray(&self, origin: Vec2, dir: Vec2, max_range: f32) -> Option<(f32, Vec2)> {
         match &self.shape {
@@ -1116,6 +1151,335 @@ impl JumpRampCarExt for wheelbase::Car {
     }
 }
 
+/// Lazy, clone-transparent spatial grid cache attached to [`TrackGeometry`] (Spec 119).
+#[derive(Debug, Default)]
+pub struct SpatialGridCache(std::sync::OnceLock<GeometrySpatialGrid>);
+
+impl Clone for SpatialGridCache {
+    fn clone(&self) -> Self {
+        Self::default()
+    }
+}
+
+impl PartialEq for SpatialGridCache {
+    fn eq(&self, _: &Self) -> bool {
+        true
+    }
+}
+
+/// Static 2D uniform spatial grid indexing walls and obstacles into square world cells (Spec 119).
+#[derive(Debug)]
+pub struct GeometrySpatialGrid {
+    counts: (usize, usize, usize, usize),
+    first_last_wall: Option<(LineSegment, LineSegment)>,
+    pub all_walls: Vec<WallBarrier>,
+    pub wall_aabbs: Vec<(Vec2, Vec2)>,
+    pub obstacle_aabbs: Vec<(Vec2, Vec2)>,
+    pub inner_count: usize,
+    pub outer_count: usize,
+    origin: Vec2,
+    inv_cell_size: Vec2,
+    cols: usize,
+    rows: usize,
+    wall_cell_offsets: Vec<u32>,
+    wall_cell_items: Vec<u32>,
+    obs_cell_offsets: Vec<u32>,
+    obs_cell_items: Vec<u32>,
+}
+
+impl GeometrySpatialGrid {
+    pub const TARGET_CELL_SIZE: f32 = 24.0;
+    pub const MAX_GRID_DIM: usize = 128;
+
+    fn fingerprint(geom: &TrackGeometry) -> ((usize, usize, usize, usize), Option<(LineSegment, LineSegment)>) {
+        let obs = geom.all_obstacles_with_scenery();
+        let counts = (
+            geom.inner_walls.len(),
+            geom.outer_walls.len(),
+            geom.network_walls.len(),
+            obs.len(),
+        );
+        let first = geom
+            .inner_walls
+            .first()
+            .or_else(|| geom.outer_walls.first())
+            .or_else(|| geom.network_walls.first())
+            .map(|w| w.segment);
+        let last = geom
+            .network_walls
+            .last()
+            .or_else(|| geom.outer_walls.last())
+            .or_else(|| geom.inner_walls.last())
+            .map(|w| w.segment);
+        (counts, first.zip(last))
+    }
+
+    #[inline]
+    pub fn matches(&self, geom: &TrackGeometry) -> bool {
+        let (counts, first_last) = Self::fingerprint(geom);
+        self.counts == counts && self.first_last_wall == first_last
+    }
+
+    pub fn build(geom: &TrackGeometry) -> Self {
+        let (counts, first_last_wall) = Self::fingerprint(geom);
+        let inner_count = geom.inner_walls.len();
+        let outer_count = geom.outer_walls.len();
+        let total_walls = inner_count + outer_count + geom.network_walls.len();
+
+        let mut all_walls = Vec::with_capacity(total_walls);
+        all_walls.extend_from_slice(&geom.inner_walls);
+        all_walls.extend_from_slice(&geom.outer_walls);
+        all_walls.extend_from_slice(&geom.network_walls);
+
+        let mut min_pt = Vec2::splat(f32::INFINITY);
+        let mut max_pt = Vec2::splat(f32::NEG_INFINITY);
+
+        let mut wall_aabbs = Vec::with_capacity(total_walls);
+        for w in &all_walls {
+            let lo = w.segment.start.min(w.segment.end);
+            let hi = w.segment.start.max(w.segment.end);
+            min_pt = min_pt.min(lo);
+            max_pt = max_pt.max(hi);
+            wall_aabbs.push((lo, hi));
+        }
+
+        let obstacles = geom.all_obstacles_with_scenery();
+        let mut obstacle_aabbs = Vec::with_capacity(obstacles.len());
+        for obs in obstacles {
+            let (lo, hi) = obs.aabb();
+            min_pt = min_pt.min(lo);
+            max_pt = max_pt.max(hi);
+            obstacle_aabbs.push((lo, hi));
+        }
+
+        if !min_pt.x.is_finite() || !max_pt.x.is_finite() {
+            min_pt = Vec2::splat(-100.0);
+            max_pt = Vec2::splat(100.0);
+        } else {
+            min_pt -= Vec2::splat(1.0);
+            max_pt += Vec2::splat(1.0);
+        }
+
+        let span = (max_pt - min_pt).max(Vec2::splat(1.0));
+        let cols = ((span.x / Self::TARGET_CELL_SIZE).ceil() as usize).clamp(1, Self::MAX_GRID_DIM);
+        let rows = ((span.y / Self::TARGET_CELL_SIZE).ceil() as usize).clamp(1, Self::MAX_GRID_DIM);
+        let inv_cell_size = Vec2::new((cols as f32) / span.x, (rows as f32) / span.y);
+        let num_cells = cols * rows;
+
+        let map_range = |lo: Vec2, hi: Vec2| -> (usize, usize, usize, usize) {
+            let c0 = (((lo.x - min_pt.x) * inv_cell_size.x).floor() as isize).clamp(0, (cols - 1) as isize) as usize;
+            let c1 = (((hi.x - min_pt.x) * inv_cell_size.x).floor() as isize).clamp(0, (cols - 1) as isize) as usize;
+            let r0 = (((lo.y - min_pt.y) * inv_cell_size.y).floor() as isize).clamp(0, (rows - 1) as isize) as usize;
+            let r1 = (((hi.y - min_pt.y) * inv_cell_size.y).floor() as isize).clamp(0, (rows - 1) as isize) as usize;
+            (c0.min(c1), c0.max(c1), r0.min(r1), r0.max(r1))
+        };
+
+        // 2-pass CSR construction for walls
+        let mut wall_cell_offsets = vec![0u32; num_cells + 1];
+        for &(lo, hi) in &wall_aabbs {
+            let (c0, c1, r0, r1) = map_range(lo, hi);
+            for r in r0..=r1 {
+                let row_base = r * cols;
+                for c in c0..=c1 {
+                    wall_cell_offsets[row_base + c + 1] += 1;
+                }
+            }
+        }
+        for i in 1..=num_cells {
+            wall_cell_offsets[i] += wall_cell_offsets[i - 1];
+        }
+        let mut wall_cell_items = vec![0u32; wall_cell_offsets[num_cells] as usize];
+        let mut cursor = wall_cell_offsets[..num_cells].to_vec();
+        for (idx, &(lo, hi)) in wall_aabbs.iter().enumerate() {
+            let (c0, c1, r0, r1) = map_range(lo, hi);
+            for r in r0..=r1 {
+                let row_base = r * cols;
+                for c in c0..=c1 {
+                    let cell = row_base + c;
+                    let pos = cursor[cell] as usize;
+                    wall_cell_items[pos] = idx as u32;
+                    cursor[cell] += 1;
+                }
+            }
+        }
+
+        // 2-pass CSR construction for obstacles
+        let mut obs_cell_offsets = vec![0u32; num_cells + 1];
+        for &(lo, hi) in &obstacle_aabbs {
+            let (c0, c1, r0, r1) = map_range(lo, hi);
+            for r in r0..=r1 {
+                let row_base = r * cols;
+                for c in c0..=c1 {
+                    obs_cell_offsets[row_base + c + 1] += 1;
+                }
+            }
+        }
+        for i in 1..=num_cells {
+            obs_cell_offsets[i] += obs_cell_offsets[i - 1];
+        }
+        let mut obs_cell_items = vec![0u32; obs_cell_offsets[num_cells] as usize];
+        cursor.copy_from_slice(&obs_cell_offsets[..num_cells]);
+        for (idx, &(lo, hi)) in obstacle_aabbs.iter().enumerate() {
+            let (c0, c1, r0, r1) = map_range(lo, hi);
+            for r in r0..=r1 {
+                let row_base = r * cols;
+                for c in c0..=c1 {
+                    let cell = row_base + c;
+                    let pos = cursor[cell] as usize;
+                    obs_cell_items[pos] = idx as u32;
+                    cursor[cell] += 1;
+                }
+            }
+        }
+
+        Self {
+            counts,
+            first_last_wall,
+            all_walls,
+            wall_aabbs,
+            obstacle_aabbs,
+            inner_count,
+            outer_count,
+            origin: min_pt,
+            inv_cell_size,
+            cols,
+            rows,
+            wall_cell_offsets,
+            wall_cell_items,
+            obs_cell_offsets,
+            obs_cell_items,
+        }
+    }
+
+    #[inline]
+    fn cell_range(&self, min: Vec2, max: Vec2) -> Option<(usize, usize, usize, usize)> {
+        if self.cols == 0 || self.rows == 0 {
+            return None;
+        }
+        let max_x_cell = (self.cols as isize) - 1;
+        let max_y_cell = (self.rows as isize) - 1;
+        let rx0 = ((min.x - self.origin.x) * self.inv_cell_size.x).floor() as isize;
+        let rx1 = ((max.x - self.origin.x) * self.inv_cell_size.x).floor() as isize;
+        let ry0 = ((min.y - self.origin.y) * self.inv_cell_size.y).floor() as isize;
+        let ry1 = ((max.y - self.origin.y) * self.inv_cell_size.y).floor() as isize;
+        if rx1 < 0 || rx0 > max_x_cell || ry1 < 0 || ry0 > max_y_cell {
+            return None;
+        }
+        let c0 = rx0.clamp(0, max_x_cell) as usize;
+        let c1 = rx1.clamp(0, max_x_cell) as usize;
+        let r0 = ry0.clamp(0, max_y_cell) as usize;
+        let r1 = ry1.clamp(0, max_y_cell) as usize;
+        Some((c0.min(c1), c0.max(c1), r0.min(r1), r0.max(r1)))
+    }
+
+    /// Calls `f(wall_index, wall)` once for every wall whose AABB overlaps `[min, max]`.
+    /// Zero heap allocations.
+    #[inline]
+    pub fn for_each_wall_in_aabb(&self, min: Vec2, max: Vec2, mut f: impl FnMut(usize, &WallBarrier)) {
+        if self.all_walls.is_empty() {
+            return;
+        }
+        let Some((c0, c1, r0, r1)) = self.cell_range(min, max) else {
+            return;
+        };
+
+        if c0 == c1 && r0 == r1 {
+            let cell = r0 * self.cols + c0;
+            let start = self.wall_cell_offsets[cell] as usize;
+            let end = self.wall_cell_offsets[cell + 1] as usize;
+            for &idx_u32 in &self.wall_cell_items[start..end] {
+                let idx = idx_u32 as usize;
+                let (w_min, w_max) = self.wall_aabbs[idx];
+                if w_max.x >= min.x && w_min.x <= max.x && w_max.y >= min.y && w_min.y <= max.y {
+                    f(idx, &self.all_walls[idx]);
+                }
+            }
+            return;
+        }
+
+        let mut visited = [0u64; 128]; // Covers up to 8,192 walls on stack
+        for r in r0..=r1 {
+            let row_base = r * self.cols;
+            for c in c0..=c1 {
+                let cell = row_base + c;
+                let start = self.wall_cell_offsets[cell] as usize;
+                let end = self.wall_cell_offsets[cell + 1] as usize;
+                for &idx_u32 in &self.wall_cell_items[start..end] {
+                    let idx = idx_u32 as usize;
+                    if idx < 8192 {
+                        let word = idx >> 6;
+                        let bit = 1u64 << (idx & 63);
+                        if (visited[word] & bit) != 0 {
+                            continue;
+                        }
+                        visited[word] |= bit;
+                    }
+                    let (w_min, w_max) = self.wall_aabbs[idx];
+                    if w_max.x >= min.x && w_min.x <= max.x && w_max.y >= min.y && w_min.y <= max.y {
+                        f(idx, &self.all_walls[idx]);
+                    }
+                }
+            }
+        }
+    }
+
+    /// Calls `f(obs_index, obstacle)` once for every obstacle whose AABB overlaps `[min, max]`.
+    #[inline]
+    pub fn for_each_obstacle_in_aabb<'a>(
+        &self,
+        obstacles: &'a [Obstacle],
+        min: Vec2,
+        max: Vec2,
+        mut f: impl FnMut(usize, &'a Obstacle),
+    ) {
+        if obstacles.is_empty() || self.obstacle_aabbs.len() != obstacles.len() {
+            return;
+        }
+        let Some((c0, c1, r0, r1)) = self.cell_range(min, max) else {
+            return;
+        };
+
+        if c0 == c1 && r0 == r1 {
+            let cell = r0 * self.cols + c0;
+            let start = self.obs_cell_offsets[cell] as usize;
+            let end = self.obs_cell_offsets[cell + 1] as usize;
+            for &idx_u32 in &self.obs_cell_items[start..end] {
+                let idx = idx_u32 as usize;
+                let (o_min, o_max) = self.obstacle_aabbs[idx];
+                if o_max.x >= min.x && o_min.x <= max.x && o_max.y >= min.y && o_min.y <= max.y {
+                    f(idx, &obstacles[idx]);
+                }
+            }
+            return;
+        }
+
+        let mut visited = [0u64; 32]; // Covers up to 2,048 obstacles on stack
+        for r in r0..=r1 {
+            let row_base = r * self.cols;
+            for c in c0..=c1 {
+                let cell = row_base + c;
+                let start = self.obs_cell_offsets[cell] as usize;
+                let end = self.obs_cell_offsets[cell + 1] as usize;
+                for &idx_u32 in &self.obs_cell_items[start..end] {
+                    let idx = idx_u32 as usize;
+                    if idx < 2048 {
+                        let word = idx >> 6;
+                        let bit = 1u64 << (idx & 63);
+                        if (visited[word] & bit) != 0 {
+                            continue;
+                        }
+                        visited[word] |= bit;
+                    }
+                    let (o_min, o_max) = self.obstacle_aabbs[idx];
+                    if o_max.x >= min.x && o_min.x <= max.x && o_max.y >= min.y && o_min.y <= max.y {
+                        f(idx, &obstacles[idx]);
+                    }
+                }
+            }
+        }
+    }
+}
+
 /// Collection of boundaries, walls, surface zones, static obstacles, jump ramps, and scenery comprising track geometry.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct TrackGeometry {
@@ -1143,11 +1507,45 @@ pub struct TrackGeometry {
     /// Suppressed wall segments pruned by network clearance conflicts (Spec 112).
     #[serde(default, skip_serializing)]
     pub wall_suppressions: Vec<WallSuppressionRecord>,
+    /// Lazily initialized 2D uniform spatial grid indexing walls and obstacles (Spec 119).
+    #[serde(skip)]
+    pub spatial_grid: SpatialGridCache,
 }
 
 impl TrackGeometry {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Invalidates the cached 2D spatial grid so the next query rebuilds it from current geometry.
+    #[inline]
+    pub fn invalidate_spatial_grid(&mut self) {
+        self.spatial_grid = SpatialGridCache::default();
+    }
+
+    /// Returns a valid [`GeometrySpatialGrid`] if the cached grid matches current walls and obstacles,
+    /// building it on first access.
+    #[inline]
+    pub fn spatial_grid(&self) -> Option<&GeometrySpatialGrid> {
+        let grid = self.spatial_grid.0.get_or_init(|| GeometrySpatialGrid::build(self));
+        grid.matches(self).then_some(grid)
+    }
+
+    /// Visits every wall whose bounding box overlaps `[min, max]`, using the O(1) spatial grid
+    /// when valid and falling back to `all_walls()` if geometry was mutated in place without invalidation.
+    #[inline]
+    pub fn for_each_wall_in_aabb(&self, min: Vec2, max: Vec2, mut f: impl FnMut(&WallBarrier)) {
+        if let Some(grid) = self.spatial_grid() {
+            grid.for_each_wall_in_aabb(min, max, |_, w| f(w));
+        } else {
+            for w in self.all_walls() {
+                let lo = w.segment.start.min(w.segment.end);
+                let hi = w.segment.start.max(w.segment.end);
+                if hi.x >= min.x && lo.x <= max.x && hi.y >= min.y && lo.y <= max.y {
+                    f(w);
+                }
+            }
+        }
     }
 
     /// All barrier segments combined (inner, outer and network branch walls).
@@ -1173,6 +1571,7 @@ impl TrackGeometry {
             obs.push(building.to_obstacle());
         }
         self.scenery_obstacles = obs;
+        self.invalidate_spatial_grid();
     }
 
     /// Returns all static obstacles plus solid tree trunk colliders, grandstand collision boxes, rocks, and buildings.

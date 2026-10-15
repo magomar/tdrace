@@ -5,7 +5,9 @@
 
 use std::cmp::Ordering;
 
-use arcade_race_core::collision::{resolve_all_wall_collisions, resolve_car_car_collision};
+use arcade_race_core::collision::{
+    resolve_car_car_collision, resolve_track_wall_collisions_into, WallCollisionEvent,
+};
 use arcade_race_core::track::{LineSegment, Track, TrackProgressTracker};
 use glam::Vec2;
 use serde::{Deserialize, Serialize};
@@ -169,6 +171,7 @@ pub struct RaceWorld<V: Vehicle = Car> {
     pub time: f32,
     events: Vec<RaceEvent>,
     brushes: Vec<CanopyBrush>,
+    wall_events_scratch: Vec<WallCollisionEvent>,
     prev_positions: Vec<Vec2>,
     drafts: Vec<f32>,
 }
@@ -187,6 +190,7 @@ impl<V: Vehicle> RaceWorld<V> {
             time: 0.0,
             events: Vec::new(),
             brushes: Vec::new(),
+            wall_events_scratch: Vec::new(),
             prev_positions: Vec::new(),
             drafts: Vec::new(),
         }
@@ -211,6 +215,7 @@ impl<V: Vehicle> RaceWorld<V> {
         self.penalty.clear();
         self.time = 0.0;
         self.events.clear();
+        self.wall_events_scratch.clear();
         self.prev_positions.clear();
         self.drafts.clear();
     }
@@ -373,23 +378,21 @@ impl<V: Vehicle> RaceWorld<V> {
             }
         }
 
-        // Wall and obstacle boundary collisions for each car (including grandstands & tree trunks)
-        let scenery_obstacles = track.geometry.all_obstacles_with_scenery();
+        // Wall and obstacle boundary collisions for each car (including grandstands & tree trunks) (Spec 119)
         for i in 0..n_cars {
-            let wall_events = {
+            self.wall_events_scratch.clear();
+            {
                 let car = &mut self.vehicles[i];
-                let mut events = resolve_all_wall_collisions(car, &track.geometry.inner_walls, scenery_obstacles);
-                events.extend(resolve_all_wall_collisions(car, &track.geometry.outer_walls, &[]));
-                events.extend(resolve_all_wall_collisions(car, &track.geometry.network_walls, &[]));
-                for ev in &events {
-                    let damage_energy = ev.estimated_damage_energy();
-                    if self.rules.damage_enabled {
+                resolve_track_wall_collisions_into(car, &track.geometry, &mut self.wall_events_scratch);
+                if self.rules.damage_enabled {
+                    for ev in &self.wall_events_scratch {
+                        let damage_energy = ev.estimated_damage_energy();
                         car.apply_collision_damage(ev.contact_point, damage_energy);
                     }
                 }
-                events
-            };
-            for ev in wall_events {
+            }
+            for idx in 0..self.wall_events_scratch.len() {
+                let ev = self.wall_events_scratch[idx];
                 self.events.push(RaceEvent::WallImpact { car: i, event: ev });
                 self.impact(i, ev.impact_speed);
             }

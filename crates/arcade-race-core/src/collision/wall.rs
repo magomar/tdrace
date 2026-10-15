@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use super::sat::OrientedBox;
 use crate::body::Body2D;
-use crate::track::geometry::{BarrierType, Obstacle, ObstacleShape, WallBarrier};
+use crate::track::geometry::{BarrierType, Obstacle, ObstacleShape, TrackGeometry, WallBarrier};
 
 /// Detailed telemetry and physics result of a vehicle-wall collision impact.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -98,7 +98,9 @@ pub fn resolve_car_wall_collision<B: Body2D>(
 
     let skin_thickness = 0.02f32;
     let mut deepest_penetration = 0.0f32;
-    let mut penetrating_points: Vec<(Vec2, f32, Vec2)> = Vec::new();
+    // At most 4 car OBB corners + 2 wall segment endpoints can penetrate (Spec 119).
+    let mut penetrating_points = [(Vec2::ZERO, 0.0f32, Vec2::ZERO); 6];
+    let mut penetrating_len = 0usize;
 
     // Test each car corner against the line segment
     for &c in &corners {
@@ -125,7 +127,8 @@ pub fn resolve_car_wall_collision<B: Body2D>(
                 if penetration > deepest_penetration {
                     deepest_penetration = penetration;
                 }
-                penetrating_points.push((c, penetration, approach_normal));
+                penetrating_points[penetrating_len] = (c, penetration, approach_normal);
+                penetrating_len += 1;
             }
         } else if dist_to_seg < skin_thickness {
             // Corner is past segment endpoints: only collide if within skin_thickness of endpoint
@@ -138,7 +141,8 @@ pub fn resolve_car_wall_collision<B: Body2D>(
             if penetration > deepest_penetration {
                 deepest_penetration = penetration;
             }
-            penetrating_points.push((c, penetration, pt_norm));
+            penetrating_points[penetrating_len] = (c, penetration, pt_norm);
+            penetrating_len += 1;
         }
     }
 
@@ -146,10 +150,10 @@ pub fn resolve_car_wall_collision<B: Body2D>(
     let fwd = obb.forward();
     let left = obb.left();
     for &endpoint in &[seg.start, seg.end] {
-        if obb.contains_point(endpoint) {
-            let rel = endpoint - obb.center;
-            let local_x = rel.dot(fwd);
-            let local_y = rel.dot(left);
+        let rel = endpoint - obb.center;
+        let local_x = rel.dot(fwd);
+        let local_y = rel.dot(left);
+        if local_x.abs() <= obb.half_extents.x && local_y.abs() <= obb.half_extents.y {
             let overlap_x = obb.half_extents.x - local_x.abs();
             let overlap_y = obb.half_extents.y - local_y.abs();
             if overlap_x > 0.0 && overlap_y > 0.0 {
@@ -163,12 +167,13 @@ pub fn resolve_car_wall_collision<B: Body2D>(
                 if pen > deepest_penetration {
                     deepest_penetration = pen;
                 }
-                penetrating_points.push((endpoint, pen, pt_norm));
+                penetrating_points[penetrating_len] = (endpoint, pen, pt_norm);
+                penetrating_len += 1;
             }
         }
     }
 
-    if penetrating_points.is_empty() || deepest_penetration <= 1e-5 {
+    if penetrating_len == 0 || deepest_penetration <= 1e-5 {
         return None;
     }
 
@@ -177,7 +182,7 @@ pub fn resolve_car_wall_collision<B: Body2D>(
     let mut contact_sum = Vec2::ZERO;
     let mut normal_sum = Vec2::ZERO;
     let mut count = 0.0f32;
-    for (pt, pen, norm) in &penetrating_points {
+    for (pt, pen, norm) in &penetrating_points[..penetrating_len] {
         if *pen >= threshold {
             contact_sum += *pt;
             normal_sum += *norm;
@@ -378,6 +383,194 @@ pub fn resolve_car_obstacle_collision<B: Body2D>(
     })
 }
 
+/// Resolves all wall and obstacle collisions for a car against track barriers,
+/// appending events into `events_out` without allocating a new vector (Spec 119).
+pub fn resolve_all_wall_collisions_into<B: Body2D>(
+    car: &mut B,
+    walls: &[WallBarrier],
+    obstacles: &[Obstacle],
+    events_out: &mut Vec<WallCollisionEvent>,
+) {
+    if walls.is_empty() && obstacles.is_empty() {
+        return;
+    }
+    if car.jump_height() > 1.2 {
+        return;
+    }
+
+    let car_reach = car.hull().reach().max(3.6f32);
+    let reach_pad = car_reach + 0.5;
+    let pos0 = car.position();
+    let min_x = pos0.x - reach_pad;
+    let max_x = pos0.x + reach_pad;
+    let min_y = pos0.y - reach_pad;
+    let max_y = pos0.y + reach_pad;
+
+    let mut near_walls = [0usize; 32];
+    let mut near_len = 0usize;
+    let mut overflow = false;
+
+    // Iteration 0: broad-phase filter + collect candidate wall indices for Iteration 1
+    for (idx, wall) in walls.iter().enumerate() {
+        let seg = &wall.segment;
+        let w_min_x = seg.start.x.min(seg.end.x);
+        let w_max_x = seg.start.x.max(seg.end.x);
+        let w_min_y = seg.start.y.min(seg.end.y);
+        let w_max_y = seg.start.y.max(seg.end.y);
+        if w_max_x < min_x || w_min_x > max_x || w_max_y < min_y || w_min_y > max_y {
+            continue;
+        }
+        if near_len < near_walls.len() {
+            near_walls[near_len] = idx;
+            near_len += 1;
+        } else {
+            overflow = true;
+        }
+        if let Some(ev) = resolve_car_wall_collision(car, wall) {
+            events_out.push(ev);
+        }
+    }
+
+    for obs in obstacles {
+        if let Some(ev) = resolve_car_obstacle_collision(car, obs) {
+            events_out.push(ev);
+        }
+    }
+
+    // Iteration 1: only re-test the nearby candidate walls
+    if overflow {
+        for wall in walls {
+            let _ = resolve_car_wall_collision(car, wall);
+        }
+    } else {
+        for &idx in &near_walls[..near_len] {
+            let _ = resolve_car_wall_collision(car, &walls[idx]);
+        }
+    }
+    for obs in obstacles {
+        let _ = resolve_car_obstacle_collision(car, obs);
+    }
+}
+
+/// Resolves all wall and obstacle collisions for a car against [`TrackGeometry`] using its
+/// static 2D uniform spatial grid (`GeometrySpatialGrid`), appending events into `events_out`
+/// with zero heap allocations (Spec 119).
+pub fn resolve_track_wall_collisions_into<B: Body2D>(
+    car: &mut B,
+    geometry: &TrackGeometry,
+    events_out: &mut Vec<WallCollisionEvent>,
+) {
+    if car.jump_height() > 1.2 {
+        return;
+    }
+    let obstacles = geometry.all_obstacles_with_scenery();
+    let Some(grid) = geometry.spatial_grid() else {
+        resolve_all_wall_collisions_into(car, &geometry.inner_walls, obstacles, events_out);
+        resolve_all_wall_collisions_into(car, &geometry.outer_walls, &[], events_out);
+        resolve_all_wall_collisions_into(car, &geometry.network_walls, &[], events_out);
+        return;
+    };
+
+    let reach_pad = car.hull().reach().max(3.6f32) + 0.5;
+    let pos = car.position();
+    let q_min = pos - Vec2::splat(reach_pad);
+    let q_max = pos + Vec2::splat(reach_pad);
+
+    let mut wall_idxs = [0usize; 64];
+    let mut w_len = 0usize;
+    let mut w_overflow = false;
+    grid.for_each_wall_in_aabb(q_min, q_max, |idx, _| {
+        if w_len < wall_idxs.len() {
+            wall_idxs[w_len] = idx;
+            w_len += 1;
+        } else {
+            w_overflow = true;
+        }
+    });
+
+    let mut obs_idxs = [0usize; 32];
+    let mut o_len = 0usize;
+    let mut o_overflow = false;
+    grid.for_each_obstacle_in_aabb(obstacles, q_min, q_max, |idx, _| {
+        if o_len < obs_idxs.len() {
+            obs_idxs[o_len] = idx;
+            o_len += 1;
+        } else {
+            o_overflow = true;
+        }
+    });
+
+    if w_overflow || o_overflow {
+        resolve_all_wall_collisions_into(car, &geometry.inner_walls, obstacles, events_out);
+        resolve_all_wall_collisions_into(car, &geometry.outer_walls, &[], events_out);
+        resolve_all_wall_collisions_into(car, &geometry.network_walls, &[], events_out);
+        return;
+    }
+
+    if w_len == 0 && o_len == 0 {
+        return;
+    }
+
+    wall_idxs[..w_len].sort_unstable();
+    obs_idxs[..o_len].sort_unstable();
+
+    let n_inner = grid.inner_count;
+    let n_inner_outer = n_inner + grid.outer_count;
+    let split_inner = wall_idxs[..w_len].partition_point(|&idx| idx < n_inner);
+    let split_outer = wall_idxs[..w_len].partition_point(|&idx| idx < n_inner_outer);
+
+    let inner_slice = &wall_idxs[..split_inner];
+    let outer_slice = &wall_idxs[split_inner..split_outer];
+    let net_slice = &wall_idxs[split_outer..w_len];
+    let obs_slice = &obs_idxs[..o_len];
+
+    // 1. Inner walls + scenery obstacles (2 iterations)
+    if !inner_slice.is_empty() || !obs_slice.is_empty() {
+        for iter in 0..2 {
+            for &idx in inner_slice {
+                if let Some(ev) = resolve_car_wall_collision(car, &grid.all_walls[idx]) {
+                    if iter == 0 {
+                        events_out.push(ev);
+                    }
+                }
+            }
+            for &idx in obs_slice {
+                if let Some(ev) = resolve_car_obstacle_collision(car, &obstacles[idx]) {
+                    if iter == 0 {
+                        events_out.push(ev);
+                    }
+                }
+            }
+        }
+    }
+
+    // 2. Outer walls (2 iterations)
+    if !outer_slice.is_empty() {
+        for iter in 0..2 {
+            for &idx in outer_slice {
+                if let Some(ev) = resolve_car_wall_collision(car, &grid.all_walls[idx]) {
+                    if iter == 0 {
+                        events_out.push(ev);
+                    }
+                }
+            }
+        }
+    }
+
+    // 3. Network walls (2 iterations)
+    if !net_slice.is_empty() {
+        for iter in 0..2 {
+            for &idx in net_slice {
+                if let Some(ev) = resolve_car_wall_collision(car, &grid.all_walls[idx]) {
+                    if iter == 0 {
+                        events_out.push(ev);
+                    }
+                }
+            }
+        }
+    }
+}
+
 /// Resolves all wall and obstacle collisions for a car against track barriers.
 pub fn resolve_all_wall_collisions<B: Body2D>(
     car: &mut B,
@@ -385,24 +578,7 @@ pub fn resolve_all_wall_collisions<B: Body2D>(
     obstacles: &[Obstacle],
 ) -> Vec<WallCollisionEvent> {
     let mut events = Vec::new();
-
-    for iter in 0..2 {
-        for wall in walls {
-            if let Some(ev) = resolve_car_wall_collision(car, wall) {
-                if iter == 0 {
-                    events.push(ev);
-                }
-            }
-        }
-        for obs in obstacles {
-            if let Some(ev) = resolve_car_obstacle_collision(car, obs) {
-                if iter == 0 {
-                    events.push(ev);
-                }
-            }
-        }
-    }
-
+    resolve_all_wall_collisions_into(car, walls, obstacles, &mut events);
     events
 }
 
@@ -511,4 +687,90 @@ mod tests {
             "Wall scraping with low normal impulse must produce 0 damage energy"
         );
     }
+
+    #[test]
+    fn test_spec_119_zero_alloc_wall_collision_and_spatial_grid_parity() {
+        use crate::lidar::{LidarConfig, LidarHit, LidarScanner};
+
+        let track = crate::track::test_circuit("classic", "gt_coastal_grand_prix");
+        let grid = track
+            .geometry
+            .spatial_grid()
+            .expect("TrackGeometry must build a GeometrySpatialGrid");
+        assert!(
+            !grid.all_walls.is_empty(),
+            "Spatial grid must index circuit walls"
+        );
+
+        // Verify multi-cell deduplication: querying the full track AABB visits each wall once
+        let mut visited_indices = Vec::new();
+        grid.for_each_wall_in_aabb(Vec2::splat(-10_000.0), Vec2::splat(10_000.0), |idx, _| {
+            visited_indices.push(idx);
+        });
+        visited_indices.sort_unstable();
+        let expected_indices: Vec<usize> = (0..grid.all_walls.len()).collect();
+        assert_eq!(
+            visited_indices, expected_indices,
+            "Spatial grid query over full bounds must visit every wall exactly once"
+        );
+
+        // Verify resolve_track_wall_collisions_into matches brute-force 3-pass solver
+        // and does not reallocate a pre-allocated events_out buffer
+        let inner_wall = &track.geometry.inner_walls[0];
+        let wall_mid = (inner_wall.segment.start + inner_wall.segment.end) * 0.5;
+        let mut car_grid = Car::new(CarConfig::sports_car()).with_pose(wall_mid, 0.15);
+        car_grid.state.velocity = -inner_wall.segment.normal() * 18.0;
+        let mut car_linear = car_grid.clone();
+
+        let mut events_grid = Vec::with_capacity(16);
+        let initial_ptr = events_grid.as_ptr();
+        let initial_cap = events_grid.capacity();
+        resolve_track_wall_collisions_into(&mut car_grid, &track.geometry, &mut events_grid);
+        assert_eq!(
+            events_grid.as_ptr(),
+            initial_ptr,
+            "Pre-allocated events buffer must not reallocate during collision resolution"
+        );
+        assert_eq!(events_grid.capacity(), initial_cap);
+        assert!(!events_grid.is_empty(), "Must record wall collision event");
+
+        let mut events_linear = Vec::new();
+        events_linear.extend(resolve_all_wall_collisions(
+            &mut car_linear,
+            &track.geometry.inner_walls,
+            track.geometry.all_obstacles_with_scenery(),
+        ));
+        events_linear.extend(resolve_all_wall_collisions(
+            &mut car_linear,
+            &track.geometry.outer_walls,
+            &[],
+        ));
+        events_linear.extend(resolve_all_wall_collisions(
+            &mut car_linear,
+            &track.geometry.network_walls,
+            &[],
+        ));
+
+        assert_eq!(events_grid.len(), events_linear.len());
+        assert!(
+            (car_grid.state.position - car_linear.state.position).length() < 1e-6,
+            "Grid-accelerated solver position must match linear solver"
+        );
+        assert!(
+            (car_grid.state.velocity - car_linear.state.velocity).length() < 1e-6,
+            "Grid-accelerated solver velocity must match linear solver"
+        );
+
+        // Verify LidarScanner::scan_into detects walls via GeometrySpatialGrid
+        let scanner = LidarScanner::new(LidarConfig::default());
+        let mut out_hits = vec![LidarHit::default(); scanner.config.num_rays];
+        let sample = &track.spline.samples[0];
+        let lidar_car = Car::new(CarConfig::sports_car()).with_pose(sample.point, 0.0);
+        scanner.scan_into(&lidar_car, &track, &[], &mut out_hits);
+        assert!(
+            out_hits.iter().any(|h| h.distance < scanner.config.max_range),
+            "LIDAR must detect track walls via GeometrySpatialGrid"
+        );
+    }
 }
+
