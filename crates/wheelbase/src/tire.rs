@@ -310,14 +310,14 @@ pub fn combined_slip_forces_with_sy(slip_ratio: f32, sy: f32, envelope: f32, tir
     }
     let s = s_sq.sqrt();
     let inv_s = 1.0 / s;
-    let f = envelope * normalized_grip_curve(s, tire);
-    let fx = f * sx * inv_s;
-    let mut fy = f * sy * inv_s;
+    let g_inv_s = normalized_grip_curve(s, tire) * inv_s;
+    let fx_norm = g_inv_s * sx;
+    let fx = envelope * fx_norm;
+    let mut fy = envelope * (g_inv_s * sy);
     let arcade = 1.0 - tire.power_slide.clamp(0.0, 1.0);
     if arcade > 0.0 && sy.abs() > 1e-6 && sx.abs() > 1e-6 {
         // Lateral force may use whatever the friction circle leaves after Fx.
         let fy_pure = envelope * normalized_grip_curve(sy, tire) * sy.signum();
-        let fx_norm = fx / envelope;
         let budget = (1.0 - fx_norm * fx_norm).max(0.0).sqrt();
         let fy_circle = fy_pure * budget;
         if fy_circle.abs() > fy.abs() {

@@ -134,17 +134,17 @@ In [`tire_friction_envelope`](../crates/wheelbase/src/tire.rs):
   - [x] **Then** the resulting wheel angular velocity and longitudinal force match the reference solver within `1e-3` relative tolerance and preserve numerical stability at low and high speeds
 
 - **Scenario: Single-car physics benchmark achieves substantial throughput speedup toward the 4M steps/sec target**
-  - [ ] **Given** the `physics_bench` benchmark in `crates/wheelbase/benches/physics_bench.rs` running 2,000,000 steps in `--release` / `bench` profile
-  - [ ] **When** `cargo bench -p wheelbase` is executed
-  - [ ] **Then** throughput exceeds `2,500,000 steps/second` (up from `1,583,789 steps/second` baseline) and all 66 `wheelbase` unit and simulation protocol tests pass
+  - [x] **Given** the `physics_bench` benchmark in `crates/wheelbase/benches/physics_bench.rs` running 2,000,000 steps in `--release` / `bench` profile
+  - [x] **When** `cargo bench -p wheelbase` is executed
+  - [x] **Then** throughput exceeds `2,500,000 steps/second` (up from `1,583,789 steps/second` baseline) and all 66 `wheelbase` unit and simulation protocol tests pass
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Created/Modified Files
-- `[ ]` `crates/wheelbase/src/tire.rs` -> Precompute `curve_constant` on `TireConfig`, implement fused `combined_slip_fx_and_stiffness`, and optimize `tire_friction_envelope`.
-- `[ ]` `crates/wheelbase/src/car.rs` -> Update `Car::step_with_surfaces` to use fused wheel spin integration and hoisted tire constants.
-- `[ ]` `crates/wheelbase/benches/physics_bench.rs` -> Verify benchmark throughput and raise regression floor to lock in gains.
-- `[ ]` `specs/constitution/ROADMAP.md` -> Link Spec 117 under Technical Debt & Maintenance.
-- `[ ]` `specs/index.md` -> Synchronize OKF v0.2 index via `keel validate`.
+- `[x]` `crates/wheelbase/src/tire.rs` -> Precompute `curve_constant` on `TireConfig`, implement fused `combined_slip_fx_and_stiffness`, and optimize `tire_friction_envelope`.
+- `[x]` `crates/wheelbase/src/car.rs` -> Update `Car::step_with_surfaces` to use fused wheel spin integration and hoisted tire constants.
+- `[x]` `crates/wheelbase/benches/physics_bench.rs` -> Verify benchmark throughput and raise regression floor to lock in gains.
+- `[x]` `specs/constitution/ROADMAP.md` -> Link Spec 117 under Technical Debt & Maintenance.
+- `[x]` `specs/index.md` -> Synchronize OKF v0.2 index via `keel validate`.
