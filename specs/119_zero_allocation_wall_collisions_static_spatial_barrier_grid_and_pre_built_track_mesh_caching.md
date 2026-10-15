@@ -3,7 +3,8 @@ type: Architecture Spec
 template: architecture
 title: "Zero-Allocation Wall Collisions, Static Spatial Barrier Grid, and Pre-Built Track Mesh Caching"
 description: "Eliminates per-tick heap allocations in wall collision resolution, introduces a static 2D uniform spatial grid in TrackGeometry for O(1) wall/obstacle queries across collisions, LIDAR, and Bot AI, pre-builds static GPU Mesh chunks in TrackRenderCache, and removes runtime catch_unwind overhead."
-status: approved
+status: implemented
+receipt: "docs/receipts/spec-119-receipt.md"
 verified: { by: human:mario, at: 2026-10-15T21:44:00Z, hash: "a6df7e0befec" }
 created: 2026-10-15
 generated: { by: agent/antigravity, at: 2026-10-15T21:22:15Z }
@@ -138,31 +139,31 @@ flowchart TD
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Wall collision resolution executes with zero heap allocations and identical impulse physics**
-  - [ ] **Given** a `Car` colliding with single and multiple `WallBarrier` segments at various angles and speeds
-  - [ ] **When** `resolve_car_wall_collision` and `resolve_all_wall_collisions_into` are executed
-  - [ ] **Then** penetration resolution, restitution, and angular impulses match existing collision unit tests identically while using the fixed 6-element stack array and reusable event buffer
+  - [x] **Given** a `Car` colliding with single and multiple `WallBarrier` segments at various angles and speeds
+  - [x] **When** `resolve_car_wall_collision` and `resolve_all_wall_collisions_into` are executed
+  - [x] **Then** penetration resolution, restitution, and angular impulses match existing collision unit tests identically while using the fixed 6-element stack array and reusable event buffer
 
 - **Scenario: Static spatial barrier grid returns exact wall and obstacle candidates in O(1) cell lookups**
-  - [ ] **Given** an official circuit loaded with `GeometrySpatialGrid` built over its `inner_walls`, `outer_walls`, `network_walls`, and `obstacles`
-  - [ ] **When** wall collisions, 32-beam `LidarScanner::scan_into`, and `BotAiDriver::line_of_sight_walled` query the track
-  - [ ] **Then** the results match a full $O(W)$ linear scan across 100% of test queries while `collision_bench` and `lidar_bench` throughput increases over baseline
+  - [x] **Given** an official circuit loaded with `GeometrySpatialGrid` built over its `inner_walls`, `outer_walls`, `network_walls`, and `obstacles`
+  - [x] **When** wall collisions, 32-beam `LidarScanner::scan_into`, and `BotAiDriver::line_of_sight_walled` query the track
+  - [x] **Then** the results match a full $O(W)$ linear scan across 100% of test queries while `collision_bench` and `lidar_bench` throughput increases over baseline
 
 - **Scenario: Pre-built TrackRenderCache meshes render static circuit passes without per-frame tessellation**
-  - [ ] **Given** a `TrackRenderCache` initialized for a circuit at a given `SurfaceTextureQuality`
-  - [ ] **When** `render_track_cached` renders multiple frames with a moving camera `view_bounds`
-  - [ ] **Then** static runoff, curb, and road surface meshes are drawn directly from cached chunk `Mesh` buffers without invoking `evaluate_macro_modulation` or allocating new `Vec<Vertex>` buffers per frame, and changing `SurfaceTextureQuality` rebuilds the cached meshes cleanly
+  - [x] **Given** a `TrackRenderCache` initialized for a circuit at a given `SurfaceTextureQuality`
+  - [x] **When** `render_track_cached` renders multiple frames with a moving camera `view_bounds`
+  - [x] **Then** static runoff, curb, and road surface meshes are drawn directly from cached chunk `Mesh` buffers without invoking `evaluate_macro_modulation` or allocating new `Vec<Vertex>` buffers per frame, and changing `SurfaceTextureQuality` rebuilds the cached meshes cleanly
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Created/Modified Files
-- `[ ]` `crates/arcade-race-core/src/collision/wall.rs` -> Replace heap `Vec` with stack `[(Vec2, f32, Vec2); 6]` in `resolve_car_wall_collision` and add `resolve_all_wall_collisions_into`.
-- `[ ]` `crates/arcade-race-core/src/track/geometry.rs` -> Implement `GeometrySpatialGrid` for $O(1)$ spatial AABB queries over walls and obstacles.
-- `[ ]` `crates/arcade-race-core/src/lidar/mod.rs` -> Query `GeometrySpatialGrid` in `LidarScanner::scan_into`.
-- `[ ]` `crates/race-kit/src/world.rs` -> Use `resolve_all_wall_collisions_into` and spatial grid in `RaceWorld::step`.
-- `[ ]` `crates/race-kit/src/ai/mod.rs` -> Replace 42-step linear lookahead pullback with binary search and query `GeometrySpatialGrid` in `line_of_sight_walled` and `turn_steer`.
-- `[ ]` `crates/race-ui/src/render/track.rs` -> Cache pre-built static chunk `Mesh`es in `TrackRenderCache` and remove per-draw `catch_unwind`.
-- `[ ]` `crates/tdrace-app/src/game/mod.rs` -> Reuse per-tick scratch buffers in `RaceSession::physics_step` and replace per-input `catch_unwind` with a single-init window flag.
-- `[ ]` `specs/constitution/ROADMAP.md` -> Link Spec 119 under Technical Debt & Maintenance.
-- `[ ]` `specs/index.md` -> Synchronize OKF v0.2 index via `keel validate`.
+- `[x]` `crates/arcade-race-core/src/collision/wall.rs` -> Replace heap `Vec` with stack `[(Vec2, f32, Vec2); 6]` in `resolve_car_wall_collision` and add `resolve_all_wall_collisions_into`.
+- `[x]` `crates/arcade-race-core/src/track/geometry.rs` -> Implement `GeometrySpatialGrid` for $O(1)$ spatial AABB queries over walls and obstacles.
+- `[x]` `crates/arcade-race-core/src/lidar/mod.rs` -> Query `GeometrySpatialGrid` in `LidarScanner::scan_into`.
+- `[x]` `crates/race-kit/src/world.rs` -> Use `resolve_all_wall_collisions_into` and spatial grid in `RaceWorld::step`.
+- `[x]` `crates/race-kit/src/ai/mod.rs` -> Replace 42-step linear lookahead pullback with binary search and query `GeometrySpatialGrid` in `line_of_sight_walled` and `turn_steer`.
+- `[x]` `crates/race-ui/src/render/track.rs` -> Cache pre-built static chunk `Mesh`es in `TrackRenderCache` and remove per-draw `catch_unwind`.
+- `[x]` `crates/tdrace-app/src/game/mod.rs` -> Reuse per-tick scratch buffers in `RaceSession::physics_step` and replace per-input `catch_unwind` with a single-init window flag.
+- `[x]` `specs/constitution/ROADMAP.md` -> Link Spec 119 under Technical Debt & Maintenance.
+- `[x]` `specs/index.md` -> Synchronize OKF v0.2 index via `keel validate`.

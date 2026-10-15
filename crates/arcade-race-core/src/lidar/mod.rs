@@ -204,27 +204,21 @@ impl LidarScanner {
         let min_y = sensor_pos.y - max_range_padded;
         let max_y = sensor_pos.y + max_range_padded;
 
-        // Pre-filter candidate walls using reusable scratch buffer with zero heap allocations
+        // Pre-filter candidate walls using spatial grid + reusable scratch buffer with zero heap allocations (Spec 119)
         let mut candidate_walls = self.scratch_walls.borrow_mut();
         candidate_walls.clear();
-        for w in track.geometry.all_walls() {
-            if !w.is_physical() {
-                continue;
-            }
-            if (car_elev - w.elevation).abs() > 2.0 {
-                continue;
-            }
-            let w_min_x = w.segment.start.x.min(w.segment.end.x);
-            let w_max_x = w.segment.start.x.max(w.segment.end.x);
-            let w_min_y = w.segment.start.y.min(w.segment.end.y);
-            let w_max_y = w.segment.start.y.max(w.segment.end.y);
-            if w_max_x < min_x || w_min_x > max_x || w_max_y < min_y || w_min_y > max_y {
-                continue;
-            }
-            if w.segment.distance_sq_to_point(sensor_pos) < max_r_sq {
-                candidate_walls.push(*w);
-            }
-        }
+        track.geometry.for_each_wall_in_aabb(
+            Vec2::new(min_x, min_y),
+            Vec2::new(max_x, max_y),
+            |w| {
+                if w.is_physical()
+                    && (car_elev - w.elevation).abs() <= 2.0
+                    && w.segment.distance_sq_to_point(sensor_pos) < max_r_sq
+                {
+                    candidate_walls.push(*w);
+                }
+            },
+        );
 
         // Precompute opponent bounding boxes using reusable scratch buffer
         let mut opponent_obbs = self.scratch_opponents.borrow_mut();

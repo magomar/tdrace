@@ -9,6 +9,6 @@ pub use sat::{
     collide_obb_circle, collide_obb_obb, ContactManifold, OrientedBox,
 };
 pub use wall::{
-    resolve_all_wall_collisions, resolve_car_obstacle_collision, resolve_car_wall_collision,
-    WallCollisionEvent,
+    resolve_all_wall_collisions, resolve_all_wall_collisions_into, resolve_car_obstacle_collision,
+    resolve_car_wall_collision, resolve_track_wall_collisions_into, WallCollisionEvent,
 };

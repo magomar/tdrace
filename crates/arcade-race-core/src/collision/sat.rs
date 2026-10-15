@@ -70,9 +70,15 @@ impl OrientedBox {
     }
 
     /// Computes the 4 world-space corners [FL, RL, RR, FR].
+    #[inline]
     pub fn corners(&self) -> [Vec2; 4] {
-        let fwd = self.forward() * self.half_extents.x;
-        let left = self.left() * self.half_extents.y;
+        self.corners_with_axes(self.axes())
+    }
+
+    #[inline]
+    fn corners_with_axes(&self, axes: [Vec2; 2]) -> [Vec2; 4] {
+        let fwd = axes[0] * self.half_extents.x;
+        let left = axes[1] * self.half_extents.y;
 
         [
             self.center + fwd + left, // FL
@@ -96,7 +102,11 @@ impl OrientedBox {
     /// Projects all 4 corners onto an arbitrary 1D axis, returning (min, max).
     #[inline]
     pub fn project_onto_axis(&self, axis: Vec2) -> (f32, f32) {
-        let corners = self.corners();
+        Self::project_corners_onto_axis(&self.corners(), axis)
+    }
+
+    #[inline]
+    fn project_corners_onto_axis(corners: &[Vec2; 4], axis: Vec2) -> (f32, f32) {
         let mut min = corners[0].dot(axis);
         let mut max = min;
         for &c in &corners[1..] {
@@ -112,12 +122,16 @@ impl OrientedBox {
     }
 
     /// Tests if a 2D point lies inside the oriented box.
+    #[inline]
     pub fn contains_point(&self, point: Vec2) -> bool {
+        self.contains_point_with_axes(point, self.axes())
+    }
+
+    #[inline]
+    fn contains_point_with_axes(&self, point: Vec2, axes: [Vec2; 2]) -> bool {
         let d = point - self.center;
-        let fwd = self.forward();
-        let left = self.left();
-        let local_x = d.dot(fwd).abs();
-        let local_y = d.dot(left).abs();
+        let local_x = d.dot(axes[0]).abs();
+        let local_y = d.dot(axes[1]).abs();
         local_x <= self.half_extents.x && local_y <= self.half_extents.y
     }
 }
@@ -150,6 +164,8 @@ impl ContactManifold {
 pub fn collide_obb_obb(box_a: &OrientedBox, box_b: &OrientedBox) -> Option<ContactManifold> {
     let axes_a = box_a.axes();
     let axes_b = box_b.axes();
+    let corners_a = box_a.corners_with_axes(axes_a);
+    let corners_b = box_b.corners_with_axes(axes_b);
 
     let candidate_axes = [axes_a[0], axes_a[1], axes_b[0], axes_b[1]];
 
@@ -157,8 +173,8 @@ pub fn collide_obb_obb(box_a: &OrientedBox, box_b: &OrientedBox) -> Option<Conta
     let mut collision_normal = Vec2::ZERO;
 
     for &axis in &candidate_axes {
-        let (min_a, max_a) = box_a.project_onto_axis(axis);
-        let (min_b, max_b) = box_b.project_onto_axis(axis);
+        let (min_a, max_a) = OrientedBox::project_corners_onto_axis(&corners_a, axis);
+        let (min_b, max_b) = OrientedBox::project_corners_onto_axis(&corners_b, axis);
 
         if min_a >= max_b || min_b >= max_a {
             return None; // Separating axis found: no collision
@@ -178,7 +194,8 @@ pub fn collide_obb_obb(box_a: &OrientedBox, box_b: &OrientedBox) -> Option<Conta
     }
 
     // Find contact points via polygon clipping
-    let contact_points = find_obb_contact_points(box_a, box_b, collision_normal);
+    let contact_points =
+        find_obb_contact_points(box_a, box_b, axes_a, axes_b, &corners_a, &corners_b);
 
     Some(ContactManifold {
         colliding: true,
@@ -189,31 +206,44 @@ pub fn collide_obb_obb(box_a: &OrientedBox, box_b: &OrientedBox) -> Option<Conta
 }
 
 /// Finds contact points by clipping the incident face against reference face side planes.
-fn find_obb_contact_points(box_a: &OrientedBox, box_b: &OrientedBox, _normal: Vec2) -> Vec<Vec2> {
-    // Determine reference box and incident box
-    let corners_a = box_a.corners();
-    let corners_b = box_b.corners();
-
-    let mut contact_points = Vec::new();
+fn find_obb_contact_points(
+    box_a: &OrientedBox,
+    box_b: &OrientedBox,
+    axes_a: [Vec2; 2],
+    axes_b: [Vec2; 2],
+    corners_a: &[Vec2; 4],
+    corners_b: &[Vec2; 4],
+) -> Vec<Vec2> {
+    let mut contact_points = Vec::with_capacity(4);
 
     // Check which corners of B penetrate A along the normal
-    for &cb in &corners_b {
-        if box_a.contains_point(cb) {
+    for &cb in corners_b {
+        if box_a.contains_point_with_axes(cb, axes_a) {
             contact_points.push(cb);
         }
     }
 
     // Check which corners of A penetrate B
-    for &ca in &corners_a {
-        if box_b.contains_point(ca) {
+    for &ca in corners_a {
+        if box_b.contains_point_with_axes(ca, axes_b) {
             contact_points.push(ca);
         }
     }
 
     // If no corners strictly inside (e.g. edge-edge grazing), use midpoints
     if contact_points.is_empty() {
-        let edges_a = box_a.edges();
-        let edges_b = box_b.edges();
+        let edges_a = [
+            LineSegment::new(corners_a[0], corners_a[1]),
+            LineSegment::new(corners_a[1], corners_a[2]),
+            LineSegment::new(corners_a[2], corners_a[3]),
+            LineSegment::new(corners_a[3], corners_a[0]),
+        ];
+        let edges_b = [
+            LineSegment::new(corners_b[0], corners_b[1]),
+            LineSegment::new(corners_b[1], corners_b[2]),
+            LineSegment::new(corners_b[2], corners_b[3]),
+            LineSegment::new(corners_b[3], corners_b[0]),
+        ];
         for ea in &edges_a {
             for eb in &edges_b {
                 if let Some(pt) = ea.intersect_segment(eb) {
