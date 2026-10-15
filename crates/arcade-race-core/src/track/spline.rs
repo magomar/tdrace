@@ -964,6 +964,45 @@ impl TrackSpline {
         }
     }
 
+    /// Evaluates horizontal signed curvature $\kappa = (\mathbf{t}_0 \times \mathbf{t}_1) / \Delta s$ at `distance`
+    /// using a single binary search into `self.samples` (Spec 118).
+    #[inline]
+    pub fn curvature_at_distance(&self, distance: f32) -> f32 {
+        let n = self.samples.len();
+        if n < 2 {
+            return 0.0;
+        }
+        let clamped_dist = if self.closed {
+            let mut d = distance % self.total_length;
+            if d < 0.0 {
+                d += self.total_length;
+            }
+            d
+        } else {
+            distance.clamp(0.0, self.total_length)
+        };
+        let idx = self
+            .samples
+            .partition_point(|s| s.distance <= clamped_dist)
+            .saturating_sub(1)
+            .min(n - 2);
+        let next_idx = if idx + 2 < n {
+            idx + 2
+        } else if self.closed && n > 2 {
+            (idx + 2) % (n - 1)
+        } else {
+            idx + 1
+        };
+        let s0 = &self.samples[idx];
+        let s1 = &self.samples[next_idx];
+        let ds = if s1.distance >= s0.distance {
+            (s1.distance - s0.distance).max(1e-4)
+        } else {
+            (self.total_length - s0.distance + s1.distance).max(1e-4)
+        };
+        (s0.tangent.x * s1.tangent.y - s0.tangent.y * s1.tangent.x) / ds
+    }
+
     /// Projects any 2D world position onto the spline centerline, computing progress and offsets.
     pub fn project_point(&self, pos: Vec2) -> SplineProjection {
         if self.samples.len() < 2 {

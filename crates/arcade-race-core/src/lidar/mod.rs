@@ -229,7 +229,15 @@ impl LidarScanner {
         // Precompute opponent bounding boxes using reusable scratch buffer
         let mut opponent_obbs = self.scratch_opponents.borrow_mut();
         opponent_obbs.clear();
+        let host_pos = car.position();
         for opp in opponents {
+            let opp_pos = opp.position();
+            if std::ptr::eq(opp, car) || (opp_pos - host_pos).length_squared() < 1e-4 {
+                continue;
+            }
+            if (opp_pos - sensor_pos).length_squared() > max_r_sq {
+                continue;
+            }
             if (car_elev - opp.total_elevation()).abs() <= 2.0 {
                 let obb = OrientedBox::from_body(opp);
                 let (sin_a, cos_a) = obb.angle.sin_cos();

@@ -14,13 +14,37 @@ pub struct SkidMark {
     pub alpha: f32, // 0.0 to 1.0
 }
 
-/// A pre-tessellated 2D colored triangle in world space.
+/// A pre-tessellated 2D colored triangle in world space with precomputed AABB bounds (Spec 118).
 #[derive(Debug, Clone, Copy)]
 pub struct WorldTriangle {
     pub v0: Vec2,
     pub v1: Vec2,
     pub v2: Vec2,
+    pub min: Vec2,
+    pub max: Vec2,
     pub color: [u8; 3],
+}
+
+impl WorldTriangle {
+    #[inline]
+    pub fn new(v0: Vec2, v1: Vec2, v2: Vec2, color: [u8; 3]) -> Self {
+        Self {
+            v0,
+            v1,
+            v2,
+            min: v0.min(v1).min(v2),
+            max: v0.max(v1).max(v2),
+            color,
+        }
+    }
+
+    #[inline(always)]
+    pub fn intersects_aabb(&self, cam_min: Vec2, cam_max: Vec2) -> bool {
+        self.max.x >= cam_min.x
+            && self.min.x <= cam_max.x
+            && self.max.y >= cam_min.y
+            && self.min.y <= cam_max.y
+    }
 }
 
 /// Fast top-down software RGB rasterizer for high-throughput pixel observations.
@@ -142,21 +166,21 @@ impl FastRasterizer {
             };
 
             // 1. Road quad (2 triangles)
-            out.push(WorldTriangle { v0: l_track0, v1: r_track0, v2: l_track1, color: road_color });
-            out.push(WorldTriangle { v0: r_track0, v1: r_track1, v2: l_track1, color: road_color });
+            out.push(WorldTriangle::new(l_track0, r_track0, l_track1, road_color));
+            out.push(WorldTriangle::new(r_track0, r_track1, l_track1, road_color));
 
             // 2. Curbs (alternating red/white stripes)
             let curb_color = if (i / 2) % 2 == 0 { curb_red } else { curb_white };
             if c0 > 0.1 || c1 > 0.1 {
                 // Left curb
                 if samp0.left_curb || samp1.left_curb {
-                    out.push(WorldTriangle { v0: l_curb0, v1: l_track0, v2: l_curb1, color: curb_color });
-                    out.push(WorldTriangle { v0: l_track0, v1: l_track1, v2: l_curb1, color: curb_color });
+                    out.push(WorldTriangle::new(l_curb0, l_track0, l_curb1, curb_color));
+                    out.push(WorldTriangle::new(l_track0, l_track1, l_curb1, curb_color));
                 }
                 // Right curb
                 if samp0.right_curb || samp1.right_curb {
-                    out.push(WorldTriangle { v0: r_track0, v1: r_curb0, v2: r_track1, color: curb_color });
-                    out.push(WorldTriangle { v0: r_curb0, v1: r_curb1, v2: r_track1, color: curb_color });
+                    out.push(WorldTriangle::new(r_track0, r_curb0, r_track1, curb_color));
+                    out.push(WorldTriangle::new(r_curb0, r_curb1, r_track1, curb_color));
                 }
             }
 
@@ -167,8 +191,8 @@ impl FastRasterizer {
                 let c_r0 = p0 + n0 * lw0;
                 let c_l1 = p1 - n1 * lw0;
                 let c_r1 = p1 + n1 * lw0;
-                out.push(WorldTriangle { v0: c_l0, v1: c_r0, v2: c_l1, color: line_white });
-                out.push(WorldTriangle { v0: c_r0, v1: c_r1, v2: c_l1, color: line_white });
+                out.push(WorldTriangle::new(c_l0, c_r0, c_l1, line_white));
+                out.push(WorldTriangle::new(c_r0, c_r1, c_l1, line_white));
             }
         }
     }
@@ -184,27 +208,27 @@ impl FastRasterizer {
                 let p1 = *center + u - v;
                 let p2 = *center + u + v;
                 let p3 = *center - u + v;
-                out.push(WorldTriangle { v0: p0, v1: p1, v2: p2, color });
-                out.push(WorldTriangle { v0: p0, v1: p2, v2: p3, color });
+                out.push(WorldTriangle::new(p0, p1, p2, color));
+                out.push(WorldTriangle::new(p0, p2, p3, color));
             }
             SurfaceShape::Aabb { min, max } => {
                 let p0 = *min;
                 let p1 = Vec2::new(max.x, min.y);
                 let p2 = *max;
                 let p3 = Vec2::new(min.x, max.y);
-                out.push(WorldTriangle { v0: p0, v1: p1, v2: p2, color });
-                out.push(WorldTriangle { v0: p0, v1: p2, v2: p3, color });
+                out.push(WorldTriangle::new(p0, p1, p2, color));
+                out.push(WorldTriangle::new(p0, p2, p3, color));
             }
             SurfaceShape::Polygon { vertices } => {
                 if vertices.len() >= 3 {
                     let v0 = vertices[0];
                     for i in 1..vertices.len() - 1 {
-                        out.push(WorldTriangle {
+                        out.push(WorldTriangle::new(
                             v0,
-                            v1: vertices[i],
-                            v2: vertices[i + 1],
+                            vertices[i],
+                            vertices[i + 1],
                             color,
-                        });
+                        ));
                     }
                 }
             }
@@ -216,7 +240,7 @@ impl FastRasterizer {
                     let p0 = *center;
                     let p1 = *center + Vec2::new(a0.cos(), a0.sin()) * *radius;
                     let p2 = *center + Vec2::new(a1.cos(), a1.sin()) * *radius;
-                    out.push(WorldTriangle { v0: p0, v1: p1, v2: p2, color });
+                    out.push(WorldTriangle::new(p0, p1, p2, color));
                 }
             }
         }
@@ -259,6 +283,16 @@ impl FastRasterizer {
         let half_w = width as f32 * 0.5;
         let half_h = height as f32 * 0.5;
 
+        // World-space camera AABB for culling off-screen triangles and walls before projection (Spec 118)
+        let inv_scale = 1.0 / scale.max(1e-4);
+        let (cam_min, cam_max) = if follow_car {
+            let r = (half_w * half_w + half_h * half_h).sqrt() * inv_scale + 2.0;
+            (cam_pos - Vec2::splat(r), cam_pos + Vec2::splat(r))
+        } else {
+            let ext = Vec2::new(half_w * inv_scale + 2.0, half_h * inv_scale + 2.0);
+            (cam_pos - ext, cam_pos + ext)
+        };
+
         // World to Screen coordinate transform closure
         let world_to_screen = |wp: Vec2| -> Vec2 {
             let dx = wp.x - cam_pos.x;
@@ -270,6 +304,9 @@ impl FastRasterizer {
 
         // 2. Render surface zones (sand traps)
         for tri in &self.sand_triangles {
+            if !tri.intersects_aabb(cam_min, cam_max) {
+                continue;
+            }
             Self::draw_screen_triangle(
                 world_to_screen(tri.v0),
                 world_to_screen(tri.v1),
@@ -283,6 +320,9 @@ impl FastRasterizer {
 
         // 3. Render track road & curbs
         for tri in &self.track_triangles {
+            if !tri.intersects_aabb(cam_min, cam_max) {
+                continue;
+            }
             Self::draw_screen_triangle(
                 world_to_screen(tri.v0),
                 world_to_screen(tri.v1),
@@ -297,6 +337,11 @@ impl FastRasterizer {
         // 4. Render skid marks
         let skid_color = [35, 35, 40];
         for skid in skid_marks {
+            let s_min = skid.start.min(skid.end);
+            let s_max = skid.start.max(skid.end);
+            if s_max.x < cam_min.x || s_min.x > cam_max.x || s_max.y < cam_min.y || s_min.y > cam_max.y {
+                continue;
+            }
             let s0 = world_to_screen(skid.start);
             let s1 = world_to_screen(skid.end);
             Self::draw_thick_line(s0, s1, (skid.width * scale).max(1.0), skid_color, width, height, buffer);
@@ -304,6 +349,11 @@ impl FastRasterizer {
 
         // 5. Render walls and barriers
         for &(start, end, thick, color) in &self.wall_segments {
+            let w_min = start.min(end);
+            let w_max = start.max(end);
+            if w_max.x < cam_min.x || w_min.x > cam_max.x || w_max.y < cam_min.y || w_min.y > cam_max.y {
+                continue;
+            }
             let s0 = world_to_screen(start);
             let s1 = world_to_screen(end);
             Self::draw_thick_line(s0, s1, (thick * scale).max(1.5), color, width, height, buffer);
@@ -342,7 +392,7 @@ impl FastRasterizer {
             }
         }
 
-        // 7. Render opponent cars
+        // 7. Render opponent cars (skipping target_car if opponents slice is &self.cars)
         let opp_colors = [
             [35, 115, 230], // Blue
             [235, 130, 25], // Orange
@@ -352,8 +402,13 @@ impl FastRasterizer {
             [210, 50, 130], // Pink
         ];
 
-        for (i, opp) in opponents.iter().enumerate() {
-            let color = opp_colors[i % opp_colors.len()];
+        let mut opp_idx = 0usize;
+        for opp in opponents {
+            if std::ptr::eq(opp, target_car) {
+                continue;
+            }
+            let color = opp_colors[opp_idx % opp_colors.len()];
+            opp_idx += 1;
             Self::draw_car(opp, color, &world_to_screen, width, height, buffer);
         }
 
@@ -433,7 +488,7 @@ impl FastRasterizer {
         Self::draw_point(t_r, [255, 30, 30], width, height, buffer);
     }
 
-    /// Fast scanline half-space rasterizer for a screen triangle.
+    /// Fast scanline half-space rasterizer for a screen triangle with incremental edge stepping (Spec 118).
     #[inline]
     fn draw_screen_triangle(
         v0: Vec2,
@@ -470,24 +525,39 @@ impl FastRasterizer {
 
         let (p0, p1, p2) = if area < 0.0 { (v0, v2, v1) } else { (v0, v1, v2) };
 
+        let dx01 = p1.x - p0.x;
+        let dy01 = p1.y - p0.y;
+        let dx12 = p2.x - p1.x;
+        let dy12 = p2.y - p1.y;
+        let dx20 = p0.x - p2.x;
+        let dy20 = p0.y - p2.y;
+
+        let px0 = x0 as f32 + 0.5;
+        let py0 = y0 as f32 + 0.5;
+        let mut e01_row = dx01 * (py0 - p0.y) - dy01 * (px0 - p0.x);
+        let mut e12_row = dx12 * (py0 - p1.y) - dy12 * (px0 - p1.x);
+        let mut e20_row = dx20 * (py0 - p2.y) - dy20 * (px0 - p2.x);
+
         for y in y0..=y1 {
-            let py = y as f32 + 0.5;
             let row_offset = y * width * 3;
+            let mut e01 = e01_row;
+            let mut e12 = e12_row;
+            let mut e20 = e20_row;
 
             for x in x0..=x1 {
-                let px = x as f32 + 0.5;
-
-                let e01 = (p1.x - p0.x) * (py - p0.y) - (p1.y - p0.y) * (px - p0.x);
-                let e12 = (p2.x - p1.x) * (py - p1.y) - (p2.y - p1.y) * (px - p1.x);
-                let e20 = (p0.x - p2.x) * (py - p2.y) - (p0.y - p2.y) * (px - p2.x);
-
-                if e01 >= 0.0 && e12 >= 0.0 && e20 >= 0.0 {
+                if e01 >= -1e-5 && e12 >= -1e-5 && e20 >= -1e-5 {
                     let idx = row_offset + x * 3;
                     buffer[idx] = color[0];
                     buffer[idx + 1] = color[1];
                     buffer[idx + 2] = color[2];
                 }
+                e01 -= dy01;
+                e12 -= dy12;
+                e20 -= dy20;
             }
+            e01_row += dx01;
+            e12_row += dx12;
+            e20_row += dx20;
         }
     }
 
@@ -557,6 +627,34 @@ impl FastRasterizer {
             buffer[idx] = color[0];
             buffer[idx + 1] = color[1];
             buffer[idx + 2] = color[2];
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tdrace_core::physics::config::CarConfig;
+    use tdrace_core::track::{create_prototypical_track, RaceDirection, TrackShape};
+
+    #[test]
+    fn test_spec_118_fast_rasterizer_culling_and_scanline() {
+        let track = create_prototypical_track("gt", TrackShape::Oval, RaceDirection::Right);
+        let rasterizer = FastRasterizer::new(&track);
+        let spawn = track.grid_positions[0];
+        let car0 = Car::new(CarConfig::sports_car()).with_pose(spawn.position, spawn.angle);
+        let car1 = Car::new(CarConfig::sports_car()).with_pose(spawn.position + Vec2::new(6.0, 2.0), spawn.angle);
+        let cars = vec![car0.clone(), car1.clone()];
+        let opponents_only = vec![car1];
+
+        for follow_car in [true, false] {
+            let mut buf_all = vec![0u8; 96 * 96 * 3];
+            let mut buf_opps = vec![0u8; 96 * 96 * 3];
+            rasterizer.render(&cars[0], &cars, &track.geometry.obstacles, &[], 96, 96, follow_car, None, &mut buf_all);
+            rasterizer.render(&car0, &opponents_only, &track.geometry.obstacles, &[], 96, 96, follow_car, None, &mut buf_opps);
+            assert_eq!(buf_all, buf_opps, "Zero-copy &self.cars must render identically to filtered opponents slice");
+            assert!(buf_all.chunks_exact(3).any(|px| px == [60, 60, 65]), "Asphalt road pixels must be rendered");
+            assert!(buf_all.chunks_exact(3).any(|px| px == [230, 30, 30]), "Target car pixels must be rendered");
         }
     }
 }
