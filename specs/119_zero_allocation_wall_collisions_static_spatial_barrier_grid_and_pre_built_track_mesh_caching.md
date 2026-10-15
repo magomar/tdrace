@@ -3,7 +3,8 @@ type: Architecture Spec
 template: architecture
 title: "Zero-Allocation Wall Collisions, Static Spatial Barrier Grid, and Pre-Built Track Mesh Caching"
 description: "Eliminates per-tick heap allocations in wall collision resolution, introduces a static 2D uniform spatial grid in TrackGeometry for O(1) wall/obstacle queries across collisions, LIDAR, and Bot AI, pre-builds static GPU Mesh chunks in TrackRenderCache, and removes runtime catch_unwind overhead."
-status: in_progress
+status: implemented
+receipt: "docs/receipts/spec-119-receipt.md"
 verified: { by: human:mario, at: 2026-10-15T21:44:00Z, hash: "a6df7e0befec" }
 created: 2026-10-15
 generated: { by: agent/antigravity, at: 2026-10-15T21:22:15Z }
