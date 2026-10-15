@@ -28,6 +28,16 @@ pub struct CanopyBrush {
 pub trait Vehicle: Body2D {
     /// Surface under each of the four contact points, with the tracker distance as a hint.
     fn sample_surfaces(&self, track: &Track, hint: f32) -> [SurfaceType; 4];
+    /// Surface under each of the four contact points, reusing a precomputed chassis [`SplineProjection`] when available (Spec 118).
+    #[inline]
+    fn sample_surfaces_from_projection(
+        &self,
+        track: &Track,
+        _proj: &SplineProjection,
+        hint: f32,
+    ) -> [SurfaceType; 4] {
+        self.sample_surfaces(track, hint)
+    }
     /// Slipstream intensity from the other vehicles.
     fn draft_intensity(&self, others: &[&Self]) -> f32;
     fn set_draft(&mut self, intensity: f32);
@@ -67,6 +77,16 @@ impl Vehicle for Car {
     #[inline]
     fn sample_surfaces(&self, track: &Track, hint: f32) -> [SurfaceType; 4] {
         track.sample_car_surfaces_with_hint(self, hint)
+    }
+
+    #[inline]
+    fn sample_surfaces_from_projection(
+        &self,
+        track: &Track,
+        proj: &SplineProjection,
+        _hint: f32,
+    ) -> [SurfaceType; 4] {
+        track.sample_car_surfaces_from_projection(self, proj)
     }
 
     #[inline]
