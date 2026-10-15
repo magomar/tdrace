@@ -3,7 +3,8 @@ type: Architecture Spec
 template: architecture
 title: "Wheelbase 4M Steps/Sec Tire Solver Acceleration and Transcendental Deduplication"
 description: "Eliminates redundant transcendental evaluations in wheelbase's Pacejka '96 tire and implicit wheel spin solvers via precomputed curve constants, fused force-stiffness evaluation, and fast load-sensitivity approximations to bridge the 1.58M to 4.0M steps/sec roadmap throughput gap."
-status: in_progress
+status: implemented
+receipt: "docs/receipts/spec-117-receipt.md"
 verified: { by: human:mario, at: 2026-10-15T21:44:00Z, hash: "1b34dc0dfec9" }
 created: 2026-10-15
 generated: { by: agent/antigravity, at: 2026-10-15T21:22:15Z }
