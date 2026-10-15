@@ -5,7 +5,27 @@ use macroquad::input::KeyCode;
 use macroquad::prelude::{get_frame_time, screen_height, screen_width};
 use serde::{Deserialize, Serialize};
 
-static MQ_AVAILABLE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(true);
+const MQ_UNPROBED: u8 = 0;
+const MQ_ACTIVE: u8 = 1;
+const MQ_HEADLESS: u8 = 2;
+static MQ_WINDOW_STATE: std::sync::atomic::AtomicU8 =
+    std::sync::atomic::AtomicU8::new(MQ_UNPROBED);
+
+#[inline]
+fn is_window_active() -> bool {
+    match MQ_WINDOW_STATE.load(std::sync::atomic::Ordering::Relaxed) {
+        MQ_ACTIVE => true,
+        MQ_HEADLESS => false,
+        _ => {
+            let active = std::panic::catch_unwind(screen_width).is_ok();
+            MQ_WINDOW_STATE.store(
+                if active { MQ_ACTIVE } else { MQ_HEADLESS },
+                std::sync::atomic::Ordering::Relaxed,
+            );
+            active
+        }
+    }
+}
 
 thread_local! {
     static INJECTED_KEY_PRESSES: std::cell::RefCell<Vec<KeyCode>> = const { std::cell::RefCell::new(Vec::new()) };
@@ -22,153 +42,90 @@ pub fn inject_key_presses_for_tests(keys: &[KeyCode]) {
 
 #[inline]
 fn is_key_pressed(k: KeyCode) -> bool {
-    if MQ_AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
-        match std::panic::catch_unwind(|| macroquad::input::is_key_pressed(k)) {
-            Ok(v) => return v,
-            Err(_) => MQ_AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed),
-        }
+    if is_window_active() {
+        return macroquad::input::is_key_pressed(k);
     }
     INJECTED_KEY_PRESSES.with(|keys| keys.borrow().contains(&k))
 }
 
 #[inline]
 fn is_key_down(k: KeyCode) -> bool {
-    if !MQ_AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
+    if !is_window_active() {
         return false;
     }
-    match std::panic::catch_unwind(|| macroquad::input::is_key_down(k)) {
-        Ok(v) => v,
-        Err(_) => {
-            MQ_AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed);
-            false
-        }
-    }
+    macroquad::input::is_key_down(k)
 }
 
 #[inline]
 fn is_mouse_button_pressed(btn: macroquad::input::MouseButton) -> bool {
-    if !MQ_AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
+    if !is_window_active() {
         return false;
     }
-    match std::panic::catch_unwind(|| macroquad::input::is_mouse_button_pressed(btn)) {
-        Ok(v) => v,
-        Err(_) => {
-            MQ_AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed);
-            false
-        }
-    }
+    macroquad::input::is_mouse_button_pressed(btn)
 }
 
 #[inline]
 fn is_mouse_button_down(btn: macroquad::input::MouseButton) -> bool {
-    if !MQ_AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
+    if !is_window_active() {
         return false;
     }
-    match std::panic::catch_unwind(|| macroquad::input::is_mouse_button_down(btn)) {
-        Ok(v) => v,
-        Err(_) => {
-            MQ_AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed);
-            false
-        }
-    }
+    macroquad::input::is_mouse_button_down(btn)
 }
 
 #[inline]
 fn is_mouse_button_released(btn: macroquad::input::MouseButton) -> bool {
-    if !MQ_AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
+    if !is_window_active() {
         return false;
     }
-    match std::panic::catch_unwind(|| macroquad::input::is_mouse_button_released(btn)) {
-        Ok(v) => v,
-        Err(_) => {
-            MQ_AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed);
-            false
-        }
-    }
+    macroquad::input::is_mouse_button_released(btn)
 }
 
 #[inline]
 fn mouse_position_safe() -> (f32, f32) {
-    if !MQ_AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
+    if !is_window_active() {
         return (0.0, 0.0);
     }
-    match std::panic::catch_unwind(macroquad::input::mouse_position) {
-        Ok(pos) => pos,
-        Err(_) => {
-            MQ_AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed);
-            (0.0, 0.0)
-        }
-    }
+    macroquad::input::mouse_position()
 }
 
 #[inline]
 fn mouse_wheel_safe() -> (f32, f32) {
-    if !MQ_AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
+    if !is_window_active() {
         return (0.0, 0.0);
     }
-    match std::panic::catch_unwind(macroquad::input::mouse_wheel) {
-        Ok(w) => w,
-        Err(_) => {
-            MQ_AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed);
-            (0.0, 0.0)
-        }
-    }
+    macroquad::input::mouse_wheel()
 }
 
 #[inline]
 fn get_char_pressed() -> Option<char> {
-    if !MQ_AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
+    if !is_window_active() {
         return None;
     }
-    match std::panic::catch_unwind(macroquad::input::get_char_pressed) {
-        Ok(c) => c,
-        Err(_) => {
-            MQ_AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed);
-            None
-        }
-    }
+    macroquad::input::get_char_pressed()
 }
 
 #[inline]
 fn get_frame_time_safe() -> f32 {
-    if !MQ_AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
+    if !is_window_active() {
         return 1.0 / 60.0;
     }
-    match std::panic::catch_unwind(get_frame_time) {
-        Ok(t) => t,
-        Err(_) => {
-            MQ_AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed);
-            1.0 / 60.0
-        }
-    }
+    get_frame_time()
 }
 
 #[inline]
 fn screen_width_safe() -> f32 {
-    if !MQ_AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
+    if !is_window_active() {
         return 1920.0;
     }
-    match std::panic::catch_unwind(screen_width) {
-        Ok(w) => w,
-        Err(_) => {
-            MQ_AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed);
-            1920.0
-        }
-    }
+    screen_width()
 }
 
 #[inline]
 fn screen_height_safe() -> f32 {
-    if !MQ_AVAILABLE.load(std::sync::atomic::Ordering::Relaxed) {
+    if !is_window_active() {
         return 1080.0;
     }
-    match std::panic::catch_unwind(screen_height) {
-        Ok(h) => h,
-        Err(_) => {
-            MQ_AVAILABLE.store(false, std::sync::atomic::Ordering::Relaxed);
-            1080.0
-        }
-    }
+    screen_height()
 }
 
 /// True when a bridge deck (a sample 2.5 m or more above `elevation`) covers `pos`: a car there is hidden

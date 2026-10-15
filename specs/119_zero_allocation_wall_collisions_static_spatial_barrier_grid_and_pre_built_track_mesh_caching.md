@@ -148,9 +148,9 @@ flowchart TD
   - [x] **Then** the results match a full $O(W)$ linear scan across 100% of test queries while `collision_bench` and `lidar_bench` throughput increases over baseline
 
 - **Scenario: Pre-built TrackRenderCache meshes render static circuit passes without per-frame tessellation**
-  - [ ] **Given** a `TrackRenderCache` initialized for a circuit at a given `SurfaceTextureQuality`
-  - [ ] **When** `render_track_cached` renders multiple frames with a moving camera `view_bounds`
-  - [ ] **Then** static runoff, curb, and road surface meshes are drawn directly from cached chunk `Mesh` buffers without invoking `evaluate_macro_modulation` or allocating new `Vec<Vertex>` buffers per frame, and changing `SurfaceTextureQuality` rebuilds the cached meshes cleanly
+  - [x] **Given** a `TrackRenderCache` initialized for a circuit at a given `SurfaceTextureQuality`
+  - [x] **When** `render_track_cached` renders multiple frames with a moving camera `view_bounds`
+  - [x] **Then** static runoff, curb, and road surface meshes are drawn directly from cached chunk `Mesh` buffers without invoking `evaluate_macro_modulation` or allocating new `Vec<Vertex>` buffers per frame, and changing `SurfaceTextureQuality` rebuilds the cached meshes cleanly
 
 ---
 
@@ -162,7 +162,7 @@ flowchart TD
 - `[x]` `crates/arcade-race-core/src/lidar/mod.rs` -> Query `GeometrySpatialGrid` in `LidarScanner::scan_into`.
 - `[x]` `crates/race-kit/src/world.rs` -> Use `resolve_all_wall_collisions_into` and spatial grid in `RaceWorld::step`.
 - `[x]` `crates/race-kit/src/ai/mod.rs` -> Replace 42-step linear lookahead pullback with binary search and query `GeometrySpatialGrid` in `line_of_sight_walled` and `turn_steer`.
-- `[ ]` `crates/race-ui/src/render/track.rs` -> Cache pre-built static chunk `Mesh`es in `TrackRenderCache` and remove per-draw `catch_unwind`.
-- `[ ]` `crates/tdrace-app/src/game/mod.rs` -> Reuse per-tick scratch buffers in `RaceSession::physics_step` and replace per-input `catch_unwind` with a single-init window flag.
-- `[ ]` `specs/constitution/ROADMAP.md` -> Link Spec 119 under Technical Debt & Maintenance.
-- `[ ]` `specs/index.md` -> Synchronize OKF v0.2 index via `keel validate`.
+- `[x]` `crates/race-ui/src/render/track.rs` -> Cache pre-built static chunk `Mesh`es in `TrackRenderCache` and remove per-draw `catch_unwind`.
+- `[x]` `crates/tdrace-app/src/game/mod.rs` -> Reuse per-tick scratch buffers in `RaceSession::physics_step` and replace per-input `catch_unwind` with a single-init window flag.
+- `[x]` `specs/constitution/ROADMAP.md` -> Link Spec 119 under Technical Debt & Maintenance.
+- `[x]` `specs/index.md` -> Synchronize OKF v0.2 index via `keel validate`.

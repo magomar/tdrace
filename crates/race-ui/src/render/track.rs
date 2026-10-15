@@ -191,17 +191,262 @@ pub type UntangledBoundaryTuple = (Vec<Vec2>, Vec<Vec2>, Vec<Vec2>, Vec<Vec2>);
 /// Borrowed slices of untangled boundaries.
 pub type UntangledBoundarySlices<'a> = (&'a [Vec2], &'a [Vec2], &'a [Vec2], &'a [Vec2]);
 
-/// Cached render data for a single network branch segment (Spec 084).
+const RENDER_CTX_UNPROBED: u8 = 0;
+const RENDER_CTX_ACTIVE: u8 = 1;
+const RENDER_CTX_HEADLESS: u8 = 2;
+static RENDER_CTX_STATE: std::sync::atomic::AtomicU8 =
+    std::sync::atomic::AtomicU8::new(RENDER_CTX_UNPROBED);
+
+/// Returns `true` when a Macroquad render window context is active.
+/// Probes once on the first call and caches the state in `RENDER_CTX_STATE` so runtime draws
+/// never pay `std::panic::catch_unwind` overhead (Spec 119).
+#[inline]
+pub fn is_render_context_active() -> bool {
+    match RENDER_CTX_STATE.load(std::sync::atomic::Ordering::Relaxed) {
+        RENDER_CTX_ACTIVE => true,
+        RENDER_CTX_HEADLESS => false,
+        _ => {
+            let active = std::panic::catch_unwind(macroquad::window::screen_width).is_ok();
+            RENDER_CTX_STATE.store(
+                if active { RENDER_CTX_ACTIVE } else { RENDER_CTX_HEADLESS },
+                std::sync::atomic::Ordering::Relaxed,
+            );
+            active
+        }
+    }
+}
+
+/// Number of spline segments grouped into each pre-built GPU mesh chunk (Spec 119).
+pub const RIBBON_CHUNK_SEGMENTS: usize = 64;
+
+/// Cloneable/Debuggable wrapper around a static Macroquad `Mesh` batch (Spec 119).
+pub struct CachedMesh(pub Mesh);
+
+impl Clone for CachedMesh {
+    fn clone(&self) -> Self {
+        Self(Mesh {
+            vertices: self.0.vertices.clone(),
+            indices: self.0.indices.clone(),
+            texture: self.0.texture.clone(),
+        })
+    }
+}
+
+impl std::fmt::Debug for CachedMesh {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("CachedMesh")
+            .field("vertices_len", &self.0.vertices.len())
+            .field("indices_len", &self.0.indices.len())
+            .field("has_texture", &self.0.texture.is_some())
+            .finish()
+    }
+}
+
+/// Pre-built static GPU meshes and edge markings for a contiguous chunk of spline segments (Spec 119).
+#[derive(Debug, Clone)]
+pub struct CachedRibbonChunk {
+    pub aabb_min: Vec2,
+    pub aabb_max: Vec2,
+    pub runoff_meshes: Vec<CachedMesh>,
+    pub curb_meshes: Vec<CachedMesh>,
+    pub shade_quads: Vec<(Vec2, Vec2, Vec2, Vec2, Color)>,
+    pub surface_meshes: Vec<CachedMesh>,
+    pub surface_lines: Vec<(Vec2, Vec2, f32, Color)>,
+}
+
+impl CachedRibbonChunk {
+    #[inline]
+    pub fn in_view(&self, view_bounds: Option<(Vec2, Vec2)>) -> bool {
+        if let Some((min, max)) = view_bounds {
+            !(self.aabb_max.x < min.x
+                || self.aabb_min.x > max.x
+                || self.aabb_max.y < min.y
+                || self.aabb_min.y > max.y)
+        } else {
+            true
+        }
+    }
+}
+
+/// Pre-tessellated chunked ribbon pass for either ground (`elevated = false`) or bridge (`elevated = true`) segments (Spec 119).
+#[derive(Debug, Clone, Default)]
+pub struct CachedRibbonPass {
+    pub chunks: Vec<CachedRibbonChunk>,
+}
+
+impl CachedRibbonPass {
+    pub fn build(
+        spline: &TrackSpline,
+        elevated: bool,
+        suppressions: Option<&[EdgeSuppression]>,
+        boundaries: UntangledBoundarySlices,
+        wall_suppressions: Option<&[WallSuppressionRecord]>,
+        is_main_spline: bool,
+        include_runoff_and_curbs: bool,
+    ) -> Self {
+        let samples = &spline.samples;
+        let n = samples.len();
+        if n < 2 {
+            return Self::default();
+        }
+        let seg_count = if spline.closed { n } else { n.saturating_sub(1) };
+        let mut chunks = Vec::new();
+
+        let mut chunk_start = 0;
+        while chunk_start < seg_count {
+            let chunk_end = (chunk_start + RIBBON_CHUNK_SEGMENTS).min(seg_count);
+            let mut aabb_min = Vec2::splat(f32::INFINITY);
+            let mut aabb_max = Vec2::splat(f32::NEG_INFINITY);
+            let mut has_matching_seg = false;
+
+            for i in chunk_start..chunk_end {
+                let s0 = &samples[i];
+                let s1 = &samples[(i + 1) % n];
+                if (s0.is_bridge && s1.is_bridge) != elevated {
+                    continue;
+                }
+                has_matching_seg = true;
+                let max_wall = s0
+                    .left_wall_distance
+                    .unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE)
+                    .max(s0.right_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE))
+                    .max(4.5);
+                let pad = s0.width.max(s1.width) * 0.5 + max_wall + 1.0;
+                let s_min = s0.point.min(s1.point) - Vec2::splat(pad);
+                let s_max = s0.point.max(s1.point) + Vec2::splat(pad);
+                aabb_min = aabb_min.min(s_min);
+                aabb_max = aabb_max.max(s_max);
+            }
+
+            if has_matching_seg {
+                let (runoff_meshes, curb_meshes) = if include_runoff_and_curbs {
+                    (
+                        build_runoff_range_meshes(
+                            spline,
+                            chunk_start..chunk_end,
+                            elevated,
+                            None,
+                            suppressions,
+                            boundaries,
+                            wall_suppressions,
+                            is_main_spline,
+                        ),
+                        build_curbs_range_meshes(
+                            spline,
+                            chunk_start..chunk_end,
+                            elevated,
+                            None,
+                            suppressions,
+                            boundaries,
+                        ),
+                    )
+                } else {
+                    (Vec::new(), Vec::new())
+                };
+
+                let (shade_quads, surface_meshes, surface_lines) = build_surface_range_data(
+                    spline,
+                    chunk_start..chunk_end,
+                    elevated,
+                    None,
+                    suppressions,
+                    boundaries,
+                );
+
+                chunks.push(CachedRibbonChunk {
+                    aabb_min,
+                    aabb_max,
+                    runoff_meshes,
+                    curb_meshes,
+                    shade_quads,
+                    surface_meshes,
+                    surface_lines,
+                });
+            }
+
+            chunk_start = chunk_end;
+        }
+
+        Self { chunks }
+    }
+
+    pub fn draw_runoff(&self, view_bounds: Option<(Vec2, Vec2)>) {
+        if !is_render_context_active() {
+            return;
+        }
+        for chunk in &self.chunks {
+            if chunk.in_view(view_bounds) {
+                for m in &chunk.runoff_meshes {
+                    draw_mesh(&m.0);
+                }
+            }
+        }
+    }
+
+    pub fn draw_curbs(&self, view_bounds: Option<(Vec2, Vec2)>) {
+        if !is_render_context_active() {
+            return;
+        }
+        for chunk in &self.chunks {
+            if chunk.in_view(view_bounds) {
+                for m in &chunk.curb_meshes {
+                    draw_mesh(&m.0);
+                }
+            }
+        }
+    }
+
+    pub fn draw_surface(&self, view_bounds: Option<(Vec2, Vec2)>) {
+        if !is_render_context_active() {
+            return;
+        }
+        for chunk in &self.chunks {
+            if chunk.in_view(view_bounds) {
+                for &(p0, p1, p2, p3, col) in &chunk.shade_quads {
+                    draw_quad(p0, p1, p2, p3, col);
+                }
+            }
+        }
+        for chunk in &self.chunks {
+            if chunk.in_view(view_bounds) {
+                for m in &chunk.surface_meshes {
+                    draw_mesh(&m.0);
+                }
+            }
+        }
+        for chunk in &self.chunks {
+            if chunk.in_view(view_bounds) {
+                for &(p0, p1, th, col) in &chunk.surface_lines {
+                    if (p1 - p0).length_squared() > 1e-4 {
+                        draw_line(p0.x, p0.y, p1.x, p1.y, th, col);
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn total_surface_vertices(&self) -> usize {
+        self.chunks
+            .iter()
+            .flat_map(|c| &c.surface_meshes)
+            .map(|m| m.0.vertices.len())
+            .sum()
+    }
+}
+
+/// Cached render data for a single network branch segment (Spec 084 / Spec 119).
 #[derive(Debug, Clone)]
 pub struct CachedSegmentRenderData {
     pub id: arcade_race_core::track::network::SegmentId,
     pub spline: TrackSpline,
     pub boundaries: UntangledBoundaryTuple,
     pub suppressions: Vec<EdgeSuppression>,
+    pub ground_pass: CachedRibbonPass,
+    pub elevated_pass: CachedRibbonPass,
 }
 
 /// Precomputed track rendering cache retaining untangled boundaries, branch splines,
-/// and junction edge suppressions across frames (Spec 084).
+/// junction edge suppressions, and pre-built static GPU Mesh chunks across frames (Spec 084 / Spec 119).
 #[derive(Debug, Clone)]
 pub struct TrackRenderCache {
     pub track_ptr: usize,
@@ -210,15 +455,23 @@ pub struct TrackRenderCache {
     pub segments_len: usize,
     pub junctions_len: usize,
     pub has_pit_lane: bool,
+    pub wall_suppressions_len: usize,
+    pub first_sample_surface: Option<SurfaceType>,
+    pub texture_quality: SurfaceTextureQuality,
     pub main_boundaries: UntangledBoundaryTuple,
     pub main_suppressions: Vec<EdgeSuppression>,
+    pub main_ground_pass: CachedRibbonPass,
+    pub main_elevated_pass: CachedRibbonPass,
     pub pit_lane_boundaries: Option<UntangledBoundaryTuple>,
+    pub pit_lane_ground_pass: Option<CachedRibbonPass>,
     pub pit_lane_junctions: Option<PitLaneJunctionData>,
     pub branch_segments: Vec<CachedSegmentRenderData>,
 }
 
 impl TrackRenderCache {
     pub fn new(track: &Track) -> Self {
+        ensure_surface_registry();
+        let texture_quality = get_surface_texture_quality();
         let main_boundaries = track.spline.untangled_boundaries(1.35);
         let mut main_suppressions = Vec::new();
         let mut branch_segments = Vec::new();
@@ -244,19 +497,83 @@ impl TrackRenderCache {
                     );
                     let seg_spline = seg.to_spline();
                     let branch_bnd = seg_spline.untangled_boundaries(1.35);
+                    let b_slices = (
+                        &branch_bnd.0[..],
+                        &branch_bnd.1[..],
+                        &branch_bnd.2[..],
+                        &branch_bnd.3[..],
+                    );
+                    let ground_pass = CachedRibbonPass::build(
+                        &seg_spline,
+                        false,
+                        Some(&branch_supp),
+                        b_slices,
+                        Some(&track.geometry.wall_suppressions),
+                        false,
+                        true,
+                    );
+                    let elevated_pass = CachedRibbonPass::build(
+                        &seg_spline,
+                        true,
+                        Some(&branch_supp),
+                        b_slices,
+                        Some(&track.geometry.wall_suppressions),
+                        false,
+                        true,
+                    );
                     branch_segments.push(CachedSegmentRenderData {
                         id: seg.id,
                         spline: seg_spline,
                         boundaries: branch_bnd,
                         suppressions: branch_supp,
+                        ground_pass,
+                        elevated_pass,
                     });
                 }
             }
         }
 
+        let main_slices = (
+            &main_boundaries.0[..],
+            &main_boundaries.1[..],
+            &main_boundaries.2[..],
+            &main_boundaries.3[..],
+        );
+        let main_supp_slice = if track.network.is_some() {
+            Some(&main_suppressions[..])
+        } else {
+            None
+        };
+        let main_ground_pass = CachedRibbonPass::build(
+            &track.spline,
+            false,
+            main_supp_slice,
+            main_slices,
+            Some(&track.geometry.wall_suppressions),
+            true,
+            true,
+        );
+        let main_elevated_pass = CachedRibbonPass::build(
+            &track.spline,
+            true,
+            main_supp_slice,
+            main_slices,
+            Some(&track.geometry.wall_suppressions),
+            true,
+            true,
+        );
+
         let pit_lane_boundaries = track.pit_lane.as_ref().map(|lane| {
             lane.spline.untangled_boundaries(1.35)
         });
+        let pit_lane_ground_pass = track
+            .pit_lane
+            .as_ref()
+            .zip(pit_lane_boundaries.as_ref())
+            .map(|(lane, bnd)| {
+                let b_slices = (&bnd.0[..], &bnd.1[..], &bnd.2[..], &bnd.3[..]);
+                CachedRibbonPass::build(&lane.spline, false, None, b_slices, None, false, false)
+            });
         let pit_lane_junctions = track.pit_lane_junctions.clone().or_else(|| track.compute_pit_lane_junctions());
 
         Self {
@@ -266,9 +583,15 @@ impl TrackRenderCache {
             segments_len: track.network.as_ref().map_or(0, |n| n.segments.len()),
             junctions_len: track.network.as_ref().map_or(0, |n| n.junctions.len()),
             has_pit_lane: track.pit_lane.is_some(),
+            wall_suppressions_len: track.geometry.wall_suppressions.len(),
+            first_sample_surface: track.spline.samples.first().map(|s| s.surface),
+            texture_quality,
             main_boundaries,
             main_suppressions,
+            main_ground_pass,
+            main_elevated_pass,
             pit_lane_boundaries,
+            pit_lane_ground_pass,
             pit_lane_junctions,
             branch_segments,
         }
@@ -281,6 +604,9 @@ impl TrackRenderCache {
             && self.segments_len == track.network.as_ref().map_or(0, |n| n.segments.len())
             && self.junctions_len == track.network.as_ref().map_or(0, |n| n.junctions.len())
             && self.has_pit_lane == track.pit_lane.is_some()
+            && self.wall_suppressions_len == track.geometry.wall_suppressions.len()
+            && self.first_sample_surface == track.spline.samples.first().map(|s| s.surface)
+            && self.texture_quality == get_surface_texture_quality()
     }
 }
 
@@ -396,6 +722,7 @@ pub struct BatchMeshBuilder {
     pub vertices: Vec<Vertex>,
     pub indices: Vec<u16>,
     pub texture: Option<macroquad::texture::Texture2D>,
+    pub completed_meshes: Vec<CachedMesh>,
 }
 
 impl BatchMeshBuilder {
@@ -404,6 +731,19 @@ impl BatchMeshBuilder {
             vertices: Vec::with_capacity(512),
             indices: Vec::with_capacity(768),
             texture,
+            completed_meshes: Vec::new(),
+        }
+    }
+
+    fn seal_batch(&mut self) {
+        if !self.indices.is_empty() {
+            let vertices = std::mem::replace(&mut self.vertices, Vec::with_capacity(512));
+            let indices = std::mem::replace(&mut self.indices, Vec::with_capacity(768));
+            self.completed_meshes.push(CachedMesh(Mesh {
+                vertices,
+                indices,
+                texture: self.texture.clone(),
+            }));
         }
     }
 
@@ -415,7 +755,7 @@ impl BatchMeshBuilder {
         p3: Vec2, uv3: macroquad::prelude::Vec2, c3: Color,
     ) {
         if self.vertices.len() + 4 > 2000 {
-            self.flush();
+            self.seal_batch();
         }
         let base = self.vertices.len() as u16;
         self.vertices.push(Vertex { position: macroquad::prelude::Vec3::new(p0.x, p0.y, 0.0), uv: uv0, normal: macroquad::prelude::Vec4::new(0.0, 0.0, 1.0, 0.0), color: c0.into() });
@@ -438,7 +778,7 @@ impl BatchMeshBuilder {
         p2: Vec2, uv2: macroquad::prelude::Vec2, c2: Color,
     ) {
         if self.vertices.len() + 3 > 2000 {
-            self.flush();
+            self.seal_batch();
         }
         let base = self.vertices.len() as u16;
         self.vertices.push(Vertex { position: macroquad::prelude::Vec3::new(p0.x, p0.y, 0.0), uv: uv0, normal: macroquad::prelude::Vec4::new(0.0, 0.0, 1.0, 0.0), color: c0.into() });
@@ -450,16 +790,34 @@ impl BatchMeshBuilder {
         self.indices.push(base + 2);
     }
 
-    pub fn flush(&mut self) {
+    pub fn into_meshes(mut self, out: &mut Vec<CachedMesh>) {
+        out.append(&mut self.completed_meshes);
         if !self.indices.is_empty() {
-            let mesh = Mesh {
-                vertices: std::mem::take(&mut self.vertices),
-                indices: std::mem::take(&mut self.indices),
-                texture: self.texture.clone(),
-            };
-            let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                draw_mesh(&mesh);
+            out.push(CachedMesh(Mesh {
+                vertices: self.vertices,
+                indices: self.indices,
+                texture: self.texture,
             }));
+        }
+    }
+
+    pub fn flush(&mut self) {
+        if is_render_context_active() {
+            for m in self.completed_meshes.drain(..) {
+                draw_mesh(&m.0);
+            }
+            if !self.indices.is_empty() {
+                let mesh = Mesh {
+                    vertices: std::mem::replace(&mut self.vertices, Vec::with_capacity(512)),
+                    indices: std::mem::replace(&mut self.indices, Vec::with_capacity(768)),
+                    texture: self.texture.clone(),
+                };
+                draw_mesh(&mesh);
+            }
+        } else {
+            self.completed_meshes.clear();
+            self.vertices.clear();
+            self.indices.clear();
         }
     }
 }
@@ -473,6 +831,9 @@ pub fn draw_textured_quad(
     texture: Option<&macroquad::texture::Texture2D>,
     color: Color,
 ) {
+    if !is_render_context_active() {
+        return;
+    }
     let vertices = vec![
         Vertex { position: macroquad::prelude::Vec3::new(p0.x, p0.y, 0.0), uv: uv0, normal: macroquad::prelude::Vec4::new(0.0, 0.0, 1.0, 0.0), color: color.into() },
         Vertex { position: macroquad::prelude::Vec3::new(p1.x, p1.y, 0.0), uv: uv1, normal: macroquad::prelude::Vec4::new(0.0, 0.0, 1.0, 0.0), color: color.into() },
@@ -485,9 +846,7 @@ pub fn draw_textured_quad(
         indices,
         texture: texture.cloned(),
     };
-    let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        draw_mesh(&mesh);
-    }));
+    draw_mesh(&mesh);
 }
 
 #[inline]
@@ -561,44 +920,36 @@ pub fn render_backdrop_ground_pass(track: &Track, view_bounds: Option<(Vec2, Vec
     draw_textured_quad(p0, uv0, p1, uv1, p2, uv2, p3, uv3, tex.as_ref(), WHITE);
 }
 
-/// Draws run-off corridors of every network branch segment.
+/// Draws run-off corridors of every network branch segment from pre-built cached mesh chunks (Spec 119).
 fn render_branch_runoffs(track: &Track, cache: &TrackRenderCache, elevated: bool, view_bounds: Option<(Vec2, Vec2)>) {
     if track.network.is_none() {
         return;
     }
     for branch in &cache.branch_segments {
-        let b_bnd = (&branch.boundaries.0[..], &branch.boundaries.1[..], &branch.boundaries.2[..], &branch.boundaries.3[..]);
-        render_runoff_pass_filtered(
-            &branch.spline,
-            elevated,
-            view_bounds,
-            Some(&branch.suppressions),
-            Some(b_bnd),
-            Some(&track.geometry.wall_suppressions),
-            false,
-        );
+        let pass = if elevated { &branch.elevated_pass } else { &branch.ground_pass };
+        pass.draw_runoff(view_bounds);
     }
 }
 
-/// Draws curbs of every network branch segment.
+/// Draws curbs of every network branch segment from pre-built cached mesh chunks (Spec 119).
 fn render_branch_curbs(track: &Track, cache: &TrackRenderCache, elevated: bool, view_bounds: Option<(Vec2, Vec2)>) {
     if track.network.is_none() {
         return;
     }
     for branch in &cache.branch_segments {
-        let b_bnd = (&branch.boundaries.0[..], &branch.boundaries.1[..], &branch.boundaries.2[..], &branch.boundaries.3[..]);
-        render_curbs_pass_filtered(&branch.spline, elevated, view_bounds, Some(&branch.suppressions), Some(b_bnd));
+        let pass = if elevated { &branch.elevated_pass } else { &branch.ground_pass };
+        pass.draw_curbs(view_bounds);
     }
 }
 
-/// Draws road surface quads of every network branch segment.
+/// Draws road surface quads of every network branch segment from pre-built cached mesh chunks (Spec 119).
 fn render_branch_surfaces(track: &Track, cache: &TrackRenderCache, elevated: bool, view_bounds: Option<(Vec2, Vec2)>) {
     if track.network.is_none() {
         return;
     }
     for branch in &cache.branch_segments {
-        let b_bnd = (&branch.boundaries.0[..], &branch.boundaries.1[..], &branch.boundaries.2[..], &branch.boundaries.3[..]);
-        render_surface_pass_filtered(&branch.spline, elevated, view_bounds, Some(&branch.suppressions), Some(b_bnd));
+        let pass = if elevated { &branch.elevated_pass } else { &branch.ground_pass };
+        pass.draw_surface(view_bounds);
     }
 }
 
@@ -617,27 +968,15 @@ pub fn render_ground_track_culled(track: &Track, view_bounds: Option<(Vec2, Vec2
         render_surface_shape(pit_area, Palette::PIT_LANE, Some(Palette::WHITE_LINE));
     }
 
-    // 2b. & 3. Render pit ribbon, segment runoff corridors, ground curbs and ground surface quads
+    // 2b. & 3. Render pit ribbon, segment runoff corridors, ground curbs and ground surface quads from pre-built cache (Spec 119)
     with_track_render_cache(track, |cache| {
-        if let Some(pit_lane) = &track.pit_lane {
-            let pit_bnd = cache.pit_lane_boundaries.as_ref().map(|b| (&b.0[..], &b.1[..], &b.2[..], &b.3[..]));
-            render_surface_pass_filtered(&pit_lane.spline, false, view_bounds, None, pit_bnd);
+        if let Some(ref pit_pass) = cache.pit_lane_ground_pass {
+            pit_pass.draw_surface(view_bounds);
         }
-
-        let main_bnd = (&cache.main_boundaries.0[..], &cache.main_boundaries.1[..], &cache.main_boundaries.2[..], &cache.main_boundaries.3[..]);
-        let main_supp = if track.network.is_some() { Some(&cache.main_suppressions[..]) } else { None };
 
         // Render all runoff corridors first so shoulder surfaces never paint on top of adjoining road ribbons.
         render_branch_runoffs(track, cache, false, view_bounds);
-        render_runoff_pass_filtered(
-            &track.spline,
-            false,
-            view_bounds,
-            main_supp,
-            Some(main_bnd),
-            Some(&track.geometry.wall_suppressions),
-            true,
-        );
+        cache.main_ground_pass.draw_runoff(view_bounds);
 
         // Spec 102: a compiled branch is drawn before the main road, which then lies on top where the two ribbons
         // overlap in a junction throat.
@@ -645,11 +984,11 @@ pub fn render_ground_track_culled(track: &Track, view_bounds: Option<(Vec2, Vec2
         if compiled {
             render_branch_curbs(track, cache, false, view_bounds);
             render_branch_surfaces(track, cache, false, view_bounds);
-            render_curbs_pass_filtered(&track.spline, false, view_bounds, main_supp, Some(main_bnd));
-            render_surface_pass_filtered(&track.spline, false, view_bounds, main_supp, Some(main_bnd));
+            cache.main_ground_pass.draw_curbs(view_bounds);
+            cache.main_ground_pass.draw_surface(view_bounds);
         } else {
-            render_curbs_pass_filtered(&track.spline, false, view_bounds, main_supp, Some(main_bnd));
-            render_surface_pass_filtered(&track.spline, false, view_bounds, main_supp, Some(main_bnd));
+            cache.main_ground_pass.draw_curbs(view_bounds);
+            cache.main_ground_pass.draw_surface(view_bounds);
             render_branch_curbs(track, cache, false, view_bounds);
             render_branch_surfaces(track, cache, false, view_bounds);
         }
@@ -695,30 +1034,19 @@ pub fn render_elevated_track_culled(track: &Track, view_bounds: Option<(Vec2, Ve
         render_bridge_structure_pass(&track.spline, view_bounds);
 
         with_track_render_cache(track, |cache| {
-            let main_bnd = (&cache.main_boundaries.0[..], &cache.main_boundaries.1[..], &cache.main_boundaries.2[..], &cache.main_boundaries.3[..]);
-            let main_supp = if track.network.is_some() { Some(&cache.main_suppressions[..]) } else { None };
-
             // Render all elevated runoff corridors first.
             render_branch_runoffs(track, cache, true, view_bounds);
-            render_runoff_pass_filtered(
-                &track.spline,
-                true,
-                view_bounds,
-                main_supp,
-                Some(main_bnd),
-                Some(&track.geometry.wall_suppressions),
-                true,
-            );
+            cache.main_elevated_pass.draw_runoff(view_bounds);
 
             let compiled = track.branch_layout.is_some();
             if compiled {
                 render_branch_curbs(track, cache, true, view_bounds);
                 render_branch_surfaces(track, cache, true, view_bounds);
-                render_curbs_pass_filtered(&track.spline, true, view_bounds, main_supp, Some(main_bnd));
-                render_surface_pass_filtered(&track.spline, true, view_bounds, main_supp, Some(main_bnd));
+                cache.main_elevated_pass.draw_curbs(view_bounds);
+                cache.main_elevated_pass.draw_surface(view_bounds);
             } else {
-                render_curbs_pass_filtered(&track.spline, true, view_bounds, main_supp, Some(main_bnd));
-                render_surface_pass_filtered(&track.spline, true, view_bounds, main_supp, Some(main_bnd));
+                cache.main_elevated_pass.draw_curbs(view_bounds);
+                cache.main_elevated_pass.draw_surface(view_bounds);
                 render_branch_curbs(track, cache, true, view_bounds);
                 render_branch_surfaces(track, cache, true, view_bounds);
             }
@@ -982,12 +1310,104 @@ pub fn render_jump_ramps(track: &Track) {
 
 /// Renders a single 2D surface shape (AABB, circle, oriented box, polygon).
 pub fn render_surface_shape(shape: &SurfaceShape, fill_col: Color, border_col: Option<Color>) {
-    let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+    if !is_render_context_active() {
+        return;
+    }
+    match shape {
+        SurfaceShape::Aabb { min, max } => {
+            let width = max.x - min.x;
+            let height = max.y - min.y;
+            draw_rectangle(min.x, min.y, width, height, fill_col);
+            if let Some(b_col) = border_col {
+                let thickness = 0.35;
+                draw_line(min.x, min.y, max.x, min.y, thickness, b_col);
+                draw_line(max.x, min.y, max.x, max.y, thickness, b_col);
+                draw_line(max.x, max.y, min.x, max.y, thickness, b_col);
+                draw_line(min.x, max.y, min.x, min.y, thickness, b_col);
+            }
+        }
+        SurfaceShape::Circle { center, radius } => {
+            draw_circle(center.x, center.y, *radius, fill_col);
+            if let Some(b_col) = border_col {
+                draw_circle_lines(center.x, center.y, *radius, 0.35, b_col);
+            }
+        }
+        SurfaceShape::OrientedBox {
+            center,
+            half_extents,
+            angle,
+        } => {
+            let fwd = Vec2::new(angle.cos(), angle.sin()) * half_extents.x;
+            let right = Vec2::new(-angle.sin(), angle.cos()) * half_extents.y;
+            let p0 = *center - fwd - right;
+            let p1 = *center + fwd - right;
+            let p2 = *center + fwd + right;
+            let p3 = *center - fwd + right;
+            draw_quad(p0, p1, p2, p3, fill_col);
+            if let Some(b_col) = border_col {
+                let thickness = 0.35;
+                draw_line(p0.x, p0.y, p1.x, p1.y, thickness, b_col);
+                draw_line(p1.x, p1.y, p2.x, p2.y, thickness, b_col);
+                draw_line(p2.x, p2.y, p3.x, p3.y, thickness, b_col);
+                draw_line(p3.x, p3.y, p0.x, p0.y, thickness, b_col);
+            }
+        }
+        SurfaceShape::Polygon { vertices } => {
+            if vertices.len() >= 3 {
+                // Fan triangulation from first vertex
+                let v0 = vertices[0];
+                for i in 1..vertices.len() - 1 {
+                    let v1 = vertices[i];
+                    let v2 = vertices[i + 1];
+                    draw_triangle(
+                        macroquad::prelude::Vec2::new(v0.x, v0.y),
+                        macroquad::prelude::Vec2::new(v1.x, v1.y),
+                        macroquad::prelude::Vec2::new(v2.x, v2.y),
+                        fill_col,
+                    );
+                }
+                if let Some(b_col) = border_col {
+                    for i in 0..vertices.len() {
+                        let next = (i + 1) % vertices.len();
+                        draw_line(
+                            vertices[i].x,
+                            vertices[i].y,
+                            vertices[next].x,
+                            vertices[next].y,
+                            0.35,
+                            b_col,
+                        );
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Renders a single 2D surface shape with world-space planar texture UV mapping if textures are enabled.
+pub fn render_surface_shape_textured(
+    shape: &SurfaceShape,
+    surface: SurfaceType,
+    fill_col: Color,
+    border_col: Option<Color>,
+) {
+    if !is_render_context_active() {
+        return;
+    }
+    let (tex, scale, quality) = get_surface_material_info(surface);
+    if quality != SurfaceTextureQuality::Off && tex.is_some() {
+        let texture = tex.as_ref();
         match shape {
             SurfaceShape::Aabb { min, max } => {
-                let width = max.x - min.x;
-                let height = max.y - min.y;
-                draw_rectangle(min.x, min.y, width, height, fill_col);
+                let p0 = Vec2::new(min.x, min.y);
+                let p1 = Vec2::new(max.x, min.y);
+                let p2 = Vec2::new(max.x, max.y);
+                let p3 = Vec2::new(min.x, max.y);
+                let uv0 = macroquad::prelude::Vec2::new(p0.x / scale, p0.y / scale);
+                let uv1 = macroquad::prelude::Vec2::new(p1.x / scale, p1.y / scale);
+                let uv2 = macroquad::prelude::Vec2::new(p2.x / scale, p2.y / scale);
+                let uv3 = macroquad::prelude::Vec2::new(p3.x / scale, p3.y / scale);
+                draw_textured_quad(p0, uv0, p1, uv1, p2, uv2, p3, uv3, texture, WHITE);
                 if let Some(b_col) = border_col {
                     let thickness = 0.35;
                     draw_line(min.x, min.y, max.x, min.y, thickness, b_col);
@@ -997,7 +1417,19 @@ pub fn render_surface_shape(shape: &SurfaceShape, fill_col: Color, border_col: O
                 }
             }
             SurfaceShape::Circle { center, radius } => {
-                draw_circle(center.x, center.y, *radius, fill_col);
+                let segments = 24;
+                let mut builder = BatchMeshBuilder::new(tex);
+                let c_uv = macroquad::prelude::Vec2::new(center.x / scale, center.y / scale);
+                for i in 0..segments {
+                    let th0 = (i as f32 / segments as f32) * std::f32::consts::TAU;
+                    let th1 = ((i + 1) as f32 / segments as f32) * std::f32::consts::TAU;
+                    let p0 = *center + Vec2::new(th0.cos(), th0.sin()) * *radius;
+                    let p1 = *center + Vec2::new(th1.cos(), th1.sin()) * *radius;
+                    let uv0 = macroquad::prelude::Vec2::new(p0.x / scale, p0.y / scale);
+                    let uv1 = macroquad::prelude::Vec2::new(p1.x / scale, p1.y / scale);
+                    builder.push_triangle(*center, c_uv, WHITE, p0, uv0, WHITE, p1, uv1, WHITE);
+                }
+                builder.flush();
                 if let Some(b_col) = border_col {
                     draw_circle_lines(center.x, center.y, *radius, 0.35, b_col);
                 }
@@ -1013,7 +1445,11 @@ pub fn render_surface_shape(shape: &SurfaceShape, fill_col: Color, border_col: O
                 let p1 = *center + fwd - right;
                 let p2 = *center + fwd + right;
                 let p3 = *center - fwd + right;
-                draw_quad(p0, p1, p2, p3, fill_col);
+                let uv0 = macroquad::prelude::Vec2::new(p0.x / scale, p0.y / scale);
+                let uv1 = macroquad::prelude::Vec2::new(p1.x / scale, p1.y / scale);
+                let uv2 = macroquad::prelude::Vec2::new(p2.x / scale, p2.y / scale);
+                let uv3 = macroquad::prelude::Vec2::new(p3.x / scale, p3.y / scale);
+                draw_textured_quad(p0, uv0, p1, uv1, p2, uv2, p3, uv3, texture, WHITE);
                 if let Some(b_col) = border_col {
                     let thickness = 0.35;
                     draw_line(p0.x, p0.y, p1.x, p1.y, thickness, b_col);
@@ -1024,18 +1460,17 @@ pub fn render_surface_shape(shape: &SurfaceShape, fill_col: Color, border_col: O
             }
             SurfaceShape::Polygon { vertices } => {
                 if vertices.len() >= 3 {
-                    // Fan triangulation from first vertex
+                    let mut builder = BatchMeshBuilder::new(tex);
                     let v0 = vertices[0];
+                    let uv0 = macroquad::prelude::Vec2::new(v0.x / scale, v0.y / scale);
                     for i in 1..vertices.len() - 1 {
                         let v1 = vertices[i];
                         let v2 = vertices[i + 1];
-                        draw_triangle(
-                            macroquad::prelude::Vec2::new(v0.x, v0.y),
-                            macroquad::prelude::Vec2::new(v1.x, v1.y),
-                            macroquad::prelude::Vec2::new(v2.x, v2.y),
-                            fill_col,
-                        );
+                        let uv1 = macroquad::prelude::Vec2::new(v1.x / scale, v1.y / scale);
+                        let uv2 = macroquad::prelude::Vec2::new(v2.x / scale, v2.y / scale);
+                        builder.push_triangle(v0, uv0, WHITE, v1, uv1, WHITE, v2, uv2, WHITE);
                     }
+                    builder.flush();
                     if let Some(b_col) = border_col {
                         for i in 0..vertices.len() {
                             let next = (i + 1) % vertices.len();
@@ -1052,114 +1487,9 @@ pub fn render_surface_shape(shape: &SurfaceShape, fill_col: Color, border_col: O
                 }
             }
         }
-    }));
-}
-
-/// Renders a single 2D surface shape with world-space planar texture UV mapping if textures are enabled.
-pub fn render_surface_shape_textured(
-    shape: &SurfaceShape,
-    surface: SurfaceType,
-    fill_col: Color,
-    border_col: Option<Color>,
-) {
-    let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        let (tex, scale, quality) = get_surface_material_info(surface);
-        if quality != SurfaceTextureQuality::Off && tex.is_some() {
-            let texture = tex.as_ref();
-            match shape {
-                SurfaceShape::Aabb { min, max } => {
-                    let p0 = Vec2::new(min.x, min.y);
-                    let p1 = Vec2::new(max.x, min.y);
-                    let p2 = Vec2::new(max.x, max.y);
-                    let p3 = Vec2::new(min.x, max.y);
-                    let uv0 = macroquad::prelude::Vec2::new(p0.x / scale, p0.y / scale);
-                    let uv1 = macroquad::prelude::Vec2::new(p1.x / scale, p1.y / scale);
-                    let uv2 = macroquad::prelude::Vec2::new(p2.x / scale, p2.y / scale);
-                    let uv3 = macroquad::prelude::Vec2::new(p3.x / scale, p3.y / scale);
-                    draw_textured_quad(p0, uv0, p1, uv1, p2, uv2, p3, uv3, texture, WHITE);
-                    if let Some(b_col) = border_col {
-                        let thickness = 0.35;
-                        draw_line(min.x, min.y, max.x, min.y, thickness, b_col);
-                        draw_line(max.x, min.y, max.x, max.y, thickness, b_col);
-                        draw_line(max.x, max.y, min.x, max.y, thickness, b_col);
-                        draw_line(min.x, max.y, min.x, min.y, thickness, b_col);
-                    }
-                }
-                SurfaceShape::Circle { center, radius } => {
-                    let segments = 24;
-                    let mut builder = BatchMeshBuilder::new(tex);
-                    let c_uv = macroquad::prelude::Vec2::new(center.x / scale, center.y / scale);
-                    for i in 0..segments {
-                        let th0 = (i as f32 / segments as f32) * std::f32::consts::TAU;
-                        let th1 = ((i + 1) as f32 / segments as f32) * std::f32::consts::TAU;
-                        let p0 = *center + Vec2::new(th0.cos(), th0.sin()) * *radius;
-                        let p1 = *center + Vec2::new(th1.cos(), th1.sin()) * *radius;
-                        let uv0 = macroquad::prelude::Vec2::new(p0.x / scale, p0.y / scale);
-                        let uv1 = macroquad::prelude::Vec2::new(p1.x / scale, p1.y / scale);
-                        builder.push_triangle(*center, c_uv, WHITE, p0, uv0, WHITE, p1, uv1, WHITE);
-                    }
-                    builder.flush();
-                    if let Some(b_col) = border_col {
-                        draw_circle_lines(center.x, center.y, *radius, 0.35, b_col);
-                    }
-                }
-                SurfaceShape::OrientedBox {
-                    center,
-                    half_extents,
-                    angle,
-                } => {
-                    let fwd = Vec2::new(angle.cos(), angle.sin()) * half_extents.x;
-                    let right = Vec2::new(-angle.sin(), angle.cos()) * half_extents.y;
-                    let p0 = *center - fwd - right;
-                    let p1 = *center + fwd - right;
-                    let p2 = *center + fwd + right;
-                    let p3 = *center - fwd + right;
-                    let uv0 = macroquad::prelude::Vec2::new(p0.x / scale, p0.y / scale);
-                    let uv1 = macroquad::prelude::Vec2::new(p1.x / scale, p1.y / scale);
-                    let uv2 = macroquad::prelude::Vec2::new(p2.x / scale, p2.y / scale);
-                    let uv3 = macroquad::prelude::Vec2::new(p3.x / scale, p3.y / scale);
-                    draw_textured_quad(p0, uv0, p1, uv1, p2, uv2, p3, uv3, texture, WHITE);
-                    if let Some(b_col) = border_col {
-                        let thickness = 0.35;
-                        draw_line(p0.x, p0.y, p1.x, p1.y, thickness, b_col);
-                        draw_line(p1.x, p1.y, p2.x, p2.y, thickness, b_col);
-                        draw_line(p2.x, p2.y, p3.x, p3.y, thickness, b_col);
-                        draw_line(p3.x, p3.y, p0.x, p0.y, thickness, b_col);
-                    }
-                }
-                SurfaceShape::Polygon { vertices } => {
-                    if vertices.len() >= 3 {
-                        let mut builder = BatchMeshBuilder::new(tex);
-                        let v0 = vertices[0];
-                        let uv0 = macroquad::prelude::Vec2::new(v0.x / scale, v0.y / scale);
-                        for i in 1..vertices.len() - 1 {
-                            let v1 = vertices[i];
-                            let v2 = vertices[i + 1];
-                            let uv1 = macroquad::prelude::Vec2::new(v1.x / scale, v1.y / scale);
-                            let uv2 = macroquad::prelude::Vec2::new(v2.x / scale, v2.y / scale);
-                            builder.push_triangle(v0, uv0, WHITE, v1, uv1, WHITE, v2, uv2, WHITE);
-                        }
-                        builder.flush();
-                        if let Some(b_col) = border_col {
-                            for i in 0..vertices.len() {
-                                let next = (i + 1) % vertices.len();
-                                draw_line(
-                                    vertices[i].x,
-                                    vertices[i].y,
-                                    vertices[next].x,
-                                    vertices[next].y,
-                                    0.35,
-                                    b_col,
-                                );
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            render_surface_shape(shape, fill_col, border_col);
-        }
-    }));
+    } else {
+        render_surface_shape(shape, fill_col, border_col);
+    }
 }
 
 /// Draws drop shadows and structural concrete slab deck for elevated bridge sections.
@@ -1230,23 +1560,23 @@ fn render_runoff_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<
     render_runoff_pass_filtered(spline, elevated, view_bounds, None, None, None, true);
 }
 
-/// Draws track runoff ribbon quads with optional precomputed untangled boundaries (Spec 084).
-fn render_runoff_pass_filtered(
+#[allow(clippy::too_many_arguments)]
+fn build_runoff_range_meshes(
     spline: &TrackSpline,
+    seg_range: std::ops::Range<usize>,
     elevated: bool,
     view_bounds: Option<(Vec2, Vec2)>,
     suppressions: Option<&[EdgeSuppression]>,
-    cached_boundaries: Option<UntangledBoundarySlices>,
+    boundaries: UntangledBoundarySlices,
     wall_suppressions: Option<&[WallSuppressionRecord]>,
     is_main_spline: bool,
-) {
+) -> Vec<CachedMesh> {
     let samples = &spline.samples;
     let n = samples.len();
     if n < 2 {
-        return;
+        return Vec::new();
     }
     let curb_extra_width = 1.35;
-    let seg_count = if spline.closed { n } else { n.saturating_sub(1) };
 
     let quality = get_surface_texture_quality();
     let mut runoff_builders: HashMap<SurfaceType, BatchMeshBuilder> = HashMap::new();
@@ -1257,16 +1587,10 @@ fn render_runoff_pass_filtered(
     };
     let mut fringe_builder = BatchMeshBuilder::new(fringe_tex);
 
-    let fallback;
     let (untangled_road_left, untangled_road_right, untangled_curb_left, untangled_curb_right) =
-        if let Some(b) = cached_boundaries {
-            b
-        } else {
-            fallback = spline.untangled_boundaries(curb_extra_width);
-            (&fallback.0[..], &fallback.1[..], &fallback.2[..], &fallback.3[..])
-        };
+        boundaries;
 
-    for i in 0..seg_count {
+    for i in seg_range {
         let s0 = &samples[i];
         let s1 = &samples[(i + 1) % n];
         let is_seg_elevated = s0.is_bridge && s1.is_bridge;
@@ -1386,7 +1710,6 @@ fn render_runoff_pass_filtered(
                         let p1_outer = quad.p1_outer;
 
                         if is_quad_valid(p0_inner, p1_inner, p1_outer, p0_outer) {
-
                             let builder = runoff_builders.entry(runoff_surf).or_insert_with(|| {
                                 let (tex, _, _) = get_surface_material_info(runoff_surf);
                                 BatchMeshBuilder::new(tex)
@@ -1440,41 +1763,74 @@ fn render_runoff_pass_filtered(
         }
     }
 
-    for (_, mut builder) in runoff_builders {
-        builder.flush();
+    let mut meshes = Vec::new();
+    for (_, builder) in runoff_builders {
+        builder.into_meshes(&mut meshes);
     }
-    fringe_builder.flush();
+    fringe_builder.into_meshes(&mut meshes);
+    meshes
 }
 
-/// Draws curb rumble strips for either ground or elevated bridge segments with optional edge suppression and precomputed boundaries (Spec 084).
-fn render_curbs_pass_filtered(
+/// Draws track runoff ribbon quads with optional precomputed untangled boundaries (Spec 084).
+fn render_runoff_pass_filtered(
     spline: &TrackSpline,
     elevated: bool,
     view_bounds: Option<(Vec2, Vec2)>,
     suppressions: Option<&[EdgeSuppression]>,
     cached_boundaries: Option<UntangledBoundarySlices>,
+    wall_suppressions: Option<&[WallSuppressionRecord]>,
+    is_main_spline: bool,
 ) {
-    let samples = &spline.samples;
-    let n = samples.len();
+    let n = spline.samples.len();
     if n < 2 {
         return;
     }
-    let curb_extra_width = 1.35;
     let seg_count = if spline.closed { n } else { n.saturating_sub(1) };
+    let fallback;
+    let boundaries = if let Some(b) = cached_boundaries {
+        b
+    } else {
+        fallback = spline.untangled_boundaries(1.35);
+        (&fallback.0[..], &fallback.1[..], &fallback.2[..], &fallback.3[..])
+    };
+    let meshes = build_runoff_range_meshes(
+        spline,
+        0..seg_count,
+        elevated,
+        view_bounds,
+        suppressions,
+        boundaries,
+        wall_suppressions,
+        is_main_spline,
+    );
+    if is_render_context_active() {
+        for m in &meshes {
+            draw_mesh(&m.0);
+        }
+    }
+}
+
+fn build_curbs_range_meshes(
+    spline: &TrackSpline,
+    seg_range: std::ops::Range<usize>,
+    elevated: bool,
+    view_bounds: Option<(Vec2, Vec2)>,
+    suppressions: Option<&[EdgeSuppression]>,
+    boundaries: UntangledBoundarySlices,
+) -> Vec<CachedMesh> {
+    let samples = &spline.samples;
+    let n = samples.len();
+    if n < 2 {
+        return Vec::new();
+    }
 
     let (curb_tex, curb_tile_scale, quality) = get_curb_material_info();
     let mut curb_builder = BatchMeshBuilder::new(curb_tex);
 
-    let fallback;
     let (untangled_road_left, untangled_road_right, untangled_curb_left, untangled_curb_right) =
-        if let Some(b) = cached_boundaries {
-            b
-        } else {
-            fallback = spline.untangled_boundaries(curb_extra_width);
-            (&fallback.0[..], &fallback.1[..], &fallback.2[..], &fallback.3[..])
-        };
+        boundaries;
 
-    for i in 0..seg_count {
+    for i in seg_range {
         let s0 = &samples[i];
         let s1 = &samples[(i + 1) % n];
         let is_seg_elevated = s0.is_bridge && s1.is_bridge;
@@ -1555,7 +1911,44 @@ fn render_curbs_pass_filtered(
         }
     }
 
-    curb_builder.flush();
+    let mut meshes = Vec::new();
+    curb_builder.into_meshes(&mut meshes);
+    meshes
+}
+
+/// Draws curb rumble strips for either ground or elevated bridge segments with optional edge suppression and precomputed boundaries (Spec 084).
+fn render_curbs_pass_filtered(
+    spline: &TrackSpline,
+    elevated: bool,
+    view_bounds: Option<(Vec2, Vec2)>,
+    suppressions: Option<&[EdgeSuppression]>,
+    cached_boundaries: Option<UntangledBoundarySlices>,
+) {
+    let n = spline.samples.len();
+    if n < 2 {
+        return;
+    }
+    let seg_count = if spline.closed { n } else { n.saturating_sub(1) };
+    let fallback;
+    let boundaries = if let Some(b) = cached_boundaries {
+        b
+    } else {
+        fallback = spline.untangled_boundaries(1.35);
+        (&fallback.0[..], &fallback.1[..], &fallback.2[..], &fallback.3[..])
+    };
+    let meshes = build_curbs_range_meshes(
+        spline,
+        0..seg_count,
+        elevated,
+        view_bounds,
+        suppressions,
+        boundaries,
+    );
+    if is_render_context_active() {
+        for m in &meshes {
+            draw_mesh(&m.0);
+        }
+    }
 }
 
 #[allow(dead_code)]
@@ -1563,35 +1956,34 @@ fn render_curbs_pass(spline: &TrackSpline, elevated: bool, view_bounds: Option<(
     render_curbs_pass_filtered(spline, elevated, view_bounds, None, None);
 }
 
-/// Draws track surface quads (asphalt/dirt) for either ground or elevated bridge segments with optional edge suppression and precomputed boundaries (Spec 084).
-fn render_surface_pass_filtered(
+#[allow(clippy::type_complexity)]
+fn build_surface_range_data(
     spline: &TrackSpline,
+    seg_range: std::ops::Range<usize>,
     elevated: bool,
     view_bounds: Option<(Vec2, Vec2)>,
     suppressions: Option<&[EdgeSuppression]>,
-    cached_boundaries: Option<UntangledBoundarySlices>,
+    boundaries: UntangledBoundarySlices,
+) -> (
+    Vec<(Vec2, Vec2, Vec2, Vec2, Color)>,
+    Vec<CachedMesh>,
+    Vec<(Vec2, Vec2, f32, Color)>,
 ) {
     let samples = &spline.samples;
     let n = samples.len();
     if n < 2 {
-        return;
+        return (Vec::new(), Vec::new(), Vec::new());
     }
-    let seg_count = if spline.closed { n } else { n.saturating_sub(1) };
 
     let quality = get_surface_texture_quality();
     let mut surface_builders: HashMap<SurfaceType, BatchMeshBuilder> = HashMap::new();
-    let mut lines_to_draw: Vec<(Vec2, Vec2, f32, Color)> = Vec::with_capacity(seg_count * 2);
+    let range_len = seg_range.len();
+    let mut shade_quads: Vec<(Vec2, Vec2, Vec2, Vec2, Color)> = Vec::new();
+    let mut lines_to_draw: Vec<(Vec2, Vec2, f32, Color)> = Vec::with_capacity(range_len * 2);
 
-    let fallback;
-    let (untangled_left, untangled_right, untangled_curb_left, untangled_curb_right) =
-        if let Some(b) = cached_boundaries {
-            b
-        } else {
-            fallback = spline.untangled_boundaries(1.35);
-            (&fallback.0[..], &fallback.1[..], &fallback.2[..], &fallback.3[..])
-        };
+    let (untangled_left, untangled_right, untangled_curb_left, untangled_curb_right) = boundaries;
 
-    for i in 0..seg_count {
+    for i in seg_range {
         let s0 = &samples[i];
         let s1 = &samples[(i + 1) % n];
         let is_seg_elevated = s0.is_bridge && s1.is_bridge;
@@ -1640,12 +2032,12 @@ fn render_surface_pass_filtered(
             if l_shade_w0 > 0.001 || l_shade_w1 > 0.001 {
                 let l0_outer = l0_base + s0.normal * l_shade_w0;
                 let l1_outer = l1_base + s1.normal * l_shade_w1;
-                draw_quad(l0_base, l1_base, l1_outer, l0_outer, Palette::SHADOW);
+                shade_quads.push((l0_base, l1_base, l1_outer, l0_outer, Palette::SHADOW));
             }
             if r_shade_w0 > 0.001 || r_shade_w1 > 0.001 {
                 let r0_outer = r0_base - s0.normal * r_shade_w0;
                 let r1_outer = r1_base - s1.normal * r_shade_w1;
-                draw_quad(r0_base, r1_base, r1_outer, r0_outer, Palette::SHADOW);
+                shade_quads.push((r0_base, r1_base, r1_outer, r0_outer, Palette::SHADOW));
             }
         }
 
@@ -2152,19 +2544,54 @@ fn render_surface_pass_filtered(
         }
     }
 
-    // Flush all batched surface meshes
-    for (_, mut builder) in surface_builders {
-        builder.flush();
+    let mut meshes = Vec::new();
+    for (_, builder) in surface_builders {
+        builder.into_meshes(&mut meshes);
     }
+    (shade_quads, meshes, lines_to_draw)
+}
 
-    // Render markings and seams on top of the surface
-    let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        for (p0, p1, th, col) in lines_to_draw {
+/// Draws track surface quads (asphalt/dirt) for either ground or elevated bridge segments with optional edge suppression and precomputed boundaries (Spec 084).
+fn render_surface_pass_filtered(
+    spline: &TrackSpline,
+    elevated: bool,
+    view_bounds: Option<(Vec2, Vec2)>,
+    suppressions: Option<&[EdgeSuppression]>,
+    cached_boundaries: Option<UntangledBoundarySlices>,
+) {
+    let n = spline.samples.len();
+    if n < 2 {
+        return;
+    }
+    let seg_count = if spline.closed { n } else { n.saturating_sub(1) };
+    let fallback;
+    let boundaries = if let Some(b) = cached_boundaries {
+        b
+    } else {
+        fallback = spline.untangled_boundaries(1.35);
+        (&fallback.0[..], &fallback.1[..], &fallback.2[..], &fallback.3[..])
+    };
+    let (shade_quads, meshes, lines_to_draw) = build_surface_range_data(
+        spline,
+        0..seg_count,
+        elevated,
+        view_bounds,
+        suppressions,
+        boundaries,
+    );
+    if is_render_context_active() {
+        for &(p0, p1, p2, p3, col) in &shade_quads {
+            draw_quad(p0, p1, p2, p3, col);
+        }
+        for m in &meshes {
+            draw_mesh(&m.0);
+        }
+        for &(p0, p1, th, col) in &lines_to_draw {
             if (p1 - p0).length_squared() > 1e-4 {
                 draw_line(p0.x, p0.y, p1.x, p1.y, th, col);
             }
         }
-    }));
+    }
 }
 
 /// Draws track surface quads for either ground or elevated bridge segments.
@@ -2258,109 +2685,112 @@ fn render_finish_line(track: &Track) {
 
 /// Renders starting grid boxes for all spawn positions.
 fn render_starting_grid(track: &Track) {
-    let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        for pose in &track.grid_positions {
-            let pos = pose.position;
-            let angle = pose.angle;
-            let fwd = Vec2::new(angle.cos(), angle.sin());
-            let right = Vec2::new(-angle.sin(), angle.cos());
+    if !is_render_context_active() {
+        return;
+    }
+    for pose in &track.grid_positions {
+        let pos = pose.position;
+        let angle = pose.angle;
+        let fwd = Vec2::new(angle.cos(), angle.sin());
+        let right = Vec2::new(-angle.sin(), angle.cos());
 
-            let box_len = 3.6;
-            let box_w = 1.9;
+        let box_len = 3.6;
+        let box_w = 1.9;
 
-            let p_fl = pos + fwd * (box_len * 0.5) - right * (box_w * 0.5);
-            let p_fr = pos + fwd * (box_len * 0.5) + right * (box_w * 0.5);
-            let p_rl = pos - fwd * (box_len * 0.5) - right * (box_w * 0.5);
-            let p_rr = pos - fwd * (box_len * 0.5) + right * (box_w * 0.5);
+        let p_fl = pos + fwd * (box_len * 0.5) - right * (box_w * 0.5);
+        let p_fr = pos + fwd * (box_len * 0.5) + right * (box_w * 0.5);
+        let p_rl = pos - fwd * (box_len * 0.5) - right * (box_w * 0.5);
+        let p_rr = pos - fwd * (box_len * 0.5) + right * (box_w * 0.5);
 
-            // Front line & side brackets
-            let line_thickness = 0.22;
-            draw_line(p_fl.x, p_fl.y, p_fr.x, p_fr.y, line_thickness, Palette::GRID_LINE);
-            draw_line(p_fl.x, p_fl.y, p_fl.x - fwd.x * 0.8, p_fl.y - fwd.y * 0.8, line_thickness, Palette::GRID_LINE);
-            draw_line(p_fr.x, p_fr.y, p_fr.x - fwd.x * 0.8, p_fr.y - fwd.y * 0.8, line_thickness, Palette::GRID_LINE);
-            draw_line(p_rl.x, p_rl.y, p_rr.x, p_rr.y, line_thickness * 0.7, Color::new(0.9, 0.9, 0.9, 0.4));
-        }
-    }));
+        // Front line & side brackets
+        let line_thickness = 0.22;
+        draw_line(p_fl.x, p_fl.y, p_fr.x, p_fr.y, line_thickness, Palette::GRID_LINE);
+        draw_line(p_fl.x, p_fl.y, p_fl.x - fwd.x * 0.8, p_fl.y - fwd.y * 0.8, line_thickness, Palette::GRID_LINE);
+        draw_line(p_fr.x, p_fr.y, p_fr.x - fwd.x * 0.8, p_fr.y - fwd.y * 0.8, line_thickness, Palette::GRID_LINE);
+        draw_line(p_rl.x, p_rl.y, p_rr.x, p_rr.y, line_thickness * 0.7, Color::new(0.9, 0.9, 0.9, 0.4));
+    }
 }
 
 /// Renders pit box team stalls and speed limit gates along the pit lane.
 fn render_pit_boxes(pit_lane: &PitLane, view_bounds: Option<(Vec2, Vec2)>) {
-    let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        let is_in_view = |pos: Vec2, radius: f32| -> bool {
-            if let Some((min, max)) = view_bounds {
-                !(pos.x + radius < min.x || pos.x - radius > max.x || pos.y + radius < min.y || pos.y - radius > max.y)
-            } else {
-                true
-            }
+    if !is_render_context_active() {
+        return;
+    }
+    let is_in_view = |pos: Vec2, radius: f32| -> bool {
+        if let Some((min, max)) = view_bounds {
+            !(pos.x + radius < min.x || pos.x - radius > max.x || pos.y + radius < min.y || pos.y - radius > max.y)
+        } else {
+            true
+        }
+    };
+
+    // Draw yellow speed limiter entry and exit lines
+    let entry = &pit_lane.entry_gate;
+    let entry_mid = (entry.start + entry.end) * 0.5;
+    if is_in_view(entry_mid, 8.0) {
+        draw_line(entry.start.x, entry.start.y, entry.end.x, entry.end.y, 0.30, Color::new(1.0, 0.82, 0.15, 0.85));
+    }
+    let exit = &pit_lane.exit_gate;
+    let exit_mid = (exit.start + exit.end) * 0.5;
+    if is_in_view(exit_mid, 8.0) {
+        draw_line(exit.start.x, exit.start.y, exit.end.x, exit.end.y, 0.30, Color::new(1.0, 0.82, 0.15, 0.85));
+    }
+
+    // Draw team pit stalls
+    for pit_box in &pit_lane.pit_boxes {
+        if !is_in_view(pit_box.position, 6.0) {
+            continue;
+        }
+        let pos = pit_box.position;
+        let fwd = if pit_box.direction.length_squared() > 1e-4 {
+            pit_box.direction.normalize()
+        } else {
+            Vec2::new(1.0, 0.0)
         };
+        let right = Vec2::new(-fwd.y, fwd.x);
 
-        // Draw yellow speed limiter entry and exit lines
-        let entry = &pit_lane.entry_gate;
-        let entry_mid = (entry.start + entry.end) * 0.5;
-        if is_in_view(entry_mid, 8.0) {
-            draw_line(entry.start.x, entry.start.y, entry.end.x, entry.end.y, 0.30, Color::new(1.0, 0.82, 0.15, 0.85));
-        }
-        let exit = &pit_lane.exit_gate;
-        let exit_mid = (exit.start + exit.end) * 0.5;
-        if is_in_view(exit_mid, 8.0) {
-            draw_line(exit.start.x, exit.start.y, exit.end.x, exit.end.y, 0.30, Color::new(1.0, 0.82, 0.15, 0.85));
-        }
+        let box_len = 4.8;
+        let box_w = 2.4;
 
-        // Draw team pit stalls
-        for pit_box in &pit_lane.pit_boxes {
-            if !is_in_view(pit_box.position, 6.0) {
-                continue;
-            }
-            let pos = pit_box.position;
-            let fwd = if pit_box.direction.length_squared() > 1e-4 {
-                pit_box.direction.normalize()
-            } else {
-                Vec2::new(1.0, 0.0)
-            };
-            let right = Vec2::new(-fwd.y, fwd.x);
+        let p_fl = pos + fwd * (box_len * 0.5) - right * (box_w * 0.5);
+        let p_fr = pos + fwd * (box_len * 0.5) + right * (box_w * 0.5);
+        let p_rl = pos - fwd * (box_len * 0.5) - right * (box_w * 0.5);
+        let p_rr = pos - fwd * (box_len * 0.5) + right * (box_w * 0.5);
 
-            let box_len = 4.8;
-            let box_w = 2.4;
+        // Team stall box outline and center stop line
+        let line_thickness = 0.22;
+        let box_col = Color::new(0.95, 0.95, 0.95, 0.75);
+        let stop_col = Color::new(0.95, 0.25, 0.25, 0.70);
+        draw_line(p_fl.x, p_fl.y, p_fr.x, p_fr.y, line_thickness, box_col);
+        draw_line(p_fr.x, p_fr.y, p_rr.x, p_rr.y, line_thickness, box_col);
+        draw_line(p_rr.x, p_rr.y, p_rl.x, p_rl.y, line_thickness, box_col);
+        draw_line(p_rl.x, p_rl.y, p_fl.x, p_fl.y, line_thickness, box_col);
 
-            let p_fl = pos + fwd * (box_len * 0.5) - right * (box_w * 0.5);
-            let p_fr = pos + fwd * (box_len * 0.5) + right * (box_w * 0.5);
-            let p_rl = pos - fwd * (box_len * 0.5) - right * (box_w * 0.5);
-            let p_rr = pos - fwd * (box_len * 0.5) + right * (box_w * 0.5);
-
-            // Team stall box outline and center stop line
-            let line_thickness = 0.22;
-            let box_col = Color::new(0.95, 0.95, 0.95, 0.75);
-            let stop_col = Color::new(0.95, 0.25, 0.25, 0.70);
-            draw_line(p_fl.x, p_fl.y, p_fr.x, p_fr.y, line_thickness, box_col);
-            draw_line(p_fr.x, p_fr.y, p_rr.x, p_rr.y, line_thickness, box_col);
-            draw_line(p_rr.x, p_rr.y, p_rl.x, p_rl.y, line_thickness, box_col);
-            draw_line(p_rl.x, p_rl.y, p_fl.x, p_fl.y, line_thickness, box_col);
-
-            // Center stop line
-            let stop_l = pos - right * (box_w * 0.45);
-            let stop_r = pos + right * (box_w * 0.45);
-            draw_line(stop_l.x, stop_l.y, stop_r.x, stop_r.y, line_thickness * 1.5, stop_col);
-        }
-    }));
+        // Center stop line
+        let stop_l = pos - right * (box_w * 0.45);
+        let stop_r = pos + right * (box_w * 0.45);
+        draw_line(stop_l.x, stop_l.y, stop_r.x, stop_r.y, line_thickness * 1.5, stop_col);
+    }
 }
 
 /// Utility to draw a filled convex quad from 4 vertices in CCW/CW order.
 #[inline]
 pub fn draw_quad(p0: Vec2, p1: Vec2, p2: Vec2, p3: Vec2, color: Color) {
-    let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        draw_triangle(
-            macroquad::prelude::Vec2::new(p0.x, p0.y),
-            macroquad::prelude::Vec2::new(p1.x, p1.y),
-            macroquad::prelude::Vec2::new(p2.x, p2.y),
-            color,
-        );
-        draw_triangle(
-            macroquad::prelude::Vec2::new(p0.x, p0.y),
-            macroquad::prelude::Vec2::new(p2.x, p2.y),
-            macroquad::prelude::Vec2::new(p3.x, p3.y),
-            color,
-        );
-    }));
+    if !is_render_context_active() {
+        return;
+    }
+    draw_triangle(
+        macroquad::prelude::Vec2::new(p0.x, p0.y),
+        macroquad::prelude::Vec2::new(p1.x, p1.y),
+        macroquad::prelude::Vec2::new(p2.x, p2.y),
+        color,
+    );
+    draw_triangle(
+        macroquad::prelude::Vec2::new(p0.x, p0.y),
+        macroquad::prelude::Vec2::new(p2.x, p2.y),
+        macroquad::prelude::Vec2::new(p3.x, p3.y),
+        color,
+    );
 }
 
 #[cfg(test)]
@@ -2811,5 +3241,35 @@ mod tests {
         render_ground_track_culled(&track, None);
         render_elevated_track_culled(&track, None);
     }
-}
 
+    #[test]
+    fn test_spec_119_track_render_cache_prebuilt_mesh_chunks_and_quality_invalidation() {
+        clear_track_render_cache();
+        set_surface_texture_quality(SurfaceTextureQuality::High);
+        let track = arcade_race_core::track::create_prototypical_track(
+            "gt",
+            arcade_race_core::track::TrackShape::Oval,
+            arcade_race_core::track::RaceDirection::Right,
+        );
+
+        let mut total_surface_verts = 0usize;
+        with_track_render_cache(&track, |cache| {
+            assert!(cache.matches(&track));
+            assert!(!cache.main_ground_pass.chunks.is_empty());
+            for chunk in &cache.main_ground_pass.chunks {
+                for m in &chunk.surface_meshes {
+                    total_surface_verts += m.0.vertices.len();
+                }
+            }
+        });
+        assert!(total_surface_verts > 0);
+
+        // Changing surface texture quality invalidates the cache until rebuilt
+        set_surface_texture_quality(SurfaceTextureQuality::Off);
+        with_track_render_cache(&track, |cache| {
+            assert!(cache.matches(&track));
+            assert_eq!(cache.texture_quality, SurfaceTextureQuality::Off);
+        });
+        set_surface_texture_quality(SurfaceTextureQuality::High);
+    }
+}
