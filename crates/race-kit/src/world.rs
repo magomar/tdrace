@@ -251,12 +251,6 @@ impl<V: Vehicle> RaceWorld<V> {
         }
         self.fit();
 
-        // Sample surfaces under all wheels of all cars
-        for (i, car) in self.vehicles.iter().enumerate() {
-            let prog = self.trackers.get(i).map(|tp| tp.progress_distance).unwrap_or(0.0);
-            self.last_surfaces[i] = car.sample_surfaces(track, prog);
-        }
-
         // Aerodynamic slipstream wake drafting between cars (zero-allocation stack buffer for <= 32 cars)
         for i in 0..n_cars {
             let intensity = if n_cars <= 32 {
@@ -285,13 +279,15 @@ impl<V: Vehicle> RaceWorld<V> {
             self.prev_positions[i] = self.vehicles[i].position();
         }
 
-        // Step individual vehicle dynamics and update road elevation & cross-slope banking
+        // Step individual vehicle dynamics, sample wheel surfaces from chassis projection, and update road elevation & cross-slope banking
         for i in 0..n_cars {
             let prev_prog = self.trackers.get(i).map(|tp| tp.progress_distance).unwrap_or(0.0);
             // Off the main road the joker or chute road gives the height: the walls there stand at its height, and
             // a car at the main road's height drove through them (tdrace-joker-wall-ghost-ebrgn).
             let proj = track.project_point_continuity(self.vehicles[i].position(), prev_prog, 50.0);
             self.vehicles[i].set_road(&proj);
+            self.last_surfaces[i] =
+                self.vehicles[i].sample_surfaces_from_projection(track, &proj, prev_prog);
 
             let mut ctrl = match self.finish[i] {
                 FinishState::Dnf { .. } => DriveControls::default(),

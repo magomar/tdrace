@@ -10,10 +10,11 @@ use tdrace_core::collision::wall::resolve_all_wall_collisions;
 use tdrace_core::lidar::{LidarHit, LidarScanner};
 use tdrace_core::physics::car::{normalize_angle, Car, CarControls};
 use tdrace_core::physics::config::CarConfig;
+use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::checkpoint::TrackProgressTracker;
 use tdrace_core::track::geometry::WallBarrier;
 use tdrace_core::catalog;
-use tdrace_core::track::Track;
+use tdrace_core::track::{JumpRamp, JumpRampCarExt, SplineProjection, Track};
 
 use crate::config::{parse_car_config, parse_lidar_config, RewardConfig};
 use crate::rasterizer::{FastRasterizer, SkidMark};
@@ -55,6 +56,8 @@ pub struct PyEngine {
     cars: Vec<Car>,
     car_configs: Vec<CarConfig>,
     trackers: Vec<TrackProgressTracker>,
+    last_projections: Vec<SplineProjection>,
+    last_wheel_surfaces: Vec<[SurfaceType; 4]>,
     scanners: Vec<LidarScanner>,
     rasterizer: FastRasterizer,
     reward_config: RewardConfig,
@@ -133,6 +136,8 @@ impl PyEngine {
         let mut cars = Vec::with_capacity(num_agents);
         let mut car_configs = Vec::with_capacity(num_agents);
         let mut trackers = Vec::with_capacity(num_agents);
+        let mut last_projections = Vec::with_capacity(num_agents);
+        let mut last_wheel_surfaces = Vec::with_capacity(num_agents);
         let mut scanners = Vec::with_capacity(num_agents);
         let mut prev_steer = Vec::with_capacity(num_agents);
 
@@ -146,10 +151,18 @@ impl PyEngine {
                 track.grid_positions[0]
             };
 
-            let car = Car::new(base_car_cfg).with_pose(spawn.position, spawn.angle);
+            let mut car = Car::new(base_car_cfg).with_pose(spawn.position, spawn.angle);
+            let mut tracker = TrackProgressTracker::new(num_checkpoints, num_sectors);
+            advance_tracker(&mut tracker, &car, &track, 0.0);
+            let proj = track.project_point_continuity(car.state.position, tracker.progress_distance, 50.0);
+            Self::apply_road_projection(&mut car, &proj);
+            let wheel_surfs = track.sample_car_surfaces_from_projection(&car, &proj);
+
             cars.push(car);
             car_configs.push(base_car_cfg);
-            trackers.push(TrackProgressTracker::new(num_checkpoints, num_sectors));
+            trackers.push(tracker);
+            last_projections.push(proj);
+            last_wheel_surfaces.push(wheel_surfs);
             scanners.push(LidarScanner::new(lidar_cfg));
             prev_steer.push(0.0);
         }
@@ -162,6 +175,8 @@ impl PyEngine {
             cars,
             car_configs,
             trackers,
+            last_projections,
+            last_wheel_surfaces,
             scanners,
             rasterizer,
             reward_config: reward_cfg,
@@ -255,6 +270,7 @@ impl PyEngine {
             self.cars[i] = Car::new(self.car_configs[i]).with_pose(pos, heading);
             self.trackers[i].reset();
             advance_tracker(&mut self.trackers[i], &self.cars[i], &self.track, 0.0);
+            self.refresh_car_projection(i);
             self.prev_steer[i] = 0.0;
         }
 
@@ -300,25 +316,34 @@ impl PyEngine {
         let prev_progress = self.trackers[0].progress_distance;
         let prev_laps = self.trackers[0].current_lap;
 
-        // 2. Sample surface & step car physics
-        let surfaces = self.track.sample_car_surfaces(&self.cars[0]);
+        // 2. Project chassis onto road, apply road banking/grade/elevation, sample surfaces, and step physics & ramps
+        let proj = self.track.project_point_continuity(
+            self.cars[0].state.position,
+            prev_progress,
+            50.0,
+        );
+        Self::apply_road_projection(&mut self.cars[0], &proj);
+        let surfaces = self.track.sample_car_surfaces_from_projection(&self.cars[0], &proj);
         self.cars[0].step_per_wheel(&ctrl, surfaces, self.dt);
+        Self::step_car_ramps(&mut self.cars[0], &self.track.geometry.jump_ramps, self.dt);
 
-        // 3. Collision resolution against walls & obstacles
+        // 3. Collision resolution against walls & obstacles (including scenery obstacles)
         let mut wall_impulse = 0.0;
         let mut wall_hit = false;
+        let scenery_obstacles = self.track.geometry.all_obstacles_with_scenery();
         let wall_events = resolve_all_wall_collisions(
             &mut self.cars[0],
             &self.walls,
-            &self.track.geometry.obstacles,
+            scenery_obstacles,
         );
         for ev in wall_events {
             wall_impulse += ev.normal_impulse;
             wall_hit = true;
         }
 
-        // 4. Update track progress tracker
+        // 4. Update track progress tracker and cache post-step projection & wheel surfaces
         advance_tracker(&mut self.trackers[0], &self.cars[0], &self.track, self.dt);
+        self.refresh_car_projection(0);
 
         // 5. Update skid marks
         self.record_skid_marks(0);
@@ -433,7 +458,7 @@ impl PyEngine {
             prev_laps.push(self.trackers[i].current_lap);
         }
 
-        // 2. Step each car physics
+        // 2. Step each car physics with road projection, chassis-guided surface sampling, and ramps
         for i in 0..n {
             let (throttle, steer, brake, handbrake, reverse) = actions[i];
             let safe_throttle = if throttle.is_finite() { throttle.clamp(-1.0, 1.0) } else { 0.0 };
@@ -447,8 +472,15 @@ impl PyEngine {
                 handbrake,
                 reverse,
             };
-            let surfaces = self.track.sample_car_surfaces(&self.cars[i]);
+            let proj = self.track.project_point_continuity(
+                self.cars[i].state.position,
+                prev_progress[i],
+                50.0,
+            );
+            Self::apply_road_projection(&mut self.cars[i], &proj);
+            let surfaces = self.track.sample_car_surfaces_from_projection(&self.cars[i], &proj);
             self.cars[i].step_per_wheel(&ctrl, surfaces, self.dt);
+            Self::step_car_ramps(&mut self.cars[i], &self.track.geometry.jump_ramps, self.dt);
         }
 
         // 3. Resolve multi-car collisions
@@ -466,14 +498,14 @@ impl PyEngine {
             }
         }
 
-        // 4. Resolve wall & obstacle collisions for all cars
+        // 4. Resolve wall & obstacle collisions (including scenery obstacles) for all cars
         let mut wall_impulses = vec![0.0f32; n];
         let mut wall_hits = vec![false; n];
         for i in 0..n {
             let wall_events = resolve_all_wall_collisions(
                 &mut self.cars[i],
                 &self.walls,
-                &self.track.geometry.obstacles,
+                self.track.geometry.all_obstacles_with_scenery(),
             );
             for ev in wall_events {
                 wall_impulses[i] += ev.normal_impulse;
@@ -481,6 +513,7 @@ impl PyEngine {
             }
 
             advance_tracker(&mut self.trackers[i], &self.cars[i], &self.track, self.dt);
+            self.refresh_car_projection(i);
             self.record_skid_marks(i);
         }
 
@@ -600,19 +633,10 @@ impl PyEngine {
         let idx = agent_idx.min(self.cars.len() - 1);
         let target_car = &self.cars[idx];
 
-        // Opponents list excluding target car
-        let opponents: Vec<Car> = self
-            .cars
-            .iter()
-            .enumerate()
-            .filter(|(i, _)| *i != idx)
-            .map(|(_, c)| c.clone())
-            .collect();
-
         let mut buffer = vec![0u8; width * height * 3];
         self.rasterizer.render(
             target_car,
-            &opponents,
+            &self.cars,
             &self.track.geometry.obstacles,
             &self.skid_marks,
             width,
@@ -685,6 +709,7 @@ impl PyEngine {
         self.cars[idx].state.angle = normalize_angle(angle);
         self.cars[idx].state.angular_velocity = angular_velocity;
         self.cars[idx].state.speed = Vec2::new(vx, vy).length();
+        self.refresh_car_projection(idx);
     }
 
     /// Gets current car state tuple: (x, y, vx, vy, angle, angular_vel, steer_angle).
@@ -696,6 +721,54 @@ impl PyEngine {
 }
 
 impl PyEngine {
+    #[inline]
+    fn apply_road_projection(car: &mut Car, proj: &SplineProjection) {
+        car.state.road_elevation = proj.elevation;
+        car.state.road_bank_angle = proj.bank_angle;
+        car.state.road_grade_slope = proj.grade_slope;
+        car.state.road_vertical_curvature = proj.vertical_curvature;
+        car.state.track_right = Vec2::new(proj.tangent.y, -proj.tangent.x);
+        car.state.track_forward = proj.tangent;
+    }
+
+    #[inline]
+    fn step_car_ramps(car: &mut Car, ramps: &[JumpRamp], dt: f32) {
+        let was_airborne = car.state.is_airborne;
+        let mut on_any_ramp = false;
+
+        if !was_airborne {
+            for ramp in ramps {
+                if ramp.contains(car.state.position) {
+                    on_any_ramp = true;
+                    if car.step_ramp_interaction(ramp, dt) {
+                        break;
+                    }
+                }
+            }
+            if !on_any_ramp {
+                if car.state.ramp_elevation > 0.10 {
+                    car.state.elevation = car.state.ramp_elevation;
+                    car.state.is_airborne = true;
+                    car.state.vertical_velocity = 0.0;
+                }
+                car.state.ramp_elevation = 0.0;
+            }
+        }
+    }
+
+    #[inline]
+    fn refresh_car_projection(&mut self, idx: usize) {
+        let proj = self.track.project_point_continuity(
+            self.cars[idx].state.position,
+            self.trackers[idx].progress_distance,
+            50.0,
+        );
+        Self::apply_road_projection(&mut self.cars[idx], &proj);
+        self.last_wheel_surfaces[idx] =
+            self.track.sample_car_surfaces_from_projection(&self.cars[idx], &proj);
+        self.last_projections[idx] = proj;
+    }
+
     #[inline]
     fn compute_obs_dim(num_agents: usize, num_lidar_rays: usize) -> usize {
         let base_features = 26;
@@ -745,8 +818,8 @@ impl PyEngine {
         self.obs_buffer[7] = car.state.acceleration_local.x / 20.0;
         self.obs_buffer[8] = car.state.acceleration_local.y / 20.0;
 
-        // 2. Track spline relative state
-        let proj = self.track.spline.project_point(car.state.position);
+        // 2. Track spline relative state (reuse cached step projection)
+        let proj = &self.last_projections[agent_idx];
         let half_w = (proj.track_width * 0.5).max(1.0);
         self.obs_buffer[9] = (proj.lateral_offset / half_w).clamp(-3.0, 3.0);
 
@@ -754,22 +827,17 @@ impl PyEngine {
         self.obs_buffer[10] = heading_diff / PI;
         self.obs_buffer[11] = tracker.normalized_progress;
 
-        // Curvature ahead at +5m, +15m, +30m
+        // Curvature ahead at +5m, +15m, +30m (single-search sample curvature)
         let s_curr = proj.progress_distance;
-        let compute_curvature = |s: f32| -> f32 {
-            let t0 = self.track.spline.sample_at_distance(s).tangent;
-            let t1 = self.track.spline.sample_at_distance(s + 2.0).tangent;
-            (t0.x * t1.y - t0.y * t1.x) / 2.0
-        };
-        let c5 = compute_curvature(s_curr + 5.0);
-        let c15 = compute_curvature(s_curr + 15.0);
-        let c30 = compute_curvature(s_curr + 30.0);
+        let c5 = self.track.spline.curvature_at_distance(s_curr + 5.0);
+        let c15 = self.track.spline.curvature_at_distance(s_curr + 15.0);
+        let c30 = self.track.spline.curvature_at_distance(s_curr + 30.0);
         self.obs_buffer[12] = (c5 * 50.0).clamp(-1.0, 1.0);
         self.obs_buffer[13] = (c15 * 50.0).clamp(-1.0, 1.0);
         self.obs_buffer[14] = (c30 * 50.0).clamp(-1.0, 1.0);
 
-        // 3. Wheel surface friction & skid intensity
-        let wheel_surfs = self.track.sample_car_surfaces(car);
+        // 3. Wheel surface friction & skid intensity (reuse cached wheel surfaces)
+        let wheel_surfs = self.last_wheel_surfaces[agent_idx];
         for i in 0..4 {
             self.obs_buffer[15 + i] = wheel_surfs[i].friction_coefficient();
             self.obs_buffer[19 + i] = car.state.wheels[i].skid_intensity;
@@ -788,22 +856,14 @@ impl PyEngine {
         self.obs_buffer[24] = cp_dir.dot(right);
         self.obs_buffer[25] = (cp_dist / 100.0).clamp(0.0, 2.0);
 
-        // 5. LIDAR raycast hits
+        // 5. LIDAR raycast hits (zero-copy scan against &self.cars)
         let num_rays = scanner.config.num_rays;
         if num_rays > 0 {
-            let opponents: Vec<Car> = self
-                .cars
-                .iter()
-                .enumerate()
-                .filter(|(i, _)| *i != agent_idx)
-                .map(|(_, c)| c.clone())
-                .collect();
-
             if self.ray_hits_buffer.len() < num_rays {
                 self.ray_hits_buffer.resize(num_rays, LidarHit::default());
             }
 
-            scanner.scan_into(car, &self.track, &opponents, &mut self.ray_hits_buffer[..num_rays]);
+            scanner.scan_into(car, &self.track, &self.cars, &mut self.ray_hits_buffer[..num_rays]);
 
             for i in 0..num_rays {
                 self.obs_buffer[26 + i] = self.ray_hits_buffer[i].normalized_distance;
@@ -881,3 +941,49 @@ impl PyEngine {
         Ok(dict)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tdrace_core::lidar::LidarConfig;
+
+    #[test]
+    fn test_spec_118_pyengine_road_projection_and_zero_copy_lidar() {
+        let track = catalog::official_track("classic", "gt_coastal_grand_prix");
+
+        let start = &track.grid_positions[0];
+        let mut car0 = Car::new(CarConfig::default()).with_pose(start.position, start.angle);
+        let car1 = Car::new(CarConfig::default()).with_pose(
+            start.position + Vec2::new(start.angle.cos(), start.angle.sin()) * 10.0,
+            start.angle,
+        );
+
+        let mut proj = track.project_point_continuity(car0.state.position, 0.0, 50.0);
+        proj.bank_angle = 12.0_f32.to_radians();
+        proj.elevation = 4.5;
+        proj.grade_slope = 0.08;
+        PyEngine::apply_road_projection(&mut car0, &proj);
+        assert!((car0.state.road_elevation - proj.elevation).abs() < 1e-5);
+        assert!(
+            (car0.state.road_bank_angle - proj.bank_angle).abs() < 1e-5
+        );
+        assert!((car0.state.road_grade_slope - proj.grade_slope).abs() < 1e-5);
+
+        // Verify zero-copy LIDAR scan_into skips self by pointer equality while detecting car1
+        let cars = vec![car0, car1];
+        let scanner = LidarScanner::new(LidarConfig::default());
+        let num_rays = scanner.config.num_rays;
+        let mut hits_zero_copy = vec![LidarHit::default(); num_rays];
+        scanner.scan_into(&cars[0], &track, &cars, &mut hits_zero_copy);
+
+        let opponents_cloned = vec![cars[1].clone()];
+        let mut hits_cloned = vec![LidarHit::default(); num_rays];
+        scanner.scan_into(&cars[0], &track, &opponents_cloned, &mut hits_cloned);
+
+        for (a, b) in hits_zero_copy.iter().zip(hits_cloned.iter()) {
+            assert!((a.distance - b.distance).abs() < 1e-5);
+            assert_eq!(a.hit_type, b.hit_type);
+        }
+    }
+}
+

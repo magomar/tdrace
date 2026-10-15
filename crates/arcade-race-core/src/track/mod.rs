@@ -508,8 +508,88 @@ impl Track {
         ]
     }
 
+    /// Samples surface types underneath all 4 wheels of a car reusing a precomputed chassis [`SplineProjection`] (Spec 118).
+    ///
+    /// When the vehicle's wheel reach circle lies strictly inside a uniform interior track ribbon without
+    /// overlapping `AboveTrack` surface zones or jump ramps, returns `[proj.base_surface; 4]` in $O(1)$ time
+    /// with zero per-wheel spline projections.
+    #[inline]
+    pub fn sample_car_surfaces_from_projection(
+        &self,
+        car: &Car,
+        proj: &SplineProjection,
+    ) -> [SurfaceType; 4] {
+        let max_long = car.config.cg_to_front.max(car.config.cg_to_rear);
+        let half_track = car.config.track_width * 0.5;
+        let r_wheel = (max_long * max_long + half_track * half_track).sqrt();
+
+        let (is_on_main_spline, is_uniform_interior) =
+            self.spline.classify_interior_ribbon(proj, r_wheel);
+
+        if is_uniform_interior {
+            let has_ramps = !self.geometry.jump_ramps.is_empty();
+            let has_above_zones = self
+                .geometry
+                .surface_zones
+                .iter()
+                .any(|z| z.is_above_track());
+
+            if !has_ramps && !has_above_zones {
+                return [proj.base_surface; 4];
+            }
+
+            let wheel_positions = car.wheel_positions_world();
+            let mut out = [proj.base_surface; 4];
+            for (i, &w_pos) in wheel_positions.iter().enumerate() {
+                let mut overridden = false;
+                if has_ramps {
+                    for ramp in &self.geometry.jump_ramps {
+                        if ramp.contains(w_pos) {
+                            out[i] = ramp.surface;
+                            overridden = true;
+                            break;
+                        }
+                    }
+                }
+                if !overridden && has_above_zones {
+                    for zone in &self.geometry.surface_zones {
+                        if zone.is_above_track() && zone.contains(w_pos) {
+                            out[i] = zone.surface;
+                            break;
+                        }
+                    }
+                }
+            }
+            return out;
+        }
+
+        let wheel_positions = car.wheel_positions_world();
+        if is_on_main_spline {
+            let window = if proj.is_on_track { 16.0 } else { 45.0 };
+            [
+                self.sample_surface_near_window(wheel_positions[0], proj.progress_distance, window),
+                self.sample_surface_near_window(wheel_positions[1], proj.progress_distance, window),
+                self.sample_surface_near_window(wheel_positions[2], proj.progress_distance, window),
+                self.sample_surface_near_window(wheel_positions[3], proj.progress_distance, window),
+            ]
+        } else {
+            [
+                self.sample_surface(wheel_positions[0]),
+                self.sample_surface(wheel_positions[1]),
+                self.sample_surface(wheel_positions[2]),
+                self.sample_surface(wheel_positions[3]),
+            ]
+        }
+    }
+
     /// Samples the surface at `point` with localized spline projection near `hint_dist`.
+    #[inline]
     pub fn sample_surface_near(&self, point: Vec2, hint_dist: f32) -> SurfaceType {
+        self.sample_surface_near_window(point, hint_dist, 45.0)
+    }
+
+    /// Samples the surface at `point` with localized spline projection within `window` meters of `hint_dist`.
+    pub fn sample_surface_near_window(&self, point: Vec2, hint_dist: f32, window: f32) -> SurfaceType {
         // 1. Check jump ramps (elevated platforms)
         for ramp in &self.geometry.jump_ramps {
             if ramp.contains(point) {
@@ -525,7 +605,7 @@ impl Track {
         }
 
         // 3. Localized spline projection near hint distance
-        let proj = self.spline.project_point_continuity(point, hint_dist, 45.0);
+        let proj = self.spline.project_point_continuity(point, hint_dist, window);
         if proj.is_on_track {
             return proj.base_surface;
         }
@@ -2661,5 +2741,59 @@ mod tests {
         let errors = track.validate();
         let blocking = errors.iter().filter(|e| e.code == "ERR_WALL_BLOCKS_PIT_LANE").count();
         assert_eq!(blocking, 0, "No walls should block pit lane: {:?}", errors);
+    }
+
+    #[test]
+    fn test_spec_118_chassis_guided_surface_sampling_parity() {
+        use super::geometry::{SurfaceLayer, SurfaceShape, SurfaceZone};
+        use super::{create_prototypical_track, RaceDirection, TrackShape};
+        use wheelbase::CarConfig;
+
+        let mut track = create_prototypical_track("gt", TrackShape::HorizontalEight, RaceDirection::Left);
+        // Add an AboveTrack hazard zone and a BelowTrack sand trap
+        let s_mid = track.spline.sample_at_distance(track.spline.total_length() * 0.25);
+        track.geometry.surface_zones.push(SurfaceZone {
+            name: "puddle".to_string(),
+            shape: SurfaceShape::Circle {
+                center: s_mid.point,
+                radius: 4.5,
+            },
+            surface: SurfaceType::Water,
+            layer: SurfaceLayer::AboveTrack,
+        });
+        let s_off = track.spline.sample_at_distance(track.spline.total_length() * 0.60);
+        track.geometry.surface_zones.push(SurfaceZone {
+            name: "sand_trap".to_string(),
+            shape: SurfaceShape::Circle {
+                center: s_off.point + s_off.normal * (s_off.width * 0.65),
+                radius: 6.0,
+            },
+            surface: SurfaceType::DeepSand,
+            layer: SurfaceLayer::BelowTrack,
+        });
+
+        let total_len = track.spline.total_length();
+        let mut car = Car::new(CarConfig::sports_car());
+
+        // Sample 1,000 poses across track interiors, curbs, off-track runoff, and AboveTrack zones
+        for i in 0..1000 {
+            let frac = i as f32 / 1000.0;
+            let dist = frac * total_len;
+            let sample = track.spline.sample_at_distance(dist);
+            let lat_frac = ((i as f32 * 0.37).sin()) * 1.4; // spans [-1.4, +1.4] of half-width (interior, curb, runoff)
+            let pos = sample.point + sample.normal * (lat_frac * sample.width * 0.5);
+            let yaw = sample.tangent.y.atan2(sample.tangent.x) + ((i as f32 * 0.19).cos()) * 0.35;
+            car.state.position = pos;
+            car.state.angle = yaw;
+
+            let proj = track.project_point_continuity(car.state.position, dist, 50.0);
+            let guided = track.sample_car_surfaces_from_projection(&car, &proj);
+            let hinted = track.sample_car_surfaces_with_hint(&car, proj.progress_distance);
+            assert_eq!(
+                guided, hinted,
+                "Pose {} at dist {:.1}m (lat_frac {:.2}) mismatch: guided={:?} vs hinted={:?}",
+                i, dist, lat_frac, guided, hinted
+            );
+        }
     }
 }

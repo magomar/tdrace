@@ -964,6 +964,45 @@ impl TrackSpline {
         }
     }
 
+    /// Evaluates horizontal signed curvature $\kappa = (\mathbf{t}_0 \times \mathbf{t}_1) / \Delta s$ at `distance`
+    /// using a single binary search into `self.samples` (Spec 118).
+    #[inline]
+    pub fn curvature_at_distance(&self, distance: f32) -> f32 {
+        let n = self.samples.len();
+        if n < 2 {
+            return 0.0;
+        }
+        let clamped_dist = if self.closed {
+            let mut d = distance % self.total_length;
+            if d < 0.0 {
+                d += self.total_length;
+            }
+            d
+        } else {
+            distance.clamp(0.0, self.total_length)
+        };
+        let idx = self
+            .samples
+            .partition_point(|s| s.distance <= clamped_dist)
+            .saturating_sub(1)
+            .min(n - 2);
+        let next_idx = if idx + 2 < n {
+            idx + 2
+        } else if self.closed && n > 2 {
+            (idx + 2) % (n - 1)
+        } else {
+            idx + 1
+        };
+        let s0 = &self.samples[idx];
+        let s1 = &self.samples[next_idx];
+        let ds = if s1.distance >= s0.distance {
+            (s1.distance - s0.distance).max(1e-4)
+        } else {
+            (self.total_length - s0.distance + s1.distance).max(1e-4)
+        };
+        (s0.tangent.x * s1.tangent.y - s0.tangent.y * s1.tangent.x) / ds
+    }
+
     /// Projects any 2D world position onto the spline centerline, computing progress and offsets.
     pub fn project_point(&self, pos: Vec2) -> SplineProjection {
         if self.samples.len() < 2 {
@@ -1334,6 +1373,93 @@ impl TrackSpline {
         // lateral_offset: + = right of center, - = left of center
         // When bank_angle > 0: right side is higher (+), left side is lower (-)
         proj.elevation + proj.lateral_offset * theta.sin()
+    }
+
+    /// Classifies a chassis [`SplineProjection`] relative to this spline for fast 4-wheel surface sampling (Spec 118).
+    ///
+    /// Returns `(is_on_this_spline, is_uniform_interior)`:
+    /// - `is_on_this_spline`: `true` when `proj.closest_point` lies on the segment of `self` at `proj.progress_distance`
+    ///   (rather than on a separate `TrackNetwork` branch segment).
+    /// - `is_uniform_interior`: `true` when `is_on_this_spline` holds, `proj.is_on_track` is true, and every sample within
+    ///   `r_wheel + 3.5` meters of `proj.progress_distance` shares `proj.base_surface` and has half-width at least
+    ///   `proj.distance_to_spline + r_wheel + 0.35`.
+    #[inline]
+    pub fn classify_interior_ribbon(&self, proj: &SplineProjection, r_wheel: f32) -> (bool, bool) {
+        let n = self.samples.len();
+        if n < 2 {
+            return (false, false);
+        }
+
+        let idx = self
+            .samples
+            .partition_point(|s| s.distance < proj.progress_distance)
+            .saturating_sub(1)
+            .min(n - 2);
+        let s_cur = &self.samples[idx];
+        let s_next = &self.samples[idx + 1];
+        let seg_len_sq = (s_next.point - s_cur.point).length_squared();
+        let max_endpoint_dist_sq = seg_len_sq + 0.05;
+        let is_on_this_spline = (proj.closest_point - s_cur.point).length_squared() <= max_endpoint_dist_sq
+            && (proj.closest_point - s_next.point).length_squared() <= max_endpoint_dist_sq;
+        if !is_on_this_spline {
+            return (false, false);
+        }
+
+        let req_half_w = proj.distance_to_spline + r_wheel + 0.35;
+        if !proj.is_on_track || proj.track_width * 0.5 < req_half_w {
+            return (true, false);
+        }
+
+        let margin = r_wheel + 3.5;
+        let total_len = self.total_length.max(1.0);
+
+        let mut k = idx;
+        loop {
+            let s = &self.samples[k];
+            if s.surface != proj.base_surface || s.width * 0.5 < req_half_w {
+                return (true, false);
+            }
+            let d = (proj.progress_distance - s.distance).abs();
+            let arc_dist = if self.closed { d.min(total_len - d) } else { d };
+            if arc_dist > margin {
+                break;
+            }
+            if k > 0 {
+                k -= 1;
+            } else if self.closed && n > 2 {
+                k = n - 2;
+            } else {
+                break;
+            }
+            if k == idx {
+                break;
+            }
+        }
+
+        let mut k = idx + 1;
+        loop {
+            let s = &self.samples[k];
+            if s.surface != proj.base_surface || s.width * 0.5 < req_half_w {
+                return (true, false);
+            }
+            let d = (s.distance - proj.progress_distance).abs();
+            let arc_dist = if self.closed { d.min(total_len - d) } else { d };
+            if arc_dist > margin {
+                break;
+            }
+            if k + 1 < n {
+                k += 1;
+            } else if self.closed && n > 2 {
+                k = 1;
+            } else {
+                break;
+            }
+            if k == idx {
+                break;
+            }
+        }
+
+        (true, true)
     }
 }
 

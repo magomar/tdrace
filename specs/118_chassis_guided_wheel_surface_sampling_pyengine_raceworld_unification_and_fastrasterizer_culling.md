@@ -3,7 +3,8 @@ type: Architecture Spec
 template: architecture
 title: "Chassis-Guided Wheel Surface Sampling, PyEngine RaceWorld Unification, and FastRasterizer Culling"
 description: "Reduces per-car spline projections from 6-10 down to 1-2 via chassis-guided wheel surface sampling, aligns PyEngine's physics loop with RaceWorld::step (restoring banking, grade, ramps, and zero-copy LIDAR), and accelerates FastRasterizer with camera AABB culling and incremental scanline edge stepping."
-status: approved
+status: implemented
+receipt: "docs/receipts/spec-118-receipt.md"
 verified: { by: human:mario, at: 2026-10-15T21:44:00Z, hash: "e3e0c0ed5898" }
 created: 2026-10-15
 generated: { by: agent/antigravity, at: 2026-10-15T21:22:15Z }
@@ -144,28 +145,28 @@ flowchart TD
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Chassis-guided surface sampling matches per-wheel sampling across track interiors, curbs, and surface zones**
-  - [ ] **Given** a `Car` positioned across 1,000 sampled poses on a circuit containing asphalt, apex curbs, off-track runoff, and `AboveTrack` surface zones
-  - [ ] **When** `sample_car_surfaces_from_projection` is compared against `sample_car_surfaces_with_hint`
-  - [ ] **Then** the returned `[SurfaceType; 4]` array is identical for 100% of on-ribbon and off-ribbon poses while avoiding per-wheel spline projections when the vehicle is strictly inside the main ribbon
+  - [x] **Given** a `Car` positioned across 1,000 sampled poses on a circuit containing asphalt, apex curbs, off-track runoff, and `AboveTrack` surface zones
+  - [x] **When** `sample_car_surfaces_from_projection` is compared against `sample_car_surfaces_with_hint`
+  - [x] **Then** the returned `[SurfaceType; 4]` array is identical for 100% of on-ribbon and off-ribbon poses while avoiding per-wheel spline projections when the vehicle is strictly inside the main ribbon
 
 - **Scenario: PyEngine physics step applies road banking, grade slope, and zero-copy LIDAR scanning**
-  - [ ] **Given** a `PyEngine` instance stepping an agent on a banked or sloped circuit segment with multiple opponents
-  - [ ] **When** `step_single` or `step_multi` is executed
-  - [ ] **Then** the vehicle's `CarState` receives the projected road banking, grade slope, and elevation matching `RaceWorld::step`, and `build_agent_obs` reuses cached wheel surfaces and scans `&self.cars` without cloning opponent `Car` structs
+  - [x] **Given** a `PyEngine` instance stepping an agent on a banked or sloped circuit segment with multiple opponents
+  - [x] **When** `step_single` or `step_multi` is executed
+  - [x] **Then** the vehicle's `CarState` receives the projected road banking, grade slope, and elevation matching `RaceWorld::step`, and `build_agent_obs` reuses cached wheel surfaces and scans `&self.cars` without cloning opponent `Car` structs
 
 - **Scenario: FastRasterizer world-space culling and incremental scanline stepping preserve RGB output**
-  - [ ] **Given** a `FastRasterizer` rendering a $96 \times 96$ RGB observation in both `follow_car = true` and `follow_car = false` modes
-  - [ ] **When** `render` is executed with world-space AABB culling and incremental edge stepping
-  - [ ] **Then** the rendered RGB pixel buffer is visually identical to the baseline rasterizer while skipping off-screen track geometry
+  - [x] **Given** a `FastRasterizer` rendering a $96 \times 96$ RGB observation in both `follow_car = true` and `follow_car = false` modes
+  - [x] **When** `render` is executed with world-space AABB culling and incremental edge stepping
+  - [x] **Then** the rendered RGB pixel buffer is visually identical to the baseline rasterizer while skipping off-screen track geometry
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Created/Modified Files
-- `[ ]` `crates/arcade-race-core/src/track/mod.rs` -> Add `sample_car_surfaces_from_projection` with interior-ribbon fast path and precomputed `AboveTrack` / branch bounds check.
-- `[ ]` `crates/race-kit/src/world.rs` -> Project vehicle chassis once per step in `RaceWorld::step` and feed `sample_car_surfaces_from_projection`.
-- `[ ]` `crates/tdrace-py/src/engine.rs` -> Align `PyEngine` step loop with `RaceWorld` road/ramp/scenery physics, cache step projections & wheel surfaces, read `SamplePoint::curvature`, and eliminate `Vec<Car>` clones.
-- `[ ]` `crates/tdrace-py/src/rasterizer.rs` -> Add world-space camera AABB culling and incremental scanline edge-function stepping.
-- `[ ]` `specs/constitution/ROADMAP.md` -> Link Spec 118 under Technical Debt & Maintenance.
-- `[ ]` `specs/index.md` -> Synchronize OKF v0.2 index via `keel validate`.
+- `[x]` `crates/arcade-race-core/src/track/mod.rs` -> Add `sample_car_surfaces_from_projection` with interior-ribbon fast path and precomputed `AboveTrack` / branch bounds check.
+- `[x]` `crates/race-kit/src/world.rs` -> Project vehicle chassis once per step in `RaceWorld::step` and feed `sample_car_surfaces_from_projection`.
+- `[x]` `crates/tdrace-py/src/engine.rs` -> Align `PyEngine` step loop with `RaceWorld` road/ramp/scenery physics, cache step projections & wheel surfaces, read `SamplePoint::curvature`, and eliminate `Vec<Car>` clones.
+- `[x]` `crates/tdrace-py/src/rasterizer.rs` -> Add world-space camera AABB culling and incremental scanline edge-function stepping.
+- `[x]` `specs/constitution/ROADMAP.md` -> Link Spec 118 under Technical Debt & Maintenance.
+- `[x]` `specs/index.md` -> Synchronize OKF v0.2 index via `keel validate`.
