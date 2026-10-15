@@ -245,6 +245,27 @@ pub fn normalized_grip_curve(s: f32, tire: &TireConfig) -> f32 {
     }
 }
 
+/// Evaluates both `normalized_grip_curve(|s|, tire)` and its derivative `dg/d|s|` in a single LUT/polynomial pass (Spec 117).
+#[inline]
+pub fn normalized_grip_curve_and_slope(s: f32, tire: &TireConfig) -> (f32, f32) {
+    let s = s.abs();
+    if s >= 1.0 {
+        let inv_falloff = 1.0 / tire.falloff.max(0.1);
+        let t = ((s - 1.0) * inv_falloff).min(1.0);
+        let one_minus_sg = 1.0 - tire.slide_grip;
+        let val = 1.0 - one_minus_sg * t * t * (3.0 - 2.0 * t);
+        let slope = -6.0 * one_minus_sg * t * (1.0 - t) * inv_falloff;
+        (val, slope)
+    } else {
+        let scaled = s * 256.0;
+        let idx = scaled as usize;
+        let frac = scaled - idx as f32;
+        let g0 = PACEJKA_RISING_LUT[idx];
+        let diff = PACEJKA_RISING_LUT[idx + 1] - g0;
+        (g0 + frac * diff, diff * 256.0)
+    }
+}
+
 /// Load-sensitive friction envelope `mu_eff * Fz` in Newtons.
 ///
 /// Heavily loaded tires deliver less grip per newton of load, so lateral load transfer
@@ -268,27 +289,36 @@ pub fn tire_friction_envelope(normal_load: f32, nominal_load: f32, friction_coef
 /// forward (wheel spinning faster than the road), `Fy` has the sign of `slip_angle`.
 #[inline]
 pub fn combined_slip_forces(slip_ratio: f32, slip_angle: f32, envelope: f32, tire: &TireConfig) -> (f32, f32) {
-    if envelope <= 1e-4 {
-        return (0.0, 0.0);
-    }
-    let sx = slip_ratio / tire.peak_slip_ratio.max(1e-3);
     let sy = if slip_angle.abs() < 1e-5 {
         0.0
     } else {
         slip_angle.tan() / tire.peak_slip_angle_tan().max(1e-3)
     };
-    let s = (sx * sx + sy * sy).sqrt();
-    if s < 1e-6 {
+    combined_slip_forces_with_sy(slip_ratio, sy, envelope, tire)
+}
+
+/// Combined-slip tire forces using precomputed normalized lateral slip `sy = tan(slip_angle) / tan(peak_slip_angle)` (Spec 117).
+#[inline]
+pub fn combined_slip_forces_with_sy(slip_ratio: f32, sy: f32, envelope: f32, tire: &TireConfig) -> (f32, f32) {
+    if envelope <= 1e-4 {
         return (0.0, 0.0);
     }
-    let f = envelope * normalized_grip_curve(s, tire);
-    let fx = f * sx / s;
-    let mut fy = f * sy / s;
+    let sx = slip_ratio / tire.peak_slip_ratio.max(1e-3);
+    let s_sq = sx * sx + sy * sy;
+    if s_sq < 1e-12 {
+        return (0.0, 0.0);
+    }
+    let s = s_sq.sqrt();
+    let inv_s = 1.0 / s;
+    let g_inv_s = normalized_grip_curve(s, tire) * inv_s;
+    let fx_norm = g_inv_s * sx;
+    let fx = envelope * fx_norm;
+    let mut fy = envelope * (g_inv_s * sy);
     let arcade = 1.0 - tire.power_slide.clamp(0.0, 1.0);
-    if arcade > 0.0 {
+    if arcade > 0.0 && sy.abs() > 1e-6 && sx.abs() > 1e-6 {
         // Lateral force may use whatever the friction circle leaves after Fx.
         let fy_pure = envelope * normalized_grip_curve(sy, tire) * sy.signum();
-        let budget = (1.0 - (fx / envelope).powi(2)).max(0.0).sqrt();
+        let budget = (1.0 - fx_norm * fx_norm).max(0.0).sqrt();
         let fy_circle = fy_pure * budget;
         if fy_circle.abs() > fy.abs() {
             fy += (fy_circle - fy) * arcade;
@@ -303,15 +333,21 @@ pub fn combined_slip_forces(slip_ratio: f32, slip_angle: f32, envelope: f32, tir
 /// yielding a significant speedup for implicit integration and ABS/TCS solvers.
 #[inline]
 pub fn combined_slip_fx(slip_ratio: f32, slip_angle: f32, envelope: f32, tire: &TireConfig) -> f32 {
-    if envelope <= 1e-4 {
-        return 0.0;
-    }
-    let sx = slip_ratio / tire.peak_slip_ratio.max(1e-3);
     let sy = if slip_angle.abs() < 1e-5 {
         0.0
     } else {
         slip_angle.tan() / tire.peak_slip_angle_tan().max(1e-3)
     };
+    combined_slip_fx_with_sy(slip_ratio, sy, envelope, tire)
+}
+
+/// Computes only the longitudinal force Fx using precomputed normalized lateral slip `sy` (Spec 117).
+#[inline]
+pub fn combined_slip_fx_with_sy(slip_ratio: f32, sy: f32, envelope: f32, tire: &TireConfig) -> f32 {
+    if envelope <= 1e-4 {
+        return 0.0;
+    }
+    let sx = slip_ratio / tire.peak_slip_ratio.max(1e-3);
     let s_sq = sx * sx + sy * sy;
     if s_sq < 1e-12 {
         return 0.0;
@@ -321,39 +357,48 @@ pub fn combined_slip_fx(slip_ratio: f32, slip_angle: f32, envelope: f32, tire: &
     f * sx / s
 }
 
+/// Computes both longitudinal force `Fx` and longitudinal slip stiffness `dFx/d(slip_ratio)`
+/// in a single analytical pass using precomputed normalized lateral slip `sy` (Spec 117).
+#[inline]
+pub fn combined_slip_fx_and_stiffness_with_sy(
+    slip_ratio: f32,
+    sy: f32,
+    envelope: f32,
+    tire: &TireConfig,
+) -> (f32, f32) {
+    if envelope <= 1e-4 {
+        return (0.0, 0.0);
+    }
+    let inv_peak_sr = 1.0 / tire.peak_slip_ratio.max(1e-3);
+    let sx = slip_ratio * inv_peak_sr;
+    let sy_sq = sy * sy;
+    let s_sq = sx * sx + sy_sq;
+    if s_sq < 1e-12 {
+        let zero_slope = envelope * (PACEJKA_RISING_LUT[1] * 256.0) * inv_peak_sr;
+        return (0.0, zero_slope.max(envelope * 0.05));
+    }
+    let s = s_sq.sqrt();
+    let inv_s = 1.0 / s;
+    let inv_s2 = inv_s * inv_s;
+    let (g, dg_ds) = normalized_grip_curve_and_slope(s, tire);
+    let fx0 = envelope * g * sx * inv_s;
+    // d(g(s) * sx / s) / dsx = dg_ds * (sx^2 / s^2) + g * (sy^2 / s^3)
+    let df_dsx = (dg_ds * (sx * sx) + g * (sy_sq * inv_s)) * inv_s2;
+    let slope = (envelope * df_dsx * inv_peak_sr).max(envelope * 0.05);
+    (fx0, slope)
+}
+
 /// Longitudinal stiffness `dFx/d(slip_ratio)` at the given combined slip state (N per unit slip).
 ///
-/// Used by the implicit wheel spin integrator. Evaluated by central difference and floored at a
-/// small positive value so the implicit step stays well conditioned past the peak.
+/// Used by the implicit wheel spin integrator.
 #[inline]
 pub fn longitudinal_slip_stiffness(slip_ratio: f32, slip_angle: f32, envelope: f32, tire: &TireConfig) -> f32 {
-    if envelope <= 1e-4 {
-        return 0.0;
-    }
     let sy = if slip_angle.abs() < 1e-5 {
         0.0
     } else {
         slip_angle.tan() / tire.peak_slip_angle_tan().max(1e-3)
     };
-    let sy_sq = sy * sy;
-    let inv_peak_sr = 1.0 / tire.peak_slip_ratio.max(1e-3);
-    let h = tire.peak_slip_ratio.max(1e-3) * 0.05;
-
-    let fx_for_sr = |sr: f32| -> f32 {
-        let sx = sr * inv_peak_sr;
-        let s_sq = sx * sx + sy_sq;
-        if s_sq < 1e-12 {
-            0.0
-        } else {
-            let s = s_sq.sqrt();
-            envelope * normalized_grip_curve(s, tire) * sx / s
-        }
-    };
-
-    let fx_hi = fx_for_sr(slip_ratio + h);
-    let fx_lo = fx_for_sr(slip_ratio - h);
-    let slope = (fx_hi - fx_lo) / (2.0 * h);
-    slope.max(envelope * 0.05)
+    combined_slip_fx_and_stiffness_with_sy(slip_ratio, sy, envelope, tire).1
 }
 
 /// Applies the friction circle / ellipse limit to combine longitudinal and lateral forces.
@@ -746,16 +791,70 @@ impl WheelAssembly {
         envelope: f32,
         dt: f32,
     ) {
-        let eff_inertia = self.effective_inertia(v_long, slip_angle, envelope, dt);
-        self.step_implicit_with_inertia(
-            drive_torque,
-            brake_torque,
-            v_long,
-            slip_angle,
-            envelope,
-            eff_inertia,
-            dt,
-        );
+        let sy = if slip_angle.abs() < 1e-5 {
+            0.0
+        } else {
+            slip_angle.tan() / self.config.tire_model.peak_slip_angle_tan().max(1e-3)
+        };
+        let _ = self.step_implicit_with_sy(drive_torque, brake_torque, v_long, sy, envelope, dt);
+    }
+
+    /// Fused implicit wheel spin integration using precomputed normalized lateral slip `sy` (Spec 117).
+    /// Evaluates longitudinal force `Fx` and slip stiffness `dFx/dslip` in a single analytical pass
+    /// and returns the effective rotational inertia for axle differential coupling.
+    #[inline]
+    pub fn step_implicit_with_sy(
+        &mut self,
+        drive_torque: f32,
+        brake_torque: f32,
+        v_long: f32,
+        sy: f32,
+        envelope: f32,
+        dt: f32,
+    ) -> f32 {
+        let inertia = self.config.rotational_inertia.max(1e-3);
+        let r = self.config.tire_radius.max(1e-2);
+        let brake_torque = brake_torque.max(0.0);
+
+        if !self.angular_velocity.is_finite() || !drive_torque.is_finite() || !brake_torque.is_finite() {
+            self.angular_velocity = v_long / r;
+            self.is_locked = false;
+            return inertia;
+        }
+
+        let slip = self.slip_ratio_raw(v_long);
+        let (fx0, effective_inertia) = if envelope <= 1e-4 {
+            (0.0, inertia)
+        } else {
+            let (fx0, stiffness) = combined_slip_fx_and_stiffness_with_sy(
+                slip,
+                sy,
+                envelope,
+                &self.config.tire_model,
+            );
+            let eff_i = inertia + dt * r * r * stiffness / v_long.abs().max(SLIP_REFERENCE_SPEED);
+            (fx0, eff_i)
+        };
+
+        // Static hold when parked
+        if v_long.abs() < 0.20 && brake_torque > 0.0 && drive_torque.abs() <= brake_torque {
+            self.angular_velocity = 0.0;
+            self.is_locked = false;
+            return effective_inertia;
+        }
+
+        let omega_free = self.angular_velocity + dt * (drive_torque - r * fx0) / effective_inertia;
+        let brake_dw = dt * brake_torque / effective_inertia;
+        self.angular_velocity = if omega_free.abs() <= brake_dw {
+            0.0
+        } else {
+            omega_free - brake_dw * omega_free.signum()
+        };
+
+        // Physical rotational limit (-550 to +550 rad/s ~ >600 km/h)
+        self.angular_velocity = self.angular_velocity.clamp(-550.0, 550.0);
+        self.is_locked = v_long.abs() > 0.5 && self.angular_velocity.abs() < 1e-3 && brake_torque > 0.0;
+        effective_inertia
     }
 
     /// Optimized implicit integration using precomputed effective inertia (Spec 084).
@@ -1117,6 +1216,60 @@ mod tests {
             let v = 0.02 * step as f32 / 60.0;
             wheel.step_implicit(800.0, 0.0, v, 0.0, 2500.0, 1.0 / 120.0);
             assert!(wheel.angular_velocity.is_finite() && wheel.angular_velocity.abs() <= 550.0);
+        }
+    }
+
+    #[test]
+    fn test_spec_117_curve_constant_and_peak_slip_tan_accuracy() {
+        for i in 40..=99 {
+            let slide_grip = i as f32 * 0.01;
+            let tire = TireConfig {
+                slide_grip,
+                ..TireConfig::default()
+            };
+            let expected = (2.0 / std::f32::consts::PI) * (1.0 - slide_grip.clamp(0.0, 0.9999).acos());
+            let approx = tire.curve_constant();
+            assert!(
+                (approx - expected).abs() < 1e-5,
+                "slide_grip={slide_grip}: approx={approx}, expected={expected}"
+            );
+        }
+
+        for deg in [4.5f32, 7.0, 8.5, 9.0, 10.5, 12.0, 15.0, 20.0] {
+            let tire = TireConfig {
+                peak_slip_angle_deg: deg,
+                ..TireConfig::default()
+            };
+            let expected = deg.to_radians().tan();
+            let approx = tire.peak_slip_angle_tan();
+            assert!(
+                (approx - expected).abs() < 1e-5,
+                "deg={deg}: approx={approx}, expected={expected}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_spec_117_fused_fx_and_stiffness() {
+        let tire = TireConfig::default();
+        let envelope = 3000.0;
+        let inv_peak_tan = 1.0 / tire.peak_slip_angle_tan();
+        for &slip_ratio in &[-0.25f32, -0.08, 0.0, 0.04, 0.12, 0.35] {
+            for &slip_angle in &[-0.15f32, -0.05, 0.0, 0.05, 0.15] {
+                let sy = if slip_angle.abs() < 1e-5 {
+                    0.0
+                } else {
+                    slip_angle.tan() * inv_peak_tan
+                };
+                let (fx, stiffness) =
+                    combined_slip_fx_and_stiffness_with_sy(slip_ratio, sy, envelope, &tire);
+                let fx_ref = combined_slip_fx_with_sy(slip_ratio, sy, envelope, &tire);
+                assert!(
+                    (fx - fx_ref).abs() < 1e-3,
+                    "fx mismatch at sr={slip_ratio}, sa={slip_angle}: {fx} vs {fx_ref}"
+                );
+                assert!(stiffness >= envelope * 0.05);
+            }
         }
     }
 }

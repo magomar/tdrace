@@ -1,9 +1,9 @@
 use std::time::Instant;
 use wheelbase::{Car, CarConfig, CarControls, SurfaceType};
 
-/// Regression floor: about 15% under the throughput measured on macOS aarch64 (2026-09-28).
-/// A refactor that drops below it has made the step slower.
-const FLOOR_STEPS_PER_SEC: f64 = 1_500_000.0;
+/// Regression floor raised by Spec 117 after eliminating redundant transcendental calls
+/// and fusing longitudinal force and slip stiffness evaluation.
+const FLOOR_STEPS_PER_SEC: f64 = 2_200_000.0;
 /// Target from `specs/constitution/ROADMAP.md` (Technical Debt: Performance).
 const ROADMAP_STEPS_PER_SEC: f64 = 4_000_000.0;
 
