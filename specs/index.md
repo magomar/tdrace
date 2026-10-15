@@ -137,6 +137,9 @@ Table of contents providing progressive disclosure of project constitution and t
 | [114](114_realworld_homologation_telemetry_calibration_for_autocross_and_rallycross_highpower_4wd_drivetrains_competition_braking_and_mechanical_grip.md) | Real-World Homologation Telemetry Calibration for Autocross and Rallycross High-Power 4WD Drivetrains, Competition Braking, and Mechanical Grip | Architecture Spec | `implemented` | `human:mario` | [025](025_terrain_surface_bifurcation_and_category_tier_gating.md), [043](043_vehicle_dynamics_rebuild_and_simplified_handling_settings.md), [050](050_fia_autocross_championship_and_vehicle_roster.md), [113](113_4wd_loose_surface_torque_split_differential_upgrades_and_turnin_dynamics.md) | Calibrates high-power 4WD vehicle dynamics across Continental Autocross and FIA Rallycross against real-world manufacturer homologation telemetry, introducing 45:55/42:58 competition AWD torque distribution, 22.5 kN competition disc braking, 1.20 base competition compound grip, and staggered rear SuperBuggy wheels to resolve high-tier drivability decay and restore monotonic tier pace progression. |
 | [115](115_lowgrip_runoff_bot_recovery_and_wall_scraping_resistance_calibration.md) | Low-Grip Runoff Bot Recovery and Wall Scraping Resistance Calibration | Architecture Spec | `implemented` | `human:mario` | [046](046_humanlike_bot_driving_with_tiered_mistakes_and_varied_lines.md), [099](099_packed_and_deep_gravel_surfaces_and_asphaltcircuit_gravel_traps.md), [106](106_classic_autocross_launch_chutes_and_tencar_rallycross_chutes.md), [114](114_realworld_homologation_telemetry_calibration_for_autocross_and_rallycross_highpower_4wd_drivetrains_competition_braking_and_mechanical_grip.md) | Calibrates wall scraping deceleration so cars resting against barriers can pull away on low-grip runoff, extends three-point turn leg duration to prevent oscillating in place, and equips the bot AI with wall-aware recovery steering and escape velocity gating for the no-progress watchdog. |
 | [116](116_performance_based_individual_vehicle_pricing_and_dynamic_catalog_valuation.md) | Performance-Based Individual Vehicle Pricing and Dynamic Catalog Valuation | Architecture Spec | `implemented` | `human:mario` | [053](053_dual_currency_economy_and_branching_career_progression_architecture.md), [060](060_classic_academy_and_grassroots_career_onboarding.md) | Establishes a data-driven Aggregated Performance Index (API) for vehicle models across all motorsport categories and scales individual credit purchase prices with intra-tier valuation spreads while anchoring entry grassroots karts at 5,000 Cr. |
+| [117](117_wheelbase_4m_steps_sec_tire_solver_acceleration_and_transcendental_deduplication.md) | Wheelbase 4M Steps/Sec Tire Solver Acceleration and Transcendental Deduplication | Architecture Spec | `approved` | `human:mario` | [043](043_vehicle_dynamics_rebuild_and_simplified_handling_settings.md), [084](084_highthroughput_physics_zeroallocation_lidar_and_precomputed_junction_render_caching.md) | Eliminates redundant transcendental evaluations in wheelbase's Pacejka '96 tire and implicit wheel spin solvers via precomputed curve constants, fused force-stiffness evaluation, and fast load-sensitivity approximations to bridge the 1.58M to 4.0M steps/sec roadmap throughput gap. |
+| [118](118_chassis_guided_wheel_surface_sampling_pyengine_raceworld_unification_and_fastrasterizer_culling.md) | Chassis-Guided Wheel Surface Sampling, PyEngine RaceWorld Unification, and FastRasterizer Culling | Architecture Spec | `approved` | `human:mario` | [056](056_racekit_headless_race_world.md), [084](084_highthroughput_physics_zeroallocation_lidar_and_precomputed_junction_render_caching.md) | Reduces per-car spline projections from 6-10 down to 1-2 via chassis-guided wheel surface sampling, aligns PyEngine's physics loop with RaceWorld::step (restoring banking, grade, ramps, and zero-copy LIDAR), and accelerates FastRasterizer with camera AABB culling and incremental scanline edge stepping. |
+| [119](119_zero_allocation_wall_collisions_static_spatial_barrier_grid_and_pre_built_track_mesh_caching.md) | Zero-Allocation Wall Collisions, Static Spatial Barrier Grid, and Pre-Built Track Mesh Caching | Architecture Spec | `approved` | `human:mario` | [070](070_global_collinear_wall_optimization_and_circuit_rebake.md), [084](084_highthroughput_physics_zeroallocation_lidar_and_precomputed_junction_render_caching.md) | Eliminates per-tick heap allocations in wall collision resolution, introduces a static 2D uniform spatial grid in TrackGeometry for O(1) wall/obstacle queries across collisions, LIDAR, and Bot AI, pre-builds static GPU Mesh chunks in TrackRenderCache, and removes runtime catch_unwind overhead. |
 
 ### 🗺️ Specification Dependency Graph
 
@@ -164,6 +167,7 @@ flowchart LR
     052["052: Karting 6-Tier Career Progression and Expanded 20-Circuit Roster"]
     053["053: Dual-Currency Economy and Branching Career Progression Architecture"]
     055["055: Classic Circuits Revamp"]
+    056["056: race-kit Headless Race World"]
     058["058: race-ui Rendering, Camera, Effects and HUD Primitives"]
     060["060: Classic Academy and Grassroots Career Onboarding"]
     062["062: Circuit Pit Lanes and Interactive Pit Stop Procedures"]
@@ -185,6 +189,7 @@ flowchart LR
     081["081: Rallycross Joker Lap Segments for Classic and OpenStreetMap Circuits"]
     082["082: Mandatory Rallycross Joker Lap Tracking and Penalty Enforcement"]
     083["083: EvoRL Bot Performance Calibration on the Launch Circuits"]
+    084["084: High-Throughput Physics, Zero-Allocation LIDAR, Precomputed Junction Render Caching, and Tactical Bot Pit Lane Navigation"]
     085["085: Bifurcation Pacenote HUD Driving Aids and De-Cluttered Track Junctions"]
     086["086: Compact Track Studio Inspector with Unified Single and Multi-Selection Editing"]
     087["087: TDRace Codex: Unified Game Encyclopedia and Technical Reference Portal"]
@@ -217,6 +222,9 @@ flowchart LR
     114["114: Real-World Homologation Telemetry Calibration for Autocross and Rallycross High-Power 4WD Drivetrains, Competition Braking, and Mechanical Grip"]
     115["115: Low-Grip Runoff Bot Recovery and Wall Scraping Resistance Calibration"]
     116["116: Performance-Based Individual Vehicle Pricing and Dynamic Catalog Valuation"]
+    117["117: Wheelbase 4M Steps/Sec Tire Solver Acceleration and Transcendental Deduplication"]
+    118["118: Chassis-Guided Wheel Surface Sampling, PyEngine RaceWorld Unification, and FastRasterizer Culling"]
+    119["119: Zero-Allocation Wall Collisions, Static Spatial Barrier Grid, and Pre-Built Track Mesh Caching"]
     055 --> 047
     062 --> 063
     055 --> 064
@@ -323,4 +331,10 @@ flowchart LR
     114 --> 115
     053 --> 116
     060 --> 116
+    043 --> 117
+    084 --> 117
+    056 --> 118
+    084 --> 118
+    070 --> 119
+    084 --> 119
 ```
