@@ -1160,8 +1160,32 @@ impl BotAiDriver {
             self.pit_cooldown = (self.pit_cooldown - dt).max(0.0);
         }
 
-        // 2. Dynamic lookahead based on speed and profile
-        let mut lookahead_dist = if !proj.is_on_track {
+        // 2. Dynamic lookahead based on speed and profile.
+        // Curbs and inside-apex curb cuts (up to 1.5m, matching humanize::OFF_MARGIN) are part of
+        // the racing surface while cornering forward at speed; only transition to short-lookahead
+        // centerline recovery when genuinely off-road or recovering at low speed.
+        let near = spline.sample_at_distance(curr_dist);
+        let total_len = spline.total_length();
+        let ahead_curv = spline.sample_at_distance((curr_dist + 6.0) % total_len);
+        let turn_dir = normalize_angle(ahead_curv.tangent.y.atan2(ahead_curv.tangent.x) - near.tangent.y.atan2(near.tangent.x));
+        // proj.lateral_offset is + right, - left; turn_dir > 0 is left turn, < 0 is right turn.
+        let on_inside_of_turn = (turn_dir > 0.03 && proj.lateral_offset < 0.0)
+            || (turn_dir < -0.03 && proj.lateral_offset > 0.0);
+        let side_curb = |s: &arcade_race_core::track::spline::SplineSample| {
+            if proj.lateral_offset < 0.0 { s.left_curb } else { s.right_curb }
+        };
+        let has_apex_curb = proj.is_on_curb
+            || side_curb(&near)
+            || (on_inside_of_turn
+                && (side_curb(&spline.sample_at_distance((curr_dist + 10.0).rem_euclid(total_len)))
+                    || side_curb(&spline.sample_at_distance((curr_dist - 10.0).rem_euclid(total_len)))));
+        let actively_cornering = car_speed > 3.5 && car_fwd.dot(proj.tangent) > 0.7;
+        let on_road = if actively_cornering && has_apex_curb {
+            proj.lateral_offset.abs() <= proj.track_width * 0.5 + 1.5
+        } else {
+            proj.is_on_track
+        };
+        let mut lookahead_dist = if !on_road {
             (4.0 + car_speed * 0.2).clamp(3.0, 8.0)
         } else {
             (10.0 + car_speed * (self.profile.lookahead_time + 0.10)).clamp(9.0, 45.0)
@@ -1170,7 +1194,6 @@ impl BotAiDriver {
         // bend, so the bot steered into the wall at the tip. Aim at most MAX_TARGET_TURN_RAD around the bend,
         // where the waypoints put a wall closer than WALL_CLEARANCE_M to the road (elsewhere the line keeps
         // running over run-off, and Tier 1 stays slower than the keyboard reference, spec 046).
-        let near = spline.sample_at_distance(curr_dist);
         let close_wall = |on: bool, d: Option<f32>| on && d.is_some_and(|d| d < WALL_CLEARANCE_M);
         let walled = close_wall(near.left_wall, near.left_wall_distance) || close_wall(near.right_wall, near.right_wall_distance);
         let max_turn_cos = MAX_TARGET_TURN_RAD.cos();
@@ -1214,13 +1237,13 @@ impl BotAiDriver {
         }
 
         let target_sample = spline.sample_at_distance(target_dist);
-        let mut target_point = if !proj.is_on_track {
+        let mut target_point = if !on_road {
             let tangent_lead = if car_speed > 3.0 { (car_speed * 0.1).min(2.0) } else { 0.0 };
             proj.closest_point + proj.tangent * tangent_lead
         } else {
             target_sample.point
         };
-        let mut human_offset = if self.human.is_active() && proj.is_on_track {
+        let mut human_offset = if self.human.is_active() && on_road {
             self.human.line_offset(spline, target_dist, target_sample.width, dt)
         } else {
             0.0
@@ -1334,7 +1357,7 @@ impl BotAiDriver {
             target_point += target_sample.normal * human_offset;
         }
 
-        if !self.is_in_pit_lane && proj.is_on_track {
+        if !self.is_in_pit_lane && on_road {
             // Keep the straight line to the target off close walls. Around a bend it passes inside the target
             // (which already sits on the inside of the racing line), and on a kart circuit the wall is 0.3-0.6 m
             // from the road edge, so bots scraped the inner wall and stopped. It only acts within WALL_CLEARANCE_M
@@ -1461,7 +1484,7 @@ impl BotAiDriver {
         let gained = (curr_dist - self.progress_mark).rem_euclid(lap_len);
         let lateral = proj.lateral_offset.abs();
         let escaping = !proj.is_on_track && car_speed > 0.5 && heading_error.abs() < std::f32::consts::FRAC_PI_2;
-        let track_progress = proj.is_on_track && gained > 5.0 && gained < 0.5 * lap_len;
+        let track_progress = on_road && gained > 5.0 && gained < 0.5 * lap_len;
         let lateral_progress = lateral < self.progress_lateral - 2.0;
         if !racing || track_progress || lateral_progress {
             self.progress_mark = curr_dist;
@@ -1714,7 +1737,7 @@ impl BotAiDriver {
                     }
 
                     // Attempt lateral slingshot overtaking maneuver around car in front
-                    if proj.is_on_track && opp_fwd_proj < 15.0 && opp_lat_proj.abs() < 2.8 {
+                    if on_road && opp_fwd_proj < 15.0 && opp_lat_proj.abs() < 2.8 {
                         // Pick the side with more track clearance
                         let evade_dir = self.human.pass_side(if opp_lat_proj >= 0.0 { 1.0 } else { -1.0 }, opp_lat_proj);
                         let evade_strength = (1.0 - (opp_fwd_proj / 15.0)) * self.profile.aggression * self.human.pass_commit();
@@ -1734,7 +1757,7 @@ impl BotAiDriver {
         self.human.update_pass_timer(had_pass_target, dt);
 
         // Apply avoidance lateral offset to target point
-        if proj.is_on_track && avoidance_steer.abs() > 0.05 {
+        if on_road && avoidance_steer.abs() > 0.05 {
             target_point += target_sample.normal * (avoidance_steer * 2.5);
         }
 
@@ -1822,5 +1845,63 @@ mod tests {
         }
         assert_eq!(DriverTier::from_index(99), DriverTier::Legend);
     }
-}
 
+    #[test]
+    fn test_bot_does_not_snap_opposite_lock_on_apex_curb() {
+        use arcade_race_core::track::TrackProgressTracker;
+        use crate::{RaceFormat, RaceRules, RaceWorld};
+        use wheelbase::CarConfig;
+
+        for (name, is_gt) in [
+            ("kart_pine_grove", false),
+            ("kart_riverbend_circuit", false),
+            ("kart_summit_international", false),
+            ("gt_coastal_grand_prix", true),
+            ("gt_ridge_ring", true),
+        ] {
+            let path = format!("../../tracks/classic/{name}.json");
+            let track = Track::load_from_file(&path).expect("load track");
+            let mut world: RaceWorld<Car> = RaceWorld::new(RaceRules {
+                format: RaceFormat::Laps(2),
+                ..RaceRules::default()
+            });
+            let slot = track.grid_positions[0];
+            let cfg = if is_gt { CarConfig::sports_car() } else { CarConfig::kart() };
+            world.spawn(
+                Car::new(cfg).with_pose(slot.position, slot.angle),
+                TrackProgressTracker::new(track.checkpoints.len(), 3),
+            );
+            let mut driver = BotAiDriver::with_seed(
+                BotProfile::from_style_and_quality(DrivingStyle::Aggressive, &DriverQuality::for_tier(DriverTier::Legend)),
+                42,
+            );
+            let dt = 1.0 / 120.0;
+            let mut snap_ticks = 0usize;
+            let mut curb_ticks = 0usize;
+            for _step in 0..(60.0 / dt) as usize {
+                let ctrl = driver.compute_controls(&world.vehicles[0], &track, &[], dt);
+                let car = &world.vehicles[0];
+                let proj = track.spline.project_point(car.position());
+                let sample = track.spline.sample_at_distance(proj.progress_distance);
+                let signed_curv = {
+                    let s1 = track.spline.sample_at_distance((proj.progress_distance + 6.0) % track.spline.total_length());
+                    normalize_angle(s1.tangent.y.atan2(s1.tangent.x) - sample.tangent.y.atan2(sample.tangent.x)) / 6.0
+                };
+                if proj.is_on_curb {
+                    curb_ticks += 1;
+                }
+                let inside_sign = -signed_curv.signum();
+                let inside_lat = proj.lateral_offset * inside_sign;
+                if signed_curv.abs() > 0.015 && inside_lat > proj.track_width * 0.5 - 0.5 && ctrl.steer * inside_sign < -0.5 {
+                    snap_ticks += 1;
+                }
+                world.step(&track, &[ctrl], dt);
+            }
+            assert!(curb_ticks > 0, "{name}: expected bot to touch apex curbs");
+            assert_eq!(
+                snap_ticks, 0,
+                "{name}: bot snapped to opposite lock {snap_ticks} ticks while riding inside apex curb"
+            );
+        }
+    }
+}
