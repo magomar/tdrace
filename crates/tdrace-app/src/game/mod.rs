@@ -1597,6 +1597,15 @@ impl RaceSession {
         next
     }
 
+    /// Toggles in-race floating pilot nameplates on or off and syncs configuration state.
+    pub fn toggle_bot_nameplates(&mut self) -> bool {
+        self.visibility_options.bot_nameplates = !self.visibility_options.bot_nameplates;
+        self.config.display.bot_nameplates = self.visibility_options.bot_nameplates;
+        self.config.player_helpers.bot_nameplates = self.visibility_options.bot_nameplates;
+        self.base_config.player_helpers.bot_nameplates = self.visibility_options.bot_nameplates;
+        self.visibility_options.bot_nameplates
+    }
+
     /// Returns true if developer mode is enabled via config or environment / CLI flags.
     #[inline]
     pub fn is_dev_mode(&self) -> bool {
@@ -5719,42 +5728,25 @@ impl RaceSession {
                     });
                 }
 
-                // [7] Toggle / Cycle CRT Scanlines Post-Processing Overlay
-                if is_key_pressed(KeyCode::Key7) || is_key_pressed(KeyCode::F7) {
-                    let mode = self.cycle_scanline_mode();
+                // [7] Toggle In-Race Floating Pilot Nameplates (Spec 029)
+                if is_key_pressed(KeyCode::Key7)
+                    || is_key_pressed(KeyCode::LeftAlt)
+                    || is_key_pressed(KeyCode::RightAlt)
+                {
+                    let is_on = self.toggle_bot_nameplates();
                     self.audio.play_sfx(SfxType::UiMove);
-                    let is_on = mode != ScanlineMode::Disabled;
+                    let state_str = if is_on { "ON" } else { "OFF" };
                     let col = if is_on { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
                     if let Some(pos) = my_pos {
-                        self.fx.drift_popups.spawn_text(pos, &format!("[7] CRT: {}", mode.label()), col);
+                        self.fx.drift_popups.spawn_text(pos, &format!("[7] PILOT NAMES: {}", state_str), col);
                     }
                     self.visibility_toast = Some(VisibilityToast {
-                        text: format!("[7] CRT SCANLINES: {}", mode.label().to_uppercase()),
+                        text: format!("[7] PILOT NAMES: {}", state_str),
                         is_on,
                         timer: 1.8,
                         duration: 1.8,
                     });
                 }
-            }
-
-            // [ALT] Toggle In-Race Floating Bot Nameplates (Spec 029)
-            if is_key_pressed(KeyCode::LeftAlt) || is_key_pressed(KeyCode::RightAlt) {
-                self.visibility_options.bot_nameplates = !self.visibility_options.bot_nameplates;
-                self.config.display.bot_nameplates = self.visibility_options.bot_nameplates;
-                self.config.player_helpers.bot_nameplates = self.visibility_options.bot_nameplates;
-                self.base_config.player_helpers.bot_nameplates = self.visibility_options.bot_nameplates;
-                self.audio.play_sfx(SfxType::UiMove);
-                let state_str = if self.visibility_options.bot_nameplates { "ON" } else { "OFF" };
-                let col = if self.visibility_options.bot_nameplates { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
-                if let Some(pos) = my_pos {
-                    self.fx.drift_popups.spawn_text(pos, &format!("[ALT] NAMES: {}", state_str), col);
-                }
-                self.visibility_toast = Some(VisibilityToast {
-                    text: format!("[ALT] BOT NAMEPLATES: {}", state_str),
-                    is_on: self.visibility_options.bot_nameplates,
-                    timer: 1.8,
-                    duration: 1.8,
-                });
             }
 
             // Update visibility toast timer

@@ -560,3 +560,24 @@ fn test_player_helpers_config_bot_nameplates_customization() {
     assert!((loaded.bot_nameplates_opacity - 0.55).abs() < 1e-4);
     assert!(loaded.bot_nameplates_compact);
 }
+
+#[test]
+fn test_race_session_toggle_bot_nameplates() {
+    let mut session = RaceSession::new_with_config(GameConfig::default());
+    assert!(session.visibility_options.bot_nameplates);
+
+    let state = session.toggle_bot_nameplates();
+    assert!(!state);
+    assert!(!session.visibility_options.bot_nameplates);
+    assert!(!session.config.display.bot_nameplates);
+    assert!(!session.config.player_helpers.bot_nameplates);
+    assert!(!session.base_config.player_helpers.bot_nameplates);
+
+    let state2 = session.toggle_bot_nameplates();
+    assert!(state2);
+    assert!(session.visibility_options.bot_nameplates);
+    assert!(session.config.display.bot_nameplates);
+    assert!(session.config.player_helpers.bot_nameplates);
+    assert!(session.base_config.player_helpers.bot_nameplates);
+}
+
