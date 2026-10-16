@@ -200,10 +200,12 @@ fn current_wall_offset(track: &Track) -> Option<f32> {
     }
     let mut counts: Vec<(i32, usize)> = Vec::new();
     let geometry = &track.geometry;
-    // Spec 101: walls along the pit lane (divider, perimeter) are not main walls.
+    // Spec 101 & Spec 120: walls along the pit lane (divider, side-bay perimeter) are not main walls.
     let pit_wall = |v: Vec2| {
         track.pit_lane.as_ref().is_some_and(|lane| {
-            lane.spline.project_point(v).distance_to_spline <= lane.road_width * 0.5 + PIT_WALL_REACH
+            let proj = lane.spline.project_point(v);
+            let (left_half, right_half) = lane.half_widths_at_s(proj.progress_distance);
+            proj.distance_to_spline <= left_half.max(right_half) + PIT_WALL_REACH
         })
     };
     for walls in [&geometry.inner_walls, &geometry.outer_walls] {
