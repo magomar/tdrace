@@ -774,6 +774,8 @@ pub struct RaceSession {
     pub lan_race: Option<LanRaceState>,
     /// The LAN race was advanced in this frame (see `lan_after_frame`).
     pub lan_frame_ran: bool,
+    /// Real-time frame and subsystem performance profiler (`--profile`, `TDRACE_PROFILE=1`, or `F7`).
+    pub profiler: std::cell::RefCell<crate::dev_tools::RuntimeProfiler>,
 }
 
 
@@ -861,7 +863,7 @@ impl RaceSession {
             num_bots: default_num_bots,
             total_laps: config.gameplay.default_laps,
             config: config.clone(),
-            base_config: config,
+            base_config: config.clone(),
 
             active_module_id: "classic",
             championship_session: None,
@@ -930,7 +932,10 @@ impl RaceSession {
             academy_challenge: None,
             academy_last_evaluation: None,
 
-            fx: EffectsManager::new_persistent(1500),
+            fx: EffectsManager::new_persistent_with_capacity(
+                config.display.clamped_skidmark_buffer_cap(),
+                1500,
+            ),
             camera,
             camera_p2,
             split_layout: SplitLayout::Vertical,
@@ -1028,6 +1033,7 @@ impl RaceSession {
             lan_player_slot: 0,
             lan_race: None,
             lan_frame_ran: false,
+            profiler: std::cell::RefCell::new(crate::dev_tools::RuntimeProfiler::new()),
         };
 
         session.refresh_profiles_and_stats();
@@ -1374,6 +1380,7 @@ impl RaceSession {
         modal.assist_dropdown.set_selected(assist_idx);
         modal.scanlines_dropdown.set_selected(self.crt_overlay.config.mode.to_index());
         modal.set_vehicle_shadows(self.config.display.vehicle_shadows);
+        modal.set_skidmark_buffer_cap(self.config.display.clamped_skidmark_buffer_cap());
         modal.set_car_damage(self.config.gameplay.car_damage);
         modal.set_bot_difficulty_idx(self.config.gameplay.default_bot_difficulty.to_index());
 
@@ -1513,6 +1520,9 @@ impl RaceSession {
                 self.config.display.window_height = sel_h;
                 self.config.display.fullscreen = is_fs;
                 self.config.display.vehicle_shadows = modal.vehicle_shadows();
+                let skid_cap = modal.skidmark_buffer_cap();
+                self.config.display.skidmark_buffer_cap = skid_cap;
+                self.fx.set_skidmark_capacity(skid_cap);
                 self.camera.set_screen_height(sel_h as f32);
                 self.camera_p2.set_screen_height(sel_h as f32);
                 self.editor_camera.set_screen_height(sel_h as f32);
@@ -5329,9 +5339,19 @@ impl RaceSession {
 
     /// Master update tick called once per frame.
     pub fn update(&mut self) {
+        self.profiler.borrow_mut().begin_frame();
+        if is_key_pressed(KeyCode::F7) {
+            let mut prof = self.profiler.borrow_mut();
+            prof.enabled = !prof.enabled;
+        }
+        let prof_enabled = self.profiler.borrow().enabled;
+        let t0 = prof_enabled.then(std::time::Instant::now);
         self.lan_frame_ran = false;
         self.update_frame();
         self.lan_after_frame();
+        if let Some(start) = t0 {
+            self.profiler.borrow_mut().current.update_ms = start.elapsed().as_secs_f64() * 1000.0;
+        }
     }
 
     fn update_frame(&mut self) {
@@ -6153,6 +6173,7 @@ impl RaceSession {
                         self.accumulator -= Self::FIXED_DT;
                         substeps += 1;
                     }
+                    self.profiler.borrow_mut().current.substeps = substeps;
                 }
 
                 // Update Camera
@@ -14184,6 +14205,8 @@ impl RaceSession {
 
     /// Renders current UI state, HUD, or pause screen.
     pub fn render(&mut self) {
+        let prof_enabled = self.profiler.borrow().enabled;
+        let render_t0 = prof_enabled.then(std::time::Instant::now);
         match self.state {
             GameState::ClassicAcademy { selected_idx, showing_graduation } => {
                 crate::ui::render_academy_curriculum_screen(&self.fonts, &self.active_profile, selected_idx);
@@ -14712,6 +14735,34 @@ impl RaceSession {
         // Render top-most arcade screen transition overlay if active
         if let Some(ref trans) = self.transition {
             trans.render(0.0, 0.0, screen_width_safe(), screen_height_safe());
+        }
+
+        if let Some(start) = render_t0 {
+            let total_render_ms = start.elapsed().as_secs_f64() * 1000.0;
+            let skid_segs = self.fx.skidmarks.count();
+            let skid_chunks = self.fx.skidmarks.chunk_count();
+            let skid_cap = self.fx.skidmarks.capacity();
+            let active_parts = self.fx.particles.count();
+            let tex_cache = crate::render::vehicle_assets::cached_texture_counts();
+            {
+                let mut prof = self.profiler.borrow_mut();
+                prof.current.total_render_ms = total_render_ms;
+                let world_phases = prof.current.track_ms
+                    + prof.current.skidmarks_ms
+                    + prof.current.scenery_ms
+                    + prof.current.cars_ms
+                    + prof.current.particles_ms;
+                prof.current.hud_ms = (total_render_ms - world_phases).max(0.0);
+                prof.end_frame(
+                    self.session_time,
+                    skid_segs,
+                    skid_chunks,
+                    skid_cap,
+                    active_parts,
+                    tex_cache,
+                );
+            }
+            self.profiler.borrow().render_overlay(&self.fonts, self.session_time);
         }
     }
 
@@ -16080,34 +16131,26 @@ impl RaceSession {
         focus_car_idx: usize,
         viewport: Option<(i32, i32, i32, i32)>,
     ) {
+        let prof_enabled = self.profiler.borrow().enabled;
         camera.apply_with_viewport(viewport);
         let view_bounds = Some(camera.visible_world_bounds(12.0));
 
         // 1. Ground Track & Environment (elevation < 0.6m)
+        let t_phase = prof_enabled.then(std::time::Instant::now);
         render_ground_track_culled(&self.track, view_bounds);
-
-        // 1b. Optimal Racing Line Visual Aid (Spec 110)
-        if self.visibility_options.racing_line_mode != crate::config::RacingLineMode::Disabled {
-            if let Some(opt_line) = self.track.cached_optimal_line.as_ref() {
-                let focus_vehicle = self.world.vehicles.get(focus_car_idx);
-                let player_pos = focus_vehicle.map(|v| v.state.position).unwrap_or(Vec2::ZERO);
-                let player_speed = focus_vehicle.map(|v| v.state.speed).unwrap_or(0.0);
-                render_optimal_racing_line(
-                    &self.track.spline,
-                    opt_line,
-                    player_pos,
-                    player_speed,
-                    self.visibility_options.racing_line_mode,
-                    self.visibility_options.racing_line_opacity,
-                    view_bounds,
-                );
-            }
+        if let Some(t0) = t_phase {
+            self.profiler.borrow_mut().current.track_ms += t0.elapsed().as_secs_f64() * 1000.0;
         }
 
         // 2. Persistent Ground Skidmarks
+        let t_phase = prof_enabled.then(std::time::Instant::now);
         self.fx.render_ground_fx_culled(view_bounds);
+        if let Some(t0) = t_phase {
+            self.profiler.borrow_mut().current.skidmarks_ms += t0.elapsed().as_secs_f64() * 1000.0;
+        }
 
         // 3. Ground Scenery Shadows, Barriers & Obstacles (elevation < 0.6m)
+        let t_phase = prof_enabled.then(std::time::Instant::now);
         render_grandstand_shadows_culled(&self.track, view_bounds);
         render_building_shadows_culled(&self.track, view_bounds);
         render_rock_shadows_culled(&self.track, view_bounds);
@@ -16117,8 +16160,12 @@ impl RaceSession {
         render_rocks_culled(&self.track, view_bounds);
         render_ground_barriers_and_obstacles_culled(&self.track, view_bounds);
         render_tree_trunks_culled(&self.track, view_bounds);
+        if let Some(t0) = t_phase {
+            self.profiler.borrow_mut().current.scenery_ms += t0.elapsed().as_secs_f64() * 1000.0;
+        }
 
         // Separate cars into ground and elevated groups
+        let t_phase = prof_enabled.then(std::time::Instant::now);
         let mut ground_cars = Vec::new();
         let mut elevated_cars = Vec::new();
         for i in 0..self.world.vehicles.len() {
@@ -16147,11 +16194,19 @@ impl RaceSession {
                 .partial_cmp(&self.world.vehicles[b].total_elevation())
                 .unwrap_or(std::cmp::Ordering::Equal)
         });
+        if let Some(t0) = t_phase {
+            self.profiler.borrow_mut().current.cars_ms += t0.elapsed().as_secs_f64() * 1000.0;
+        }
 
         // 3b. Off-track roost (Dirt, Sand, Gravel, ...) stays under the cars
+        let t_phase = prof_enabled.then(std::time::Instant::now);
         self.fx.render_ground_debris();
+        if let Some(t0) = t_phase {
+            self.profiler.borrow_mut().current.particles_ms += t0.elapsed().as_secs_f64() * 1000.0;
+        }
 
         // 4. Ground-Level Vehicles
+        let t_phase = prof_enabled.then(std::time::Instant::now);
         let adaptive_factors = self.world.vehicles.get(focus_car_idx).map(|pc| {
             let crowding = if self.visibility_options.adaptive_visibility {
                 compute_traffic_crowding(
@@ -16255,34 +16310,26 @@ impl RaceSession {
                 }
             }
         }
+        if let Some(t0) = t_phase {
+            self.profiler.borrow_mut().current.cars_ms += t0.elapsed().as_secs_f64() * 1000.0;
+        }
 
         // 6. Elevated Overpass Bridges (solid opaque concrete deck + drop shadow + ribbon)
+        let t_phase = prof_enabled.then(std::time::Instant::now);
         render_elevated_track_culled(&self.track, view_bounds);
-
-        // 6b. Optimal Racing Line Visual Aid on elevated bridge decks (Spec 110)
-        if self.visibility_options.racing_line_mode != crate::config::RacingLineMode::Disabled
-            && (elevated_cars.contains(&focus_car_idx) || focus_under_deck)
-        {
-            if let Some(opt_line) = self.track.cached_optimal_line.as_ref() {
-                let focus_vehicle = self.world.vehicles.get(focus_car_idx);
-                let player_pos = focus_vehicle.map(|v| v.state.position).unwrap_or(Vec2::ZERO);
-                let player_speed = focus_vehicle.map(|v| v.state.speed).unwrap_or(0.0);
-                render_optimal_racing_line(
-                    &self.track.spline,
-                    opt_line,
-                    player_pos,
-                    player_speed,
-                    self.visibility_options.racing_line_mode,
-                    self.visibility_options.racing_line_opacity,
-                    view_bounds,
-                );
-            }
+        if let Some(t0) = t_phase {
+            self.profiler.borrow_mut().current.track_ms += t0.elapsed().as_secs_f64() * 1000.0;
         }
 
         // 7. Elevated Bridge Barriers & Guardrails (drawn on top of the bridge deck, touching the track)
+        let t_phase = prof_enabled.then(std::time::Instant::now);
         render_elevated_barriers_and_obstacles_culled(&self.track, view_bounds);
+        if let Some(t0) = t_phase {
+            self.profiler.borrow_mut().current.scenery_ms += t0.elapsed().as_secs_f64() * 1000.0;
+        }
 
         // 8. Elevated Vehicles (drawn on top of the bridge deck); the aura of a car under the deck also goes here
+        let t_phase = prof_enabled.then(std::time::Instant::now);
         if self.visibility_options.ground_aura && (elevated_cars.contains(&focus_car_idx) || focus_under_deck) {
             if let Some(focus_car) = self.world.vehicles.get(focus_car_idx) {
                 let scheme = self.color_schemes.get(focus_car_idx).unwrap_or(&self.active_profile.color_scheme);
@@ -16338,12 +16385,33 @@ impl RaceSession {
                 lights_on,
             );
         }
+        if let Some(t0) = t_phase {
+            self.profiler.borrow_mut().current.cars_ms += t0.elapsed().as_secs_f64() * 1000.0;
+        }
 
         // 9. Airborne Particles (Smoke, Dirt roost, Sparks, Drift text)
+        let t_phase = prof_enabled.then(std::time::Instant::now);
         self.fx.render_airborne_fx();
+        if let Some(t0) = t_phase {
+            self.profiler.borrow_mut().current.particles_ms += t0.elapsed().as_secs_f64() * 1000.0;
+        }
 
-        // 10. Player Car Visibility Aids (Frontal Chevron)
+        // 10. Player Car Visibility Aids (Optimal Racing Line, Frontal Chevron, Pacenotes)
+        let t_phase = prof_enabled.then(std::time::Instant::now);
         if let Some(focus_car) = self.world.vehicles.get(focus_car_idx) {
+            if self.visibility_options.racing_line_mode != crate::config::RacingLineMode::Disabled {
+                if let Some(opt_line) = self.track.cached_optimal_line.as_ref() {
+                    render_optimal_racing_line(
+                        &self.track.spline,
+                        opt_line,
+                        focus_car.state.position,
+                        focus_car.state.speed,
+                        self.visibility_options.racing_line_mode,
+                        self.visibility_options.racing_line_opacity,
+                        view_bounds,
+                    );
+                }
+            }
             let scheme = self.color_schemes.get(focus_car_idx).unwrap_or(&self.active_profile.color_scheme);
             if self.visibility_options.frontal_chevron {
                 render_player_frontal_chevron(
@@ -16421,9 +16489,16 @@ impl RaceSession {
                 }
             }
         }
+        if let Some(t0) = t_phase {
+            self.profiler.borrow_mut().current.cars_ms += t0.elapsed().as_secs_f64() * 1000.0;
+        }
 
         // 11. Tree Foliage Canopies (Above Vehicles with proximity alpha fading)
+        let t_phase = prof_enabled.then(std::time::Instant::now);
         render_tree_canopies_culled(&self.track, &self.world.vehicles, view_bounds);
+        if let Some(t0) = t_phase {
+            self.profiler.borrow_mut().current.scenery_ms += t0.elapsed().as_secs_f64() * 1000.0;
+        }
 
         // 12. Debug Overlays (F1: LIDAR, F2: Checkpoints, F3: OBBs, F4: AI Lines)
         if let Some(focus_car) = self.world.vehicles.get(focus_car_idx) {

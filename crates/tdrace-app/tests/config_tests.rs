@@ -539,6 +539,29 @@ window_height = 1080
 }
 
 #[test]
+fn test_display_config_skidmark_buffer_cap_roundtrip_and_clamping() {
+    let mut config = GameConfig::default();
+    assert_eq!(config.display.skidmark_buffer_cap, 262_144);
+    assert_eq!(config.display.clamped_skidmark_buffer_cap(), 262_144);
+
+    // Custom 512K roundtrip
+    config.display.skidmark_buffer_cap = 524_288;
+    let toml_str = toml::to_string_pretty(&config).expect("Serialize display config");
+    let loaded: GameConfig = toml::from_str(&toml_str).expect("Deserialize display config");
+    assert_eq!(loaded.display.skidmark_buffer_cap, 524_288);
+    assert_eq!(loaded.display.clamped_skidmark_buffer_cap(), 524_288);
+
+    // Clamping bounds [32_768, 1_048_576]
+    let mut low = GameConfig::default();
+    low.display.skidmark_buffer_cap = 1_024;
+    assert_eq!(low.display.clamped_skidmark_buffer_cap(), 32_768);
+
+    let mut high = GameConfig::default();
+    high.display.skidmark_buffer_cap = 8_000_000;
+    assert_eq!(high.display.clamped_skidmark_buffer_cap(), 1_048_576);
+}
+
+#[test]
 fn test_display_config_surface_texture_quality_roundtrip() {
     use tdrace_app::render::SurfaceTextureQuality;
 

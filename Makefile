@@ -35,6 +35,8 @@ help: ## Display this help screen
 	@echo -e "Examples:"
 	@echo -e "  $(GREEN)make run -- --f1$(RESET)          # Launch F1 module directly"
 	@echo -e "  $(GREEN)make run f1$(RESET)               # Launch F1 module (shorthand)"
+	@echo -e "  $(GREEN)make dev profile$(RESET)          # Launch dev mode with runtime profiler (or F7 in-game)"
+	@echo -e "  $(GREEN)make dev PROFILE=1$(RESET)        # Launch dev mode with runtime profiler via env flag"
 	@echo -e "  $(GREEN)make run ARGS=\"--rally\"$(RESET)   # Launch Rally module via ARGS"
 	@echo -e "  $(GREEN)make run-kart$(RESET)             # Dedicated target for Karting"
 	@echo -e "  $(GREEN)make test-rust -- --nocapture$(RESET)\n"
@@ -75,19 +77,19 @@ setup-python: ## Initialize Python virtual environment (.venv) and build editabl
 # 🎮 Game Execution
 # ------------------------------------------------------------------------------
 
-run: ## Run desktop arcade game (release mode, accepts args: make run -- --f1, make run f1, make run ARGS="--f1")
+run: ## Run desktop arcade game (release mode, accepts args: make run -- --f1, make run profile, make run PROFILE=1)
 	@echo -e "$(GREEN)🚀 Launching TDRace Arcade Game (Release)...$(RESET)"
-	cargo run --release -p tdrace-app $(if $(EXTRA_ARGS),-- $(EXTRA_ARGS),)
+	$(if $(PROFILE),TDRACE_PROFILE=$(PROFILE),) cargo run --release -p tdrace-app $(if $(EXTRA_ARGS),-- $(EXTRA_ARGS),)
 
 play: ## Alias for 'make run'
-	@$(MAKE) run $(if $(EXTRA_ARGS),ARGS="$(EXTRA_ARGS)",)
+	@$(MAKE) run $(if $(EXTRA_ARGS),ARGS="$(EXTRA_ARGS)",) $(if $(PROFILE),PROFILE="$(PROFILE)",)
 
-run-dev: ## Run desktop arcade game in debug/dev mode (accepts args: make run-dev -- --f1, make run-dev f1)
+run-dev: ## Run desktop arcade game in debug/dev mode (accepts args: make dev profile, make dev -- --profile, make dev PROFILE=1)
 	@echo -e "$(YELLOW)🚀 Launching TDRace Arcade Game (Debug/Dev)...$(RESET)"
-	TDRACE_DEV=1 RUST_BACKTRACE=1 cargo run -p tdrace-app $(if $(EXTRA_ARGS),-- $(EXTRA_ARGS),)
+	TDRACE_DEV=1 $(if $(PROFILE),TDRACE_PROFILE=$(PROFILE),) RUST_BACKTRACE=1 cargo run -p tdrace-app $(if $(EXTRA_ARGS),-- $(EXTRA_ARGS),)
 
 dev: ## Run desktop arcade game in development mode (alias for 'make run-dev')
-	@$(MAKE) run-dev $(if $(EXTRA_ARGS),ARGS="$(EXTRA_ARGS)",)
+	@$(MAKE) run-dev $(if $(EXTRA_ARGS),ARGS="$(EXTRA_ARGS)",) $(if $(PROFILE),PROFILE="$(PROFILE)",)
 
 run-gt: ## Run GT World Challenge module directly
 	@echo -e "$(CYAN)🏎️  Launching GT World Challenge Module...$(RESET)"

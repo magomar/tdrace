@@ -42,6 +42,7 @@ pub struct SettingsSnapshot {
     pub ui_scale_idx: usize,
     pub scanlines_idx: usize,
     pub vehicle_shadows_idx: usize,
+    pub skidmark_cap_k: f32,
     pub theme_idx: usize,
     pub assist_idx: usize,
     pub speed_unit_idx: usize,
@@ -90,6 +91,7 @@ impl Default for SettingsSnapshot {
             ui_scale_idx: 0,
             scanlines_idx: 0,
             vehicle_shadows_idx: 1,
+            skidmark_cap_k: 256.0,
             theme_idx: 0,
             assist_idx: 0,
             speed_unit_idx: 0,
@@ -439,6 +441,7 @@ pub struct ArcadeSettingsModal {
     pub ui_scale_dropdown: DropdownWidget,
     pub scanlines_dropdown: DropdownWidget,
     pub vehicle_shadows_dropdown: DropdownWidget,
+    pub skidmark_cap_slider: SliderWidget,
     pub theme_dropdown: DropdownWidget,
 
     // Gameplay Widgets
@@ -499,12 +502,12 @@ impl ArcadeSettingsModal {
 
         // Grid navigation: 4 columns for the 4 tabs, each with widget count + 1 (for bottom buttons)
         // Tab 0 (Audio): 5 widgets + 1 bottom row = 6 rows
-        // Tab 1 (Controls): 7 widgets + 1 bottom row = 8 rows
-        // Tab 2 (Display): 6 widgets + 1 bottom row = 7 rows
+        // Tab 1 (Controls): 6 widgets + 1 bottom row = 7 rows
+        // Tab 2 (Display): 7 widgets + 1 bottom row = 8 rows
         // Tab 3 (Gameplay):
         //   Sub-tab 0 (General): 6 widgets (assist, bot difficulty, speed, ghost, damage, preset) + 1 customize button + 1 bottom row = 8 rows
         //   Sub-tab 1 (Visual Aids): 1 preset + 12 helper widgets + 1 bottom row = 14 rows
-        let nav = NavGrid2D::new(vec![6, 7, 7, 8]);
+        let nav = NavGrid2D::new(vec![6, 7, 8, 8]);
 
         let mute_options = vec!["ACTIVE (UNMUTED)".to_string(), "MUTED".to_string()];
         let mute_idx = if audio.is_muted { 1 } else { 0 };
@@ -672,6 +675,8 @@ impl ArcadeSettingsModal {
                 vec!["Enabled".to_string(), "Disabled".to_string()],
                 1,
             ),
+            skidmark_cap_slider: SliderWidget::new("SKIDMARK BUFFER CAP", 32.0, 1024.0, 32.0, 256.0)
+                .with_suffix("K"),
             theme_dropdown: DropdownWidget::new("COLOR THEME", theme_options, 0),
 
             assist_dropdown: DropdownWidget::new("ASSIST PROFILE", assist_options, 0),
@@ -798,6 +803,7 @@ impl ArcadeSettingsModal {
         self.ui_scale_dropdown.set_selected(0);
         self.scanlines_dropdown.set_selected(0);
         self.vehicle_shadows_dropdown.set_selected(1);
+        self.skidmark_cap_slider.set_value(256.0);
         self.theme_dropdown.set_selected(0);
         self.assist_dropdown.set_selected(0);
         self.speed_unit_dropdown.set_selected(0);
@@ -1141,6 +1147,17 @@ impl ArcadeSettingsModal {
             .set_selected(if enabled { 0 } else { 1 });
     }
 
+    /// Returns the configured skidmark ring buffer capacity in segments (`32_768..=1_048_576`).
+    pub fn skidmark_buffer_cap(&self) -> usize {
+        ((self.skidmark_cap_slider.value.round() as usize) * 1024).clamp(32_768, 1_048_576)
+    }
+
+    /// Sets the skidmark ring buffer capacity slider from a segment count (`32_768..=1_048_576`).
+    pub fn set_skidmark_buffer_cap(&mut self, cap: usize) {
+        let clamped_k = ((cap.clamp(32_768, 1_048_576) as f32) / 1024.0).clamp(32.0, 1024.0);
+        self.skidmark_cap_slider.set_value(clamped_k);
+    }
+
     /// Returns true if car damage is enabled.
     pub fn car_damage(&self) -> bool {
         self.car_damage_dropdown.selected_index == 1
@@ -1185,6 +1202,7 @@ impl ArcadeSettingsModal {
             ui_scale_idx: self.ui_scale_dropdown.selected_index,
             scanlines_idx: self.scanlines_dropdown.selected_index,
             vehicle_shadows_idx: self.vehicle_shadows_dropdown.selected_index,
+            skidmark_cap_k: self.skidmark_cap_slider.value,
             theme_idx: self.theme_dropdown.selected_index,
             assist_idx: self.assist_dropdown.selected_index,
             speed_unit_idx: self.speed_unit_dropdown.selected_index,
@@ -1251,6 +1269,7 @@ impl ArcadeSettingsModal {
         self.scanlines_dropdown.set_selected(snap.scanlines_idx);
         self.vehicle_shadows_dropdown
             .set_selected(snap.vehicle_shadows_idx);
+        self.skidmark_cap_slider.set_value(snap.skidmark_cap_k);
         self.theme_dropdown.set_selected(snap.theme_idx);
         self.assist_dropdown.set_selected(snap.assist_idx);
         self.speed_unit_dropdown.set_selected(snap.speed_unit_idx);
@@ -1310,6 +1329,7 @@ impl ArcadeSettingsModal {
             || cur.ui_scale_idx != init.ui_scale_idx
             || cur.scanlines_idx != init.scanlines_idx
             || cur.vehicle_shadows_idx != init.vehicle_shadows_idx
+            || (cur.skidmark_cap_k - init.skidmark_cap_k).abs() > 0.001
             || cur.theme_idx != init.theme_idx
             || cur.assist_idx != init.assist_idx
             || cur.speed_unit_idx != init.speed_unit_idx
@@ -1964,32 +1984,45 @@ impl CabinetScreen for ArcadeSettingsModal {
                 }
             }
             2 => {
-                // DISPLAY: 0: Resolution, 1: Display Mode, 2: UI Scale, 3: Scanlines, 4: Vehicle Shadows, 5: Theme, 6: Bottom Buttons
-                let r0 = (content_x, content_y, content_w, row_h);
-                let r1 = (content_x, content_y + (row_h + row_gap), content_w, row_h);
+                // DISPLAY: 0: Resolution, 1: Display Mode, 2: UI Scale, 3: Scanlines, 4: Vehicle Shadows, 5: Skidmark Buffer Cap, 6: Theme, 7: Bottom Buttons
+                let (disp_row_h, disp_row_gap, disp_content_y) =
+                    (scaler.s(36.0), scaler.s(6.0), box_y + scaler.s(98.0));
+                let r0 = (content_x, disp_content_y, content_w, disp_row_h);
+                let r1 = (
+                    content_x,
+                    disp_content_y + (disp_row_h + disp_row_gap),
+                    content_w,
+                    disp_row_h,
+                );
                 let r2 = (
                     content_x,
-                    content_y + (row_h + row_gap) * 2.0,
+                    disp_content_y + (disp_row_h + disp_row_gap) * 2.0,
                     content_w,
-                    row_h,
+                    disp_row_h,
                 );
                 let r3 = (
                     content_x,
-                    content_y + (row_h + row_gap) * 3.0,
+                    disp_content_y + (disp_row_h + disp_row_gap) * 3.0,
                     content_w,
-                    row_h,
+                    disp_row_h,
                 );
                 let r4 = (
                     content_x,
-                    content_y + (row_h + row_gap) * 4.0,
+                    disp_content_y + (disp_row_h + disp_row_gap) * 4.0,
                     content_w,
-                    row_h,
+                    disp_row_h,
                 );
                 let r5 = (
                     content_x,
-                    content_y + (row_h + row_gap) * 5.0,
+                    disp_content_y + (disp_row_h + disp_row_gap) * 5.0,
                     content_w,
-                    row_h,
+                    disp_row_h,
+                );
+                let r6 = (
+                    content_x,
+                    disp_content_y + (disp_row_h + disp_row_gap) * 6.0,
+                    content_w,
+                    disp_row_h,
                 );
 
                 if self.resolution_dropdown.handle_input(
@@ -2057,15 +2090,23 @@ impl CabinetScreen for ArcadeSettingsModal {
                 ) {
                     ctx.play_ui_select();
                 }
-                if self.theme_dropdown.handle_input(
+                if self.skidmark_cap_slider.handle_input(
                     active_row == 5,
+                    ctx.gamepad.nav_left,
+                    ctx.gamepad.nav_right,
+                    r5,
+                ) {
+                    ctx.play_ui_move();
+                }
+                if self.theme_dropdown.handle_input(
+                    active_row == 6,
                     ctx.gamepad.nav_left,
                     ctx.gamepad.nav_right,
                     ctx.gamepad.nav_up,
                     ctx.gamepad.nav_down,
                     ctx.gamepad.btn_confirm_pressed,
                     ctx.gamepad.btn_cancel_pressed,
-                    r5,
+                    r6,
                     scaler,
                 ) {
                     ctx.play_ui_select();
@@ -3037,16 +3078,18 @@ impl CabinetScreen for ArcadeSettingsModal {
                 }
             }
             2 => {
-                // DISPLAY TAB: 0: Resolution, 1: Display Mode, 2: UI Scale, 3: Scanlines, 4: Vehicle Shadows, 5: Theme
-                let mut y = content_y;
-                let r0 = (content_x, y, content_w, row_h);
+                // DISPLAY TAB: 0: Resolution, 1: Display Mode, 2: UI Scale, 3: Scanlines, 4: Vehicle Shadows, 5: Skidmark Buffer Cap, 6: Theme
+                let (disp_row_h, disp_row_gap, disp_content_y) =
+                    (scaler.s(36.0), scaler.s(6.0), box_y + scaler.s(98.0));
+                let mut y = disp_content_y;
+                let r0 = (content_x, y, content_w, disp_row_h);
                 draw_dropdown(
                     scaler,
                     fonts,
                     content_x,
                     y,
                     content_w,
-                    row_h,
+                    disp_row_h,
                     &self.resolution_dropdown.label,
                     &self.resolution_dropdown.options,
                     self.resolution_dropdown.selected_index,
@@ -3056,15 +3099,15 @@ impl CabinetScreen for ArcadeSettingsModal {
                     false,
                     accent,
                 );
-                y += row_h + row_gap;
-                let r1 = (content_x, y, content_w, row_h);
+                y += disp_row_h + disp_row_gap;
+                let r1 = (content_x, y, content_w, disp_row_h);
                 draw_dropdown(
                     scaler,
                     fonts,
                     content_x,
                     y,
                     content_w,
-                    row_h,
+                    disp_row_h,
                     &self.display_mode_dropdown.label,
                     &self.display_mode_dropdown.options,
                     self.display_mode_dropdown.selected_index,
@@ -3074,15 +3117,15 @@ impl CabinetScreen for ArcadeSettingsModal {
                     false,
                     accent,
                 );
-                y += row_h + row_gap;
-                let r2 = (content_x, y, content_w, row_h);
+                y += disp_row_h + disp_row_gap;
+                let r2 = (content_x, y, content_w, disp_row_h);
                 draw_dropdown(
                     scaler,
                     fonts,
                     content_x,
                     y,
                     content_w,
-                    row_h,
+                    disp_row_h,
                     &self.ui_scale_dropdown.label,
                     &self.ui_scale_dropdown.options,
                     self.ui_scale_dropdown.selected_index,
@@ -3092,15 +3135,15 @@ impl CabinetScreen for ArcadeSettingsModal {
                     false,
                     accent,
                 );
-                y += row_h + row_gap;
-                let r3 = (content_x, y, content_w, row_h);
+                y += disp_row_h + disp_row_gap;
+                let r3 = (content_x, y, content_w, disp_row_h);
                 draw_dropdown(
                     scaler,
                     fonts,
                     content_x,
                     y,
                     content_w,
-                    row_h,
+                    disp_row_h,
                     &self.scanlines_dropdown.label,
                     &self.scanlines_dropdown.options,
                     self.scanlines_dropdown.selected_index,
@@ -3110,15 +3153,15 @@ impl CabinetScreen for ArcadeSettingsModal {
                     false,
                     accent,
                 );
-                y += row_h + row_gap;
-                let r4 = (content_x, y, content_w, row_h);
+                y += disp_row_h + disp_row_gap;
+                let r4 = (content_x, y, content_w, disp_row_h);
                 draw_dropdown(
                     scaler,
                     fonts,
                     content_x,
                     y,
                     content_w,
-                    row_h,
+                    disp_row_h,
                     &self.vehicle_shadows_dropdown.label,
                     &self.vehicle_shadows_dropdown.options,
                     self.vehicle_shadows_dropdown.selected_index,
@@ -3128,21 +3171,36 @@ impl CabinetScreen for ArcadeSettingsModal {
                     false,
                     accent,
                 );
-                y += row_h + row_gap;
-                let r5 = (content_x, y, content_w, row_h);
+                y += disp_row_h + disp_row_gap;
+                draw_slider(
+                    scaler,
+                    fonts,
+                    content_x,
+                    y,
+                    content_w,
+                    disp_row_h,
+                    &self.skidmark_cap_slider.label,
+                    &self.skidmark_cap_slider.formatted_value(),
+                    self.skidmark_cap_slider.normalized(),
+                    active_row == 5,
+                    false,
+                    accent,
+                );
+                y += disp_row_h + disp_row_gap;
+                let r6 = (content_x, y, content_w, disp_row_h);
                 draw_dropdown(
                     scaler,
                     fonts,
                     content_x,
                     y,
                     content_w,
-                    row_h,
+                    disp_row_h,
                     &self.theme_dropdown.label,
                     &self.theme_dropdown.options,
                     self.theme_dropdown.selected_index,
                     false,
                     self.theme_dropdown.popup_hovered_index,
-                    active_row == 5,
+                    active_row == 6,
                     false,
                     accent,
                 );
@@ -3217,10 +3275,10 @@ impl CabinetScreen for ArcadeSettingsModal {
                     draw_dropdown_popup(
                         scaler,
                         fonts,
-                        r5.0,
-                        r5.1,
-                        r5.2,
-                        r5.3,
+                        r6.0,
+                        r6.1,
+                        r6.2,
+                        r6.3,
                         &self.theme_dropdown.options,
                         self.theme_dropdown.selected_index,
                         self.theme_dropdown.popup_hovered_index,

@@ -207,6 +207,8 @@ pub struct DisplayConfig {
     pub surface_texture_quality: SurfaceTextureQuality,
     /// In-race floating bot nameplates enabled toggle.
     pub bot_nameplates: bool,
+    /// Persistent skidmark ring buffer capacity (clamped to `[32_768, 1_048_576]`, default `262_144`).
+    pub skidmark_buffer_cap: usize,
 }
 
 impl Default for DisplayConfig {
@@ -223,11 +225,20 @@ impl Default for DisplayConfig {
             vehicle_shadows: false,
             surface_texture_quality: SurfaceTextureQuality::High,
             bot_nameplates: true,
+            skidmark_buffer_cap: race_ui::fx::DEFAULT_SKIDMARK_CAPACITY,
         }
     }
 }
 
 impl DisplayConfig {
+    /// Returns the skidmark ring buffer capacity clamped to `[32_768, 1_048_576]`.
+    pub fn clamped_skidmark_buffer_cap(&self) -> usize {
+        self.skidmark_buffer_cap.clamp(
+            race_ui::fx::MIN_SKIDMARK_CAPACITY,
+            race_ui::fx::MAX_SKIDMARK_CAPACITY,
+        )
+    }
+
     pub fn to_scanline_mode(&self) -> cabinet::fx::ScanlineMode {
         match self.scanline_mode.to_lowercase().as_str() {
             "subtle" => cabinet::fx::ScanlineMode::Subtle,
