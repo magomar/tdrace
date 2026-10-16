@@ -140,6 +140,41 @@ impl TrackChoice {
     pub fn is_user_custom(&self) -> bool {
         !self.is_official_preset()
     }
+
+    /// Module hint used when resolving this choice in the official catalog.
+    pub fn choice_module_hint(&self) -> Option<&'static str> {
+        match self {
+            Self::Custom { path, .. } => {
+                if path.starts_with("gt/") {
+                    Some("gt")
+                } else if path.starts_with("nascar/") {
+                    Some("nascar")
+                } else if path.starts_with("rally/") || path.starts_with("rallycross/") {
+                    Some("rallycross")
+                } else if path.starts_with("kart/") {
+                    Some("kart")
+                } else if path.starts_with("classic/") {
+                    Some("classic")
+                } else if path.starts_with("extreme_offroad/") {
+                    Some("extreme_offroad")
+                } else if path.starts_with("autocross/") {
+                    Some("autocross")
+                } else {
+                    None
+                }
+            }
+            _ => Some("classic"),
+        }
+    }
+
+    /// Returns compile-time [`tdrace_core::catalog::EmbeddedCircuit`] metadata and thumbnail geometry
+    /// when this choice is an official preset without a dev-mode disk override.
+    pub fn embedded_for_menu(&self) -> Option<&'static tdrace_core::catalog::EmbeddedCircuit> {
+        if !self.is_official_preset() {
+            return None;
+        }
+        crate::tracks::official::embedded_for_menu(self.track_id(), self.choice_module_hint())
+    }
 }
 
 /// The embedded official circuit for a classic `TrackChoice` variant (spec 042: text lives in tracks/ JSON).
@@ -173,7 +208,7 @@ fn module_label(module: &str) -> &'static str {
 }
 
 static MENU_TRACK_CACHE: std::sync::Mutex<
-    Option<std::collections::HashMap<String, tdrace_core::track::Track>>,
+    Option<std::collections::HashMap<String, std::sync::Arc<tdrace_core::track::Track>>>,
 > = std::sync::Mutex::new(None);
 
 /// Bumped on every cache clear, so a background prewarm never stores a track loaded before the clear.
@@ -189,9 +224,16 @@ pub fn clear_menu_track_cache() {
     }
 }
 
+/// Returns the number of circuits currently stored in [`MENU_TRACK_CACHE`].
+pub fn menu_track_cache_len() -> usize {
+    MENU_TRACK_CACHE
+        .lock()
+        .ok()
+        .and_then(|guard| guard.as_ref().map(|c| c.len()))
+        .unwrap_or(0)
+}
+
 /// Loads the given circuits into the menu cache on a background thread.
-/// Without this, the first visit to a circuit category loads every visible card on the
-/// UI thread and the menu freezes for up to half a second.
 pub fn prewarm_menu_track_cache(choices: Vec<TrackChoice>) -> Option<std::thread::JoinHandle<()>> {
     let dir = crate::storage::resolve_user_tracks_dir();
     std::thread::Builder::new()
@@ -215,12 +257,45 @@ pub fn prewarm_menu_track_cache(choices: Vec<TrackChoice>) -> Option<std::thread
                         guard
                             .get_or_insert_with(std::collections::HashMap::new)
                             .entry(cache_key)
-                            .or_insert(track);
+                            .or_insert_with(|| std::sync::Arc::new(track));
                     }
                 }
             }
         })
         .ok()
+}
+
+/// Resolves a TrackChoice to a shared [`std::sync::Arc<Track>`] for UI preview rendering without cloning.
+pub fn resolve_track_for_menu_arc(
+    choice: &TrackChoice,
+) -> Option<std::sync::Arc<tdrace_core::track::Track>> {
+    resolve_track_for_menu_arc_with_dir(choice, crate::storage::resolve_user_tracks_dir())
+}
+
+/// Resolves a TrackChoice to a shared [`std::sync::Arc<Track>`] for UI preview rendering given a tracks directory, cached.
+pub fn resolve_track_for_menu_arc_with_dir(
+    choice: &TrackChoice,
+    tracks_dir: impl AsRef<std::path::Path>,
+) -> Option<std::sync::Arc<tdrace_core::track::Track>> {
+    let dir = tracks_dir.as_ref();
+    let cache_key = format!("{}:{}", choice.track_id(), dir.display());
+
+    if let Ok(guard) = MENU_TRACK_CACHE.lock() {
+        if let Some(cache) = guard.as_ref() {
+            if let Some(track) = cache.get(&cache_key) {
+                return Some(std::sync::Arc::clone(track));
+            }
+        }
+    }
+
+    let loaded = resolve_track_for_menu_with_dir_uncached(choice, dir).map(std::sync::Arc::new);
+    if let Some(ref t) = loaded {
+        if let Ok(mut guard) = MENU_TRACK_CACHE.lock() {
+            let cache = guard.get_or_insert_with(std::collections::HashMap::new);
+            cache.insert(cache_key, std::sync::Arc::clone(t));
+        }
+    }
+    loaded
 }
 
 /// Resolves a TrackChoice to a concrete Track instance for UI preview rendering.
@@ -233,25 +308,7 @@ pub fn resolve_track_for_menu_with_dir(
     choice: &TrackChoice,
     tracks_dir: impl AsRef<std::path::Path>,
 ) -> Option<tdrace_core::track::Track> {
-    let dir = tracks_dir.as_ref();
-    let cache_key = format!("{}:{}", choice.track_id(), dir.display());
-
-    if let Ok(guard) = MENU_TRACK_CACHE.lock() {
-        if let Some(cache) = guard.as_ref() {
-            if let Some(track) = cache.get(&cache_key) {
-                return Some(track.clone());
-            }
-        }
-    }
-
-    let loaded = resolve_track_for_menu_with_dir_uncached(choice, dir);
-    if let Some(ref t) = loaded {
-        if let Ok(mut guard) = MENU_TRACK_CACHE.lock() {
-            let cache = guard.get_or_insert_with(std::collections::HashMap::new);
-            cache.insert(cache_key, t.clone());
-        }
-    }
-    loaded
+    resolve_track_for_menu_arc_with_dir(choice, tracks_dir).map(|t| (*t).clone())
 }
 
 fn resolve_track_for_menu_with_dir_uncached(
@@ -259,31 +316,13 @@ fn resolve_track_for_menu_with_dir_uncached(
     dir: &std::path::Path,
 ) -> Option<tdrace_core::track::Track> {
     let choice_module = match choice {
-        TrackChoice::Custom { path, .. } => {
-            if path.starts_with("gt/") {
-                Some("gt")
-            } else if path.starts_with("nascar/") {
-                Some("nascar")
-            } else if path.starts_with("rally/") || path.starts_with("rallycross/") {
-                Some("rallycross")
-            } else if path.starts_with("kart/") {
-                Some("kart")
-            } else if path.starts_with("classic/") {
-                Some("classic")
-            } else if path.starts_with("extreme_offroad/") {
-                Some("extreme_offroad")
-            } else if path.starts_with("autocross/") {
-                Some("autocross")
-            } else {
-                None
-            }
-        }
+        TrackChoice::Custom { .. } => choice.choice_module_hint(),
         _ => None,
     };
 
     // Official presets come only from the official catalog (spec 042); the user folder never shadows them.
     if choice.is_official_preset() {
-        if let Some(result) = crate::tracks::official::load(choice.track_id(), choice_module) {
+        if let Some(result) = crate::tracks::official::load_menu(choice.track_id(), choice_module) {
             return result.ok();
         }
     }
@@ -304,7 +343,7 @@ fn resolve_track_for_menu_with_dir_uncached(
     ];
     for p in &user_candidates {
         if p.exists() {
-            if let Ok(t) = tdrace_core::track::Track::load_from_file(p) {
+            if let Ok(t) = tdrace_core::track::Track::load_from_file_menu(p) {
                 return Some(t);
             }
         }
@@ -320,7 +359,7 @@ fn resolve_track_for_menu_with_dir_uncached(
             choice.track_id(),
             choice_module,
         ) {
-            if let Ok(t) = tdrace_core::track::Track::load_from_file(&p) {
+            if let Ok(t) = tdrace_core::track::Track::load_from_file_menu(&p) {
                 return Some(t);
             }
         }
@@ -330,26 +369,26 @@ fn resolve_track_for_menu_with_dir_uncached(
     if let TrackChoice::Custom { path, .. } = choice {
         let file_path = std::path::Path::new(path);
         if file_path.exists() {
-            if let Ok(t) = tdrace_core::track::Track::load_from_file(file_path) {
+            if let Ok(t) = tdrace_core::track::Track::load_from_file_menu(file_path) {
                 return Some(t);
             }
         }
         if file_path.with_extension("json").exists() {
             if let Ok(t) =
-                tdrace_core::track::Track::load_from_file(&file_path.with_extension("json"))
+                tdrace_core::track::Track::load_from_file_menu(&file_path.with_extension("json"))
             {
                 return Some(t);
             }
         }
         let rel_in_dir = dir.join(path);
         if rel_in_dir.exists() {
-            if let Ok(t) = tdrace_core::track::Track::load_from_file(&rel_in_dir) {
+            if let Ok(t) = tdrace_core::track::Track::load_from_file_menu(&rel_in_dir) {
                 return Some(t);
             }
         }
         let rel_in_dir_json = dir.join(format!("{}.json", path));
         if rel_in_dir_json.exists() {
-            if let Ok(t) = tdrace_core::track::Track::load_from_file(&rel_in_dir_json) {
+            if let Ok(t) = tdrace_core::track::Track::load_from_file_menu(&rel_in_dir_json) {
                 return Some(t);
             }
         }
@@ -358,13 +397,13 @@ fn resolve_track_for_menu_with_dir_uncached(
         {
             let rel_in_git = git_tracks_dir.join(path);
             if rel_in_git.exists() {
-                if let Ok(t) = tdrace_core::track::Track::load_from_file(&rel_in_git) {
+                if let Ok(t) = tdrace_core::track::Track::load_from_file_menu(&rel_in_git) {
                     return Some(t);
                 }
             }
             let rel_in_git_json = git_tracks_dir.join(format!("{}.json", path));
             if rel_in_git_json.exists() {
-                if let Ok(t) = tdrace_core::track::Track::load_from_file(&rel_in_git_json) {
+                if let Ok(t) = tdrace_core::track::Track::load_from_file_menu(&rel_in_git_json) {
                     return Some(t);
                 }
             }
@@ -388,7 +427,7 @@ fn resolve_track_for_menu_with_dir_uncached(
         ];
         for p in &git_candidates {
             if p.exists() {
-                if let Ok(t) = tdrace_core::track::Track::load_from_file(p) {
+                if let Ok(t) = tdrace_core::track::Track::load_from_file_menu(p) {
                     return Some(t);
                 }
             }
@@ -396,7 +435,7 @@ fn resolve_track_for_menu_with_dir_uncached(
     }
 
     // 3. Fallback to the official catalog (e.g. an alias id saved as a custom choice)
-    crate::tracks::official::load(choice.track_id(), choice_module).and_then(|r| r.ok())
+    crate::tracks::official::load_menu(choice.track_id(), choice_module).and_then(|r| r.ok())
 }
 
 /// Available vehicle model options.
@@ -1661,7 +1700,30 @@ pub fn render_track_select_menu(
 
             if i < total_tracks {
                 let track_opt = &available_tracks[i];
-                let loaded_track = resolve_track_for_menu(track_opt);
+                let embedded_circuit = track_opt.embedded_for_menu();
+                let loaded_track = if embedded_circuit.is_none() {
+                    resolve_track_for_menu_arc(track_opt)
+                } else {
+                    None
+                };
+                let card_metrics: Option<(f32, std::borrow::Cow<'_, str>, bool, &str)> =
+                    if let Some(emb) = embedded_circuit {
+                        Some((
+                            emb.total_length_m,
+                            std::borrow::Cow::Borrowed(emb.surface_summary),
+                            emb.is_inspired,
+                            emb.scale,
+                        ))
+                    } else {
+                        loaded_track.as_ref().map(|tr| {
+                            (
+                                tr.total_length_m(),
+                                std::borrow::Cow::Owned(tr.surface_summary_string()),
+                                tr.is_inspired,
+                                tr.scale(),
+                            )
+                        })
+                    };
                 let is_active_track =
                     active_track_id.map_or(false, |aid| aid == track_opt.track_id());
                 let is_locked = if let Some(cp) = career_progress {
@@ -1717,7 +1779,11 @@ pub fn render_track_select_menu(
                 let thumb_x = col1_x + col_w - thumb_w - scaler.s(8.0);
                 let thumb_y = curr_y + scaler.s(7.0);
 
-                if let Some(ref tr) = loaded_track {
+                if let Some(emb) = embedded_circuit {
+                    super::track_preview::render_embedded_track_thumbnail(
+                        &scaler, thumb_x, thumb_y, thumb_w, thumb_h, emb, is_sel,
+                    );
+                } else if let Some(ref tr) = loaded_track {
                     super::track_preview::render_track_thumbnail(
                         &scaler, thumb_x, thumb_y, thumb_w, thumb_h, tr, is_sel,
                     );
@@ -1731,59 +1797,37 @@ pub fn render_track_select_menu(
                     } else {
                         "★ ACTIVE CIRCUIT"
                     };
-                    let lbl = if let Some(ref tr) = loaded_track {
-                        format!(
-                            "{} • {:.0}m • {}",
-                            active_tag,
-                            tr.total_length_m(),
-                            tr.surface_summary_string()
-                        )
+                    let lbl = if let Some((len_m, ref surf, _, _)) = card_metrics {
+                        format!("{} • {:.0}m • {}", active_tag, len_m, surf)
                     } else {
                         active_tag.to_string()
                     };
                     (lbl, Palette::NEON_GOLD)
                 } else if is_career_mode {
-                    let lbl = if let Some(ref tr) = loaded_track {
-                        format!(
-                            "🔒 CAREER LOCKED • {:.0}m • {}",
-                            tr.total_length_m(),
-                            tr.surface_summary_string()
-                        )
+                    let lbl = if let Some((len_m, ref surf, _, _)) = card_metrics {
+                        format!("🔒 CAREER LOCKED • {:.0}m • {}", len_m, surf)
                     } else {
                         "🔒 CAREER LOCKED • OTHER CIRCUIT".to_string()
                     };
                     (lbl, Palette::RED)
                 } else if is_locked {
-                    let lbl = if let Some(ref tr) = loaded_track {
-                        format!(
-                            "LOCKED • {:.0}m • {}",
-                            tr.total_length_m(),
-                            tr.surface_summary_string()
-                        )
+                    let lbl = if let Some((len_m, ref surf, _, _)) = card_metrics {
+                        format!("LOCKED • {:.0}m • {}", len_m, surf)
                     } else {
                         "LOCKED".to_string()
                     };
                     (lbl, Palette::RED)
                 } else if is_custom {
-                    let lbl = if let Some(ref tr) = loaded_track {
-                        format!(
-                            "CUSTOM CIRCUIT • {:.0}m • {}",
-                            tr.total_length_m(),
-                            tr.surface_summary_string()
-                        )
+                    let lbl = if let Some((len_m, ref surf, _, _)) = card_metrics {
+                        format!("CUSTOM CIRCUIT • {:.0}m • {}", len_m, surf)
                     } else {
                         "CUSTOM CIRCUIT".to_string()
                     };
                     (lbl, Palette::NEON_GOLD)
                 } else {
                     let tag_prefix = track_opt.tag_for_module(active_module_id);
-                    let lbl = if let Some(ref tr) = loaded_track {
-                        format!(
-                            "{} • {:.0}m • {}",
-                            tag_prefix,
-                            tr.total_length_m(),
-                            tr.surface_summary_string()
-                        )
+                    let lbl = if let Some((len_m, ref surf, _, _)) = card_metrics {
+                        format!("{} • {:.0}m • {}", tag_prefix, len_m, surf)
                     } else {
                         tag_prefix.to_string()
                     };
@@ -1824,13 +1868,13 @@ pub fn render_track_select_menu(
                         scaler.font_s(9.0),
                         Palette::NEON_GOLD,
                     );
-                } else if let Some(ref tr) = loaded_track {
+                } else if let Some((_, _, is_inspired, scale)) = card_metrics {
                     let mut extra_tags = Vec::new();
-                    if tr.is_inspired {
+                    if is_inspired {
                         extra_tags.push("INSPIRED".to_string());
                     }
-                    if tr.scale() != "1:1" {
-                        extra_tags.push(tr.scale().to_string());
+                    if scale != "1:1" {
+                        extra_tags.push(scale.to_string());
                     }
                     if !extra_tags.is_empty() {
                         let tag_str = extra_tags.join(" • ");
@@ -1973,8 +2017,8 @@ pub fn render_track_select_menu(
 
     if selected_track_idx < total_tracks {
         let track_opt = &available_tracks[selected_track_idx];
-        let loaded_track = resolve_track_for_menu(track_opt);
-        let tr_ref = loaded_track.as_ref();
+        let loaded_track = resolve_track_for_menu_arc(track_opt);
+        let tr_ref = loaded_track.as_deref();
 
         // Section 1 Header: Circuit Dossier & Vector Telemetry
         fonts.draw_ui_bold(
@@ -2801,8 +2845,8 @@ pub fn render_track_select_menu(
     // Layout selection modal overlay
     if show_layout_modal {
         if let Some(track_opt) = available_tracks.get(selected_track_idx) {
-            if let Some(mut tr) = resolve_track_for_menu(track_opt) {
-                let net = tr.ensure_network();
+            if let Some(tr) = resolve_track_for_menu_arc(track_opt) {
+                let net = tr.active_network();
                 if !net.layouts.is_empty() {
                     render_layout_select_modal(fonts, &net.layouts, layout_modal_idx, accent);
                 }

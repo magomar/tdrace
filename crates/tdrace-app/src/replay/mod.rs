@@ -324,8 +324,9 @@ impl ReplayPlayer {
     ///
     /// Returns `Ok(max_error_distance)` if determinism passes, or `Err(diagnostic)` if mismatch occurs.
     pub fn verify_determinism(&self) -> Result<f32, String> {
-        let track = crate::ui::menu::resolve_track_for_menu(&self.replay.header.track_choice)
+        let mut track = crate::ui::menu::resolve_track_for_menu(&self.replay.header.track_choice)
             .unwrap_or_else(crate::tracks::official::fallback_track);
+        track.ensure_runtime_geometry();
 
         let config = self.replay.header.car_choice.config();
 
