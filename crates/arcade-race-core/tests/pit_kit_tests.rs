@@ -615,3 +615,35 @@ fn spec_120_validation_flags_stall_blocking_fast_lane() {
     );
 }
 
+#[test]
+fn pit_area_uses_main_track_surface_without_gravel_runoff_overlap() {
+    use arcade_race_core::track::{CarCategory, PitLane};
+    let mut track = track_on(stadium());
+    track.name = "pit runoff surface test".to_string();
+    track.car_category = CarCategory::Gt;
+    track.modules = vec!["gt".to_string()];
+    track.default_surface = SurfaceType::Grass;
+    track.pit_lane_layout = Some(straight_layout());
+    bake(&mut track, &BakeOptions { rebuild: true, ..BakeOptions::default() }).expect("bake succeeds");
+
+    let lane = track.pit_lane.as_ref().unwrap();
+    // 1. Along the pit stop bay, the dividing strip between main track and pit lane, the fast lane,
+    // the stalls, and the 1.5m outer apron inside the outer pit wall must all sample as Asphalt.
+    for b in &lane.pit_boxes {
+        let proj_pit = lane.spline.project_point(b.position);
+        let s_pit = lane.spline.sample_at_distance(proj_pit.progress_distance);
+        // Fast lane center
+        assert_eq!(track.sample_surface(s_pit.point), SurfaceType::Asphalt);
+        // Stall center
+        assert_eq!(track.sample_surface(b.position), SurfaceType::Asphalt);
+        // Outer 1.5m apron between stall outer edge and outer pit wall (sigma = -1.0 for Side::Right)
+        let apron_pt = s_pit.point - s_pit.normal * (lane.road_width * 0.5 + PitLane::BAY_WIDTH + 1.0);
+        assert_eq!(track.sample_surface(apron_pt), SurfaceType::Asphalt);
+        // Divider strip between main track edge (y = -6.0) and pit inner edge (y = -8.0)
+        let proj_main = track.spline.project_point(s_pit.point);
+        let divider_pt = proj_main.closest_point - proj_main.normal * (proj_main.track_width * 0.5 + 1.0);
+        assert_eq!(track.sample_surface(divider_pt), SurfaceType::Asphalt);
+    }
+}
+
+

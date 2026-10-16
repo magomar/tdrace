@@ -680,10 +680,15 @@ impl Track {
 
     /// Samples surface type for the pit lane road ribbon and pit boxes.
     pub fn sample_pit_lane_surface(&self, point: Vec2) -> Option<SurfaceType> {
+        let main_road_surface = self
+            .spline
+            .samples
+            .first()
+            .map_or(SurfaceType::Asphalt, |s| s.surface);
         let Some(ref lane) = self.pit_lane else {
             if let Some(ref shape) = self.pit_box_area {
                 if shape.contains(point) {
-                    return Some(SurfaceType::Asphalt);
+                    return Some(main_road_surface);
                 }
             }
             return None;
@@ -704,7 +709,7 @@ impl Track {
         {
             if let Some(ref shape) = self.pit_box_area {
                 if shape.contains(point) {
-                    return Some(SurfaceType::Asphalt);
+                    return Some(main_road_surface);
                 }
             }
             return None;
@@ -720,7 +725,14 @@ impl Track {
                 return Some(SurfaceType::Curb);
             }
             if !pit_kit::beyond_lane_end(lane, point) {
-                let (left_half, right_half) = lane.half_widths_at_s(proj.progress_distance);
+                let (mut left_half, mut right_half) = lane.half_widths_at_s(proj.progress_distance);
+                if let Some((_, _, sigma)) = lane.bay_span_and_side() {
+                    if sigma >= 0.0 {
+                        left_half += 1.5;
+                    } else {
+                        right_half += 1.5;
+                    }
+                }
                 if proj.lateral_offset >= -left_half && proj.lateral_offset <= right_half {
                     return Some(proj.base_surface);
                 }
@@ -731,13 +743,13 @@ impl Track {
         // not paved: they keep the natural surface, so a junction never adds a tarmac grip island (spec 085).
         for pit_box in &lane.pit_boxes {
             if pit_box.contains_point(point) {
-                return Some(SurfaceType::Asphalt);
+                return Some(main_road_surface);
             }
         }
 
         if let Some(ref shape) = self.pit_box_area {
             if shape.contains(point) {
-                return Some(SurfaceType::Asphalt);
+                return Some(main_road_surface);
             }
         }
 
@@ -1981,6 +1993,89 @@ impl Track {
             // Runoff corridor width applies with or without a wall, matching `sample_surface`.
             s.left_wall_distance = left_d.or(Some(sample_bo));
             s.right_wall_distance = right_d.or(Some(sample_bo));
+        }
+
+        if let Some(ref mut lane) = self.pit_lane {
+            if self.spline.samples.len() >= 2 && lane.spline.samples.len() >= 2 {
+                let sigma = self.pit_lane_layout.as_ref().map_or_else(
+                    || {
+                        let mid = &lane.spline.samples[lane.spline.samples.len() / 2];
+                        let mp = self.spline.project_point(mid.point);
+                        if (mid.point - mp.closest_point).dot(mp.normal) >= 0.0 {
+                            1.0
+                        } else {
+                            -1.0
+                        }
+                    },
+                    |l| l.side.sign(),
+                );
+                let needs_lane_runoff = lane
+                    .spline
+                    .waypoints
+                    .iter()
+                    .all(|wp| wp.left_wall_distance.is_none() && wp.right_wall_distance.is_none());
+                if needs_lane_runoff {
+                    for wp in &mut lane.spline.waypoints {
+                        let mp = self.spline.project_point(wp.point);
+                        let road_surf = mp.base_surface;
+                        let lat = (wp.point - mp.closest_point).dot(mp.normal) * sigma;
+                        let inner_ro = (lat >= lane.road_width * 0.5).then_some(road_surf);
+                        let inner_wd = (lat >= lane.road_width * 0.5).then_some(1.5);
+                        wp.surface = Some(road_surf);
+                        if sigma >= 0.0 {
+                            wp.left_runoff_surface = Some(road_surf);
+                            wp.left_wall_distance = Some(1.5);
+                            wp.right_runoff_surface = inner_ro;
+                            wp.right_wall_distance = inner_wd;
+                        } else {
+                            wp.right_runoff_surface = Some(road_surf);
+                            wp.right_wall_distance = Some(1.5);
+                            wp.left_runoff_surface = inner_ro;
+                            wp.left_wall_distance = inner_wd;
+                        }
+                    }
+                    for s in &mut lane.spline.samples {
+                        let mp = self.spline.project_point(s.point);
+                        let road_surf = mp.base_surface;
+                        let lat = (s.point - mp.closest_point).dot(mp.normal) * sigma;
+                        let inner_ro = (lat >= lane.road_width * 0.5).then_some(road_surf);
+                        let inner_wd = (lat >= lane.road_width * 0.5).then_some(1.5);
+                        s.surface = road_surf;
+                        if sigma >= 0.0 {
+                            s.left_runoff_surface = Some(road_surf);
+                            s.left_wall_distance = Some(1.5);
+                            s.right_runoff_surface = inner_ro;
+                            s.right_wall_distance = inner_wd;
+                        } else {
+                            s.right_runoff_surface = Some(road_surf);
+                            s.right_wall_distance = Some(1.5);
+                            s.left_runoff_surface = inner_ro;
+                            s.left_wall_distance = inner_wd;
+                        }
+                    }
+                }
+                for s in &mut self.spline.samples {
+                    if pit_kit::beyond_lane_end(lane, s.point) {
+                        continue;
+                    }
+                    let proj_pit = lane.spline.project_point(s.point);
+                    if (s.elevation - proj_pit.elevation).abs() > 2.0 {
+                        continue;
+                    }
+                    let lat_dist = (proj_pit.closest_point - s.point).dot(s.normal) * sigma;
+                    let (pit_lh, pit_rh) = lane.half_widths_at_s(proj_pit.progress_distance);
+                    let pit_inner_half = if sigma >= 0.0 { pit_rh } else { pit_lh };
+                    let gap = lat_dist - s.width * 0.5 - pit_inner_half;
+                    let sample_bo = sample_offset(s);
+                    if gap <= sample_bo + 2.0 {
+                        if sigma >= 0.0 {
+                            s.left_runoff_surface = Some(s.surface);
+                        } else {
+                            s.right_runoff_surface = Some(s.surface);
+                        }
+                    }
+                }
+            }
         }
     }
 

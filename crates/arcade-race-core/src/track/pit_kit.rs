@@ -9,8 +9,6 @@
 use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
-use wheelbase::SurfaceType;
-
 use super::geometry::{BarrierType, LineSegment, PitBox, PitLane, PitLaneExitQuad, PitLaneJunctionData};
 use super::junction_kit::{
     build_junction, cumulative_lengths, first_self_crossing, free_road, signed_curvature, JunctionComponent,
@@ -133,14 +131,29 @@ impl PitLaneLayout {
         points.extend_from_slice(&road);
         let road_end_s = road_start_s + road_len_at[last];
         points.extend_from_slice(&exit.centreline[1..]);
+        let sigma = self.side.sign();
         let waypoints: Vec<TrackWaypoint> = points
             .iter()
             .map(|&p| {
-                let mut wp = TrackWaypoint::new(p, self.road_width)
-                    .with_runoff_surface(SurfaceType::Asphalt)
-                    .with_walls(false, false);
-                wp.surface = Some(SurfaceType::Asphalt);
-                wp.elevation = main.project_point(p).elevation;
+                let main_proj = main.project_point(p);
+                let road_surf = main_proj.base_surface;
+                let lat = (p - main_proj.closest_point).dot(main_proj.normal) * sigma;
+                let inner_ro = (lat >= self.road_width * 0.5).then_some(road_surf);
+                let inner_wd = (lat >= self.road_width * 0.5).then_some(OUTER_WALL_OFFSET);
+                let mut wp = TrackWaypoint::new(p, self.road_width).with_walls(false, false);
+                wp.surface = Some(road_surf);
+                if sigma >= 0.0 {
+                    wp.left_runoff_surface = Some(road_surf);
+                    wp.left_wall_distance = Some(OUTER_WALL_OFFSET);
+                    wp.right_runoff_surface = inner_ro;
+                    wp.right_wall_distance = inner_wd;
+                } else {
+                    wp.right_runoff_surface = Some(road_surf);
+                    wp.right_wall_distance = Some(OUTER_WALL_OFFSET);
+                    wp.left_runoff_surface = inner_ro;
+                    wp.left_wall_distance = inner_wd;
+                }
+                wp.elevation = main_proj.elevation;
                 wp
             })
             .collect();
@@ -159,7 +172,6 @@ impl PitLaneLayout {
 
         // Guard 8 and Pillar IV (amended by Spec 120): stalls sit in the outer service side bay on stretches of
         // radius >= 50 m, with a garage behind each stall outside the widened bay perimeter wall.
-        let sigma = self.side.sign();
         let mut pit_boxes = Vec::with_capacity(self.box_row.count as usize);
         let mut garages = Vec::new();
         for i in 0..self.box_row.count {

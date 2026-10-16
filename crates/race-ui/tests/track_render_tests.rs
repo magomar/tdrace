@@ -65,3 +65,26 @@ fn test_runoff_shoulder_tapers_where_wall_suppressed() {
     let p_suppressed_with_curb = compute_runoff_outer_point(&s0, Side::Left, true);
     assert_eq!(p_suppressed_with_curb, Vec2::new(0.0, 5.0 + 1.35)); // 0 m extra runoff past curb
 }
+
+#[test]
+fn test_runoff_quad_follows_widened_pit_side_bay_boundary() {
+    let mut s0 = SplineSample::default();
+    s0.point = Vec2::new(0.0, 0.0);
+    s0.tangent = Vec2::new(1.0, 0.0);
+    s0.normal = Vec2::new(0.0, 1.0);
+    s0.width = 7.0;
+    s0.right_wall_distance = Some(1.5);
+
+    let mut s1 = s0.clone();
+    s1.point = Vec2::new(10.0, 0.0);
+
+    // Side bay bulges outward on the right (-normal) by 3.6 m beyond hw = 3.5 m -> y = -7.1 m
+    let p0_inner = Vec2::new(0.0, -7.1);
+    let p1_inner = Vec2::new(10.0, -7.1);
+
+    let quad = compute_runoff_quad_vertices(&s0, &s1, Side::Right, p0_inner, p1_inner, false, false)
+        .expect("pit side-bay runoff quad should exist");
+    assert!((quad.p0_outer.y - (-8.6)).abs() < 1e-4, "expected outer edge at -8.6m, got {:?}", quad.p0_outer);
+    assert!((quad.p1_outer.y - (-8.6)).abs() < 1e-4, "expected outer edge at -8.6m, got {:?}", quad.p1_outer);
+}
+

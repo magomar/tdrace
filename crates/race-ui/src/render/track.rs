@@ -80,15 +80,25 @@ pub fn compute_runoff_quad_vertices(
     if suppressed_s0 && suppressed_s1 {
         return None;
     }
+    let curb_w0 = match side {
+        Side::Left => if s0.left_curb { 1.35 } else { 0.0 },
+        Side::Right => if s0.right_curb { 1.35 } else { 0.0 },
+    };
+    let curb_w1 = match side {
+        Side::Left => if s1.left_curb { 1.35 } else { 0.0 },
+        Side::Right => if s1.right_curb { 1.35 } else { 0.0 },
+    };
+    let extra0 = ((s0_inner - s0.point).dot(s0.normal * side.sign()) - (s0.width * 0.5 + curb_w0)).max(0.0);
+    let extra1 = ((s1_inner - s1.point).dot(s1.normal * side.sign()) - (s1.width * 0.5 + curb_w1)).max(0.0);
     let p0_outer = if suppressed_s0 {
         s0_inner
     } else {
-        compute_runoff_outer_point(s0, side, false)
+        compute_runoff_outer_point(s0, side, false) + s0.normal * (side.sign() * extra0)
     };
     let p1_outer = if suppressed_s1 {
         s1_inner
     } else {
-        compute_runoff_outer_point(s1, side, false)
+        compute_runoff_outer_point(s1, side, false) + s1.normal * (side.sign() * extra1)
     };
     Some(RunoffQuadVertices {
         p0_inner: s0_inner,
@@ -311,7 +321,7 @@ impl CachedRibbonPass {
                     .unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE)
                     .max(s0.right_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE))
                     .max(4.5);
-                let pad = s0.width.max(s1.width) * 0.5 + max_wall + 1.0;
+                let pad = s0.width.max(s1.width) * 0.5 + max_wall + 4.0;
                 let s_min = s0.point.min(s1.point) - Vec2::splat(pad);
                 let s_max = s0.point.max(s1.point) + Vec2::splat(pad);
                 aabb_min = aabb_min.min(s_min);
@@ -572,7 +582,7 @@ impl TrackRenderCache {
             .zip(pit_lane_boundaries.as_ref())
             .map(|(lane, bnd)| {
                 let b_slices = (&bnd.0[..], &bnd.1[..], &bnd.2[..], &bnd.3[..]);
-                CachedRibbonPass::build(&lane.spline, false, None, b_slices, None, false, false)
+                CachedRibbonPass::build(&lane.spline, false, None, b_slices, None, false, true)
             });
         let pit_lane_junctions = track.pit_lane_junctions.clone().or_else(|| track.compute_pit_lane_junctions());
 
@@ -968,15 +978,19 @@ pub fn render_ground_track_culled(track: &Track, view_bounds: Option<(Vec2, Vec2
         render_surface_shape(pit_area, Palette::PIT_LANE, Some(Palette::WHITE_LINE));
     }
 
-    // 2b. & 3. Render pit ribbon, segment runoff corridors, ground curbs and ground surface quads from pre-built cache (Spec 119)
+    // 2b. & 3. Render segment runoff corridors first, then pit ribbon, ground curbs and ground surface quads from pre-built cache (Spec 119)
     with_track_render_cache(track, |cache| {
-        if let Some(ref pit_pass) = cache.pit_lane_ground_pass {
-            pit_pass.draw_surface(view_bounds);
-        }
-
         // Render all runoff corridors first so shoulder surfaces never paint on top of adjoining road ribbons.
         render_branch_runoffs(track, cache, false, view_bounds);
         cache.main_ground_pass.draw_runoff(view_bounds);
+        if let Some(ref pit_pass) = cache.pit_lane_ground_pass {
+            pit_pass.draw_runoff(view_bounds);
+        }
+
+        if let Some(ref pit_pass) = cache.pit_lane_ground_pass {
+            pit_pass.draw_curbs(view_bounds);
+            pit_pass.draw_surface(view_bounds);
+        }
 
         // Spec 102: a compiled branch is drawn before the main road, which then lies on top where the two ribbons
         // overlap in a junction throat.
@@ -1666,7 +1680,7 @@ fn build_runoff_range_meshes(
                                 builder.push_quad(p0_inner, uv0, c0, p1_inner, uv1, c1, p1_outer, uv2, c2, p0_outer, uv3, c3);
 
                                 // Outer organic fringe feathering
-                                if fringe_builder.texture.is_some() {
+                                if is_main_spline && fringe_builder.texture.is_some() {
                                     let p0_fringe = if is_supp0 { p0_outer } else { p0_outer + s0.normal * 0.6 };
                                     let p1_fringe = if is_supp1 { p1_outer } else { p1_outer + s1.normal * 0.6 };
                                     let fringe_c = Color::new(fill_col.r, fill_col.g, fill_col.b, 0.75);
@@ -1742,7 +1756,7 @@ fn build_runoff_range_meshes(
                                 builder.push_quad(p0_inner, uv0, c0, p1_inner, uv1, c1, p1_outer, uv2, c2, p0_outer, uv3, c3);
 
                                 // Outer organic fringe feathering
-                                if fringe_builder.texture.is_some() {
+                                if is_main_spline && fringe_builder.texture.is_some() {
                                     let p0_fringe = if is_supp0 { p0_outer } else { p0_outer - s0.normal * 0.6 };
                                     let p1_fringe = if is_supp1 { p1_outer } else { p1_outer - s1.normal * 0.6 };
                                     let fringe_c = Color::new(fill_col.r, fill_col.g, fill_col.b, 0.75);
