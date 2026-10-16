@@ -188,6 +188,94 @@ pub fn render_track_thumbnail(
     }
 }
 
+/// Renders a small track thumbnail for track selection list items directly from compile-time
+/// [`tdrace_core::catalog::EmbeddedCircuit`] geometry without decompressing or parsing a [`Track`].
+pub fn render_embedded_track_thumbnail(
+    scaler: &UiScaler,
+    x: f32,
+    y: f32,
+    w: f32,
+    h: f32,
+    circuit: &tdrace_core::catalog::EmbeddedCircuit,
+    is_selected: bool,
+) {
+    let bg_col = if is_selected {
+        Color::new(0.06, 0.10, 0.16, 0.95)
+    } else {
+        Color::new(0.03, 0.05, 0.08, 0.85)
+    };
+    let border_col = if is_selected {
+        Palette::NEON_CYAN
+    } else {
+        Color::new(0.18, 0.22, 0.30, 0.80)
+    };
+
+    draw_rectangle(x, y, w, h, bg_col);
+
+    let backdrop_tint = crate::render::get_track_backdrop_color(circuit.default_surface);
+    let backdrop_card_tint = Color::new(backdrop_tint.r, backdrop_tint.g, backdrop_tint.b, 0.16);
+    draw_rectangle(x + 1.0, y + 1.0, w - 2.0, h - 2.0, backdrop_card_tint);
+
+    draw_rectangle_lines(x, y, w, h, if is_selected { 1.5 } else { 1.0 }, border_col);
+
+    let min = Vec2::from_array(circuit.bounds_min);
+    let max = Vec2::from_array(circuit.bounds_max);
+    let track_w = (max.x - min.x).max(10.0);
+    let track_h = (max.y - min.y).max(10.0);
+
+    let pad = scaler.s(5.0);
+    let avail_w = (w - pad * 2.0).max(4.0);
+    let avail_h = (h - pad * 2.0).max(4.0);
+    let scale = (avail_w / track_w).min(avail_h / track_h);
+
+    let center_x = x + w * 0.5;
+    let center_y = y + h * 0.5;
+    let track_cx = (min.x + max.x) * 0.5;
+    let track_cy = (min.y + max.y) * 0.5;
+
+    let to_screen = |pt: [f32; 2]| -> Vec2 {
+        let rx = (pt[0] - track_cx) * scale;
+        let ry = -(pt[1] - track_cy) * scale;
+        Vec2::new(center_x + rx, center_y + ry)
+    };
+
+    let samples = circuit.thumbnail_samples;
+    if samples.len() >= 2 {
+        let n = samples.len();
+        let seg_count = if circuit.closed { n } else { n - 1 };
+
+        // Pass 0: Joker detours and launch chute, under the main loop
+        for branch in circuit.thumbnail_branches {
+            for pair in branch.windows(2) {
+                let p0 = to_screen(pair[0].0);
+                let p1 = to_screen(pair[1].0);
+                draw_line(p0.x, p0.y, p1.x, p1.y, scaler.s(1.2), surface_preview_color(pair[0].1));
+            }
+        }
+
+        // Pass 1: Outer subtle glow
+        for i in 0..seg_count {
+            let p0 = to_screen(samples[i].0);
+            let p1 = to_screen(samples[(i + 1) % n].0);
+            draw_line(p0.x, p0.y, p1.x, p1.y, scaler.s(2.8), Color::new(0.15, 0.35, 0.50, 0.35));
+        }
+
+        // Pass 2: Core surface-colored track line
+        for i in 0..seg_count {
+            let p0 = to_screen(samples[i].0);
+            let p1 = to_screen(samples[(i + 1) % n].0);
+            let col = surface_preview_color(samples[i].1);
+            draw_line(p0.x, p0.y, p1.x, p1.y, scaler.s(1.6), col);
+        }
+
+        // Pass 3: Start/Finish line indicator dot
+        let start_pt = to_screen(samples[0].0);
+        draw_circle(start_pt.x, start_pt.y, scaler.s(2.6), Palette::NEON_GREEN);
+        draw_circle_lines(start_pt.x, start_pt.y, scaler.s(2.6), 1.0, Palette::WHITE);
+    }
+}
+
+
 /// Renders a detailed larger track preview widget for the Track Details dossier.
 pub fn render_track_detailed_preview(
     fonts: &Fonts,

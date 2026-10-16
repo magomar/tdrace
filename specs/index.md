@@ -141,6 +141,7 @@ Table of contents providing progressive disclosure of project constitution and t
 | [118](118_chassis_guided_wheel_surface_sampling_pyengine_raceworld_unification_and_fastrasterizer_culling.md) | Chassis-Guided Wheel Surface Sampling, PyEngine RaceWorld Unification, and FastRasterizer Culling | Architecture Spec | `implemented` | `human:mario` | [056](056_racekit_headless_race_world.md), [084](084_highthroughput_physics_zeroallocation_lidar_and_precomputed_junction_render_caching.md) | Reduces per-car spline projections from 6-10 down to 1-2 via chassis-guided wheel surface sampling, aligns PyEngine's physics loop with RaceWorld::step (restoring banking, grade, ramps, and zero-copy LIDAR), and accelerates FastRasterizer with camera AABB culling and incremental scanline edge stepping. |
 | [119](119_zero_allocation_wall_collisions_static_spatial_barrier_grid_and_pre_built_track_mesh_caching.md) | Zero-Allocation Wall Collisions, Static Spatial Barrier Grid, and Pre-Built Track Mesh Caching | Architecture Spec | `implemented` | `human:mario` | [070](070_global_collinear_wall_optimization_and_circuit_rebake.md), [084](084_highthroughput_physics_zeroallocation_lidar_and_precomputed_junction_render_caching.md) | Eliminates per-tick heap allocations in wall collision resolution, introduces a static 2D uniform spatial grid in TrackGeometry for O(1) wall/obstacle queries across collisions, LIDAR, and Bot AI, pre-builds static GPU Mesh chunks in TrackRenderCache, and removes runtime catch_unwind overhead. |
 | [120](120_widened_pit_stop_side_bay_outer_stall_placement_and_unobstructed_pit_fast_lane.md) | Widened Pit Stop Side Bay, Outer Stall Placement, and Unobstructed Pit Fast Lane | Architecture Spec | `implemented` | `human:mario` | [062](062_circuit_pit_lanes_and_interactive_pit_stop_procedures.md), [077](077_procedural_gt_circuit_pit_lanes_from_openstreetmap_survey_data.md), [101](101_parametric_pit_lane_kit_blocks_on_spline_circuits.md) | Amends Spec 101 to widen the pit stop area on the outer (garage) side into a dedicated 3.6 m service bay with smooth entry and exit tapers, relocating PitBox stalls from the pit road centerline into the outer bay while preserving the full pit road width as an unobstructed pass-through fast lane. |
+| [121](121_two_stage_lazy_circuit_menu_loading_and_compile_time_card_metadata.md) | Two-Stage Lazy Circuit Menu Loading and Compile-Time Card Metadata | Architecture Spec | `implemented` | `human:mario` | [042](042_jsononly_official_circuit_catalog_and_embedded_track_data.md), [066](066_navigation_reorganization_category_circuit_filter_and_tiered_career_championships.md) | Eliminates multi-second circuit menu category switching stalls and startup prewarm overhead via compile-time embedded card metadata and thumbnail polylines, lightweight on-demand preview deserialization (Track::from_json_menu), zero-clone Arc<Track> menu caching, and lazy runtime geometry compilation. |
 
 ### 🗺️ Specification Dependency Graph
 
@@ -227,6 +228,7 @@ flowchart LR
     118["118: Chassis-Guided Wheel Surface Sampling, PyEngine RaceWorld Unification, and FastRasterizer Culling"]
     119["119: Zero-Allocation Wall Collisions, Static Spatial Barrier Grid, and Pre-Built Track Mesh Caching"]
     120["120: Widened Pit Stop Side Bay, Outer Stall Placement, and Unobstructed Pit Fast Lane"]
+    121["121: Two-Stage Lazy Circuit Menu Loading and Compile-Time Card Metadata"]
     055 --> 047
     062 --> 063
     055 --> 064
@@ -342,4 +344,6 @@ flowchart LR
     062 --> 120
     077 --> 120
     101 --> 120
+    042 --> 121
+    066 --> 121
 ```

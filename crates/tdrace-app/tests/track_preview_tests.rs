@@ -421,3 +421,239 @@ fn test_preview_branch_roads_are_the_joker_and_the_chute() {
     let monza = tdrace_core::catalog::official_track("gt", "monza");
     assert!(branch_roads(&monza).is_empty(), "a circuit without a network has no branch roads");
 }
+
+#[test]
+fn test_spec121_compile_time_embedded_circuit_metadata_and_thumbnail_parity() {
+    for c in tdrace_core::catalog::circuits() {
+        let track = c
+            .load_menu()
+            .unwrap_or_else(|e| panic!("{}/{}: {}", c.module, c.id, e));
+        let at = format!("{}/{}", c.module, c.id);
+        assert!(
+            (c.total_length_m - track.total_length_m()).abs() < 0.05,
+            "{}: embedded total_length_m {} != track.total_length_m() {}",
+            at,
+            c.total_length_m,
+            track.total_length_m()
+        );
+        assert_eq!(
+            c.surface_summary,
+            track.surface_summary_string(),
+            "{}: embedded surface_summary mismatch",
+            at
+        );
+        assert_eq!(c.scale, track.scale(), "{}: embedded scale mismatch", at);
+        assert_eq!(
+            c.is_inspired, track.is_inspired,
+            "{}: embedded is_inspired mismatch",
+            at
+        );
+        assert_eq!(
+            c.default_surface, track.default_surface,
+            "{}: embedded default_surface mismatch",
+            at
+        );
+        assert!(
+            (2..=160).contains(&c.thumbnail_samples.len()),
+            "{}: thumbnail_samples len {} not in 2..=160",
+            at,
+            c.thumbnail_samples.len()
+        );
+        for branch in c.thumbnail_branches {
+            assert!(
+                (2..=64).contains(&branch.len()),
+                "{}: thumbnail_branches len {} not in 2..=64",
+                at,
+                branch.len()
+            );
+        }
+    }
+}
+
+#[test]
+fn test_spec121_lazy_menu_category_switch_resolves_only_selected_circuit() {
+    let _lock = DEV_MODE_TEST_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+    use std::time::Instant;
+    use tdrace_app::module::{
+        autocross::AutocrossGameModule, gt::GtWorldChallengeModule, rally::RallyGameModule,
+        GameModule,
+    };
+    use tdrace_app::ui::menu::{
+        clear_menu_track_cache, menu_track_cache_len, resolve_track_for_menu_arc,
+    };
+
+    clear_menu_track_cache();
+    assert_eq!(menu_track_cache_len(), 0);
+
+    let max_switch_ms: u128 = if cfg!(debug_assertions) { 150 } else { 25 };
+
+    let gt_choices: Vec<TrackChoice> = GtWorldChallengeModule::new()
+        .tracks()
+        .into_iter()
+        .take(7)
+        .map(|d| TrackChoice::Custom {
+            id: d.id.to_string(),
+            title: d.title.to_string(),
+            description: d.description.to_string(),
+            path: format!("gt/{}", d.id),
+        })
+        .collect();
+
+    let t0_cards = Instant::now();
+    // Simulate rendering 7 visible list cards via embedded_for_menu + 1 selected dossier via resolve_track_for_menu_arc
+    for choice in &gt_choices {
+        let emb = choice
+            .embedded_for_menu()
+            .expect("Official GT choice must provide compile-time EmbeddedCircuit");
+        assert!(emb.total_length_m > 0.0);
+        assert!(!emb.thumbnail_samples.is_empty());
+    }
+    let gt_cards_elapsed = t0_cards.elapsed();
+    assert!(
+        gt_cards_elapsed.as_millis() < 1,
+        "Resolving 7 visible GT list cards from EmbeddedCircuit must take < 1ms, took {:?}",
+        gt_cards_elapsed
+    );
+
+    let selected_gt =
+        resolve_track_for_menu_arc(&gt_choices[0]).expect("Selected GT track must resolve");
+    let gt_elapsed = t0_cards.elapsed();
+
+    assert_eq!(
+        menu_track_cache_len(),
+        1,
+        "Only the 1 selected track should be parsed into MENU_TRACK_CACHE"
+    );
+    assert!(
+        !selected_gt.runtime_geometry_ready(),
+        "Menu-resolved track should skip heavy runtime wall/scenery synthesis"
+    );
+    assert!(
+        gt_elapsed.as_millis() < max_switch_ms,
+        "Category switch + 7 list cards + 1 dossier must take < {}ms, took {:?}",
+        max_switch_ms,
+        gt_elapsed
+    );
+
+    // Also verify Rally (Höljes) and Autocross category switches
+    let rally_choices: Vec<TrackChoice> = RallyGameModule::new()
+        .tracks()
+        .into_iter()
+        .take(7)
+        .map(|d| TrackChoice::Custom {
+            id: d.id.to_string(),
+            title: d.title.to_string(),
+            description: d.description.to_string(),
+            path: format!("rally/{}", d.id),
+        })
+        .collect();
+    let t1 = Instant::now();
+    for choice in &rally_choices {
+        assert!(choice.embedded_for_menu().is_some());
+    }
+    let _selected_rx =
+        resolve_track_for_menu_arc(&rally_choices[0]).expect("Selected RX track must resolve");
+    let rx_elapsed = t1.elapsed();
+    assert_eq!(menu_track_cache_len(), 2);
+    assert!(
+        rx_elapsed.as_millis() < max_switch_ms,
+        "Rally category switch must take < {}ms, took {:?}",
+        max_switch_ms,
+        rx_elapsed
+    );
+
+    let ax_choices: Vec<TrackChoice> = AutocrossGameModule::new()
+        .tracks()
+        .into_iter()
+        .take(7)
+        .map(|d| TrackChoice::Custom {
+            id: d.id.to_string(),
+            title: d.title.to_string(),
+            description: d.description.to_string(),
+            path: format!("autocross/{}", d.id),
+        })
+        .collect();
+    let t2 = Instant::now();
+    for choice in &ax_choices {
+        assert!(choice.embedded_for_menu().is_some());
+    }
+    let _selected_ax =
+        resolve_track_for_menu_arc(&ax_choices[0]).expect("Selected AX track must resolve");
+    let ax_elapsed = t2.elapsed();
+    assert_eq!(menu_track_cache_len(), 3);
+    assert!(
+        ax_elapsed.as_millis() < max_switch_ms,
+        "Autocross category switch must take < {}ms, took {:?}",
+        max_switch_ms,
+        ax_elapsed
+    );
+}
+
+#[test]
+fn test_spec121_menu_track_load_preserves_dossier_preview_and_runtime_geometry_parity() {
+    for (module, id) in [
+        ("gt", "suzuka"),
+        ("rally", "holjes_rx"),
+        ("classic", "rx_canyon_flyer"),
+    ] {
+        let circuit = tdrace_core::catalog::find(id, Some(module)).unwrap();
+        let mut menu_track = circuit.load_menu().unwrap();
+        let full_track = circuit.load().unwrap();
+
+        assert!(!menu_track.runtime_geometry_ready());
+        assert!(full_track.runtime_geometry_ready());
+
+        assert_eq!(
+            compute_track_bounds(&menu_track),
+            compute_track_bounds(&full_track)
+        );
+        assert_eq!(branch_roads(&menu_track), branch_roads(&full_track));
+        assert!(
+            (menu_track.total_length_m() - full_track.total_length_m()).abs() < 1e-3,
+            "total_length_m mismatch on {}/{}",
+            module,
+            id
+        );
+        assert_eq!(
+            menu_track.width_summary_string(),
+            full_track.width_summary_string()
+        );
+        assert_eq!(
+            menu_track.surface_breakdown(),
+            full_track.surface_breakdown()
+        );
+        assert_eq!(menu_track.checkpoints, full_track.checkpoints);
+        assert_eq!(menu_track.grid_positions, full_track.grid_positions);
+
+        menu_track.ensure_runtime_geometry();
+        assert!(menu_track.runtime_geometry_ready());
+        assert_eq!(
+            menu_track, full_track,
+            "ensure_runtime_geometry() must produce identical Track to Track::from_json for {}/{}",
+            module, id
+        );
+    }
+}
+
+#[test]
+fn test_spec121_menu_track_cache_returns_shared_arc_without_cloning() {
+    let _lock = DEV_MODE_TEST_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
+    use tdrace_app::ui::menu::{clear_menu_track_cache, resolve_track_for_menu_arc};
+
+    clear_menu_track_cache();
+
+    let suzuka_choice = TrackChoice::Custom {
+        id: "suzuka".to_string(),
+        title: "Suzuka".to_string(),
+        description: String::new(),
+        path: "gt/suzuka".to_string(),
+    };
+
+    let arc1 = resolve_track_for_menu_arc(&suzuka_choice).expect("First resolve must succeed");
+    let arc2 = resolve_track_for_menu_arc(&suzuka_choice).expect("Second resolve must succeed");
+    assert!(
+        std::sync::Arc::ptr_eq(&arc1, &arc2),
+        "Repeated resolve_track_for_menu_arc calls must share the same Arc<Track> allocation"
+    );
+}
+

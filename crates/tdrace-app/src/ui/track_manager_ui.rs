@@ -364,7 +364,12 @@ pub fn render_track_manager_screen(
         for i in start_idx..end_idx {
             let track_choice = &tracks_list[i];
             let is_sel = i == selected_idx;
-            let loaded_track = super::menu::resolve_track_for_menu_with_dir(track_choice, &track_manager.tracks_dir);
+            let embedded_circuit = track_choice.embedded_for_menu();
+            let loaded_track = if embedded_circuit.is_none() {
+                super::menu::resolve_track_for_menu_arc_with_dir(track_choice, &track_manager.tracks_dir)
+            } else {
+                None
+            };
 
             let item_bg = if is_sel {
                 Palette::UI_CARD_BG_HOVER
@@ -385,7 +390,9 @@ pub fn render_track_manager_screen(
             let thumb_x = col1_x + col1_w - scaler.s(12.0) - thumb_w - scaler.s(6.0);
             let thumb_y = item_y + scaler.s(8.0);
 
-            if let Some(ref tr) = loaded_track {
+            if let Some(emb) = embedded_circuit {
+                super::track_preview::render_embedded_track_thumbnail(&scaler, thumb_x, thumb_y, thumb_w, thumb_h, emb, is_sel);
+            } else if let Some(ref tr) = loaded_track {
                 super::track_preview::render_track_thumbnail(&scaler, thumb_x, thumb_y, thumb_w, thumb_h, tr, is_sel);
             }
 
@@ -411,7 +418,9 @@ pub fn render_track_manager_screen(
             );
 
             // Short metric info: Length & Surface breakdown
-            let metric_str = if let Some(ref tr) = loaded_track {
+            let metric_str = if let Some(emb) = embedded_circuit {
+                format!("{:.0}m • {}", emb.total_length_m, emb.surface_summary)
+            } else if let Some(ref tr) = loaded_track {
                 format!("{:.0}m • {}", tr.total_length_m(), tr.surface_summary_string())
             } else {
                 format!("ID: {}", track_choice.track_id())
@@ -432,7 +441,7 @@ pub fn render_track_manager_screen(
     scaler.draw_glass_card(col2_x, content_y, col2_w, content_h, Color::new(0.06, 0.08, 0.12, 0.90), Palette::UI_CARD_BORDER, 1.2);
 
     if let Some(selected_track) = tracks_list.get(selected_idx) {
-        let loaded_track = super::menu::resolve_track_for_menu_with_dir(selected_track, &track_manager.tracks_dir);
+        let loaded_track = super::menu::resolve_track_for_menu_arc_with_dir(selected_track, &track_manager.tracks_dir);
         let pad_x = col2_x + scaler.s(18.0);
         let mut d_y = content_y + scaler.s(18.0);
 

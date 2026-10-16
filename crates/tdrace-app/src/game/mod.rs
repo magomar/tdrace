@@ -11077,7 +11077,8 @@ impl RaceSession {
     }
 
     /// Transitions cleanly into full circuit top-down viewer with maximum zoom out.
-    pub fn open_circuit_viewer(&mut self, track: Track, title: String, origin: CircuitViewerOrigin) {
+    pub fn open_circuit_viewer(&mut self, mut track: Track, title: String, origin: CircuitViewerOrigin) {
+        track.ensure_runtime_geometry();
         self.audio.play_sfx(SfxType::UiSelect);
         let sw = screen_width_safe();
         let sh = screen_height_safe();
