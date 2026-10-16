@@ -34,11 +34,11 @@ from evorl.evo.search import CMAESEmitter
 # crates/tdrace-app/src/ai/bot_harness.rs; constants match StyleTuning::for_style(Balanced) in
 # crates/race-kit/src/ai/mod.rs. `check_incumbent` fails the run if the constants drift.
 STAGE_A = [
-    ("lookahead_time", 0.25, 0.55, 0.38),
-    ("steering_kp", 1.50, 3.50, 2.10),
-    ("steering_kd", 0.03, 0.12, 0.07),
-    ("brake_margin", 0.85, 1.30, 1.05),
-    ("speed_mult", 0.94, 1.06, 0.98),
+    ("lookahead_time", 0.20, 0.55, 0.34),
+    ("steering_kp", 1.50, 3.50, 2.00),
+    ("steering_kd", 0.03, 0.14, 0.08),
+    ("brake_margin", 0.80, 1.30, 1.08),
+    ("speed_mult", 0.94, 1.10, 1.00),
 ]
 # Share of a candidate's matches with a spin or a stall that costs the whole Wilson bound.
 DISQUALIFY_WEIGHT = 1.0

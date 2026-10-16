@@ -60,7 +60,7 @@ fn test_stage_b_genome_sets_the_tier_quality() {
 #[test]
 fn test_genome_values_are_clamped_and_non_finite_values_fail() {
     let wild = BotGenome { steering_kp: Some(99.0), lookahead_time: Some(-5.0), ..Default::default() };
-    let at_bounds = BotGenome { steering_kp: Some(3.50), lookahead_time: Some(0.25), ..Default::default() };
+    let at_bounds = BotGenome { steering_kp: Some(3.50), lookahead_time: Some(0.20), ..Default::default() };
     assert_eq!(wild.profile(DrivingStyle::Balanced, DriverTier::Pro).unwrap(), at_bounds.profile(DrivingStyle::Balanced, DriverTier::Pro).unwrap());
     for bad in [f32::NAN, f32::INFINITY, f32::NEG_INFINITY] {
         let genome = BotGenome { composure: Some(bad), ..Default::default() };

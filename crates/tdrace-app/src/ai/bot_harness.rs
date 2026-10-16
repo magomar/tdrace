@@ -436,13 +436,13 @@ pub struct BotGenome {
 
 /// Search box of each `BotGenome` value (spec 083, "What gets tuned"). Values are clamped into it.
 pub const GENOME_BOUNDS: [(&str, f32, f32); 9] = [
-    ("lookahead_time", 0.25, 0.55),
+    ("lookahead_time", 0.20, 0.55),
     ("steering_kp", 1.50, 3.50),
-    ("steering_kd", 0.03, 0.12),
-    ("brake_margin", 0.85, 1.30),
-    ("speed_mult", 0.94, 1.06),
-    ("pace_limit", 0.70, 1.10),
-    ("brake_padding", -0.08, 0.30),
+    ("steering_kd", 0.03, 0.14),
+    ("brake_margin", 0.80, 1.30),
+    ("speed_mult", 0.94, 1.10),
+    ("pace_limit", 0.70, 1.15),
+    ("brake_padding", -0.15, 0.30),
     ("consistency", 0.40, 1.00),
     ("composure", 0.30, 1.00),
 ];

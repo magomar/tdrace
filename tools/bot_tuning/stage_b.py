@@ -91,17 +91,17 @@ TIER_CONFIGS = [
     {
         "tier": 5,
         "name": "Legend",
-        "target_centre": -0.0225,
-        "target_half_width": 0.0075,
+        "target_centre": -0.055,
+        "target_half_width": 0.015,
         "defaults": {
-            "pace_limit": 1.04,
-            "brake_padding": -0.03,
+            "pace_limit": 1.06,
+            "brake_padding": -0.05,
             "consistency": 0.99,
             "composure": 0.98,
         },
         "specs": [
-            ("pace_limit", 1.00, 1.10, 1.04),
-            ("brake_padding", -0.08, 0.05, -0.03),
+            ("pace_limit", 1.00, 1.15, 1.06),
+            ("brake_padding", -0.15, 0.05, -0.05),
             ("consistency", 0.94, 1.00, 0.99),
             ("composure", 0.91, 1.00, 0.98),
         ],

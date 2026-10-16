@@ -1,9 +1,9 @@
 {
-  "evorl_commit": "11b9ac3",
-  "tdrace_commit": "92be9098",
+  "evorl_commit": "unknown",
+  "tdrace_commit": "unknown",
   "seed": 83,
-  "generations": 25,
-  "population": 14,
+  "generations": 50,
+  "population": 16,
   "seeds_per_generation": 4,
   "circuits": [
     "classic/gt_coastal_grand_prix",
@@ -20,353 +20,678 @@
     "rally/mettet_rx",
     "rally/montalegre_rx"
   ],
-  "elapsed_s": 1524.7454907849897,
+  "elapsed_s": 1650.723545522007,
   "history": [
     {
       "generation": 0,
-      "best_score": 0.06161065819374739,
-      "mean_score": -0.10838881975192063,
+      "best_score": 0.48458249852793156,
+      "mean_score": 0.13118404486509683,
       "best_params": {
-        "brake_margin": 1.1073286198074974,
-        "lookahead_time": 0.3294758699943469,
-        "speed_mult": 1.0005759359825015,
-        "steering_kd": 0.07911244917564084,
-        "steering_kp": 1.9605464017949112
+        "brake_margin": 1.1391639197346717,
+        "lookahead_time": 0.2904697846363503,
+        "speed_mult": 1.0113629925438323,
+        "steering_kd": 0.052839518542179026,
+        "steering_kp": 1.6289503270426144
       },
-      "elapsed_s": 62.43677841799217
+      "elapsed_s": 34.568460821014014
     },
     {
       "generation": 1,
-      "best_score": 0.23089633743915827,
-      "mean_score": -0.021289481512675398,
+      "best_score": 0.5179604216622584,
+      "mean_score": 0.27715233446145643,
       "best_params": {
-        "brake_margin": 1.1337888700834424,
-        "lookahead_time": 0.29015781244340966,
-        "speed_mult": 1.0104006205491884,
-        "steering_kd": 0.06639951068428149,
-        "steering_kp": 1.7552954241853285
+        "brake_margin": 1.134508037820747,
+        "lookahead_time": 0.28986913630907307,
+        "speed_mult": 1.0607378811999717,
+        "steering_kd": 0.05341359899160912,
+        "steering_kp": 1.5001954267153774
       },
-      "elapsed_s": 121.73603068199009
+      "elapsed_s": 66.51292621000903
     },
     {
       "generation": 2,
-      "best_score": 0.3173826815809684,
-      "mean_score": 0.09032407271950303,
+      "best_score": 0.5676973308222006,
+      "mean_score": 0.28811975758207775,
       "best_params": {
-        "brake_margin": 1.0904883983588503,
-        "lookahead_time": 0.2501904658904565,
-        "speed_mult": 1.01036985694374,
-        "steering_kd": 0.06687243745729553,
-        "steering_kp": 1.915988328553718
+        "brake_margin": 1.082454485138436,
+        "lookahead_time": 0.246972510263508,
+        "speed_mult": 1.0718200339167279,
+        "steering_kd": 0.07287584293982552,
+        "steering_kp": 2.1719632005266107
       },
-      "elapsed_s": 178.54690169700189
+      "elapsed_s": 98.21514909001417
     },
     {
       "generation": 3,
-      "best_score": 0.34666560508882355,
-      "mean_score": 0.14106650091759373,
+      "best_score": 0.5879712497671368,
+      "mean_score": 0.40548889368880126,
       "best_params": {
-        "brake_margin": 1.172251997942237,
-        "lookahead_time": 0.2609333042751938,
-        "speed_mult": 1.04237088201015,
-        "steering_kd": 0.09838645118296784,
-        "steering_kp": 1.572010726233161
+        "brake_margin": 1.1179550110427343,
+        "lookahead_time": 0.20337994641392304,
+        "speed_mult": 1.0437752107444542,
+        "steering_kd": 0.05934914747294601,
+        "steering_kp": 2.765082981276068
       },
-      "elapsed_s": 233.96596014199895
+      "elapsed_s": 129.9165558930108
     },
     {
       "generation": 4,
-      "best_score": 0.3562809897042082,
-      "mean_score": 0.1586789722882927,
+      "best_score": 0.672808355315222,
+      "mean_score": 0.4221563141726924,
       "best_params": {
-        "brake_margin": 1.1348463110420186,
-        "lookahead_time": 0.2540857055426235,
-        "speed_mult": 1.0116374975469928,
-        "steering_kd": 0.07817942054520323,
-        "steering_kp": 1.7474072860348349
+        "brake_margin": 1.0504822705325494,
+        "lookahead_time": 0.20296477539325955,
+        "speed_mult": 1.0915177325614742,
+        "steering_kd": 0.09656528715237364,
+        "steering_kp": 3.1931436403846547
       },
-      "elapsed_s": 289.39964325199253
+      "elapsed_s": 161.62856147700222
     },
     {
       "generation": 5,
-      "best_score": 0.36634139894944,
-      "mean_score": 0.18445498757541337,
+      "best_score": 0.5602386543045572,
+      "mean_score": 0.36554662460330906,
       "best_params": {
-        "brake_margin": 1.1896010683642135,
-        "lookahead_time": 0.25061014197554277,
-        "speed_mult": 1.0394499553417071,
-        "steering_kd": 0.08300595063294891,
-        "steering_kp": 1.5643160027529868
+        "brake_margin": 1.1611010750040238,
+        "lookahead_time": 0.243310608434198,
+        "speed_mult": 1.041465635327718,
+        "steering_kd": 0.04676240558442042,
+        "steering_kp": 2.876992974537763
       },
-      "elapsed_s": 344.9485539659945
+      "elapsed_s": 192.86947684700135
     },
     {
       "generation": 6,
-      "best_score": 0.39494561025123887,
-      "mean_score": 0.17218802813897363,
+      "best_score": 0.6264327882286753,
+      "mean_score": 0.3897715275320597,
       "best_params": {
-        "brake_margin": 1.1518817483794006,
-        "lookahead_time": 0.2592348131625593,
-        "speed_mult": 1.0525745220463834,
-        "steering_kd": 0.10321429874576386,
-        "steering_kp": 1.5757036929467638
+        "brake_margin": 1.0432647013767486,
+        "lookahead_time": 0.22484158543829771,
+        "speed_mult": 1.0559238244025753,
+        "steering_kd": 0.08872192105031484,
+        "steering_kp": 2.088306277964313
       },
-      "elapsed_s": 400.2381016279978
+      "elapsed_s": 224.39197903100285
     },
     {
       "generation": 7,
-      "best_score": 0.32726991533315786,
-      "mean_score": 0.19042138089106903,
+      "best_score": 0.5763361486321631,
+      "mean_score": 0.4507101091556337,
       "best_params": {
-        "brake_margin": 1.1300997982758256,
-        "lookahead_time": 0.2512703497673692,
-        "speed_mult": 1.0163992250494869,
-        "steering_kd": 0.10542133396566472,
-        "steering_kp": 1.5761940651418098
+        "brake_margin": 1.0692134420561366,
+        "lookahead_time": 0.22610680738571975,
+        "speed_mult": 1.0810061326859197,
+        "steering_kd": 0.09987532794418014,
+        "steering_kp": 2.228848140461861
       },
-      "elapsed_s": 456.17563437498757
+      "elapsed_s": 255.8251970380079
     },
     {
       "generation": 8,
-      "best_score": 0.36140783150476435,
-      "mean_score": 0.2947692310008389,
+      "best_score": 0.6588488327346387,
+      "mean_score": 0.4909942014587469,
       "best_params": {
-        "brake_margin": 1.1680466628620634,
-        "lookahead_time": 0.2518428942604816,
-        "speed_mult": 1.0554493667853224,
-        "steering_kd": 0.10340741360969224,
-        "steering_kp": 1.5017257499873118
+        "brake_margin": 1.0454256378279079,
+        "lookahead_time": 0.2254282866620333,
+        "speed_mult": 1.0964258219342857,
+        "steering_kd": 0.10542015158402487,
+        "steering_kp": 2.018245937589082
       },
-      "elapsed_s": 524.7427789809881
+      "elapsed_s": 288.9383831160085
     },
     {
       "generation": 9,
-      "best_score": 0.39615459999119035,
-      "mean_score": 0.2895918364557129,
+      "best_score": 0.6340284563244707,
+      "mean_score": 0.486100030106479,
       "best_params": {
-        "brake_margin": 1.0877336937831963,
-        "lookahead_time": 0.25714748087939804,
-        "speed_mult": 1.0424504390656315,
-        "steering_kd": 0.09269054481526458,
-        "steering_kp": 1.8560926046357031
+        "brake_margin": 1.056658952801011,
+        "lookahead_time": 0.2001574044998539,
+        "speed_mult": 1.0888476727544996,
+        "steering_kd": 0.08768161747463388,
+        "steering_kp": 2.2201335126761865
       },
-      "elapsed_s": 582.6182963369938
+      "elapsed_s": 320.81104016701283
     },
     {
       "generation": 10,
-      "best_score": 0.39494561025123887,
-      "mean_score": 0.30058625447296444,
+      "best_score": 0.6479654259227873,
+      "mean_score": 0.557593162180468,
       "best_params": {
-        "brake_margin": 1.1568679046226609,
-        "lookahead_time": 0.2501766346154435,
-        "speed_mult": 1.056770931319454,
-        "steering_kd": 0.11893693416979721,
-        "steering_kp": 1.5271463092893605
+        "brake_margin": 1.0439100881150811,
+        "lookahead_time": 0.22688543476979248,
+        "speed_mult": 1.0957097177413595,
+        "steering_kd": 0.1250731154283887,
+        "steering_kp": 2.5009809965074186
       },
-      "elapsed_s": 639.504968726993
+      "elapsed_s": 351.75362730601046
     },
     {
       "generation": 11,
-      "best_score": 0.38557216818020923,
-      "mean_score": 0.3255670589668533,
+      "best_score": 0.6328015863577576,
+      "mean_score": 0.5696305898766709,
       "best_params": {
-        "brake_margin": 1.1301888583335744,
-        "lookahead_time": 0.2590852544138768,
-        "speed_mult": 1.0537848742050047,
-        "steering_kd": 0.10434486951253351,
-        "steering_kp": 1.5006434640369086
+        "brake_margin": 0.9747223023932279,
+        "lookahead_time": 0.20330809264974456,
+        "speed_mult": 1.0752346865230031,
+        "steering_kd": 0.13949806815548163,
+        "steering_kp": 2.739764989826271
       },
-      "elapsed_s": 696.2285942000017
+      "elapsed_s": 382.7734391200065
     },
     {
       "generation": 12,
-      "best_score": 0.39494561025123887,
-      "mean_score": 0.2990624257720165,
+      "best_score": 0.6794330410682103,
+      "mean_score": 0.5860411037529444,
       "best_params": {
-        "brake_margin": 1.1924058450048665,
-        "lookahead_time": 0.2501382899711475,
-        "speed_mult": 1.0599975298778936,
-        "steering_kd": 0.11979543425696854,
-        "steering_kp": 1.7226850649494208
+        "brake_margin": 1.017318321664395,
+        "lookahead_time": 0.22455843002200865,
+        "speed_mult": 1.07400290240064,
+        "steering_kd": 0.10976103186504392,
+        "steering_kp": 2.3498106437982553
       },
-      "elapsed_s": 752.9570023629931
+      "elapsed_s": 413.5107551950059
     },
     {
       "generation": 13,
-      "best_score": 0.3757148410204696,
-      "mean_score": 0.30382983981339795,
+      "best_score": 0.6808785094346808,
+      "mean_score": 0.5704812968209928,
       "best_params": {
-        "brake_margin": 1.2252210858001338,
-        "lookahead_time": 0.2506629979840674,
-        "speed_mult": 1.0222074908042655,
-        "steering_kd": 0.10746762995253993,
-        "steering_kp": 1.6050760773974524
+        "brake_margin": 1.0272036134008369,
+        "lookahead_time": 0.21906039174792702,
+        "speed_mult": 1.089568790578327,
+        "steering_kd": 0.10030374038380276,
+        "steering_kp": 2.7731103453189623
       },
-      "elapsed_s": 809.0698821369879
+      "elapsed_s": 444.498892144009
     },
     {
       "generation": 14,
-      "best_score": 0.3755117589349774,
-      "mean_score": 0.3197170965614248,
+      "best_score": 0.6712631248192961,
+      "mean_score": 0.5585018397175778,
       "best_params": {
-        "brake_margin": 1.0841578767050661,
-        "lookahead_time": 0.25000586074204684,
-        "speed_mult": 1.0524607698054607,
-        "steering_kd": 0.10492878101801896,
-        "steering_kp": 1.5685093910432109
+        "brake_margin": 1.1065169028154052,
+        "lookahead_time": 0.21945182599514096,
+        "speed_mult": 1.0747370785164403,
+        "steering_kd": 0.07701780524529467,
+        "steering_kp": 2.5584757792550485
       },
-      "elapsed_s": 865.1941574259981
+      "elapsed_s": 475.51191576200654
     },
     {
       "generation": 15,
-      "best_score": 0.38557216818020923,
-      "mean_score": 0.2955945235639331,
+      "best_score": 0.6467771158430188,
+      "mean_score": 0.5147614274874776,
       "best_params": {
-        "brake_margin": 1.1252853197370587,
-        "lookahead_time": 0.2510454557906467,
-        "speed_mult": 1.0542759834218194,
-        "steering_kd": 0.10166875025571763,
-        "steering_kp": 1.638713418288055
+        "brake_margin": 1.0441524446544812,
+        "lookahead_time": 0.20481584159945557,
+        "speed_mult": 1.0949647231090809,
+        "steering_kd": 0.07765951493782572,
+        "steering_kp": 2.4979637981285543
       },
-      "elapsed_s": 922.0565593489882
+      "elapsed_s": 507.3881468440086
     },
     {
       "generation": 16,
-      "best_score": 0.4048029374109785,
-      "mean_score": 0.328054025834493,
+      "best_score": 0.6890484256835949,
+      "mean_score": 0.6137895423005237,
       "best_params": {
-        "brake_margin": 1.1738604456632524,
-        "lookahead_time": 0.25027365255851036,
-        "speed_mult": 1.0445131024637875,
-        "steering_kd": 0.09666210124918334,
-        "steering_kp": 1.5341295918407079
+        "brake_margin": 1.064647369564335,
+        "lookahead_time": 0.21109437861082087,
+        "speed_mult": 1.0973862220345358,
+        "steering_kd": 0.08230827719215073,
+        "steering_kp": 2.8592925133711593
       },
-      "elapsed_s": 978.3099062429974
+      "elapsed_s": 538.2652966630121
     },
     {
       "generation": 17,
-      "best_score": 0.36589637431959277,
-      "mean_score": 0.31779463602729496,
+      "best_score": 0.6505868872220565,
+      "mean_score": 0.5809096911529357,
       "best_params": {
-        "brake_margin": 1.1226516527184347,
-        "lookahead_time": 0.25212496408111407,
-        "speed_mult": 1.0357062650654543,
-        "steering_kd": 0.07298119438269993,
-        "steering_kp": 1.5664970152483846
+        "brake_margin": 1.0375174114076353,
+        "lookahead_time": 0.20155307115942062,
+        "speed_mult": 1.09999116010701,
+        "steering_kd": 0.07789915316979992,
+        "steering_kp": 2.7627073324467495
       },
-      "elapsed_s": 1035.4052870799933
+      "elapsed_s": 570.072468798011
     },
     {
       "generation": 18,
-      "best_score": 0.39518755279559387,
-      "mean_score": 0.3162395283909101,
+      "best_score": 0.6602022718374411,
+      "mean_score": 0.5953946414919261,
       "best_params": {
-        "brake_margin": 1.2277287006455175,
-        "lookahead_time": 0.2521999640665747,
-        "speed_mult": 1.034587092439283,
-        "steering_kd": 0.07511366633497127,
-        "steering_kp": 1.555751180889616
+        "brake_margin": 1.074769113150501,
+        "lookahead_time": 0.2100960886638781,
+        "speed_mult": 1.0764343149809625,
+        "steering_kd": 0.07606192136734402,
+        "steering_kp": 2.672561787185522
       },
-      "elapsed_s": 1093.2452543529944
+      "elapsed_s": 601.8609685690026
     },
     {
       "generation": 19,
-      "best_score": 0.4054065494308151,
-      "mean_score": 0.33494474897993326,
+      "best_score": 0.7112698937767604,
+      "mean_score": 0.5943977033946792,
       "best_params": {
-        "brake_margin": 1.153273636464876,
-        "lookahead_time": 0.2500001433933594,
-        "speed_mult": 1.0413972561463158,
-        "steering_kd": 0.07946270807609289,
-        "steering_kp": 1.5763862834064295
+        "brake_margin": 1.0202593604803663,
+        "lookahead_time": 0.21399652896724067,
+        "speed_mult": 1.096787371586747,
+        "steering_kd": 0.11045424705847974,
+        "steering_kp": 2.6452393621416137
       },
-      "elapsed_s": 1151.971300552992
+      "elapsed_s": 632.8760578670044
     },
     {
       "generation": 20,
-      "best_score": 0.40456099486662345,
-      "mean_score": 0.3403411806275311,
+      "best_score": 0.7129240223938683,
+      "mean_score": 0.6271760000056941,
       "best_params": {
-        "brake_margin": 1.1872417667570807,
-        "lookahead_time": 0.2504581727925497,
-        "speed_mult": 1.0521283307626972,
-        "steering_kd": 0.07488838410410081,
-        "steering_kp": 1.5767023078403568
+        "brake_margin": 1.0198192642207067,
+        "lookahead_time": 0.2066874400619682,
+        "speed_mult": 1.0915695818058573,
+        "steering_kd": 0.11677694480945283,
+        "steering_kp": 2.543545611030477
       },
-      "elapsed_s": 1210.5053996259958
+      "elapsed_s": 671.4027174580115
     },
     {
       "generation": 21,
-      "best_score": 0.4237917640973927,
-      "mean_score": 0.35629300267977876,
+      "best_score": 0.6684642173500233,
+      "mean_score": 0.607579264933586,
       "best_params": {
-        "brake_margin": 1.156698091909578,
-        "lookahead_time": 0.2500705102387235,
-        "speed_mult": 1.0453296033781305,
-        "steering_kd": 0.08003727016548093,
-        "steering_kp": 1.502430562226181
+        "brake_margin": 1.0331959452294932,
+        "lookahead_time": 0.21399914876382078,
+        "speed_mult": 1.0935075411978619,
+        "steering_kd": 0.1299754406015453,
+        "steering_kp": 2.9219017253812876
       },
-      "elapsed_s": 1267.820430155989
+      "elapsed_s": 704.668515701007
     },
     {
       "generation": 22,
-      "best_score": 0.38585373893244357,
-      "mean_score": 0.3276989864701586,
+      "best_score": 0.6890484256835949,
+      "mean_score": 0.6032327185865924,
       "best_params": {
-        "brake_margin": 1.1615268509844494,
-        "lookahead_time": 0.25002135434878137,
-        "speed_mult": 1.0442245990246204,
-        "steering_kd": 0.11267096739348244,
-        "steering_kp": 1.5006473182787352
+        "brake_margin": 1.0567028113185781,
+        "lookahead_time": 0.22073875274981675,
+        "speed_mult": 1.0757810886291348,
+        "steering_kd": 0.09492611327038397,
+        "steering_kp": 2.600309645429645
       },
-      "elapsed_s": 1323.7729128609935
+      "elapsed_s": 737.7126228020061
     },
     {
       "generation": 23,
-      "best_score": 0.41502193404619975,
-      "mean_score": 0.3308898462262616,
+      "best_score": 0.693693253163099,
+      "mean_score": 0.6043989327271835,
       "best_params": {
-        "brake_margin": 1.131514882855163,
-        "lookahead_time": 0.25012127521069444,
-        "speed_mult": 1.0530259273594282,
-        "steering_kd": 0.11149585278483998,
-        "steering_kp": 1.5338883457351378
+        "brake_margin": 1.0216528426040996,
+        "lookahead_time": 0.21324563093482135,
+        "speed_mult": 1.0958529564274444,
+        "steering_kd": 0.09421751214334795,
+        "steering_kp": 2.6135050033298057
       },
-      "elapsed_s": 1379.2234479780018
+      "elapsed_s": 770.2129047480121
     },
     {
       "generation": 24,
-      "best_score": 0.4146998927785974,
-      "mean_score": 0.3376620568877957,
+      "best_score": 0.6631929706998374,
+      "mean_score": 0.6170628307134773,
       "best_params": {
-        "brake_margin": 1.1487558033783574,
-        "lookahead_time": 0.2506438760428841,
-        "speed_mult": 1.0533740056981937,
-        "steering_kd": 0.11804232018287626,
-        "steering_kp": 1.6481695791222244
+        "brake_margin": 1.0281087685974033,
+        "lookahead_time": 0.2107058449241265,
+        "speed_mult": 1.098779286168006,
+        "steering_kd": 0.09391488435041391,
+        "steering_kp": 2.656039531898922
       },
-      "elapsed_s": 1435.0938815779955
+      "elapsed_s": 801.2631113710086
+    },
+    {
+      "generation": 25,
+      "best_score": 0.6840778685477145,
+      "mean_score": 0.6031413105117109,
+      "best_params": {
+        "brake_margin": 1.0468779362298335,
+        "lookahead_time": 0.21127735196239752,
+        "speed_mult": 1.0996307375232508,
+        "steering_kd": 0.10155385510665398,
+        "steering_kp": 2.585251107392085
+      },
+      "elapsed_s": 832.3028248860064
+    },
+    {
+      "generation": 26,
+      "best_score": 0.693693253163099,
+      "mean_score": 0.6134949200745852,
+      "best_params": {
+        "brake_margin": 1.0271168088731126,
+        "lookahead_time": 0.22942525995695756,
+        "speed_mult": 1.0953232809378608,
+        "steering_kd": 0.09675275373019451,
+        "steering_kp": 2.414622415579591
+      },
+      "elapsed_s": 863.5759229520045
+    },
+    {
+      "generation": 27,
+      "best_score": 0.7050825860757322,
+      "mean_score": 0.5974013477570674,
+      "best_params": {
+        "brake_margin": 1.0359545578510998,
+        "lookahead_time": 0.2175870715298499,
+        "speed_mult": 1.087515361384576,
+        "steering_kd": 0.10426653702442588,
+        "steering_kp": 2.571461118616401
+      },
+      "elapsed_s": 894.6982439359999
+    },
+    {
+      "generation": 28,
+      "best_score": 0.6520323555885269,
+      "mean_score": 0.6041300513523457,
+      "best_params": {
+        "brake_margin": 1.0323084997138696,
+        "lookahead_time": 0.2125714079312537,
+        "speed_mult": 1.0995586617822064,
+        "steering_kd": 0.11471747080292698,
+        "steering_kp": 2.699724533581728
+      },
+      "elapsed_s": 926.4273684650107
+    },
+    {
+      "generation": 29,
+      "best_score": 0.7016545091613758,
+      "mean_score": 0.6371493844956995,
+      "best_params": {
+        "brake_margin": 1.034536307701999,
+        "lookahead_time": 0.21837357060781187,
+        "speed_mult": 1.0991076268972908,
+        "steering_kd": 0.09851896417134681,
+        "steering_kp": 2.7259933804730396
+      },
+      "elapsed_s": 961.6440386960021
+    },
+    {
+      "generation": 30,
+      "best_score": 0.6808785094346808,
+      "mean_score": 0.6142951153579299,
+      "best_params": {
+        "brake_margin": 1.030564362499046,
+        "lookahead_time": 0.20890294431268377,
+        "speed_mult": 1.0998899861739,
+        "steering_kd": 0.12881064562445804,
+        "steering_kp": 2.6122266771171123
+      },
+      "elapsed_s": 994.8233767520142
+    },
+    {
+      "generation": 31,
+      "best_score": 0.7208852783921451,
+      "mean_score": 0.6352475206915087,
+      "best_params": {
+        "brake_margin": 1.0236119745468626,
+        "lookahead_time": 0.2084237727732673,
+        "speed_mult": 1.0999998917847948,
+        "steering_kd": 0.1159783795757191,
+        "steering_kp": 2.7199652361162934
+      },
+      "elapsed_s": 1026.4780529830023
+    },
+    {
+      "generation": 32,
+      "best_score": 0.6588488327346387,
+      "mean_score": 0.6030255793361443,
+      "best_params": {
+        "brake_margin": 1.02556181408108,
+        "lookahead_time": 0.20807393773872396,
+        "speed_mult": 1.09345413973606,
+        "steering_kd": 0.12439593282322646,
+        "steering_kp": 2.710168031976987
+      },
+      "elapsed_s": 1057.9486305040045
+    },
+    {
+      "generation": 33,
+      "best_score": 0.6712631248192961,
+      "mean_score": 0.6053466628057187,
+      "best_params": {
+        "brake_margin": 1.0315649013373414,
+        "lookahead_time": 0.2105263762847863,
+        "speed_mult": 1.0998748247135564,
+        "steering_kd": 0.12321087275121065,
+        "steering_kp": 2.902856054048923
+      },
+      "elapsed_s": 1092.520080762013
+    },
+    {
+      "generation": 34,
+      "best_score": 0.7112698937767604,
+      "mean_score": 0.6205223228860927,
+      "best_params": {
+        "brake_margin": 1.029613007026159,
+        "lookahead_time": 0.2153000780826401,
+        "speed_mult": 1.095007024895483,
+        "steering_kd": 0.13397728429332156,
+        "steering_kp": 2.551020721419798
+      },
+      "elapsed_s": 1126.2714742430107
+    },
+    {
+      "generation": 35,
+      "best_score": 0.6535775860844528,
+      "mean_score": 0.597172532241087,
+      "best_params": {
+        "brake_margin": 1.0228316165752576,
+        "lookahead_time": 0.20515109737447812,
+        "speed_mult": 1.0932239032144522,
+        "steering_kd": 0.12896798601293968,
+        "steering_kp": 2.853545696699329
+      },
+      "elapsed_s": 1157.7301449990046
+    },
+    {
+      "generation": 36,
+      "best_score": 0.6744624839323299,
+      "mean_score": 0.619069130921116,
+      "best_params": {
+        "brake_margin": 1.0214789677953224,
+        "lookahead_time": 0.21302795007688924,
+        "speed_mult": 1.0855443109780394,
+        "steering_kd": 0.12694208809730084,
+        "steering_kp": 2.8921106624100092
+      },
+      "elapsed_s": 1188.4644977000135
+    },
+    {
+      "generation": 37,
+      "best_score": 0.6890484256835949,
+      "mean_score": 0.616392615206986,
+      "best_params": {
+        "brake_margin": 1.0365905654683358,
+        "lookahead_time": 0.21663140026308295,
+        "speed_mult": 1.078642375737739,
+        "steering_kd": 0.12010121673943,
+        "steering_kp": 2.504858087171454
+      },
+      "elapsed_s": 1219.3001742240012
+    },
+    {
+      "generation": 38,
+      "best_score": 0.6744624839323299,
+      "mean_score": 0.6329017758471506,
+      "best_params": {
+        "brake_margin": 1.0290892830622176,
+        "lookahead_time": 0.222356442792754,
+        "speed_mult": 1.0999992452812772,
+        "steering_kd": 0.12714529049103365,
+        "steering_kp": 2.70764696795415
+      },
+      "elapsed_s": 1250.18497539901
+    },
+    {
+      "generation": 39,
+      "best_score": 0.6631929706998374,
+      "mean_score": 0.604732889876989,
+      "best_params": {
+        "brake_margin": 1.0278818388233804,
+        "lookahead_time": 0.2231426519473771,
+        "speed_mult": 1.0832121158544303,
+        "steering_kd": 0.13265467713140455,
+        "steering_kp": 2.6103891122945817
+      },
+      "elapsed_s": 1281.8456055630086
+    },
+    {
+      "generation": 40,
+      "best_score": 0.7033086377784837,
+      "mean_score": 0.6245396380188615,
+      "best_params": {
+        "brake_margin": 1.0211908696234522,
+        "lookahead_time": 0.21355168673319302,
+        "speed_mult": 1.0928789454917334,
+        "steering_kd": 0.1296564019074857,
+        "steering_kp": 2.8138848858703778
+      },
+      "elapsed_s": 1317.9685164590046
+    },
+    {
+      "generation": 41,
+      "best_score": 0.6904938940500653,
+      "mean_score": 0.6369891873640481,
+      "best_params": {
+        "brake_margin": 1.0185561575719921,
+        "lookahead_time": 0.20892068261970187,
+        "speed_mult": 1.09511671068667,
+        "steering_kd": 0.13998299825072566,
+        "steering_kp": 2.714411350085724
+      },
+      "elapsed_s": 1351.2209599740017
+    },
+    {
+      "generation": 42,
+      "best_score": 0.6920391245459913,
+      "mean_score": 0.6394765720420007,
+      "best_params": {
+        "brake_margin": 1.0229986454586493,
+        "lookahead_time": 0.20398412376583203,
+        "speed_mult": 1.094712583782011,
+        "steering_kd": 0.13386301439698584,
+        "steering_kp": 2.7308968496935027
+      },
+      "elapsed_s": 1384.4523540970113
+    },
+    {
+      "generation": 43,
+      "best_score": 0.6505868872220565,
+      "mean_score": 0.6071381394133396,
+      "best_params": {
+        "brake_margin": 1.0279569518750964,
+        "lookahead_time": 0.22061864391576633,
+        "speed_mult": 1.0985388832016576,
+        "steering_kd": 0.13281295818988348,
+        "steering_kp": 2.7771602973432605
+      },
+      "elapsed_s": 1416.9383956170059
+    },
+    {
+      "generation": 44,
+      "best_score": 0.6808785094346808,
+      "mean_score": 0.6369158572506767,
+      "best_params": {
+        "brake_margin": 1.0321638998362979,
+        "lookahead_time": 0.21609979558786913,
+        "speed_mult": 1.0916487656378913,
+        "steering_kd": 0.11778078994921466,
+        "steering_kp": 2.6448637109353714
+      },
+      "elapsed_s": 1448.5921287340025
+    },
+    {
+      "generation": 45,
+      "best_score": 0.7016545091613758,
+      "mean_score": 0.6160733453252385,
+      "best_params": {
+        "brake_margin": 1.0312143646301606,
+        "lookahead_time": 0.21837093159420856,
+        "speed_mult": 1.0935142896288894,
+        "steering_kd": 0.13816512841878648,
+        "steering_kp": 2.819647969746738
+      },
+      "elapsed_s": 1479.7657587540016
+    },
+    {
+      "generation": 46,
+      "best_score": 0.6840778685477145,
+      "mean_score": 0.6300547399466923,
+      "best_params": {
+        "brake_margin": 1.0326004162681264,
+        "lookahead_time": 0.205707427408837,
+        "speed_mult": 1.0926747994785253,
+        "steering_kd": 0.1277784272988512,
+        "steering_kp": 2.7205978093789005
+      },
+      "elapsed_s": 1510.6698836150026
+    },
+    {
+      "generation": 47,
+      "best_score": 0.7243133553065014,
+      "mean_score": 0.6160361084567352,
+      "best_params": {
+        "brake_margin": 1.035916317397936,
+        "lookahead_time": 0.21534110274086407,
+        "speed_mult": 1.0957357293774328,
+        "steering_kd": 0.11502653912699937,
+        "steering_kp": 2.6712540310627935
+      },
+      "elapsed_s": 1543.8509556600038
+    },
+    {
+      "generation": 48,
+      "best_score": 0.6712631248192961,
+      "mean_score": 0.6214169127698967,
+      "best_params": {
+        "brake_margin": 1.0351260973529004,
+        "lookahead_time": 0.21566707369562169,
+        "speed_mult": 1.0863250594196536,
+        "steering_kd": 0.13465924566375864,
+        "steering_kp": 2.5576206151946144
+      },
+      "elapsed_s": 1574.65678450001
+    },
+    {
+      "generation": 49,
+      "best_score": 0.6840778685477145,
+      "mean_score": 0.5988691697880132,
+      "best_params": {
+        "brake_margin": 1.0378062865898345,
+        "lookahead_time": 0.210557270297563,
+        "speed_mult": 1.0863575164698702,
+        "steering_kd": 0.12735901353395374,
+        "steering_kp": 2.5030078573202266
+      },
+      "elapsed_s": 1606.348816030004
     }
   ],
   "final": [
     {
-      "key": "d9cdcb8da38f",
+      "key": "8cf74b97e292",
       "params": {
-        "brake_margin": 1.131514882855163,
-        "lookahead_time": 0.25012127521069444,
-        "speed_mult": 1.0530259273594282,
-        "steering_kd": 0.11149585278483998,
-        "steering_kp": 1.5338883457351378
+        "brake_margin": 1.029613007026159,
+        "lookahead_time": 0.2153000780826401,
+        "speed_mult": 1.095007024895483,
+        "steering_kd": 0.13397728429332156,
+        "steering_kp": 2.551020721419798
       },
-      "score": 0.40263425118183765,
+      "score": 0.6805390563686469,
       "fitness": {
-        "subject": "candidate@d9cdcb8da38f",
-        "mean_score": 0.021724095934332444,
-        "win_rate": 0.65625,
+        "subject": "candidate@8cf74b97e292",
+        "mean_score": 0.030584422121738803,
+        "win_rate": 0.8413461538461539,
         "pair_count": 208,
         "total_matches": 416,
-        "wilson_lower": 0.6093650204126069,
-        "wilson_upper": 0.7002755678473465,
+        "wilson_lower": 0.8031352102148007,
+        "wilson_upper": 0.8733103825992511,
         "opponents": [
           "autocross/maggiora_ax",
           "autocross/nova_paka_ax",
@@ -383,36 +708,36 @@
           "rally/montalegre_rx"
         ],
         "metrics_mean": {
-          "mean_flying_lap": 54.18654407692308,
-          "opponent_mean_flying_lap": 55.079054463942306,
-          "spins": 0.28365384615384615,
-          "offs": 2.0288461538461537,
-          "mistakes": 0.44471153846153844,
-          "wall_contacts": 5.447115384615385,
-          "longest_no_progress_s": 1.6511628534375,
+          "mean_flying_lap": 53.99571716105769,
+          "opponent_mean_flying_lap": 55.57126529326923,
+          "spins": 0.12980769230769232,
+          "offs": 0.3605769230769231,
+          "mistakes": 0.4254807692307692,
+          "wall_contacts": 1.0288461538461537,
+          "longest_no_progress_s": 1.2499593306490386,
           "dnf": 0.0,
-          "disqualified": 0.20673076923076922
+          "disqualified": 0.12259615384615384
         }
       }
     },
     {
-      "key": "b7f351a983f3",
+      "key": "e3166ea50a7d",
       "params": {
-        "brake_margin": 1.153273636464876,
-        "lookahead_time": 0.2500001433933594,
-        "speed_mult": 1.0413972561463158,
-        "steering_kd": 0.07946270807609289,
-        "steering_kp": 1.5763862834064295
+        "brake_margin": 1.0198192642207067,
+        "lookahead_time": 0.2066874400619682,
+        "speed_mult": 1.0915695818058573,
+        "steering_kd": 0.11677694480945283,
+        "steering_kp": 2.543545611030477
       },
-      "score": 0.4024327099700997,
+      "score": 0.6657414074132112,
       "fitness": {
-        "subject": "candidate@b7f351a983f3",
-        "mean_score": 0.023303403759309872,
-        "win_rate": 0.6466346153846154,
+        "subject": "candidate@e3166ea50a7d",
+        "mean_score": 0.02703077324567841,
+        "win_rate": 0.8365384615384616,
         "pair_count": 208,
         "total_matches": 416,
-        "wilson_lower": 0.5995480945854843,
-        "wilson_upper": 0.6910376882430873,
+        "wilson_lower": 0.7979529458747496,
+        "wilson_upper": 0.8689652442236113,
         "opponents": [
           "autocross/maggiora_ax",
           "autocross/nova_paka_ax",
@@ -429,36 +754,36 @@
           "rally/montalegre_rx"
         ],
         "metrics_mean": {
-          "mean_flying_lap": 54.19889733653846,
-          "opponent_mean_flying_lap": 55.15172867067307,
-          "spins": 0.2620192307692308,
-          "offs": 1.8076923076923077,
-          "mistakes": 0.49278846153846156,
-          "wall_contacts": 5.168269230769231,
-          "longest_no_progress_s": 1.6346767727403846,
+          "mean_flying_lap": 54.19633616826923,
+          "opponent_mean_flying_lap": 55.57825670673078,
+          "spins": 0.13701923076923078,
+          "offs": 0.38221153846153844,
+          "mistakes": 0.4735576923076923,
+          "wall_contacts": 1.0576923076923077,
+          "longest_no_progress_s": 1.272655420192308,
           "dnf": 0.0,
-          "disqualified": 0.1971153846153846
+          "disqualified": 0.13221153846153846
         }
       }
     },
     {
-      "key": "44f8236ab5a7",
+      "key": "b634e5df8f4b",
       "params": {
-        "brake_margin": 1.1329244460940389,
-        "lookahead_time": 0.25222170019453743,
-        "speed_mult": 1.0477930794072747,
-        "steering_kd": 0.1024162000836042,
-        "steering_kp": 1.7310525012348679
+        "brake_margin": 1.0236119745468626,
+        "lookahead_time": 0.2084237727732673,
+        "speed_mult": 1.0999998917847948,
+        "steering_kd": 0.1159783795757191,
+        "steering_kp": 2.7199652361162934
       },
-      "score": 0.3975777769710907,
+      "score": 0.6651995198808933,
       "fitness": {
-        "subject": "candidate@44f8236ab5a7",
-        "mean_score": 0.02485582289595783,
-        "win_rate": 0.6442307692307693,
+        "subject": "candidate@b634e5df8f4b",
+        "mean_score": 0.02946975275061381,
+        "win_rate": 0.8293269230769231,
         "pair_count": 208,
         "total_matches": 416,
-        "wilson_lower": 0.5970970077403215,
-        "wilson_upper": 0.6887250737304047,
+        "wilson_lower": 0.7901995198808933,
+        "wilson_upper": 0.8624275661439313,
         "opponents": [
           "autocross/maggiora_ax",
           "autocross/nova_paka_ax",
@@ -475,36 +800,36 @@
           "rally/montalegre_rx"
         ],
         "metrics_mean": {
-          "mean_flying_lap": 54.022688350961545,
-          "opponent_mean_flying_lap": 55.08735115144231,
-          "spins": 0.2980769230769231,
-          "offs": 1.6658653846153846,
-          "mistakes": 0.4879807692307692,
-          "wall_contacts": 5.144230769230769,
-          "longest_no_progress_s": 1.6060711800721157,
+          "mean_flying_lap": 54.1371424375,
+          "opponent_mean_flying_lap": 55.616621548076914,
+          "spins": 0.13701923076923078,
+          "offs": 0.4254807692307692,
+          "mistakes": 0.4110576923076923,
+          "wall_contacts": 1.1947115384615385,
+          "longest_no_progress_s": 1.2907444118990385,
           "dnf": 0.0,
-          "disqualified": 0.19951923076923078
+          "disqualified": 0.125
         }
       }
     },
     {
-      "key": "8009c22e52c1",
+      "key": "4ae11869cf0e",
       "params": {
-        "brake_margin": 1.156698091909578,
-        "lookahead_time": 0.2500705102387235,
-        "speed_mult": 1.0453296033781305,
-        "steering_kd": 0.08003727016548093,
-        "steering_kp": 1.502430562226181
+        "brake_margin": 1.0202593604803663,
+        "lookahead_time": 0.21399652896724067,
+        "speed_mult": 1.096787371586747,
+        "steering_kd": 0.11045424705847974,
+        "steering_kp": 2.6452393621416137
       },
-      "score": 0.39491646995102214,
+      "score": 0.6592901127326155,
       "fitness": {
-        "subject": "candidate@8009c22e52c1",
-        "mean_score": 0.01966816726990073,
-        "win_rate": 0.6298076923076923,
+        "subject": "candidate@4ae11869cf0e",
+        "mean_score": 0.02957760553182152,
+        "win_rate": 0.8461538461538461,
         "pair_count": 208,
         "total_matches": 416,
-        "wilson_lower": 0.5824164699510221,
-        "wilson_upper": 0.6748234033726312,
+        "wilson_lower": 0.8083285742710771,
+        "wilson_upper": 0.8776444212586656,
         "opponents": [
           "autocross/maggiora_ax",
           "autocross/nova_paka_ax",
@@ -521,36 +846,36 @@
           "rally/montalegre_rx"
         ],
         "metrics_mean": {
-          "mean_flying_lap": 54.39709671875001,
-          "opponent_mean_flying_lap": 55.13164090144231,
-          "spins": 0.2692307692307692,
-          "offs": 2.0697115384615383,
-          "mistakes": 0.3798076923076923,
-          "wall_contacts": 5.658653846153846,
-          "longest_no_progress_s": 1.6646848339423077,
+          "mean_flying_lap": 54.064379966346145,
+          "opponent_mean_flying_lap": 55.571537141826916,
+          "spins": 0.16826923076923078,
+          "offs": 0.37740384615384615,
+          "mistakes": 0.3942307692307692,
+          "wall_contacts": 1.0793269230769231,
+          "longest_no_progress_s": 1.316125068221154,
           "dnf": 0.0,
-          "disqualified": 0.1875
+          "disqualified": 0.14903846153846154
         }
       }
     },
     {
-      "key": "6141470d91d0",
+      "key": "ffeca22284ce",
       "params": {
-        "brake_margin": 1.1487558033783574,
-        "lookahead_time": 0.2506438760428841,
-        "speed_mult": 1.0533740056981937,
-        "steering_kd": 0.11804232018287626,
-        "steering_kp": 1.6481695791222244
+        "brake_margin": 1.035916317397936,
+        "lookahead_time": 0.21534110274086407,
+        "speed_mult": 1.0957357293774328,
+        "steering_kd": 0.11502653912699937,
+        "steering_kp": 2.6712540310627935
       },
-      "score": 0.37580889532112727,
+      "score": 0.6467258940680458,
       "fitness": {
-        "subject": "candidate@6141470d91d0",
-        "mean_score": 0.026765679990809258,
-        "win_rate": 0.6370192307692307,
+        "subject": "candidate@ffeca22284ce",
+        "mean_score": 0.028163546657236267,
+        "win_rate": 0.8052884615384616,
         "pair_count": 208,
         "total_matches": 416,
-        "wilson_lower": 0.589751203013435,
-        "wilson_upper": 0.6817797743837547,
+        "wilson_lower": 0.7645143556065074,
+        "wilson_upper": 0.8404757168398628,
         "opponents": [
           "autocross/maggiora_ax",
           "autocross/nova_paka_ax",
@@ -567,36 +892,36 @@
           "rally/montalegre_rx"
         ],
         "metrics_mean": {
-          "mean_flying_lap": 54.03617460096154,
-          "opponent_mean_flying_lap": 55.17333376682693,
-          "spins": 0.3173076923076923,
-          "offs": 1.8317307692307692,
-          "mistakes": 0.47596153846153844,
-          "wall_contacts": 5.329326923076923,
-          "longest_no_progress_s": 1.652425256153846,
+          "mean_flying_lap": 54.16030285817307,
+          "opponent_mean_flying_lap": 55.57180889903846,
+          "spins": 0.1346153846153846,
+          "offs": 0.4735576923076923,
+          "mistakes": 0.47836538461538464,
+          "wall_contacts": 1.25,
+          "longest_no_progress_s": 1.3194701943509617,
           "dnf": 0.0,
-          "disqualified": 0.21394230769230768
+          "disqualified": 0.11778846153846154
         }
       }
     },
     {
-      "key": "a8e949671d84",
+      "key": "563edf702701",
       "params": {
-        "brake_margin": 1.05,
-        "lookahead_time": 0.38,
-        "speed_mult": 0.98,
-        "steering_kd": 0.07,
-        "steering_kp": 2.1
+        "brake_margin": 1.08,
+        "lookahead_time": 0.34,
+        "speed_mult": 1.0,
+        "steering_kd": 0.08,
+        "steering_kp": 2.0
       },
-      "score": -0.08293298423956541,
+      "score": 0.16988606955585134,
       "fitness": {
-        "subject": "candidate@a8e949671d84",
-        "mean_score": -0.002215557620726443,
-        "win_rate": 0.3004807692307692,
+        "subject": "candidate@563edf702701",
+        "mean_score": 0.001030264175529697,
+        "win_rate": 0.484375,
         "pair_count": 208,
         "total_matches": 416,
-        "wilson_lower": 0.25841316960658844,
-        "wilson_upper": 0.3461996176922404,
+        "wilson_lower": 0.4367129926327744,
+        "wilson_upper": 0.5323229485412302,
         "opponents": [
           "autocross/maggiora_ax",
           "autocross/nova_paka_ax",
@@ -613,37 +938,37 @@
           "rally/montalegre_rx"
         ],
         "metrics_mean": {
-          "mean_flying_lap": 55.33077268990384,
-          "opponent_mean_flying_lap": 55.16782642788462,
-          "spins": 0.9182692307692307,
-          "offs": 0.9663461538461539,
-          "mistakes": 0.46634615384615385,
-          "wall_contacts": 4.6610576923076925,
-          "longest_no_progress_s": 1.8850794217067308,
+          "mean_flying_lap": 55.59354152644231,
+          "opponent_mean_flying_lap": 55.61629909134615,
+          "spins": 0.46875,
+          "offs": 0.09375,
+          "mistakes": 0.4495192307692308,
+          "wall_contacts": 1.3293269230769231,
+          "longest_no_progress_s": 1.5429283686778845,
           "dnf": 0.0,
-          "disqualified": 0.34134615384615385
+          "disqualified": 0.2668269230769231
         }
       }
     }
   ],
   "best": {
-    "key": "d9cdcb8da38f",
+    "key": "8cf74b97e292",
     "params": {
-      "brake_margin": 1.131514882855163,
-      "lookahead_time": 0.25012127521069444,
-      "speed_mult": 1.0530259273594282,
-      "steering_kd": 0.11149585278483998,
-      "steering_kp": 1.5338883457351378
+      "brake_margin": 1.029613007026159,
+      "lookahead_time": 0.2153000780826401,
+      "speed_mult": 1.095007024895483,
+      "steering_kd": 0.13397728429332156,
+      "steering_kp": 2.551020721419798
     },
-    "score": 0.40263425118183765,
+    "score": 0.6805390563686469,
     "fitness": {
-      "subject": "candidate@d9cdcb8da38f",
-      "mean_score": 0.021724095934332444,
-      "win_rate": 0.65625,
+      "subject": "candidate@8cf74b97e292",
+      "mean_score": 0.030584422121738803,
+      "win_rate": 0.8413461538461539,
       "pair_count": 208,
       "total_matches": 416,
-      "wilson_lower": 0.6093650204126069,
-      "wilson_upper": 0.7002755678473465,
+      "wilson_lower": 0.8031352102148007,
+      "wilson_upper": 0.8733103825992511,
       "opponents": [
         "autocross/maggiora_ax",
         "autocross/nova_paka_ax",
@@ -660,36 +985,36 @@
         "rally/montalegre_rx"
       ],
       "metrics_mean": {
-        "mean_flying_lap": 54.18654407692308,
-        "opponent_mean_flying_lap": 55.079054463942306,
-        "spins": 0.28365384615384615,
-        "offs": 2.0288461538461537,
-        "mistakes": 0.44471153846153844,
-        "wall_contacts": 5.447115384615385,
-        "longest_no_progress_s": 1.6511628534375,
+        "mean_flying_lap": 53.99571716105769,
+        "opponent_mean_flying_lap": 55.57126529326923,
+        "spins": 0.12980769230769232,
+        "offs": 0.3605769230769231,
+        "mistakes": 0.4254807692307692,
+        "wall_contacts": 1.0288461538461537,
+        "longest_no_progress_s": 1.2499593306490386,
         "dnf": 0.0,
-        "disqualified": 0.20673076923076922
+        "disqualified": 0.12259615384615384
       }
     }
   },
   "baseline": {
-    "key": "a8e949671d84",
+    "key": "563edf702701",
     "params": {
-      "brake_margin": 1.05,
-      "lookahead_time": 0.38,
-      "speed_mult": 0.98,
-      "steering_kd": 0.07,
-      "steering_kp": 2.1
+      "brake_margin": 1.08,
+      "lookahead_time": 0.34,
+      "speed_mult": 1.0,
+      "steering_kd": 0.08,
+      "steering_kp": 2.0
     },
-    "score": -0.08293298423956541,
+    "score": 0.16988606955585134,
     "fitness": {
-      "subject": "candidate@a8e949671d84",
-      "mean_score": -0.002215557620726443,
-      "win_rate": 0.3004807692307692,
+      "subject": "candidate@563edf702701",
+      "mean_score": 0.001030264175529697,
+      "win_rate": 0.484375,
       "pair_count": 208,
       "total_matches": 416,
-      "wilson_lower": 0.25841316960658844,
-      "wilson_upper": 0.3461996176922404,
+      "wilson_lower": 0.4367129926327744,
+      "wilson_upper": 0.5323229485412302,
       "opponents": [
         "autocross/maggiora_ax",
         "autocross/nova_paka_ax",
@@ -706,15 +1031,15 @@
         "rally/montalegre_rx"
       ],
       "metrics_mean": {
-        "mean_flying_lap": 55.33077268990384,
-        "opponent_mean_flying_lap": 55.16782642788462,
-        "spins": 0.9182692307692307,
-        "offs": 0.9663461538461539,
-        "mistakes": 0.46634615384615385,
-        "wall_contacts": 4.6610576923076925,
-        "longest_no_progress_s": 1.8850794217067308,
+        "mean_flying_lap": 55.59354152644231,
+        "opponent_mean_flying_lap": 55.61629909134615,
+        "spins": 0.46875,
+        "offs": 0.09375,
+        "mistakes": 0.4495192307692308,
+        "wall_contacts": 1.3293269230769231,
+        "longest_no_progress_s": 1.5429283686778845,
         "dnf": 0.0,
-        "disqualified": 0.34134615384615385
+        "disqualified": 0.2668269230769231
       }
     }
   }

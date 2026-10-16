@@ -52,6 +52,12 @@ impl BotVehicle for Car {
         self.config.tire.grip
     }
     #[inline]
+    fn planning_grip(&self) -> f32 {
+        // Spec 083 / 114: scale planning grip with the car's real tire grip (e.g. 1.20 competition compound
+        // plans around 0.936, rather than being capped to 0.78 regardless of vehicle capability).
+        self.config.tire.grip * 0.78
+    }
+    #[inline]
     fn max_tire_wear(&self) -> f32 {
         self.state.wheels.iter().map(|w| w.wear).fold(0.0, f32::max)
     }
@@ -326,26 +332,24 @@ impl DriverQuality {
         match tier {
             DriverTier::Rookie => Self {
                 tier,
-                // Spec 046: 0.88 -> 0.82, so a keyboard driver on Balanced beats a Tier 1 grid. 0.80 since
-                // curbs no longer add grip (tdrace-le75): the keyboard driver lost 1.1 s on Ridge Ring.
                 pace_limit: 0.80,
-                brake_padding: 0.20,
+                brake_padding: 0.16,
                 avoidance_padding: 2.5,
                 consistency: 0.60,
-                composure: 0.48,
+                composure: 0.50,
             },
             DriverTier::Amateur => Self {
                 tier,
-                pace_limit: 0.90,
-                brake_padding: 0.12,
+                pace_limit: 0.88,
+                brake_padding: 0.13,
                 avoidance_padding: 1.4,
-                consistency: 0.72,
+                consistency: 0.70,
                 composure: 0.60,
             },
             DriverTier::Contender => Self {
                 tier,
-                pace_limit: 0.96,
-                brake_padding: 0.06,
+                pace_limit: 0.95,
+                brake_padding: 0.065,
                 avoidance_padding: 0.7,
                 consistency: 0.80,
                 composure: 0.76,
@@ -360,11 +364,11 @@ impl DriverQuality {
             },
             DriverTier::Legend => Self {
                 tier,
-                pace_limit: 1.035,
-                brake_padding: -0.03,
+                pace_limit: 1.05,
+                brake_padding: -0.07,
                 avoidance_padding: -0.5,
                 consistency: 0.99,
-                composure: 0.98,
+                composure: 0.99,
             },
         }
     }
@@ -387,12 +391,12 @@ pub struct StyleTuning {
 impl StyleTuning {
     pub const fn for_style(style: DrivingStyle) -> Self {
         let (lookahead_time, steering_kp, steering_kd, brake_margin, aggression, avoidance_distance, speed_mult) = match style {
-            DrivingStyle::Smooth => (0.36, 2.20, 0.09, 1.05, 0.70, 6.5, 1.03),
-            DrivingStyle::Aggressive => (0.28, 2.40, 0.06, 0.93, 0.95, 5.0, 1.04),
-            DrivingStyle::Tenacious => (0.38, 2.10, 0.09, 1.08, 0.82, 6.0, 1.01),
-            DrivingStyle::Calculating => (0.35, 2.30, 0.08, 1.03, 0.75, 6.5, 1.02),
-            DrivingStyle::Bold => (0.27, 2.60, 0.05, 0.91, 0.92, 5.2, 1.03),
-            DrivingStyle::Balanced => (0.34, 2.00, 0.08, 1.08, 0.65, 7.0, 1.00),
+            DrivingStyle::Smooth => (0.24, 2.75, 0.14, 1.00, 0.70, 6.5, 1.13),
+            DrivingStyle::Aggressive => (0.20, 2.95, 0.11, 0.88, 0.95, 5.0, 1.14),
+            DrivingStyle::Tenacious => (0.26, 2.65, 0.14, 1.03, 0.82, 6.0, 1.11),
+            DrivingStyle::Calculating => (0.23, 2.85, 0.13, 0.98, 0.75, 6.5, 1.12),
+            DrivingStyle::Bold => (0.20, 3.15, 0.10, 0.86, 0.92, 5.2, 1.13),
+            DrivingStyle::Balanced => (0.30, 2.30, 0.12, 1.03, 0.65, 7.0, 1.10),
         };
         Self { lookahead_time, steering_kp, steering_kd, brake_margin, aggression, avoidance_distance, speed_mult }
     }
@@ -560,12 +564,12 @@ impl BotProfile {
         Self {
             name: "Composite Bot",
             lookahead_time: (tuning.lookahead_time * (0.80 + 0.20 * quality.consistency)).clamp(0.20, 0.55),
-            speed_factor: (quality.pace_limit * tuning.speed_mult).clamp(0.80, 1.15),
+            speed_factor: (quality.pace_limit * tuning.speed_mult).clamp(0.75, 1.20),
             steering_kp: tuning.steering_kp,
             steering_kd: tuning.steering_kd * (0.75 + 0.25 * quality.consistency),
-            brake_margin: (tuning.brake_margin + quality.brake_padding).clamp(0.80, 1.45),
+            brake_margin: (tuning.brake_margin + quality.brake_padding).clamp(0.70, 1.45),
             aggression: tuning.aggression,
-            avoidance_distance: (tuning.avoidance_distance + quality.avoidance_padding).clamp(3.5, 12.0),
+            avoidance_distance: (tuning.avoidance_distance + quality.avoidance_padding).clamp(2.5, 12.0),
             traits: HumanTraits::for_style_and_quality(style, quality, tuning.aggression),
         }
     }
@@ -624,7 +628,7 @@ const TURN_RECHOOSE_RAD: f32 = 2.8;
 /// Below this speed a bot that should be moving is stuck (m/s).
 const STUCK_SPEED: f32 = 0.4;
 /// Below this speed a bot with a front corner on a wall is stuck: it grinds along the wall (m/s).
-const WALL_GRIND_SPEED: f32 = 2.0;
+const WALL_GRIND_SPEED: f32 = 2.5;
 /// A front hull corner this close to a wall is on it (m).
 const NOSE_ON_WALL_M: f32 = 0.3;
 /// Slowest speed at which a bot starts a turn by itself (m/s).
@@ -1524,9 +1528,11 @@ impl BotAiDriver {
         }
 
         // A slow bot pointing away from its target (after a spin, or back on the road the wrong way round)
-        // turns round instead of circling at full lock wider than the road.
+        // turns round instead of circling at full lock wider than the road. If its nose is on a wall, start
+        // by reversing rather than driving into the wall.
         if self.turn.is_none() && racing && car_speed < TURN_START_SPEED && heading_error.abs() > TURN_START_RAD {
-            self.turn = Some(ThreePointTurn::new(false, self.turn_steer(car, track, heading_error)));
+            let start_reversing = nose_on_wall();
+            self.turn = Some(ThreePointTurn::new(start_reversing, self.turn_steer(car, track, heading_error)));
         }
         if let Some(mut turn) = self.turn {
             turn.leg_time += dt;
@@ -1536,7 +1542,8 @@ impl BotAiDriver {
             let blocked_threshold = if low_grip_runoff { 0.8 } else { 0.4 };
             let min_leg_s = if low_grip_runoff { 1.0 } else { TURN_MIN_LEG_S };
 
-            turn.blocked_time = if car_speed < STUCK_SPEED && turn.leg_time > blocked_grace {
+            let stuck_in_turn = car_speed < STUCK_SPEED || (!turn.reversing && car_speed < WALL_GRIND_SPEED && nose_on_wall());
+            turn.blocked_time = if stuck_in_turn && turn.leg_time > blocked_grace {
                 turn.blocked_time + dt
             } else {
                 0.0
@@ -1578,7 +1585,7 @@ impl BotAiDriver {
                     });
                     clear
                 };
-                let forward_progressing = !turn.reversing && !proj.is_on_track && car_speed > STUCK_SPEED;
+                let forward_progressing = !turn.reversing && !proj.is_on_track && car_speed > STUCK_SPEED && !nose_on_wall();
                 let leg_done = at_edge
                     || turn.blocked_time > blocked_threshold
                     || (!forward_progressing && turn.leg_time > TURN_LEG_S)
