@@ -4,6 +4,7 @@ template: architecture
 title: "Widened Pit Stop Side Bay, Outer Stall Placement, and Unobstructed Pit Fast Lane"
 description: "Amends Spec 101 to widen the pit stop area on the outer (garage) side into a dedicated 3.6 m service bay with smooth entry and exit tapers, relocating PitBox stalls from the pit road centerline into the outer bay while preserving the full pit road width as an unobstructed pass-through fast lane."
 status: implemented
+receipt: "docs/receipts/spec-120-receipt.md"
 verified: { by: human:mario, at: 2026-10-16T07:25:26Z, hash: "2b9871b469c8" }
 created: 2026-10-16
 generated: { by: agent/antigravity, at: 2026-10-16T07:16:42Z }
