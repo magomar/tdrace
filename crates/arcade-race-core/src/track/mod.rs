@@ -2085,8 +2085,12 @@ impl Track {
         self
     }
 
-    /// Deserializes a `Track` from a JSON string.
-    pub fn from_json(json_str: &str) -> Result<Self, TrackError> {
+    /// Deserializes a `Track` from a JSON string for lightweight menu/preview inspection (Spec 121).
+    ///
+    /// Skips expensive post-deserialization CAD passes (pit wall trimming/generation, runoff surface
+    /// projections, network wall slicing/generation, composite spline rebuilds, and scenery colliders).
+    /// Call [`Self::ensure_runtime_geometry`] before using the track for simulation, validation, or full rendering.
+    pub fn from_json_menu(json_str: &str) -> Result<Self, TrackError> {
         let mut track: Self = serde_json::from_str(json_str).map_err(|e| TrackError::Json(e.to_string()))?;
         if track.spline.curves.is_empty() && !track.spline.samples.is_empty() {
             track.spline.curves = curve::extract_curves_from_samples(
@@ -2095,25 +2099,43 @@ impl Track {
                 track.spline.closed,
             );
         }
-        if let Some(lane) = &mut track.pit_lane {
+        Ok(track)
+    }
+
+    /// Returns whether post-deserialization runtime geometry passes have been executed on this track (Spec 121).
+    #[inline]
+    pub fn runtime_geometry_ready(&self) -> bool {
+        self.cached_barrier_offset.is_some()
+    }
+
+    /// Executes the post-deserialization runtime geometry pipeline (pit lane walls & junctions,
+    /// default runoff surfaces, network branch walls & composite splines, and scenery obstacle colliders) (Spec 121).
+    pub fn ensure_runtime_geometry(&mut self) {
+        if let Some(lane) = &mut self.pit_lane {
             if lane.spline.samples.is_empty() && !lane.spline.waypoints.is_empty() {
                 lane.spline = TrackSpline::new(lane.spline.waypoints.clone(), false);
             }
         }
-        if track.pit_lane.is_some() {
-            track.trim_walls_for_pit_lane();
-            track.generate_pit_lane_walls();
-            track.recompute_pit_lane_junctions();
+        if self.pit_lane.is_some() {
+            self.trim_walls_for_pit_lane();
+            self.generate_pit_lane_walls();
+            self.recompute_pit_lane_junctions();
         }
-        track.apply_default_runoff_surfaces();
-        if track.network.is_some() {
-            track.trim_walls_for_network();
-            track.generate_network_walls();
-            if let Some(ref mut net) = track.network {
+        self.apply_default_runoff_surfaces();
+        if self.network.is_some() {
+            self.trim_walls_for_network();
+            self.generate_network_walls();
+            if let Some(ref mut net) = self.network {
                 net.recompute_composite_splines();
             }
         }
-        track.geometry.recompute_scenery_obstacles();
+        self.geometry.recompute_scenery_obstacles();
+    }
+
+    /// Deserializes a `Track` from a JSON string and builds all runtime geometry.
+    pub fn from_json(json_str: &str) -> Result<Self, TrackError> {
+        let mut track = Self::from_json_menu(json_str)?;
+        track.ensure_runtime_geometry();
         Ok(track)
     }
 
@@ -2127,11 +2149,18 @@ impl Track {
         serde_json::to_string_pretty(self).map_err(|e| TrackError::Json(e.to_string()))
     }
 
-    /// Loads and deserializes a track file from the local filesystem.
+    /// Loads and deserializes a track file from the local filesystem with full runtime geometry.
     pub fn load_from_file(path: impl AsRef<Path>) -> Result<Self, TrackError> {
         let content = fs::read_to_string(path.as_ref())
             .map_err(|e| TrackError::Io(format!("{}: {}", path.as_ref().display(), e)))?;
         Self::from_json(&content)
+    }
+
+    /// Loads and deserializes a track file from the local filesystem for lightweight menu/preview rendering (Spec 121).
+    pub fn load_from_file_menu(path: impl AsRef<Path>) -> Result<Self, TrackError> {
+        let content = fs::read_to_string(path.as_ref())
+            .map_err(|e| TrackError::Io(format!("{}: {}", path.as_ref().display(), e)))?;
+        Self::from_json_menu(&content)
     }
 
     /// Saves and serializes this track to a file on the local filesystem.
@@ -2302,8 +2331,12 @@ impl Track {
             .into_iter()
             .map(|(surf, len)| (surf, (len / total_len) * 100.0))
             .collect();
-        // Sort descending by percentage
-        breakdown.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+        // Sort descending by percentage, breaking ties deterministically by surface name
+        breakdown.sort_by(|a, b| {
+            b.1.partial_cmp(&a.1)
+                .unwrap_or(std::cmp::Ordering::Equal)
+                .then_with(|| a.0.name().cmp(b.0.name()))
+        });
         breakdown
     }
 
