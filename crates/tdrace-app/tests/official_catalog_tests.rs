@@ -217,7 +217,11 @@ fn test_old_short_slug_and_module_hint_resolve() {
     };
     let expected = tdrace_core::catalog::official_track("extreme_offroad", "dirt_figure_eight");
     assert_eq!(manager.load_track(&offroad_eight).unwrap(), expected);
-    assert_eq!(resolve_track_for_menu_with_dir(&offroad_eight, &user).unwrap(), expected);
+    let mut menu_resolved = resolve_track_for_menu_with_dir(&offroad_eight, &user).unwrap();
+    assert!(!menu_resolved.runtime_geometry_ready());
+    menu_resolved.ensure_runtime_geometry();
+    assert!(menu_resolved.runtime_geometry_ready());
+    assert_eq!(menu_resolved, expected);
 }
 
 // --- Saving (spec 042 §2.5) ---
