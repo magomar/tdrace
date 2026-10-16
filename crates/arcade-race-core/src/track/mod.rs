@@ -1577,32 +1577,43 @@ impl Track {
 
     /// Computes the track-level barrier offset from wall geometry or category fallback.
     pub fn compute_effective_barrier_offset(&self) -> f32 {
-        // Infer from inner/outer wall geometry if available
-        let walls = if !self.geometry.inner_walls.is_empty() {
-            &self.geometry.inner_walls
-        } else {
-            &self.geometry.outer_walls
-        };
+        // Infer from inner/outer wall geometry across evenly-spaced non-bridge samples
+        let inner = &self.geometry.inner_walls;
+        let outer = &self.geometry.outer_walls;
 
-        if !walls.is_empty() && !self.spline.samples.is_empty() {
-            let sample_count = self.spline.samples.len().min(10);
-            let mut dists = Vec::with_capacity(sample_count);
-            for s in &self.spline.samples[..sample_count] {
+        if (!inner.is_empty() || !outer.is_empty()) && !self.spline.samples.is_empty() {
+            let n = self.spline.samples.len();
+            let step = (n / 32).max(1);
+            let has_ground = self.spline.samples.iter().any(|s| !s.is_bridge);
+            let mut dists = Vec::with_capacity(64);
+            for s in self.spline.samples.iter().step_by(step) {
+                if has_ground && s.is_bridge {
+                    continue;
+                }
                 let hw = s.width * 0.5;
-                let edge = s.point + s.normal * hw;
-                let mut min_d = f32::MAX;
-                for w in walls {
-                    let d = w.segment.distance_to_point(edge);
-                    if d < min_d {
-                        min_d = d;
+                if !inner.is_empty() && s.left_wall {
+                    let edge_l = s.point + s.normal * hw;
+                    let min_d = inner
+                        .iter()
+                        .map(|w| w.segment.distance_to_point(edge_l))
+                        .fold(f32::MAX, f32::min);
+                    if min_d < 30.0 {
+                        dists.push(min_d);
                     }
                 }
-                if min_d < 30.0 {
-                    dists.push(min_d);
+                if !outer.is_empty() && s.right_wall {
+                    let edge_r = s.point - s.normal * hw;
+                    let min_d = outer
+                        .iter()
+                        .map(|w| w.segment.distance_to_point(edge_r))
+                        .fold(f32::MAX, f32::min);
+                    if min_d < 30.0 {
+                        dists.push(min_d);
+                    }
                 }
             }
             if !dists.is_empty() {
-                dists.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+                dists.sort_by(f32::total_cmp);
                 return dists[dists.len() / 2];
             }
         }
@@ -1916,7 +1927,11 @@ impl Track {
     /// and spline samples where they have not been explicitly customized.
     pub fn apply_default_runoff_surfaces(&mut self) {
         let default_runoff = self.default_runoff_surface();
-        let bo = self.effective_barrier_offset();
+        let bo = if !self.geometry.inner_walls.is_empty() || !self.geometry.outer_walls.is_empty() {
+            self.compute_effective_barrier_offset()
+        } else {
+            self.effective_barrier_offset()
+        };
         self.cached_barrier_offset = Some(bo);
 
         for wp in &mut self.spline.waypoints {
@@ -2036,6 +2051,7 @@ impl Track {
     /// Rebuilds spline samples, boundary polylines, and wall barriers from the spline waypoints.
     pub fn rebuild_geometry(&mut self, barrier_offset: f32, barrier_type: BarrierType) {
         if self.spline.waypoints.len() >= 3 {
+            self.cached_barrier_offset = Some(barrier_offset);
             self.apply_default_runoff_surfaces();
             self.spline = TrackSpline::new(self.spline.waypoints.clone(), self.spline.closed);
             let (left_walls, right_walls, left_poly, right_poly) =
@@ -2794,6 +2810,33 @@ mod tests {
                 "Pose {} at dist {:.1}m (lat_frac {:.2}) mismatch: guided={:?} vs hinted={:?}",
                 i, dist, lat_frac, guided, hinted
             );
+        }
+    }
+
+    #[test]
+    fn test_pit_lane_does_not_skew_effective_barrier_offset_or_runoff_width() {
+        for (slug, expected_bo) in [
+            ("nurburgring_gp", 4.0),
+            ("portimao_gp", 4.0),
+            ("catalunya", 3.5),
+        ] {
+            let track = test_circuit("gt", slug);
+            let bo = track.compute_effective_barrier_offset();
+            assert!(
+                (bo - expected_bo).abs() < 0.25,
+                "{slug}: expected barrier offset ~{expected_bo:.2}m, got {bo:.2}m"
+            );
+            for (idx, s) in track.spline.samples.iter().enumerate() {
+                if s.is_bridge {
+                    continue;
+                }
+                let lwd = s.left_wall_distance.unwrap_or(0.0);
+                let rwd = s.right_wall_distance.unwrap_or(0.0);
+                assert!(
+                    (lwd - expected_bo).abs() < 0.25 && (rwd - expected_bo).abs() < 0.25,
+                    "{slug} sample[{idx}]: runoff wall distance ({lwd:.2}, {rwd:.2}) should match perimeter wall offset ~{expected_bo:.2}m (> 1.35m curb width)"
+                );
+            }
         }
     }
 }

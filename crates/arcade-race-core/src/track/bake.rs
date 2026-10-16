@@ -78,6 +78,7 @@ pub fn bake(track: &mut Track, opts: &BakeOptions) -> Result<BakeReport, String>
         .barrier_type
         .or_else(|| track.dominant_barrier_type())
         .unwrap_or(BarrierType::Steel);
+    track.cached_barrier_offset = Some(barrier_offset);
     if opts.rebuild {
         track.geometry.inner_walls.clear();
         track.geometry.outer_walls.clear();
