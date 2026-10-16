@@ -3,7 +3,7 @@ type: Architecture Spec
 template: architecture
 title: "Widened Pit Stop Side Bay, Outer Stall Placement, and Unobstructed Pit Fast Lane"
 description: "Amends Spec 101 to widen the pit stop area on the outer (garage) side into a dedicated 3.6 m service bay with smooth entry and exit tapers, relocating PitBox stalls from the pit road centerline into the outer bay while preserving the full pit road width as an unobstructed pass-through fast lane."
-status: in_progress
+status: implemented
 verified: { by: human:mario, at: 2026-10-16T07:25:26Z, hash: "2b9871b469c8" }
 created: 2026-10-16
 generated: { by: agent/antigravity, at: 2026-10-16T07:16:42Z }
@@ -159,51 +159,52 @@ Not applicable. All track geometry compilation, validation, and rendering run lo
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Compiled layout places pit stalls in the outer service bay clear of the fast lane**
-  - [ ] **Given** a `PitLaneLayout` with `road_width = 7.0 m`, `box_row.count = 6`, and `garages = true`
-  - [ ] **When** `PitLaneLayout::compile` runs
-  - [ ] **Then** every `PitBox` center sits at lateral offset `5.3 m` (`road_width * 0.5 + 1.8 m`) on the outer side (`side`) of `PitLane.spline`
-  - [ ] **And** the inner edge of each `2.4 m`-wide stall box (`4.1 m`) is at least `0.6 m` outside the `3.5 m` fast-lane edge
-  - [ ] **And** each `PitGarage` building sits outside the widened bay and outer perimeter wall without triggering `ERR_SCENERY_INSIDE_WALL`
+  - [x] **Given** a `PitLaneLayout` with `road_width = 7.0 m`, `box_row.count = 6`, and `garages = true`
+  - [x] **When** `PitLaneLayout::compile` runs
+  - [x] **Then** every `PitBox` center sits at lateral offset `5.3 m` (`road_width * 0.5 + 1.8 m`) on the outer side (`side`) of `PitLane.spline`
+  - [x] **And** the inner edge of each `2.4 m`-wide stall box (`4.1 m`) is at least `0.6 m` outside the `3.5 m` fast-lane edge
+  - [x] **And** each `PitGarage` building sits outside the widened bay and outer perimeter wall without triggering `ERR_SCENERY_INSIDE_WALL`
 
 - **Scenario: Fast-lane pass-through traffic does not collide with a parked car or trigger pit stops**
-  - [ ] **Given** a GT circuit where Car A (`2.0 m` wide) is stopped at the center of Pit Stall 1 for pit service
-  - [ ] **When** Car B (`2.0 m` wide) drives down the `PitLane.spline` fast-lane centerline (`0.0 m` lateral offset) from entry to exit
-  - [ ] **Then** the lateral clearance between Car A's hull and Car B's hull is at least `2.5 m`
-  - [ ] **And** Car B never enters `PitBox::contains_point` (`stop_radius = 3.0 m`) of any stall while driving along the fast-lane centerline
+  - [x] **Given** a GT circuit where Car A (`2.0 m` wide) is stopped at the center of Pit Stall 1 for pit service
+  - [x] **When** Car B (`2.0 m` wide) drives down the `PitLane.spline` fast-lane centerline (`0.0 m` lateral offset) from entry to exit
+  - [x] **Then** the lateral clearance between Car A's hull and Car B's hull is at least `2.5 m`
+  - [x] **And** Car B never enters `PitBox::contains_point` (`stop_radius = 3.0 m`) of any stall while driving along the fast-lane centerline
 
 - **Scenario: Pit lane surface sampling and visual boundaries include the tapered outer side bay**
-  - [ ] **Given** a circuit with a compiled or free-form `PitLane` containing 6 outer-bay stalls
-  - [ ] **When** `Track::sample_pit_lane_surface` is queried at every stall center and across `[road_width * 0.5, road_width * 0.5 + 3.6 m]` along the stall row
-  - [ ] **Then** it returns `SurfaceType::Asphalt` (`on_track = true`) across the entire outer service bay and tapers smoothly over `16.0 m` at both ends
-  - [ ] **And** `PitLane::generate_boundaries` produces an outer boundary polyline that bulges out by `3.6 m` across the stall row while the inner boundary stays at `road_width * 0.5`
+  - [x] **Given** a circuit with a compiled or free-form `PitLane` containing 6 outer-bay stalls
+  - [x] **When** `Track::sample_pit_lane_surface` is queried at every stall center and across `[road_width * 0.5, road_width * 0.5 + 3.6 m]` along the stall row
+  - [x] **Then** it returns `SurfaceType::Asphalt` (`on_track = true`) across the entire outer service bay and tapers smoothly over `16.0 m` at both ends
+  - [x] **And** `PitLane::generate_boundaries` produces an outer boundary polyline that bulges out by `3.6 m` across the stall row while the inner boundary stays at `road_width * 0.5`
 
 - **Scenario: Outer perimeter wall encloses the widened side bay with zero wall intrusions or gaps**
-  - [ ] **Given** all 18 official GT circuits re-baked with outer-bay pit stalls
-  - [ ] **When** `validate_track` and `pit_kit::enclosure_holes` run on each circuit
-  - [ ] **Then** no circuit reports `ERR_WALL_BLOCKS_PIT_LANE`, `ERR_PIT_BOX_ON_TRACK`, `ERR_PIT_BOX_BLOCKS_FAST_LANE`, or `ERR_SCENERY_INSIDE_WALL`
-  - [ ] **And** every enclosed GT pit lane reports `0` enclosure holes
+  - [x] **Given** all 18 official GT circuits re-baked with outer-bay pit stalls
+  - [x] **When** `validate_track` and `pit_kit::enclosure_holes` run on each circuit
+  - [x] **Then** no circuit reports `ERR_WALL_BLOCKS_PIT_LANE`, `ERR_PIT_BOX_ON_TRACK`, `ERR_PIT_BOX_BLOCKS_FAST_LANE`, or `ERR_SCENERY_INSIDE_WALL`
+  - [x] **And** every enclosed GT pit lane reports `0` enclosure holes
 
 - **Scenario: Bots pull into the outer side bay for service and merge back into the fast lane**
-  - [ ] **Given** a race on a GT circuit (e.g., `monza`) with pit stops enabled and multiple GT bots entering the pit lane
-  - [ ] **When** a bot approaches its target stall, completes its pit stop, and exits while another bot drives past toward a downstream stall
-  - [ ] **Then** the servicing bot steers into the outer bay stall, stops within `stop_radius`, increments `pit_stops`, and merges back to the fast lane without blocking the passing bot
+  - [x] **Given** a race on a GT circuit (e.g., `monza`) with pit stops enabled and multiple GT bots entering the pit lane
+  - [x] **When** a bot approaches its target stall, completes its pit stop, and exits while another bot drives past toward a downstream stall
+  - [x] **Then** the servicing bot steers into the outer bay stall, stops within `stop_radius`, increments `pit_stops`, and merges back to the fast lane without blocking the passing bot
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Created/Modified Files
-- `[ ]` `crates/arcade-race-core/src/track/mod.rs` -> Adds `BAY_WIDTH`, `BAY_STALL_OFFSET`, `BAY_PAD_S`, `BAY_TAPER_LEN`, `PitLane::bay_extension_at_s`, `PitLane::half_widths_at_s`, `PitLane::generate_boundaries`, and updates `Track::sample_pit_lane_surface` and `Track::trim_walls_for_pit_lane`.
-- `[ ]` `crates/arcade-race-core/src/track/pit_kit.rs` -> Amends `PitLaneLayout::compile` to place stalls in the outer bay (`road_width * 0.5 + BAY_STALL_OFFSET`), shifts `PitGarage` buildings outward by `BAY_WIDTH`, and widens `perimeter_chain` around the side bay.
-- `[ ]` `crates/arcade-race-core/src/track/bake.rs` -> Updates pit wall offset exclusion zone to account for `BAY_WIDTH`.
-- `[ ]` `crates/arcade-race-core/src/track/validation.rs` -> Updates `ERR_WALL_BLOCKS_PIT_LANE` to check asymmetric bay half-widths and adds `ERR_PIT_BOX_BLOCKS_FAST_LANE`.
-- `[ ]` `crates/race-ui/src/render/track.rs` -> Uses `pit_lane.generate_boundaries` for the widened side-bay asphalt ribbon and renders the dashed fast-lane / service-bay dividing line.
-- `[ ]` `crates/tdrace-app/src/editor/render.rs` -> Renders the widened side-bay boundary preview in Track Studio.
-- `[ ]` `crates/race-kit/src/ai/mod.rs` -> Smooths bot lateral pull-in from the fast lane into the outer side bay (`20.0 m` lookahead blend) and exit merge back to the fast lane.
-- `[ ]` `scripts/osm_importer.py` -> Updates free-form pit box lateral placement to `road_width * 0.5 + 1.8 m`.
-- `[ ]` `crates/arcade-race-core/tests/pit_kit_tests.rs` -> Adds unit tests for outer side-bay stall placement, bay boundary envelope, surface sampling, and fast-lane clearance.
-- `[ ]` `crates/tdrace-app/tests/pit_lane_integration_tests.rs` -> Adds integration tests verifying side-by-side fast-lane pass-through clearance past a parked stall car and multi-bot pit stop execution across all 18 GT circuits.
-- `[ ]` `tracks/gt/*.json` -> Re-baked 18 GT circuits with outer-bay pit stalls, garages, and bowed-out outer perimeter walls.
+- `[x]` `crates/arcade-race-core/src/track/geometry.rs` -> Adds `BAY_WIDTH`, `BAY_STALL_OFFSET`, `BAY_PAD_S`, `BAY_TAPER_LEN`, `PitLane::bay_extension_at_s`, `PitLane::half_widths_at_s`, `PitLane::generate_boundaries`, and `PitLane::untangled_boundaries`.
+- `[x]` `crates/arcade-race-core/src/track/mod.rs` -> Updates `Track::sample_pit_lane_surface`, `Track::trim_walls_for_pit_lane`, and `Track::generate_pit_lane_walls` for the widened outer side bay.
+- `[x]` `crates/arcade-race-core/src/track/pit_kit.rs` -> Amends `PitLaneLayout::compile` to place stalls in the outer bay (`road_width * 0.5 + BAY_STALL_OFFSET`), shifts `PitGarage` buildings outward by `BAY_WIDTH`, and widens `perimeter_chain` around the side bay.
+- `[x]` `crates/arcade-race-core/src/track/bake.rs` -> Updates pit wall offset exclusion zone to account for `BAY_WIDTH` and migrates free-form pit boxes into the outer service bay.
+- `[x]` `crates/arcade-race-core/src/track/validation.rs` -> Updates `ERR_WALL_BLOCKS_PIT_LANE` to check asymmetric bay half-widths and adds `ERR_PIT_BOX_BLOCKS_FAST_LANE`.
+- `[x]` `crates/race-ui/src/render/track.rs` -> Uses `pit_lane.untangled_boundaries` for the widened side-bay asphalt ribbon and renders the dashed fast-lane / service-bay dividing line.
+- `[x]` `crates/tdrace-app/src/editor/tools.rs` -> Places default free-form pit boxes in the outer side bay and hit-tests the full side-bay width.
+- `[x]` `crates/race-kit/src/ai/mod.rs` -> Smooths bot lateral pull-in from the fast lane into the outer side bay (`20.0 m` lookahead blend) and exit merge back to the fast lane.
+- `[x]` `scripts/osm_importer.py` -> Updates free-form pit box lateral placement to `road_width * 0.5 + 1.8 m`.
+- `[x]` `crates/arcade-race-core/tests/pit_kit_tests.rs` -> Adds unit tests for outer side-bay stall placement, bay boundary envelope, surface sampling, and fast-lane clearance.
+- `[x]` `crates/tdrace-app/tests/pit_lane_integration_tests.rs` -> Adds integration tests verifying side-by-side fast-lane pass-through clearance past a parked stall car and outer-bay validation across all 18 GT circuits.
+- `[x]` `tracks/gt/*.json` -> Re-baked 18 GT circuits with outer-bay pit stalls, garages, and bowed-out outer perimeter walls.
 
 ### Verification Assertions
 - `crates/arcade-race-core/src/track/pit_kit.rs` references `specs/120_widened_pit_stop_side_bay_outer_stall_placement_and_unobstructed_pit_fast_lane.md` in its module header comments.
