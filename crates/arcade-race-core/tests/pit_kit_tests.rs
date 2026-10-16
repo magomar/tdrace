@@ -501,3 +501,117 @@ fn baked_layout_lane_is_fully_enclosed() {
     let loaded = Track::from_json(&serde_json::to_string(&track).unwrap()).unwrap();
     assert!(enclosure_holes(&loaded).is_empty(), "holes after load");
 }
+
+#[test]
+fn spec_120_compiled_stalls_sit_in_outer_side_bay_clear_of_fast_lane() {
+    use arcade_race_core::track::PitLane;
+    let mut track = track_on(stadium());
+    let mut layout = straight_layout();
+    layout.road_width = 7.0;
+    let compiled = layout.compile(&track).expect("7.0m layout compiles");
+    let lane = &compiled.lane;
+    assert_eq!(lane.pit_boxes.len(), 6);
+
+    for (i, b) in lane.pit_boxes.iter().enumerate() {
+        let proj = lane.spline.project_point(b.position);
+        let lat_abs = proj.lateral_offset.abs();
+        assert!(
+            (lat_abs - 5.3).abs() < 0.05,
+            "stall {i} lateral offset {lat_abs:.2}m != expected 5.30m (road_width * 0.5 + 1.8m)"
+        );
+        // Stall inner edge (lat_abs - 1.2m = 4.1m) must be >= 0.6m outside the 3.5m fast-lane edge,
+        // and >= 3.1m clear of a 2.0m car centered on the fast lane ([-1.0m, +1.0m]).
+        let stall_inner_edge = lat_abs - 1.2;
+        assert!(stall_inner_edge >= lane.road_width * 0.5 + 0.55, "stall {i} inner edge {stall_inner_edge:.2}m encroaches fast lane");
+        let clearance_to_fast_lane_car = stall_inner_edge - 1.0;
+        assert!(clearance_to_fast_lane_car >= 3.0, "stall {i} clearance to fast-lane car {clearance_to_fast_lane_car:.2}m < 3.0m");
+
+        // Fast-lane centerline must never trigger PitBox::contains_point (stop_radius = 3.0m).
+        for s_sample in &lane.spline.samples {
+            assert!(
+                !b.contains_point(s_sample.point),
+                "stall {i} stop_radius overlaps fast-lane centerline at s={:.1}",
+                s_sample.distance
+            );
+        }
+    }
+
+    // Install and bake to verify garages and walls pass all validation checks.
+    track.pit_lane_layout = Some(layout);
+    bake(&mut track, &BakeOptions { rebuild: true, ..BakeOptions::default() }).expect("bake succeeds");
+    let pit_errors: Vec<_> = validate_track(&track)
+        .into_iter()
+        .filter(|d| d.code.starts_with("ERR_"))
+        .collect();
+    // Filter out only pit/scenery/wall errors (stadium test track has no finish line checkpoint by default unless baked)
+    let relevant: Vec<_> = pit_errors
+        .iter()
+        .filter(|d| d.code.contains("PIT") || d.code.contains("SCENERY") || d.code.contains("WALL"))
+        .collect();
+    assert!(relevant.is_empty(), "unexpected validation errors: {relevant:?}");
+    let _ = PitLane::BAY_WIDTH;
+}
+
+#[test]
+fn spec_120_side_bay_surface_sampling_and_boundaries_taper_smoothly() {
+    use arcade_race_core::track::PitLane;
+    let mut track = baked_track_with_layout();
+    track.default_surface = SurfaceType::Grass;
+    let lane = track.pit_lane.as_ref().unwrap().clone();
+
+    let (s_bay_start, s_bay_end, sigma) = lane.bay_span_and_side().expect("bay span exists");
+    for b in &lane.pit_boxes {
+        assert_eq!(
+            track.sample_pit_lane_surface(b.position),
+            Some(SurfaceType::Asphalt),
+            "stall center must be paved asphalt"
+        );
+        // Outer edge of the bay (road_width * 0.5 + 3.4m) must also be paved asphalt.
+        let proj = lane.spline.project_point(b.position);
+        let sample = lane.spline.sample_at_distance(proj.progress_distance);
+        let bay_outer_pt = sample.point + sample.normal * (sigma * (lane.road_width * 0.5 + PitLane::BAY_WIDTH - 0.2));
+        assert_eq!(
+            track.sample_pit_lane_surface(bay_outer_pt),
+            Some(SurfaceType::Asphalt),
+            "outer service bay margin must be paved asphalt"
+        );
+    }
+
+    // Verify PitLane::generate_boundaries bulges by BAY_WIDTH on the outer side across [s_bay_start, s_bay_end]
+    // while keeping the inner side at road_width * 0.5.
+    let (left_bnd, right_bnd) = lane.generate_boundaries(0.0);
+    assert_eq!(left_bnd.len(), lane.spline.samples.len());
+    assert_eq!(right_bnd.len(), lane.spline.samples.len());
+    for (idx, s) in lane.spline.samples.iter().enumerate() {
+        let dl = left_bnd[idx].distance(s.point);
+        let dr = right_bnd[idx].distance(s.point);
+        if s.distance >= s_bay_start && s.distance <= s_bay_end {
+            let (outer_d, inner_d) = if sigma > 0.0 { (dl, dr) } else { (dr, dl) };
+            assert!(
+                (outer_d - (lane.road_width * 0.5 + PitLane::BAY_WIDTH)).abs() < 0.05,
+                "outer boundary at s={:.1} is {outer_d:.2}m",
+                s.distance
+            );
+            assert!(
+                (inner_d - lane.road_width * 0.5).abs() < 0.05,
+                "inner boundary at s={:.1} is {inner_d:.2}m",
+                s.distance
+            );
+        }
+    }
+}
+
+#[test]
+fn spec_120_validation_flags_stall_blocking_fast_lane() {
+    let mut track = baked_track_with_layout();
+    let lane = track.pit_lane.as_mut().unwrap();
+    // Move stall 0 onto the pit spline centerline (0.0m lateral offset).
+    let s0 = lane.spline.sample_at_distance(120.0);
+    lane.pit_boxes[0].position = s0.point;
+    let diags = validate_track(&track);
+    assert!(
+        diags.iter().any(|d| d.code == "ERR_PIT_BOX_BLOCKS_FAST_LANE"),
+        "expected ERR_PIT_BOX_BLOCKS_FAST_LANE when stall sits on centerline, got: {diags:?}"
+    );
+}
+

@@ -710,7 +710,7 @@ impl Track {
             return None;
         }
 
-        // 1. Pit lane drivable road ribbon
+        // 1. Pit lane drivable road ribbon (including the widened outer service side bay, Spec 120)
         if lane.spline.samples.len() >= 2 {
             let proj = lane.spline.project_point(point);
             if proj.is_on_track {
@@ -718,6 +718,12 @@ impl Track {
             }
             if proj.is_on_curb {
                 return Some(SurfaceType::Curb);
+            }
+            if !pit_kit::beyond_lane_end(lane, point) {
+                let (left_half, right_half) = lane.half_widths_at_s(proj.progress_distance);
+                if proj.lateral_offset >= -left_half && proj.lateral_offset <= right_half {
+                    return Some(proj.base_surface);
+                }
             }
         }
 
@@ -1677,8 +1683,8 @@ impl Track {
                 }
                 let proj = lane.spline.project_point(pt);
                 if (wall.elevation - proj.elevation).abs() < 2.0 {
-                    let half_w = proj.track_width * 0.5;
-                    if proj.lateral_offset.abs() < (half_w - 0.2) {
+                    let (left_half, right_half) = lane.half_widths_at_s(proj.progress_distance);
+                    if proj.lateral_offset > -(left_half - 0.2) && proj.lateral_offset < (right_half - 0.2) {
                         return false;
                     }
                 }
@@ -1761,12 +1767,16 @@ impl Track {
             // The outer retaining wall sits on the outer flank along the parallel working lane
             if gap_dist >= 2.5 {
                 let pit_normal = Vec2::new(-s.tangent.y, s.tangent.x);
-                let outer_pt = s.point + pit_normal * (pit_side * (pit_half_w + 1.5));
+                let (left_extra, right_extra) = lane.bay_extension_at_s(s.distance);
+                let bay_extra = if pit_side > 0.0 { left_extra } else { right_extra };
+                let outer_pt = s.point + pit_normal * (pit_side * (pit_half_w + bay_extra + 1.5));
                 let check_outer_main = self.spline.project_point(outer_pt);
                 let check_outer_pit = lane.spline.project_point(outer_pt);
                 let outer_curb = if check_outer_main.left_curb || check_outer_main.right_curb { 1.4 } else { 0.0 };
+                let (chk_left_half, chk_right_half) = lane.half_widths_at_s(check_outer_pit.progress_distance);
+                let chk_pit_half = if check_outer_pit.lateral_offset < 0.0 { chk_left_half } else { chk_right_half };
                 if check_outer_main.distance_to_spline >= (check_outer_main.track_width * 0.5 + outer_curb + 0.5)
-                    && check_outer_pit.lateral_offset.abs() >= (pit_half_w + 0.5)
+                    && check_outer_pit.lateral_offset.abs() >= (chk_pit_half + 0.5)
                 {
                     if outer_wall_pts.is_empty() || outer_wall_pts.last().unwrap().distance(outer_pt) >= 1.0 {
                         outer_wall_pts.push(outer_pt);

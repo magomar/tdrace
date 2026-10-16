@@ -747,7 +747,7 @@ def build_pit_lane(cid, cfg, root, nodes, ways, transform_ctx, final_track_pts):
     step_d = (x_end - x_start - 2.0 * stall_margin) / (num_boxes - 1) if num_boxes > 1 else 0.0
     for k in range(num_boxes):
         xk = x_start + stall_margin + k * step_d
-        yk = side * (d_parallel + 1.8)
+        yk = side * (d_parallel + w_pit * 0.5 + 1.8)
         pit_boxes.append({
             "position": [round(xk, 2), round(yk, 2)],
             "direction": [1.0, 0.0],

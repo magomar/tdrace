@@ -1331,9 +1331,26 @@ pub fn validate_track(track: &Track) -> Vec<TrackValidationError> {
                     .with_details("Shift the pit box stall outward into the dedicated working lane."),
                 );
             }
+            if lane.spline.samples.len() >= 2 {
+                let pit_proj = lane.spline.project_point(box_slot.position);
+                if pit_proj.lateral_offset.abs() < lane.road_width * 0.5 + 1.2 - 0.05 {
+                    diagnostics.push(
+                        TrackValidationError::error(
+                            "ERR_PIT_BOX_BLOCKS_FAST_LANE",
+                            format!(
+                                "Pit stall {} sits at {:.2}m from pit centerline, encroaching into the {:.1}m fast lane (requires >= {:.2}m offset).",
+                                i,
+                                pit_proj.lateral_offset.abs(),
+                                lane.road_width,
+                                lane.road_width * 0.5 + 1.2
+                            ),
+                        )
+                        .with_details("Place pit box stalls in the outer service side bay so the fast lane stays unobstructed."),
+                    );
+                }
+            }
         }
 
-        let half_w = lane.road_width * 0.5;
         for wall in track.geometry.inner_walls.iter().chain(&track.geometry.outer_walls) {
             let p0 = wall.segment.start;
             let p1 = wall.segment.end;
@@ -1344,7 +1361,11 @@ pub fn validate_track(track: &Track) -> Vec<TrackValidationError> {
                     continue;
                 }
                 let proj = lane.spline.project_point(pt);
-                if (wall.elevation - proj.elevation).abs() < 1.5 && proj.lateral_offset.abs() < (half_w - 0.25) {
+                let (left_half, right_half) = lane.half_widths_at_s(proj.progress_distance);
+                if (wall.elevation - proj.elevation).abs() < 1.5
+                    && proj.lateral_offset > -(left_half - 0.25)
+                    && proj.lateral_offset < (right_half - 0.25)
+                {
                     wall_blocks = true;
                     break;
                 }

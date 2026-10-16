@@ -1,8 +1,10 @@
 //! Parametric pit lane kit: predefined junction components on a free-form main spline.
 //!
-//! See `specs/101_parametric_pit_lane_kit_blocks_on_spline_circuits.md`. A pit lane is an entry junction, a free
-//! pit road and an exit junction. The junction component (`Side`, `JunctionShape`, `JunctionComponent`,
-//! `JunctionError`, `build_junction`) lives in `junction_kit.rs` since spec 102, shared with road branches.
+//! See `specs/101_parametric_pit_lane_kit_blocks_on_spline_circuits.md` and
+//! `specs/120_widened_pit_stop_side_bay_outer_stall_placement_and_unobstructed_pit_fast_lane.md`. A pit lane is an
+//! entry junction, a free pit road, an outer service side bay holding the box row, and an exit junction. The junction
+//! component (`Side`, `JunctionShape`, `JunctionComponent`, `JunctionError`, `build_junction`) lives in
+//! `junction_kit.rs` since spec 102, shared with road branches.
 
 use glam::Vec2;
 use serde::{Deserialize, Serialize};
@@ -155,7 +157,8 @@ impl PitLaneLayout {
             s += ROAD_STEP;
         }
 
-        // Guard 8 and Pillar IV: stalls on the road part, on stretches of radius >= 50 m, with a garage each.
+        // Guard 8 and Pillar IV (amended by Spec 120): stalls sit in the outer service side bay on stretches of
+        // radius >= 50 m, with a garage behind each stall outside the widened bay perimeter wall.
         let sigma = self.side.sign();
         let mut pit_boxes = Vec::with_capacity(self.box_row.count as usize);
         let mut garages = Vec::new();
@@ -169,10 +172,11 @@ impl PitLaneLayout {
                 return Err(PitKitError::BoxRowOffRoad { box_index: i });
             }
             let sample = spline.sample_at_distance(s_box);
-            pit_boxes.push(PitBox::new(sample.point, sample.tangent, BOX_STOP_RADIUS, sample.elevation));
+            let out = sample.normal * sigma;
+            let stall_reach = self.road_width * 0.5 + PitLane::BAY_STALL_OFFSET;
+            pit_boxes.push(PitBox::new(sample.point + out * stall_reach, sample.tangent, BOX_STOP_RADIUS, sample.elevation));
             if self.box_row.garages {
-                let out = sample.normal * sigma;
-                let reach = self.road_width * 0.5 + OUTER_WALL_OFFSET + GARAGE_WALL_CLEARANCE + GARAGE_DEPTH * 0.5;
+                let reach = self.road_width * 0.5 + PitLane::BAY_WIDTH + OUTER_WALL_OFFSET + GARAGE_WALL_CLEARANCE + GARAGE_DEPTH * 0.5;
                 let heading = sample.tangent.y.atan2(sample.tangent.x);
                 // A building's front faces its right; turn it so the front faces the road.
                 let angle = if sigma > 0.0 { heading } else { heading + std::f32::consts::PI };
@@ -400,7 +404,9 @@ pub fn perimeter_chain(track: &Track, lane: &PitLane, span: &PerimeterSpan) -> (
     let mut d = 0.0;
     while d <= total {
         let sample = lane.spline.sample_at_distance(d);
-        let outer = sample.point + sample.normal * (sigma * (lane.road_width * 0.5 + OUTER_WALL_OFFSET));
+        let (left_extra, right_extra) = lane.bay_extension_at_s(d);
+        let bay_extra = if sigma > 0.0 { left_extra } else { right_extra };
+        let outer = sample.point + sample.normal * (sigma * (lane.road_width * 0.5 + bay_extra + OUTER_WALL_OFFSET));
         let proj = main.project_point(outer);
         let lat = (outer - proj.closest_point).dot(proj.normal) * sigma;
         let gap = if d < total * 0.5 { gap_in } else { gap_out };

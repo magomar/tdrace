@@ -1635,6 +1635,14 @@ pub struct PitLane {
 impl PitLane {
     pub const DEFAULT_ROAD_SPEED_LIMIT: f32 = 16.67; // 60 km/h
     pub const DEFAULT_OVAL_SPEED_LIMIT: f32 = 22.22; // 80 km/h
+    /// Extra width added on the outer (garage) side along the pit stop stall row (Spec 120).
+    pub const BAY_WIDTH: f32 = 3.6;
+    /// Lateral offset of pit box centers outward from the fast-lane edge `road_width * 0.5` (Spec 120).
+    pub const BAY_STALL_OFFSET: f32 = 1.8;
+    /// Flat longitudinal padding before the first stall center and after the last stall center (m).
+    pub const BAY_PAD_S: f32 = 4.0;
+    /// Longitudinal smoothstep taper length at the entry and exit of the service bay (m).
+    pub const BAY_TAPER_LEN: f32 = 16.0;
 
     pub fn new(
         spline: TrackSpline,
@@ -1652,6 +1660,173 @@ impl PitLane {
             entry_gate,
             exit_gate,
         }
+    }
+
+    /// Returns `(s_bay_start, s_bay_end, sigma)` for the outer service side bay when `pit_boxes` sit off the centerline
+    /// (`sigma = +1.0` for left/`+normal`, `-1.0` for right/`-normal`).
+    pub fn bay_span_and_side(&self) -> Option<(f32, f32, f32)> {
+        if self.pit_boxes.is_empty() || self.spline.samples.len() < 2 {
+            return None;
+        }
+        let mut s_first = f32::INFINITY;
+        let mut s_last = f32::NEG_INFINITY;
+        let mut normal_dot_sum = 0.0f32;
+        for b in &self.pit_boxes {
+            let proj = self.spline.project_point(b.position);
+            s_first = s_first.min(proj.progress_distance);
+            s_last = s_last.max(proj.progress_distance);
+            normal_dot_sum += (b.position - proj.closest_point).dot(proj.normal);
+        }
+        if !s_first.is_finite() || !s_last.is_finite() {
+            return None;
+        }
+        if normal_dot_sum.abs() < 0.1 * (self.pit_boxes.len() as f32) {
+            return None;
+        }
+        let sigma = if normal_dot_sum >= 0.0 { 1.0 } else { -1.0 };
+        let total = self.spline.total_length;
+        let s_bay_start = (s_first - Self::BAY_PAD_S).clamp(0.0, total);
+        let s_bay_end = (s_last + Self::BAY_PAD_S).clamp(s_bay_start, total);
+        Some((s_bay_start, s_bay_end, sigma))
+    }
+
+    /// Returns `(left_extra, right_extra)` outer bay width expansion in meters at arc length `s` along `self.spline`
+    /// (`left_extra` along `+normal`, `right_extra` along `-normal`).
+    pub fn bay_extension_at_s(&self, s: f32) -> (f32, f32) {
+        let Some((s_bay_start, s_bay_end, sigma)) = self.bay_span_and_side() else {
+            return (0.0, 0.0);
+        };
+        let total = self.spline.total_length;
+        let taper_in_start = (s_bay_start - Self::BAY_TAPER_LEN).max(0.0);
+        let taper_out_end = (s_bay_end + Self::BAY_TAPER_LEN).min(total);
+        let extra = if s < taper_in_start || s > taper_out_end {
+            0.0
+        } else if s < s_bay_start {
+            let span = (s_bay_start - taper_in_start).max(1e-3);
+            let t = ((s - taper_in_start) / span).clamp(0.0, 1.0);
+            Self::BAY_WIDTH * t * t * (3.0 - 2.0 * t)
+        } else if s <= s_bay_end {
+            Self::BAY_WIDTH
+        } else {
+            let span = (taper_out_end - s_bay_end).max(1e-3);
+            let t = ((taper_out_end - s) / span).clamp(0.0, 1.0);
+            Self::BAY_WIDTH * t * t * (3.0 - 2.0 * t)
+        };
+        if sigma > 0.0 {
+            (extra, 0.0)
+        } else {
+            (0.0, extra)
+        }
+    }
+
+    /// Returns `(left_half_width, right_half_width)` at arc length `s` along `self.spline`, including any side-bay
+    /// expansion.
+    #[inline]
+    pub fn half_widths_at_s(&self, s: f32) -> (f32, f32) {
+        let half_w = self.road_width * 0.5;
+        let (left_extra, right_extra) = self.bay_extension_at_s(s);
+        (half_w + left_extra, half_w + right_extra)
+    }
+
+    /// Generates `(left_boundary, right_boundary)` polylines along `self.spline` sampled every `sample_step` meters
+    /// (or at `self.spline.samples` when `sample_step <= 0.0`), incorporating the outer service side bay.
+    pub fn generate_boundaries(&self, sample_step: f32) -> (Vec<Vec2>, Vec<Vec2>) {
+        if self.spline.samples.is_empty() {
+            return (Vec::new(), Vec::new());
+        }
+        if sample_step <= 0.0 {
+            let left = self
+                .spline
+                .samples
+                .iter()
+                .map(|s| {
+                    let (lh, _) = self.half_widths_at_s(s.distance);
+                    s.point + s.normal * lh
+                })
+                .collect();
+            let right = self
+                .spline
+                .samples
+                .iter()
+                .map(|s| {
+                    let (_, rh) = self.half_widths_at_s(s.distance);
+                    s.point - s.normal * rh
+                })
+                .collect();
+            return (left, right);
+        }
+        let step = sample_step.max(0.25);
+        let total = self.spline.total_length;
+        let mut left = Vec::new();
+        let mut right = Vec::new();
+        let mut d = 0.0f32;
+        while d < total {
+            let s = self.spline.sample_at_distance(d);
+            let (lh, rh) = self.half_widths_at_s(d);
+            left.push(s.point + s.normal * lh);
+            right.push(s.point - s.normal * rh);
+            d += step;
+        }
+        let s_end = self.spline.sample_at_distance(total);
+        let (lh, rh) = self.half_widths_at_s(total);
+        left.push(s_end.point + s_end.normal * lh);
+        right.push(s_end.point - s_end.normal * rh);
+        (left, right)
+    }
+
+    /// Computes untangled `(left_road, right_road, left_curb, right_curb)` boundary slices matching
+    /// `self.spline.samples.len()`, incorporating the outer service side bay (Spec 120).
+    pub fn untangled_boundaries(
+        &self,
+        curb_extra_width: f32,
+    ) -> (Vec<Vec2>, Vec<Vec2>, Vec<Vec2>, Vec<Vec2>) {
+        let n = self.spline.samples.len();
+        if n == 0 {
+            return (Vec::new(), Vec::new(), Vec::new(), Vec::new());
+        }
+        let mut left_road: Vec<Vec2> = self
+            .spline
+            .samples
+            .iter()
+            .map(|s| {
+                let (lh, _) = self.half_widths_at_s(s.distance);
+                s.point + s.normal * lh
+            })
+            .collect();
+        let mut right_road: Vec<Vec2> = self
+            .spline
+            .samples
+            .iter()
+            .map(|s| {
+                let (_, rh) = self.half_widths_at_s(s.distance);
+                s.point - s.normal * rh
+            })
+            .collect();
+        let mut left_curb: Vec<Vec2> = self
+            .spline
+            .samples
+            .iter()
+            .map(|s| {
+                let (lh, _) = self.half_widths_at_s(s.distance);
+                let extra = if s.left_curb { curb_extra_width } else { 0.0 };
+                s.point + s.normal * (lh + extra)
+            })
+            .collect();
+        let mut right_curb: Vec<Vec2> = self
+            .spline
+            .samples
+            .iter()
+            .map(|s| {
+                let (_, rh) = self.half_widths_at_s(s.distance);
+                let extra = if s.right_curb { curb_extra_width } else { 0.0 };
+                s.point - s.normal * (rh + extra)
+            })
+            .collect();
+
+        super::spline::untangle_road_and_curb(&mut left_road, &mut left_curb, self.spline.closed);
+        super::spline::untangle_road_and_curb(&mut right_road, &mut right_curb, self.spline.closed);
+
+        (left_road, right_road, left_curb, right_curb)
     }
 }
 

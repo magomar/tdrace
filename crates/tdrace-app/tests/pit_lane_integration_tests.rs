@@ -268,3 +268,74 @@ fn test_gt_pit_lanes_are_fully_enclosed() {
     }
     assert!(failures.is_empty(), "{failures:#?}");
 }
+
+/// Scenario: Every GT circuit pit lane places stalls in the outer side bay and passes validation (Spec 120)
+#[test]
+fn test_all_gt_pit_lanes_have_outer_bay_stalls_and_pass_validation() {
+    use tdrace_core::track::{validate_track, ValidationSeverity};
+    use tdrace_core::SurfaceType;
+
+    let mut failures = Vec::new();
+    for id in GT_CIRCUITS {
+        let track = tdrace_core::catalog::official_track("gt", id);
+        let Some(lane) = &track.pit_lane else {
+            failures.push(format!("{id}: missing pit_lane"));
+            continue;
+        };
+        if lane.bay_span_and_side().is_none() {
+            failures.push(format!("{id}: bay_span_and_side() returned None"));
+        }
+        let min_offset = lane.road_width * 0.5 + 1.2 - 0.05;
+        for (idx, b) in lane.pit_boxes.iter().enumerate() {
+            let proj = lane.spline.project_point(b.position);
+            if proj.distance_to_spline < min_offset {
+                failures.push(format!(
+                    "{id}: stall {idx} lateral offset {:.2}m < {:.2}m",
+                    proj.distance_to_spline, min_offset
+                ));
+            }
+            let surf = track.sample_surface(b.position);
+            if surf != SurfaceType::Asphalt {
+                failures.push(format!("{id}: stall {idx} surface is {surf:?}, expected Asphalt"));
+            }
+        }
+        let errors: Vec<_> = validate_track(&track)
+            .into_iter()
+            .filter(|d| d.severity == ValidationSeverity::Error)
+            .collect();
+        if !errors.is_empty() {
+            failures.push(format!("{id}: validation errors: {errors:?}"));
+        }
+    }
+    assert!(failures.is_empty(), "{failures:#?}");
+}
+
+/// Scenario: A car in the pit fast lane passes a stopped car in Stall 1 without collision or false stall capture (Spec 120)
+#[test]
+fn test_passing_car_clears_stopped_car_in_pit_bay() {
+    for id in GT_CIRCUITS {
+        let track = tdrace_core::catalog::official_track("gt", id);
+        let lane = track.pit_lane.as_ref().expect("pit_lane");
+        let stall = &lane.pit_boxes[0];
+        let stall_proj = lane.spline.project_point(stall.position);
+        let fast_lane_pt = stall_proj.closest_point;
+
+        // Center-to-center lateral separation is ~5.3 m; for 2.0 m wide GT cars, hull-to-hull clearance is ~3.3 m >= 2.5 m.
+        let center_sep = stall.position.distance(fast_lane_pt);
+        let hull_clearance = center_sep - 2.0;
+        assert!(
+            hull_clearance >= 2.5,
+            "{id}: hull-to-hull clearance between stopped stall car and fast-lane car is {hull_clearance:.2}m (< 2.5m)"
+        );
+
+        // No point along the fast-lane centerline falls inside the stall's stop_radius capture disk.
+        for s in &lane.spline.samples {
+            assert!(
+                !stall.contains_point(s.point),
+                "{id}: fast-lane centerline at s={:.1}m falls inside stall 0 stop_radius",
+                s.distance
+            );
+        }
+    }
+}
+

@@ -115,6 +115,25 @@ pub fn bake(track: &mut Track, opts: &BakeOptions) -> Result<BakeReport, String>
         if opts.rebuild || lane.spline.samples.is_empty() {
             lane.spline = TrackSpline::new(lane.spline.waypoints.clone(), false);
         }
+        let target_offset = lane.road_width * 0.5 + super::geometry::PitLane::BAY_STALL_OFFSET;
+        for b in &mut lane.pit_boxes {
+            let proj = lane.spline.project_point(b.position);
+            if proj.distance_to_spline < target_offset - 0.05 {
+                let dot = (b.position - proj.closest_point).dot(proj.normal);
+                let sigma = if dot.abs() > 0.1 {
+                    dot.signum()
+                } else {
+                    let main_proj = track.spline.project_point(proj.closest_point);
+                    if (proj.closest_point - main_proj.closest_point).dot(proj.normal) >= 0.0 {
+                        1.0
+                    } else {
+                        -1.0
+                    }
+                };
+                let p = proj.closest_point + proj.normal * (sigma * target_offset);
+                b.position = Vec2::new((p.x * 100.0).round() / 100.0, (p.y * 100.0).round() / 100.0);
+            }
+        }
     }
     // A launch chute (spec 103) is part of the network that the compile replaces: stamped again at the end.
     let mut chute = None;
@@ -200,10 +219,12 @@ fn current_wall_offset(track: &Track) -> Option<f32> {
     }
     let mut counts: Vec<(i32, usize)> = Vec::new();
     let geometry = &track.geometry;
-    // Spec 101: walls along the pit lane (divider, perimeter) are not main walls.
+    // Spec 101 & Spec 120: walls along the pit lane (divider, side-bay perimeter) are not main walls.
     let pit_wall = |v: Vec2| {
         track.pit_lane.as_ref().is_some_and(|lane| {
-            lane.spline.project_point(v).distance_to_spline <= lane.road_width * 0.5 + PIT_WALL_REACH
+            let proj = lane.spline.project_point(v);
+            let (left_half, right_half) = lane.half_widths_at_s(proj.progress_distance);
+            proj.distance_to_spline <= left_half.max(right_half) + PIT_WALL_REACH
         })
     };
     for walls in [&geometry.inner_walls, &geometry.outer_walls] {
