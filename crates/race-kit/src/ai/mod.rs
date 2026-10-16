@@ -1256,7 +1256,9 @@ impl BotAiDriver {
                 }
 
                 let pit_proj = lane.spline.project_point(car_pos);
-                let is_on_pit_ribbon = pit_proj.distance_to_spline < (lane.road_width * 0.5 + 0.8);
+                let (pit_left_half, pit_right_half) = lane.half_widths_at_s(pit_proj.progress_distance);
+                let is_on_pit_ribbon = pit_proj.lateral_offset >= -(pit_left_half + 0.8)
+                    && pit_proj.lateral_offset <= (pit_right_half + 0.8);
 
                 // Entry gate transition: mark is_in_pit_lane = true upon crossing entry_gate or entering pit ribbon while pitting (Spec 084)
                 let entered_gate = if let Some(last_p) = self.last_pos {
@@ -1293,18 +1295,31 @@ impl BotAiDriver {
                         let num_boxes = lane.pit_boxes.len();
                         let stall_idx = self.pit_stall_idx % num_boxes;
                         let pbox = &lane.pit_boxes[stall_idx];
+                        let pbox_s = lane.spline.project_point(pbox.position).progress_distance;
+                        let dist_along_lane = (pbox_s - pit_proj.progress_distance).max(0.0);
                         let dist_to_box = (pbox.position - car_pos).length();
-                        if dist_to_box < 15.0 {
-                            pit_target = pbox.position;
+                        if dist_along_lane <= 20.0 || dist_to_box < 20.0 {
+                            let pull_in_blend = (1.0 - (dist_along_lane / 20.0)).clamp(0.35, 1.0);
+                            let fast_pt = lane.spline.sample_at_distance(pbox_s).point;
+                            pit_target = fast_pt.lerp(pbox.position, pull_in_blend);
                         }
                         if dist_to_box <= pbox.stop_radius || pbox.contains_point(car_pos) {
+                            self.stuck_timer = 0.0;
+                            self.no_progress_timer = 0.0;
+                            self.turn = None;
                             if car_speed < 1.0 {
                                 self.stall_stop_timer += dt;
                             }
                         }
                         if self.stall_stop_timer >= 2.0 || (car.max_tire_wear() < 0.10 && car.health() >= 0.65) {
                             self.pit_serviced = true;
+                            self.stuck_timer = 0.0;
+                            self.no_progress_timer = 0.0;
+                            self.turn = None;
                         }
+                    } else if self.pit_serviced {
+                        let merge_s = (pit_proj.progress_distance + 12.0).min(lane.spline.total_length());
+                        pit_target = lane.spline.sample_at_distance(merge_s).point;
                     }
 
                     target_point = pit_target;

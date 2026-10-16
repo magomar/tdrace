@@ -564,7 +564,7 @@ impl TrackRenderCache {
         );
 
         let pit_lane_boundaries = track.pit_lane.as_ref().map(|lane| {
-            lane.spline.untangled_boundaries(1.35)
+            lane.untangled_boundaries(1.35)
         });
         let pit_lane_ground_pass = track
             .pit_lane
@@ -2734,6 +2734,27 @@ fn render_pit_boxes(pit_lane: &PitLane, view_bounds: Option<(Vec2, Vec2)>) {
     let exit_mid = (exit.start + exit.end) * 0.5;
     if is_in_view(exit_mid, 8.0) {
         draw_line(exit.start.x, exit.start.y, exit.end.x, exit.end.y, 0.30, Color::new(1.0, 0.82, 0.15, 0.85));
+    }
+
+    // Draw dashed white dividing line between pass-through fast lane and outer pit stop bay (Spec 120)
+    if let Some((s_bay_start, s_bay_end, sigma)) = pit_lane.bay_span_and_side() {
+        let fast_half = pit_lane.road_width * 0.5;
+        let div_col = Color::new(0.95, 0.95, 0.95, 0.65);
+        for pair in pit_lane.spline.samples.windows(2) {
+            let s0 = &pair[0];
+            let s1 = &pair[1];
+            if s1.distance < s_bay_start || s0.distance > s_bay_end {
+                continue;
+            }
+            let dash = ((s0.distance / 2.5).floor() as i32).rem_euclid(2) == 0;
+            if dash {
+                let p0 = s0.point + s0.normal * (sigma * fast_half);
+                let p1 = s1.point + s1.normal * (sigma * fast_half);
+                if is_in_view((p0 + p1) * 0.5, 6.0) {
+                    draw_line(p0.x, p0.y, p1.x, p1.y, 0.18, div_col);
+                }
+            }
+        }
     }
 
     // Draw team pit stalls

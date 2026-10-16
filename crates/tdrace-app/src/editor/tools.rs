@@ -434,7 +434,21 @@ impl ToolSettings {
 
         if pit_boxes.is_empty() {
             let mid = spline_points[spline_points.len() / 2];
-            pit_boxes.push(PitBox::new(mid, dir0, 3.0, 0.0));
+            let main_proj = state.track.spline.project_point(mid);
+            let pit_proj = pit_spline.project_point(mid);
+            let outer_sigma = if (mid - main_proj.closest_point).dot(pit_proj.normal) >= 0.0 {
+                1.0
+            } else {
+                -1.0
+            };
+            let box_pos = pit_proj.closest_point
+                + pit_proj.normal * (outer_sigma * (road_width * 0.5 + PitLane::BAY_STALL_OFFSET));
+            let box_dir = if pit_proj.tangent.length_squared() > 1e-4 {
+                pit_proj.tangent
+            } else {
+                dir0
+            };
+            pit_boxes.push(PitBox::new(box_pos, box_dir, 3.0, 0.0));
         }
 
         state.track.pit_lane = Some(PitLane::new(
@@ -2672,7 +2686,8 @@ fn find_closest_entity(state: &EditorState, point: Vec2) -> Option<Selection> {
         }
         if lane.spline.total_length > 1.0 {
             let proj = lane.spline.project_point(point);
-            if proj.distance_to_spline < lane.road_width * 0.5 {
+            let (left_half, right_half) = lane.half_widths_at_s(proj.progress_distance);
+            if proj.lateral_offset >= -left_half && proj.lateral_offset <= right_half {
                 return Some(Selection::PitBox);
             }
         }
