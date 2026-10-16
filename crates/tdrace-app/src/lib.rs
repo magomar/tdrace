@@ -75,7 +75,10 @@ pub use render::lateral::{render_car_lateral, render_real_car_lateral_by_id};
 pub use render::trophy_textures::{
     draw_trophy_badge, get_trophy_texture, normalize_discipline, trophy_filename,
 };
-pub use render::{compute_adaptive_alpha, PlayerVisibilityOptions};
+pub use render::{
+    compute_adaptive_alpha, compute_adaptive_visibility, compute_traffic_crowding,
+    AdaptiveVisibilityFactors, PlayerVisibilityOptions,
+};
 pub use replay::{
     PlaybackSpeed, Replay, ReplayHeader, ReplayInputFrame, ReplayKeyframe, ReplayPlayer,
     ReplayRecorder,

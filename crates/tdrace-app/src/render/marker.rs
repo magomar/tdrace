@@ -12,12 +12,12 @@ use crate::ui::CurveColorScheme;
 /// Runtime toggle flags and visual parameters for player car visibility and HUD driving aids.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct PlayerVisibilityOptions {
-    /// Option 1: Inverted neon chevron (`▼`) floating above the player car roof.
-    pub overhead_chevron: bool,
-    /// Size scale multiplier for the overhead chevron.
-    pub overhead_chevron_scale: f32,
-    /// Brightness multiplier for the overhead chevron.
-    pub overhead_chevron_brightness: f32,
+    /// Option 1: Frontal directional chevron (`▲`) seated on the front of the player car's ground aura.
+    pub frontal_chevron: bool,
+    /// Size scale multiplier for the frontal chevron.
+    pub frontal_chevron_scale: f32,
+    /// Brightness multiplier for the frontal chevron.
+    pub frontal_chevron_brightness: f32,
     /// Option 2: Luminous ground aura / underglow disc beneath the player chassis.
     pub ground_aura: bool,
     /// Radius ratio multiplier for the ground aura disc.
@@ -57,9 +57,9 @@ pub struct PlayerVisibilityOptions {
 impl Default for PlayerVisibilityOptions {
     fn default() -> Self {
         Self {
-            overhead_chevron: true,
-            overhead_chevron_scale: 1.0,
-            overhead_chevron_brightness: 1.0,
+            frontal_chevron: true,
+            frontal_chevron_scale: 1.0,
+            frontal_chevron_brightness: 1.0,
             ground_aura: true,
             ground_aura_radius_ratio: 1.0,
             ground_aura_brightness: 1.0,
@@ -90,9 +90,9 @@ impl From<&crate::config::PlayerHelpersConfig> for PlayerVisibilityOptions {
             _ => CurveColorScheme::Traffic,
         };
         Self {
-            overhead_chevron: cfg.overhead_chevron,
-            overhead_chevron_scale: cfg.overhead_chevron_scale,
-            overhead_chevron_brightness: cfg.overhead_chevron_brightness,
+            frontal_chevron: cfg.frontal_chevron,
+            frontal_chevron_scale: cfg.frontal_chevron_scale,
+            frontal_chevron_brightness: cfg.frontal_chevron_brightness,
             ground_aura: cfg.ground_aura,
             ground_aura_radius_ratio: cfg.ground_aura_radius_ratio,
             ground_aura_brightness: cfg.ground_aura_brightness,
@@ -123,9 +123,9 @@ impl From<&PlayerVisibilityOptions> for crate::config::PlayerHelpersConfig {
             CurveColorScheme::Rally => "rally".to_string(),
         };
         Self {
-            overhead_chevron: opts.overhead_chevron,
-            overhead_chevron_scale: opts.overhead_chevron_scale,
-            overhead_chevron_brightness: opts.overhead_chevron_brightness,
+            frontal_chevron: opts.frontal_chevron,
+            frontal_chevron_scale: opts.frontal_chevron_scale,
+            frontal_chevron_brightness: opts.frontal_chevron_brightness,
             ground_aura: opts.ground_aura,
             ground_aura_radius_ratio: opts.ground_aura_radius_ratio,
             ground_aura_brightness: opts.ground_aura_brightness,
@@ -147,76 +147,187 @@ impl From<&PlayerVisibilityOptions> for crate::config::PlayerHelpersConfig {
     }
 }
 
-/// Renders a zoom-invariant overhead indicator (inverted chevron/triangle `▼`)
-/// hovering above the player car roof.
-pub fn render_player_overhead_chevron(
+/// Number of arc segments used to conform the chevron base to the circular aura perimeter.
+pub const PLAYER_CHEVRON_ARC_SEGMENTS: usize = 6;
+
+/// Computed world-space geometry for the player's forward-pointing aura chevron.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct PlayerChevronGeometry {
+    /// Forward unit direction vector of the vehicle.
+    pub forward: Vec2,
+    /// Radius of the ground aura ring where the chevron base is anchored.
+    pub aura_radius: f32,
+    /// World-space tip of the chevron pointing ahead of the car.
+    pub tip: Vec2,
+    /// Leftmost base vertex on the aura perimeter ring.
+    pub base_left: Vec2,
+    /// Rightmost base vertex on the aura perimeter ring.
+    pub base_right: Vec2,
+    /// Arc-conforming base vertices along the aura ring from left to right.
+    pub base_arc: [Vec2; PLAYER_CHEVRON_ARC_SEGMENTS + 1],
+    /// Angular half-spread (radians) of the chevron base along the aura perimeter.
+    pub half_angle: f32,
+    /// Radial protrusion length of the chevron tip beyond `aura_radius`.
+    pub length: f32,
+}
+
+/// Computes the zoom-compensated radius of the player's ground aura ring in world meters.
+#[inline]
+pub fn player_aura_radius(current_zoom: f32, radius_ratio: f32) -> f32 {
+    let zoom = current_zoom.max(0.5);
+    let ratio = radius_ratio.max(0.2);
+    (2.4f32 * ratio).max((15.0 * ratio) / zoom)
+}
+
+/// Computes the world-space geometry of the forward-pointing chevron seated on the front
+/// perimeter of the player's ground aura ring.
+pub fn compute_player_chevron_geometry(
     pos: Vec2,
-    elevation: f32,
+    fwd: Vec2,
     current_zoom: f32,
-    anim_time: f32,
+    scale: f32,
+    aura_radius_ratio: f32,
+) -> PlayerChevronGeometry {
+    let zoom = current_zoom.max(0.5);
+    let s = scale.max(0.25);
+    let dir = if fwd.length_squared() > 1e-6 {
+        fwd.normalize()
+    } else {
+        Vec2::X
+    };
+    let right = Vec2::new(-dir.y, dir.x);
+    let aura_radius = player_aura_radius(zoom, aura_radius_ratio);
+
+    // Protrusion length and base half-width scale with the aura ring and maintain a minimum screen-pixel footprint when zoomed out
+    let length = (aura_radius * 0.42 * s).max((10.0 * s) / zoom);
+    let half_w = (aura_radius * 0.32 * s)
+        .max((7.0 * s) / zoom)
+        .min(aura_radius * 0.82);
+    let half_angle = (half_w / aura_radius).clamp(0.05, 0.95).asin();
+
+    let tip = pos + dir * (aura_radius + length);
+    let mut base_arc = [Vec2::ZERO; PLAYER_CHEVRON_ARC_SEGMENTS + 1];
+    for (k, slot) in base_arc.iter_mut().enumerate() {
+        let t = -1.0 + 2.0 * (k as f32 / PLAYER_CHEVRON_ARC_SEGMENTS as f32);
+        let theta = t * half_angle;
+        *slot = pos + dir * (aura_radius * theta.cos()) + right * (aura_radius * theta.sin());
+    }
+
+    PlayerChevronGeometry {
+        forward: dir,
+        aura_radius,
+        tip,
+        base_left: base_arc[0],
+        base_right: base_arc[PLAYER_CHEVRON_ARC_SEGMENTS],
+        base_arc,
+        half_angle,
+        length,
+    }
+}
+
+/// Renders a forward-pointing directional chevron seated on the front perimeter of the
+/// player's ground aura ring, indicating both car location and heading when sprites are small.
+#[allow(clippy::too_many_arguments)]
+pub fn render_player_frontal_chevron(
+    pos: Vec2,
+    fwd: Vec2,
+    current_zoom: f32,
     color_scheme: &CarColorScheme,
     alpha_scale: f32,
     scale: f32,
     brightness: f32,
+    aura_radius_ratio: f32,
 ) {
-    let effective_alpha = (alpha_scale * brightness).clamp(0.0, 1.0);
+    let effective_alpha = (alpha_scale * brightness).max(0.0);
     if effective_alpha <= 0.01 {
         return;
     }
     let zoom = current_zoom.max(0.5);
+    let geom = compute_player_chevron_geometry(pos, fwd, zoom, scale, aura_radius_ratio);
+    let dir = geom.forward;
+    let right = Vec2::new(-dir.y, dir.x);
 
-    // Height offset: clearance above car (2.2m radius) plus constant 14px on screen + bobbing
-    let bob_px = (anim_time * 6.0).sin() * 3.0;
-    let offset_y = 2.2 + (16.0 + bob_px) / zoom;
-    let anchor = pos + Vec2::new(0.0, offset_y + elevation);
-
-    // Chevron dimensions (fixed screen-pixel footprint: 18px wide x 13px tall, scaled)
-    let half_w = (9.0 * scale) / zoom;
-    let height = (13.0 * scale) / zoom;
-    let stroke = ((2.0 * scale) / zoom).max(0.06);
-
-    // Points of inverted triangle (tip pointing down toward car)
-    let p_tip = anchor;
-    let p_left = anchor + Vec2::new(-half_w, height);
-    let p_right = anchor + Vec2::new(half_w, height);
-
-    // Color with alpha_scale * brightness
-    let mut fill_col = color_scheme.secondary;
-    // Boost vibrancy if too dark or low contrast
-    if fill_col.r + fill_col.g + fill_col.b < 0.85 {
-        fill_col = Palette::NEON_CYAN;
+    // Match the ground aura color selection so the ring and forward pointer form a unified indicator
+    let mut aura_col = color_scheme.secondary;
+    if aura_col.r + aura_col.g + aura_col.b < 0.85 {
+        aura_col = Palette::NEON_CYAN;
     }
-    fill_col.a *= effective_alpha;
 
-    let outline_col = Color::new(0.0, 0.0, 0.0, 0.98 * effective_alpha);
+    let m = |v: Vec2| macroquad::prelude::Vec2::new(v.x, v.y);
 
-    // Drop shadow slightly offset with higher contrast
-    let s_off = Vec2::new(0.14, -0.14);
-    draw_triangle(
-        macroquad::prelude::Vec2::new(p_tip.x + s_off.x, p_tip.y + s_off.y),
-        macroquad::prelude::Vec2::new(p_left.x + s_off.x, p_left.y + s_off.y),
-        macroquad::prelude::Vec2::new(p_right.x + s_off.x, p_right.y + s_off.y),
-        Color::new(0.0, 0.0, 0.0, 0.65 * effective_alpha),
+    // 1. Soft outer ambient halo matching the ground aura's outer glow layer
+    let halo_col = Color::new(
+        aura_col.r,
+        aura_col.g,
+        aura_col.b,
+        (0.32 * effective_alpha).min(1.0),
     );
+    let halo_tip = pos + dir * (geom.aura_radius + geom.length * 1.22);
+    let halo_half_angle = (geom.half_angle * 1.20).min(1.15);
+    for k in 0..PLAYER_CHEVRON_ARC_SEGMENTS {
+        let t0 = -1.0 + 2.0 * (k as f32 / PLAYER_CHEVRON_ARC_SEGMENTS as f32);
+        let t1 = -1.0 + 2.0 * ((k + 1) as f32 / PLAYER_CHEVRON_ARC_SEGMENTS as f32);
+        let a0 = t0 * halo_half_angle;
+        let a1 = t1 * halo_half_angle;
+        let b0 = pos + dir * (geom.aura_radius * a0.cos()) + right * (geom.aura_radius * a0.sin());
+        let b1 = pos + dir * (geom.aura_radius * a1.cos()) + right * (geom.aura_radius * a1.sin());
+        draw_triangle(m(halo_tip), m(b0), m(b1), halo_col);
+    }
 
-    // Fill triangle
-    draw_triangle(
-        macroquad::prelude::Vec2::new(p_tip.x, p_tip.y),
-        macroquad::prelude::Vec2::new(p_left.x, p_left.y),
-        macroquad::prelude::Vec2::new(p_right.x, p_right.y),
-        fill_col,
+    // 2. Main luminous chevron fill conforming to the outer circumference of the aura ring
+    let fill_col = Color::new(
+        aura_col.r,
+        aura_col.g,
+        aura_col.b,
+        (0.68 * effective_alpha).min(1.0),
     );
+    for k in 0..PLAYER_CHEVRON_ARC_SEGMENTS {
+        draw_triangle(
+            m(geom.tip),
+            m(geom.base_arc[k]),
+            m(geom.base_arc[k + 1]),
+            fill_col,
+        );
+    }
 
-    // High-contrast triangle border
-    draw_line(p_tip.x, p_tip.y, p_left.x, p_left.y, stroke, outline_col);
-    draw_line(p_left.x, p_left.y, p_right.x, p_right.y, stroke, outline_col);
-    draw_line(p_right.x, p_right.y, p_tip.x, p_tip.y, stroke, outline_col);
+    // 3. Inner bright core highlight matching the multi-layered luminous aura aesthetic
+    let core_col = Color::new(
+        (aura_col.r + 1.0) * 0.5,
+        (aura_col.g + 1.0) * 0.5,
+        (aura_col.b + 1.0) * 0.5,
+        (0.50 * effective_alpha).min(1.0),
+    );
+    let core_tip = pos + dir * (geom.aura_radius + geom.length * 0.78);
+    let core_base_r = geom.aura_radius + geom.length * 0.12;
+    let core_half_w = (geom.aura_radius * geom.half_angle.sin()) * 0.45;
+    let core_left = pos + dir * core_base_r - right * core_half_w;
+    let core_right = pos + dir * core_base_r + right * core_half_w;
+    draw_triangle(m(core_tip), m(core_left), m(core_right), core_col);
 
-    // Inner bright highlight bar for vector polish and contrast
-    let inner_col = Color::new(1.0, 1.0, 1.0, 0.85 * effective_alpha);
-    let inner_top_l = anchor + Vec2::new(-half_w * 0.55, height * 0.72);
-    let inner_top_r = anchor + Vec2::new(half_w * 0.55, height * 0.72);
-    draw_line(inner_top_l.x, inner_top_l.y, inner_top_r.x, inner_top_r.y, stroke * 0.8, inner_col);
+    // 4. Crisp leading-edge flank strokes continuing the aura perimeter ring to the tip
+    let stroke = ((2.0 * scale.max(0.5)) / zoom).max(0.06);
+    let edge_col = Color::new(
+        aura_col.r,
+        aura_col.g,
+        aura_col.b,
+        (0.78 * effective_alpha).min(1.0),
+    );
+    draw_line(
+        geom.base_left.x,
+        geom.base_left.y,
+        geom.tip.x,
+        geom.tip.y,
+        stroke,
+        edge_col,
+    );
+    draw_line(
+        geom.base_right.x,
+        geom.base_right.y,
+        geom.tip.x,
+        geom.tip.y,
+        stroke,
+        edge_col,
+    );
 }
 
 /// Renders a luminous ground aura / underglow disc beneath the player's chassis.
@@ -231,14 +342,14 @@ pub fn render_player_ground_aura(
     radius_ratio: f32,
     brightness: f32,
 ) {
-    let effective_alpha = (alpha_scale * brightness).clamp(0.0, 1.0);
+    let effective_alpha = (alpha_scale * brightness).max(0.0);
     if effective_alpha <= 0.01 {
         return;
     }
     let zoom = current_zoom.max(0.5);
 
     // Dynamic radius: 2.4m base radius * ratio, clamped to at least (15.0 * ratio) px on screen
-    let radius = (2.4f32 * radius_ratio).max((15.0 * radius_ratio) / zoom);
+    let radius = player_aura_radius(zoom, radius_ratio);
 
     let mut aura_col = color_scheme.secondary;
     if aura_col.r + aura_col.g + aura_col.b < 0.85 {
@@ -263,32 +374,119 @@ pub fn render_player_ground_aura(
     draw_circle_lines(pos.x, pos.y, radius, ring_stroke, c_ring);
 }
 
-/// Computes the context-aware adaptive visibility scale factor based on camera zoom and vehicle speed.
+/// Radius (in world meters) around the player car within which other vehicles
+/// contribute to situational crowding for adaptive visibility scaling.
+pub const ADAPTIVE_TRAFFIC_RADIUS: f32 = 22.0;
+
+/// Weighted proximity sum at which traffic crowding saturates (`1.0`).
+pub const ADAPTIVE_TRAFFIC_SATURATION: f32 = 2.4;
+
+/// Relative multipliers applied to the user's configured visual aid settings
+/// (brightness and size/radius) when Adaptive Visibility is active.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct AdaptiveVisibilityFactors {
+    /// Relative multiplier applied to configured brightness (`1.0` when disabled; `[0.50, 1.50]` when enabled).
+    pub alpha_multiplier: f32,
+    /// Relative multiplier applied to configured radius/scale (`1.0` when disabled; `[0.90, 1.25]` when enabled).
+    pub scale_multiplier: f32,
+}
+
+/// Computes a normalized `[0.0, 1.0]` traffic crowding factor around `player_pos`
+/// based on the proximity of other vehicles within [`ADAPTIVE_TRAFFIC_RADIUS`].
+pub fn compute_traffic_crowding(
+    player_pos: Vec2,
+    other_positions: impl IntoIterator<Item = Vec2>,
+) -> f32 {
+    let mut weighted_sum = 0.0f32;
+    for pos in other_positions {
+        let dist = player_pos.distance(pos);
+        if dist < ADAPTIVE_TRAFFIC_RADIUS {
+            let w = (1.0 - dist / ADAPTIVE_TRAFFIC_RADIUS).clamp(0.0, 1.0);
+            weighted_sum += w * (0.5 + 0.5 * w);
+        }
+    }
+    (weighted_sum / ADAPTIVE_TRAFFIC_SATURATION).clamp(0.0, 1.0)
+}
+
+/// Computes relative brightness and scale multipliers around the user's configured settings (`1.0`).
 ///
-/// Returns 1.0 if adaptive visibility is disabled. When enabled, smoothly fades indicators
-/// when zoomed close or travelling at high speed, and amplifies prominence when zoomed out or slow/stopped.
+/// - When `enabled == false`: returns `(1.0, 1.0)` so the exact Settings values are used directly.
+/// - When `enabled == true`: scales in a `[0.50, 1.50]` relative range around `1.0`:
+///   - Decreases below `1.0` (down to `0.50` alpha / `0.90` scale) when visibility is very clear
+///     (close zoom, racing speed, no nearby traffic).
+///   - Increases above `1.0` (up to `1.50` alpha / `1.25` scale) when camera zoom pulls out,
+///     when surrounded by nearby vehicles (`traffic_crowding`), or when stopped/recovering.
+pub fn compute_adaptive_visibility(
+    enabled: bool,
+    current_zoom: f32,
+    car_speed: f32,
+    anim_time: f32,
+    traffic_crowding: f32,
+) -> AdaptiveVisibilityFactors {
+    if !enabled {
+        return AdaptiveVisibilityFactors {
+            alpha_multiplier: 1.0,
+            scale_multiplier: 1.0,
+        };
+    }
+
+    let crowding = traffic_crowding.clamp(0.0, 1.0);
+
+    // 1. Zoom relative factor around neutral Medium-Close zoom (14.0):
+    //    - Close zoom (14.0..20.0+): diminishes below 1.0 down to 0.50 when visibility is clear
+    //    - Far/Overview zoom (14.0..5.0): boosts above 1.0 up to 1.35 as sprites shrink
+    let base_zoom_mult = if current_zoom >= 14.0 {
+        let t = ((current_zoom - 14.0) / (20.0 - 14.0)).clamp(0.0, 1.0);
+        1.0 - t * 0.50
+    } else {
+        let t = ((14.0 - current_zoom) / (14.0 - 5.0)).clamp(0.0, 1.0);
+        1.0 + t * 0.35
+    };
+
+    // 2. Traffic crowding: cancels close-zoom dimming and adds up to +0.35 prominence in packs
+    let zoom_with_traffic_floor = if base_zoom_mult < 1.0 {
+        base_zoom_mult + (1.0 - base_zoom_mult) * crowding
+    } else {
+        base_zoom_mult
+    };
+    let traffic_boost = crowding * 0.35;
+
+    // 3. Low-speed / spin-recovery boost (< 8.0 m/s) with gentle breathing pulse
+    let speed_boost = if car_speed < 8.0 {
+        let t = ((8.0 - car_speed.max(0.0)) / 8.0).clamp(0.0, 1.0);
+        t * 0.20 + (anim_time * 5.0).sin() * 0.08 * t
+    } else {
+        0.0
+    };
+
+    let alpha_multiplier = (zoom_with_traffic_floor + traffic_boost + speed_boost).clamp(0.50, 1.50);
+
+    // Relative size/radius scaling around 1.0:
+    // Slightly compact (down to 0.90x) when visibility is clear, expanding up to 1.25x in far zoom or dense traffic
+    let delta = alpha_multiplier - 1.0;
+    let scale_multiplier = if delta < 0.0 {
+        (1.0 + delta * 0.20).clamp(0.90, 1.0)
+    } else {
+        (1.0 + delta * 0.50).clamp(1.0, 1.25)
+    };
+
+    AdaptiveVisibilityFactors {
+        alpha_multiplier,
+        scale_multiplier,
+    }
+}
+
+/// Computes the context-aware adaptive visibility alpha multiplier based on camera zoom and vehicle speed.
+///
+/// Returns `1.0` if adaptive visibility is disabled. When enabled, scales relative to `1.0`
+/// (decreasing below `1.0` when close and clear, and boosting above `1.0` when zoomed out or slow/stopped).
 pub fn compute_adaptive_alpha(
     enabled: bool,
     current_zoom: f32,
     car_speed: f32,
     anim_time: f32,
 ) -> f32 {
-    if !enabled {
-        return 1.0;
-    }
-
-    // Zoom scaling: fades to 0.15 at Close zoom (>= 18.0), full 1.0 at Far/Overview (<= 6.0)
-    let zoom_factor = ((18.0 - current_zoom) / (18.0 - 6.0)).clamp(0.15, 1.0);
-
-    // Speed scaling: when moving slowly (< 8.0 m/s), boost visibility and add gentle breathing pulse
-    let speed_boost = if car_speed < 8.0 {
-        let t = (8.0 - car_speed) / 8.0;
-        t * 0.35 + (anim_time * 5.0).sin() * 0.15 * t
-    } else {
-        0.0
-    };
-
-    (zoom_factor + speed_boost).clamp(0.15, 1.0)
+    compute_adaptive_visibility(enabled, current_zoom, car_speed, anim_time, 0.0).alpha_multiplier
 }
 
 /// Renders a diegetic high-visibility day-glo roof beacon / roll-hoop T-cam strobe atop the player car.
@@ -305,7 +503,7 @@ pub fn render_player_roof_beacon(
     alpha_scale: f32,
     brightness: f32,
 ) {
-    let effective_alpha = (alpha_scale * brightness).clamp(0.0, 1.0);
+    let effective_alpha = (alpha_scale * brightness).max(0.0);
     if effective_alpha <= 0.01 {
         return;
     }
@@ -747,7 +945,7 @@ mod tests {
     #[test]
     fn test_player_visibility_options_defaults_and_conversion() {
         let opts = PlayerVisibilityOptions::default();
-        assert!(opts.overhead_chevron);
+        assert!(opts.frontal_chevron);
         assert!(opts.ground_aura);
         assert!(opts.adaptive_visibility);
         assert!(!opts.roof_beacon);
@@ -774,6 +972,36 @@ mod tests {
         render_player_sonar_ping(Vec2::ZERO, 10.0, 0.0, 0.75);
         render_player_sonar_ping(Vec2::ZERO, 10.0, -0.5, 0.75);
         render_player_sonar_ping(Vec2::ZERO, 10.0, 0.5, 0.0);
+    }
+
+    #[test]
+    fn test_player_chevron_geometry_follows_heading_and_aura_ring() {
+        let pos = Vec2::new(40.0, -25.0);
+        for &angle in &[0.0f32, 0.65, std::f32::consts::FRAC_PI_2, 2.35, -1.2] {
+            let fwd = Vec2::new(angle.cos(), angle.sin());
+            let geom = compute_player_chevron_geometry(pos, fwd, 14.0, 1.0, 1.0);
+
+            // Forward direction and tip alignment
+            assert!((geom.forward - fwd).length() < 1e-5);
+            let tip_vec = geom.tip - pos;
+            let tip_dir = tip_vec.normalize();
+            assert!((tip_dir - fwd).length() < 1e-5, "Chevron tip must point in car forward direction");
+            assert!(
+                (tip_vec.length() - (geom.aura_radius + geom.length)).abs() < 1e-4,
+                "Chevron tip must extend beyond aura radius by chevron length"
+            );
+
+            // Every base arc vertex must sit directly on the aura perimeter circle
+            for pt in &geom.base_arc {
+                let r = (*pt - pos).length();
+                assert!(
+                    (r - geom.aura_radius).abs() < 1e-4,
+                    "Base arc vertex must lie on aura ring radius {}, got {}",
+                    geom.aura_radius,
+                    r
+                );
+            }
+        }
     }
 }
 

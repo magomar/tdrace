@@ -63,9 +63,9 @@ line_spacing = 3.0
 vehicle_shadows = true
 
 [player_helpers]
-overhead_chevron = true
-overhead_chevron_scale = 1.0
-overhead_chevron_brightness = 1.0
+frontal_chevron = true
+frontal_chevron_scale = 1.0
+frontal_chevron_brightness = 1.0
 ground_aura = true
 ground_aura_radius_ratio = 1.0
 ground_aura_brightness = 1.0

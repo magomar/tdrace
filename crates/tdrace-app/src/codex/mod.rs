@@ -1288,7 +1288,7 @@ fn hud_data() -> CodexHudData {
             name: "Player Locator Aids",
             screen_position: "In-World around Player Vehicle",
             hotkey: None,
-            description: "Overhead chevron pointer, ground proximity aura, roof strobe beacon, and radar sonar ping for high-density pack clarity.",
+            description: "Frontal chevron pointer, ground proximity aura, roof strobe beacon, and radar sonar ping for high-density pack clarity.",
         },
         CodexHudElement {
             id: "debug_overlays",
@@ -1376,9 +1376,9 @@ fn hud_data() -> CodexHudData {
 
     let locator_aids = vec![
         CodexLocatorAid {
-            id: "overhead_chevron",
-            name: "Overhead Floating Chevron",
-            description: "High-visibility floating arrow directly above the player's car, scaling dynamically with camera zoom.",
+            id: "frontal_chevron",
+            name: "Frontal Heading Chevron",
+            description: "High-visibility directional chevron seated on the front of the ground aura ring, indicating vehicle heading and scaling dynamically with camera zoom.",
         },
         CodexLocatorAid {
             id: "ground_aura",

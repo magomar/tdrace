@@ -277,12 +277,15 @@ pub fn deep_merge_toml(base: &mut toml::Value, overrides: &toml::Value) {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct PlayerHelpersConfig {
-    /// Inverted overhead triangle chevron marker above the player car.
-    pub overhead_chevron: bool,
-    /// Size scale multiplier for the overhead chevron (0.5 to 2.0).
-    pub overhead_chevron_scale: f32,
-    /// Brightness multiplier for the overhead chevron (0.2 to 2.5).
-    pub overhead_chevron_brightness: f32,
+    /// Frontal directional chevron marker seated on the front of the player car's ground aura.
+    #[serde(alias = "overhead_chevron")]
+    pub frontal_chevron: bool,
+    /// Size scale multiplier for the frontal chevron (0.5 to 2.0).
+    #[serde(alias = "overhead_chevron_scale")]
+    pub frontal_chevron_scale: f32,
+    /// Brightness multiplier for the frontal chevron (0.2 to 2.5).
+    #[serde(alias = "overhead_chevron_brightness")]
+    pub frontal_chevron_brightness: f32,
     /// Soft ground aura / glow disc projected under the player car.
     pub ground_aura: bool,
     /// Radius ratio multiplier for the ground aura disc (0.4 to 1.8).
@@ -333,9 +336,9 @@ fn default_bot_nameplates_opacity() -> f32 {
 impl Default for PlayerHelpersConfig {
     fn default() -> Self {
         Self {
-            overhead_chevron: true,
-            overhead_chevron_scale: 1.0,
-            overhead_chevron_brightness: 1.0,
+            frontal_chevron: true,
+            frontal_chevron_scale: 1.0,
+            frontal_chevron_brightness: 1.0,
             ground_aura: true,
             ground_aura_radius_ratio: 1.0,
             ground_aura_brightness: 1.0,

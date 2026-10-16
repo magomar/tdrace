@@ -181,19 +181,20 @@ use crate::editor::{
 };
 use crate::render::ghost::{render_ghost_car, GhostRecorder};
 use crate::render::{
-    compute_adaptive_alpha, render_elevated_barriers_and_obstacles,
+    compute_adaptive_visibility, compute_traffic_crowding,
+    render_elevated_barriers_and_obstacles,
     render_elevated_barriers_and_obstacles_culled, render_elevated_track,
     render_elevated_track_culled, render_floating_bot_nameplates_ext,
     render_building_shadows_culled, render_buildings_culled,
     render_grandstand_shadows_culled, render_grandstands_culled,
     render_ground_barriers_and_obstacles, render_ground_barriers_and_obstacles_culled,
     render_ground_track, render_ground_track_culled, render_optimal_racing_line,
-    render_player_ground_aura,
-    render_player_overhead_chevron, render_player_sonar_ping, render_pit_box_chevron,
+    render_player_frontal_chevron, render_player_ground_aura,
+    render_player_sonar_ping, render_pit_box_chevron,
     render_rock_shadows_culled, render_rocks_culled,
     render_tree_canopies_culled,
     render_tree_shadows_culled, render_tree_trunks_culled,
-    PlayerVisibilityOptions, VehicleNameplateItem,
+    AdaptiveVisibilityFactors, PlayerVisibilityOptions, VehicleNameplateItem,
 };
 use crate::replay::{ReplayPlayer, ReplayRecorder};
 use crate::series::format::{ChampionshipDefinition, SeriesDefinition};
@@ -1391,8 +1392,8 @@ impl RaceSession {
             ribbon_enabled: self.config.player_helpers.curve_helper,
             ribbon_brightness: self.config.player_helpers.curve_helper_brightness,
             ribbon_scale: self.config.player_helpers.curve_helper_scale,
-            chevron_enabled: self.config.player_helpers.overhead_chevron,
-            chevron_brightness: self.config.player_helpers.overhead_chevron_brightness,
+            chevron_enabled: self.config.player_helpers.frontal_chevron,
+            chevron_brightness: self.config.player_helpers.frontal_chevron_brightness,
             adaptive_enabled: self.config.player_helpers.adaptive_visibility,
             radar_sonar_ping: self.config.player_helpers.radar_sonar_ping,
             racing_line_mode: self.config.player_helpers.racing_line_mode.to_index(),
@@ -1530,8 +1531,8 @@ impl RaceSession {
                 self.config.player_helpers.curve_helper = h_state.ribbon_enabled;
                 self.config.player_helpers.curve_helper_brightness = h_state.ribbon_brightness;
                 self.config.player_helpers.curve_helper_scale = h_state.ribbon_scale;
-                self.config.player_helpers.overhead_chevron = h_state.chevron_enabled;
-                self.config.player_helpers.overhead_chevron_brightness = h_state.chevron_brightness;
+                self.config.player_helpers.frontal_chevron = h_state.chevron_enabled;
+                self.config.player_helpers.frontal_chevron_brightness = h_state.chevron_brightness;
                 self.config.player_helpers.adaptive_visibility = h_state.adaptive_enabled;
                 self.config.player_helpers.radar_sonar_ping = h_state.radar_sonar_ping;
                 self.config.player_helpers.racing_line_mode =
@@ -2232,6 +2233,7 @@ impl RaceSession {
         // Apply gameplay settings
         self.num_bots = self.config.gameplay.default_num_bots;
         self.total_laps = self.config.gameplay.default_laps;
+        self.visibility_options = PlayerVisibilityOptions::from(&self.config.player_helpers);
         // Driving assist mode belongs to the player: any player starts in Arcade mode,
         // and for any new race it starts with the last mode the player used.
         // We preserve self.assist_profile across module changes.
@@ -5599,18 +5601,20 @@ impl RaceSession {
                     });
                 }
             } else {
-                // [1] Toggle Overhead Chevron Indicator
+                // [1] Toggle Frontal Chevron Indicator
                 if is_key_pressed(KeyCode::Key1) {
-                    self.visibility_options.overhead_chevron = !self.visibility_options.overhead_chevron;
+                    self.visibility_options.frontal_chevron = !self.visibility_options.frontal_chevron;
+                    self.config.player_helpers.frontal_chevron = self.visibility_options.frontal_chevron;
+                    self.base_config.player_helpers.frontal_chevron = self.visibility_options.frontal_chevron;
                     self.audio.play_sfx(SfxType::UiMove);
-                    let state_str = if self.visibility_options.overhead_chevron { "ON" } else { "OFF" };
-                    let col = if self.visibility_options.overhead_chevron { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
+                    let state_str = if self.visibility_options.frontal_chevron { "ON" } else { "OFF" };
+                    let col = if self.visibility_options.frontal_chevron { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
                     if let Some(pos) = my_pos {
                         self.fx.drift_popups.spawn_text(pos, &format!("[1] CHEVRON: {}", state_str), col);
                     }
                     self.visibility_toast = Some(VisibilityToast {
-                        text: format!("[1] OVERHEAD CHEVRON: {}", state_str),
-                        is_on: self.visibility_options.overhead_chevron,
+                        text: format!("[1] FRONTAL CHEVRON: {}", state_str),
+                        is_on: self.visibility_options.frontal_chevron,
                         timer: 1.8,
                         duration: 1.8,
                     });
@@ -5619,6 +5623,8 @@ impl RaceSession {
                 // [2] Toggle Player Ground Aura / Underglow Disc
                 if is_key_pressed(KeyCode::Key2) {
                     self.visibility_options.ground_aura = !self.visibility_options.ground_aura;
+                    self.config.player_helpers.ground_aura = self.visibility_options.ground_aura;
+                    self.base_config.player_helpers.ground_aura = self.visibility_options.ground_aura;
                     self.audio.play_sfx(SfxType::UiMove);
                     let state_str = if self.visibility_options.ground_aura { "ON" } else { "OFF" };
                     let col = if self.visibility_options.ground_aura { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
@@ -5636,6 +5642,8 @@ impl RaceSession {
                 // [3] Toggle Context-Aware Adaptive Visibility
                 if is_key_pressed(KeyCode::Key3) {
                     self.visibility_options.adaptive_visibility = !self.visibility_options.adaptive_visibility;
+                    self.config.player_helpers.adaptive_visibility = self.visibility_options.adaptive_visibility;
+                    self.base_config.player_helpers.adaptive_visibility = self.visibility_options.adaptive_visibility;
                     self.audio.play_sfx(SfxType::UiMove);
                     let state_str = if self.visibility_options.adaptive_visibility { "ON" } else { "OFF" };
                     let col = if self.visibility_options.adaptive_visibility { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
@@ -5653,6 +5661,8 @@ impl RaceSession {
                 // [4] Toggle Sonar Ping Shockwave Ripple
                 if is_key_pressed(KeyCode::Key4) {
                     self.visibility_options.sonar_ping = !self.visibility_options.sonar_ping;
+                    self.config.player_helpers.radar_sonar_ping = self.visibility_options.sonar_ping;
+                    self.base_config.player_helpers.radar_sonar_ping = self.visibility_options.sonar_ping;
                     if self.visibility_options.sonar_ping {
                         self.trigger_sonar_ping();
                     }
@@ -5673,6 +5683,8 @@ impl RaceSession {
                 // [5] Toggle Approaching Curve Helper (rally pacenote)
                 if is_key_pressed(KeyCode::Key5) {
                     self.visibility_options.curve_helper = !self.visibility_options.curve_helper;
+                    self.config.player_helpers.curve_helper = self.visibility_options.curve_helper;
+                    self.base_config.player_helpers.curve_helper = self.visibility_options.curve_helper;
                     self.audio.play_sfx(SfxType::UiMove);
                     let state_str = if self.visibility_options.curve_helper { "ON" } else { "OFF" };
                     let col = if self.visibility_options.curve_helper { Palette::NEON_CYAN } else { Palette::UI_TEXT_MUTED };
@@ -16147,14 +16159,33 @@ impl RaceSession {
         self.fx.render_ground_debris();
 
         // 4. Ground-Level Vehicles
-        let player_alpha = self.world.vehicles.get(focus_car_idx).map(|pc| {
-            compute_adaptive_alpha(
+        let adaptive_factors = self.world.vehicles.get(focus_car_idx).map(|pc| {
+            let crowding = if self.visibility_options.adaptive_visibility {
+                compute_traffic_crowding(
+                    pc.state.position,
+                    self.world
+                        .vehicles
+                        .iter()
+                        .enumerate()
+                        .filter(|&(idx, _)| idx != focus_car_idx && !self.lan_car_left(idx))
+                        .map(|(_, c)| c.state.position),
+                )
+            } else {
+                0.0
+            };
+            compute_adaptive_visibility(
                 self.visibility_options.adaptive_visibility,
                 camera.current_zoom,
                 pc.state.speed,
                 self.session_time,
+                crowding,
             )
-        }).unwrap_or(1.0);
+        }).unwrap_or(AdaptiveVisibilityFactors {
+            alpha_multiplier: 1.0,
+            scale_multiplier: 1.0,
+        });
+        let player_alpha = adaptive_factors.alpha_multiplier;
+        let player_scale_mult = adaptive_factors.scale_multiplier;
 
         // A car under a bridge deck is hidden by the deck; its markers are drawn above the deck instead.
         let focus_under_deck = ground_cars.contains(&focus_car_idx)
@@ -16171,7 +16202,7 @@ impl RaceSession {
                     camera.current_zoom,
                     scheme,
                     player_alpha,
-                    self.visibility_options.ground_aura_radius_ratio,
+                    self.visibility_options.ground_aura_radius_ratio * player_scale_mult,
                     self.visibility_options.ground_aura_brightness,
                 );
             }
@@ -16267,7 +16298,7 @@ impl RaceSession {
                     camera.current_zoom,
                     scheme,
                     player_alpha,
-                    self.visibility_options.ground_aura_radius_ratio,
+                    self.visibility_options.ground_aura_radius_ratio * player_scale_mult,
                     self.visibility_options.ground_aura_brightness,
                 );
             }
@@ -16318,19 +16349,19 @@ impl RaceSession {
         // 9. Airborne Particles (Smoke, Dirt roost, Sparks, Drift text)
         self.fx.render_airborne_fx();
 
-        // 10. Player Car Visibility Aids (Overhead Chevron)
+        // 10. Player Car Visibility Aids (Frontal Chevron)
         if let Some(focus_car) = self.world.vehicles.get(focus_car_idx) {
             let scheme = self.color_schemes.get(focus_car_idx).unwrap_or(&self.active_profile.color_scheme);
-            if self.visibility_options.overhead_chevron {
-                render_player_overhead_chevron(
+            if self.visibility_options.frontal_chevron {
+                render_player_frontal_chevron(
                     focus_car.state.position,
-                    focus_car.dynamic_elevation(),
+                    focus_car.forward_vector(),
                     camera.current_zoom,
-                    self.session_time,
                     scheme,
                     player_alpha,
-                    self.visibility_options.overhead_chevron_scale,
-                    self.visibility_options.overhead_chevron_brightness,
+                    self.visibility_options.frontal_chevron_scale * player_scale_mult,
+                    self.visibility_options.frontal_chevron_brightness,
+                    self.visibility_options.ground_aura_radius_ratio * player_scale_mult,
                 );
             }
             if self.visibility_options.curve_helper {

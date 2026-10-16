@@ -1,4 +1,7 @@
-use tdrace_app::render::{compute_adaptive_alpha, PlayerVisibilityOptions};
+use tdrace_app::render::{
+    compute_adaptive_alpha, compute_adaptive_visibility, compute_traffic_crowding,
+    PlayerVisibilityOptions,
+};
 use tdrace_app::ui::CurveColorScheme;
 use tdrace_app::ui::hud::VisibilityToast;
 use tdrace_app::game::RaceSession;
@@ -6,9 +9,9 @@ use tdrace_app::game::RaceSession;
 #[test]
 fn test_player_visibility_options_defaults() {
     let opts = PlayerVisibilityOptions::default();
-    assert!(opts.overhead_chevron, "Option 1 (Overhead Chevron) must be enabled by default");
-    assert!((opts.overhead_chevron_scale - 1.0).abs() < 1e-4);
-    assert!((opts.overhead_chevron_brightness - 1.0).abs() < 1e-4);
+    assert!(opts.frontal_chevron, "Option 1 (Frontal Chevron) must be enabled by default");
+    assert!((opts.frontal_chevron_scale - 1.0).abs() < 1e-4);
+    assert!((opts.frontal_chevron_brightness - 1.0).abs() < 1e-4);
     assert!(opts.ground_aura, "Option 2 (Ground Aura) must be enabled by default");
     assert!((opts.ground_aura_radius_ratio - 1.0).abs() < 1e-4);
     assert!((opts.ground_aura_brightness - 1.0).abs() < 1e-4);
@@ -26,8 +29,8 @@ fn test_player_visibility_options_individual_toggles() {
     let mut opts = PlayerVisibilityOptions::default();
 
     // Toggle 1
-    opts.overhead_chevron = !opts.overhead_chevron;
-    assert!(!opts.overhead_chevron);
+    opts.frontal_chevron = !opts.frontal_chevron;
+    assert!(!opts.frontal_chevron);
     assert!(opts.ground_aura);
 
     // Toggle 2
@@ -61,29 +64,74 @@ fn test_player_visibility_options_individual_toggles() {
     assert_eq!(opts.curve_color_scheme, CurveColorScheme::Traffic);
 
     // Turn back on
-    opts.overhead_chevron = true;
+    opts.frontal_chevron = true;
     opts.curve_helper = true;
-    assert!(opts.overhead_chevron);
+    assert!(opts.frontal_chevron);
     assert!(opts.curve_helper);
 }
 
 #[test]
 fn test_compute_adaptive_alpha_behavior() {
-    // Disabled should always return 1.0 regardless of zoom or speed
+    use glam::Vec2;
+
+    // Disabled should always return exact 1.0 multipliers regardless of zoom, speed, or traffic
     assert_eq!(compute_adaptive_alpha(false, 22.0, 40.0, 0.0), 1.0);
     assert_eq!(compute_adaptive_alpha(false, 3.5, 0.0, 0.0), 1.0);
+    let disabled_factors = compute_adaptive_visibility(false, 5.0, 0.0, 0.0, 1.0);
+    assert_eq!(disabled_factors.alpha_multiplier, 1.0);
+    assert_eq!(disabled_factors.scale_multiplier, 1.0);
 
-    // Enabled: Close zoom at racing speed should have reduced opacity
-    let close_fast = compute_adaptive_alpha(true, 20.0, 40.0, 0.0);
-    assert!(close_fast <= 0.20, "Close zoom at high speed should be subtle: got {}", close_fast);
+    // Enabled: Close zoom at racing speed with no traffic scales down to 0.50x
+    let close_fast = compute_adaptive_visibility(true, 20.0, 40.0, 0.0, 0.0);
+    assert!(
+        (close_fast.alpha_multiplier - 0.50).abs() < 1e-4,
+        "Close zoom with clear visibility should scale down to 0.50x: got {}",
+        close_fast.alpha_multiplier
+    );
+    assert!(close_fast.scale_multiplier < 1.0);
 
-    // Enabled: Far/Overview zoom should have full or near full opacity
-    let overview_fast = compute_adaptive_alpha(true, 3.5, 40.0, 0.0);
-    assert!(overview_fast >= 0.95, "Overview zoom should be high opacity: got {}", overview_fast);
+    // Enabled: Far/Overview zoom boosts above 1.0 relative to configured settings
+    let overview_fast = compute_adaptive_visibility(true, 3.5, 40.0, 0.0, 0.0);
+    assert!(
+        overview_fast.alpha_multiplier >= 1.30 && overview_fast.alpha_multiplier <= 1.50,
+        "Overview zoom should boost above 1.0 within [0.5, 1.5]: got {}",
+        overview_fast.alpha_multiplier
+    );
+    assert!(overview_fast.scale_multiplier > 1.05);
+
+    // Enabled: Surrounding traffic crowding boosts visibility above 1.0 even at Close zoom
+    let player_pos = Vec2::new(100.0, 100.0);
+    let pack_positions = [
+        Vec2::new(103.5, 101.0),
+        Vec2::new(97.0, 99.0),
+        Vec2::new(101.0, 105.0),
+        Vec2::new(96.0, 104.0),
+    ];
+    let crowding = compute_traffic_crowding(player_pos, pack_positions);
+    assert!(crowding > 0.75, "Close 4-car pack should produce high traffic crowding: got {}", crowding);
+    let close_in_pack = compute_adaptive_visibility(true, 20.0, 40.0, 0.0, crowding);
+    assert!(
+        close_in_pack.alpha_multiplier > 1.15 && close_in_pack.alpha_multiplier <= 1.50,
+        "Pack traffic at close zoom must boost visibility above 1.0 (up to 1.50x): got {}",
+        close_in_pack.alpha_multiplier
+    );
+    assert!(close_in_pack.scale_multiplier > 1.0);
+
+    // Enabled: Maximum boost (overview + pack + stopped) clamps cleanly at 1.50x
+    let max_boost = compute_adaptive_visibility(true, 3.5, 0.0, 0.3, 1.0);
+    assert!(
+        (max_boost.alpha_multiplier - 1.50).abs() < 1e-4,
+        "Maximum adaptive visibility multiplier must clamp at 1.50x: got {}",
+        max_boost.alpha_multiplier
+    );
 
     // Enabled: Low speed / stationary boost
     let overview_stopped = compute_adaptive_alpha(true, 3.5, 0.0, 0.0);
-    assert!(overview_stopped >= 1.0, "Stopped car in overview should have maximum prominence: got {}", overview_stopped);
+    assert!(
+        overview_stopped > overview_fast.alpha_multiplier && overview_stopped <= 1.50,
+        "Stopped car in overview should have extra recovery boost up to 1.50x: got {}",
+        overview_stopped
+    );
 
     // Low speed boost should be greater than high speed at same zoom level
     let mid_zoom_stopped = compute_adaptive_alpha(true, 12.0, 0.0, 0.0);
@@ -94,13 +142,13 @@ fn test_compute_adaptive_alpha_behavior() {
 #[test]
 fn test_visibility_toast_struct() {
     let toast = VisibilityToast {
-        text: "[1] OVERHEAD CHEVRON: ON".to_string(),
+        text: "[1] FRONTAL CHEVRON: ON".to_string(),
         is_on: true,
         timer: 1.8,
         duration: 1.8,
     };
 
-    assert_eq!(toast.text, "[1] OVERHEAD CHEVRON: ON");
+    assert_eq!(toast.text, "[1] FRONTAL CHEVRON: ON");
     assert!(toast.is_on);
     assert!((toast.timer - 1.8).abs() < 1e-4);
     assert!((toast.duration - 1.8).abs() < 1e-4);
@@ -110,7 +158,7 @@ fn test_visibility_toast_struct() {
 fn test_race_session_visibility_initialization() {
     let _scoped_cfg = tdrace_app::storage::ScopedTempConfigDir::new("helpers_visibility_init");
     let session = RaceSession::new();
-    assert!(session.visibility_options.overhead_chevron);
+    assert!(session.visibility_options.frontal_chevron);
     assert!(session.visibility_options.ground_aura);
     assert!(session.visibility_options.adaptive_visibility);
     assert!(!session.visibility_options.roof_beacon);
@@ -126,7 +174,7 @@ fn test_render_player_visual_clues_headless_execution() {
     use macroquad::color::Color;
     use tdrace_app::render::color::CarColorScheme;
     use tdrace_app::render::marker::{
-        render_player_ground_aura, render_player_overhead_chevron, render_player_roof_beacon,
+        render_player_frontal_chevron, render_player_ground_aura, render_player_roof_beacon,
     };
 
     let schemes = [
@@ -152,10 +200,49 @@ fn test_render_player_visual_clues_headless_execution() {
             for &alpha in &[0.0f32, 0.20, 0.50, 1.0] {
                 // Must execute calculations cleanly without panic prior to GPU submission
                 let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                    render_player_overhead_chevron(pos, 0.0, zoom, 1.25, scheme, alpha, 1.2, 1.5);
+                    render_player_frontal_chevron(pos, fwd, zoom, scheme, alpha, 1.2, 1.5, 0.8);
                     render_player_ground_aura(pos, zoom, scheme, alpha, 0.8, 1.4);
                     render_player_roof_beacon(pos, fwd, 0.0, zoom, 1.25, scheme, alpha, 1.3);
                 }));
+            }
+        }
+    }
+}
+
+#[test]
+fn test_player_chevron_points_toward_car_front_and_matches_aura() {
+    use glam::Vec2;
+    use tdrace_app::render::{compute_player_chevron_geometry, player_aura_radius};
+
+    let pos = Vec2::new(10.0, 20.0);
+    // Test northwest heading (like the reference buggy screenshot) and other orientations
+    let headings = [
+        Vec2::new(-0.70710677, 0.70710677),
+        Vec2::new(1.0, 0.0),
+        Vec2::new(0.0, -1.0),
+        Vec2::new(-0.5, -0.8660254),
+    ];
+
+    for &fwd in &headings {
+        for &zoom in &[3.5f32, 8.0, 16.0] {
+            for &ratio in &[0.75f32, 1.0, 1.35] {
+                let expected_aura_r = player_aura_radius(zoom, ratio);
+                let geom = compute_player_chevron_geometry(pos, fwd, zoom, 1.0, ratio);
+
+                assert!(
+                    (geom.aura_radius - expected_aura_r).abs() < 1e-5,
+                    "Chevron base radius must match ground aura radius"
+                );
+                let tip_dir = (geom.tip - pos).normalize();
+                assert!(
+                    (tip_dir - fwd.normalize()).length() < 1e-4,
+                    "Chevron tip must point toward the front of the car"
+                );
+                // Base corners sit flush on the aura perimeter
+                assert!(((geom.base_left - pos).length() - expected_aura_r).abs() < 1e-4);
+                assert!(((geom.base_right - pos).length() - expected_aura_r).abs() < 1e-4);
+                // When zoomed far out (zoom = 3.5), screen-space tip length stays >= 10px
+                assert!(geom.length * zoom >= 10.0 - 1e-3);
             }
         }
     }
@@ -166,9 +253,9 @@ fn test_player_helpers_config_roundtrip() {
     use tdrace_app::PlayerHelpersConfig;
 
     let mut cfg = PlayerHelpersConfig::default();
-    cfg.overhead_chevron = false;
-    cfg.overhead_chevron_scale = 1.35;
-    cfg.overhead_chevron_brightness = 2.10;
+    cfg.frontal_chevron = false;
+    cfg.frontal_chevron_scale = 1.35;
+    cfg.frontal_chevron_brightness = 2.10;
     cfg.ground_aura = false;
     cfg.ground_aura_radius_ratio = 0.55;
     cfg.ground_aura_brightness = 1.75;
@@ -183,9 +270,9 @@ fn test_player_helpers_config_roundtrip() {
     cfg.radar_sonar_ping = false;
 
     let opts = PlayerVisibilityOptions::from(&cfg);
-    assert!(!opts.overhead_chevron);
-    assert!((opts.overhead_chevron_scale - 1.35).abs() < 1e-4);
-    assert!((opts.overhead_chevron_brightness - 2.10).abs() < 1e-4);
+    assert!(!opts.frontal_chevron);
+    assert!((opts.frontal_chevron_scale - 1.35).abs() < 1e-4);
+    assert!((opts.frontal_chevron_brightness - 2.10).abs() < 1e-4);
     assert!(!opts.ground_aura);
     assert!((opts.ground_aura_radius_ratio - 0.55).abs() < 1e-4);
     assert!((opts.ground_aura_brightness - 1.75).abs() < 1e-4);
@@ -200,9 +287,9 @@ fn test_player_helpers_config_roundtrip() {
     assert!(!opts.sonar_ping);
 
     let roundtrip = PlayerHelpersConfig::from(&opts);
-    assert_eq!(roundtrip.overhead_chevron, cfg.overhead_chevron);
-    assert!((roundtrip.overhead_chevron_scale - cfg.overhead_chevron_scale).abs() < 1e-4);
-    assert!((roundtrip.overhead_chevron_brightness - cfg.overhead_chevron_brightness).abs() < 1e-4);
+    assert_eq!(roundtrip.frontal_chevron, cfg.frontal_chevron);
+    assert!((roundtrip.frontal_chevron_scale - cfg.frontal_chevron_scale).abs() < 1e-4);
+    assert!((roundtrip.frontal_chevron_brightness - cfg.frontal_chevron_brightness).abs() < 1e-4);
     assert_eq!(roundtrip.ground_aura, cfg.ground_aura);
     assert!((roundtrip.ground_aura_radius_ratio - cfg.ground_aura_radius_ratio).abs() < 1e-4);
     assert!((roundtrip.ground_aura_brightness - cfg.ground_aura_brightness).abs() < 1e-4);
@@ -225,6 +312,7 @@ fn test_race_session_settings_modal_helpers_workflow() {
     assert!(session.is_settings_modal_open());
 
     if let Some(ref mut modal) = session.settings_modal {
+        assert_eq!(modal.chevron_dropdown.label, "FRONTAL CHEVRON");
         modal.aura_dropdown.set_selected(1); // Disabled
         modal.aura_ratio_slider.set_value(0.60);
         modal.aura_brightness_slider.set_value(2.10);
@@ -250,8 +338,8 @@ fn test_race_session_settings_modal_helpers_workflow() {
     assert!(session.config.player_helpers.curve_helper);
     assert!((session.config.player_helpers.curve_helper_scale - 1.75).abs() < 1e-4);
     assert!((session.config.player_helpers.curve_helper_brightness - 2.40).abs() < 1e-4);
-    assert!(!session.config.player_helpers.overhead_chevron);
-    assert!((session.config.player_helpers.overhead_chevron_brightness - 0.80).abs() < 1e-4);
+    assert!(!session.config.player_helpers.frontal_chevron);
+    assert!((session.config.player_helpers.frontal_chevron_brightness - 0.80).abs() < 1e-4);
     assert!(!session.config.player_helpers.roof_beacon);
     assert!(!session.config.player_helpers.adaptive_visibility);
     assert!(!session.config.player_helpers.radar_sonar_ping);
@@ -267,8 +355,8 @@ fn test_race_session_settings_modal_helpers_workflow() {
     assert!(session.visibility_options.curve_helper);
     assert!((session.visibility_options.curve_helper_scale - 1.75).abs() < 1e-4);
     assert!((session.visibility_options.curve_helper_brightness - 2.40).abs() < 1e-4);
-    assert!(!session.visibility_options.overhead_chevron);
-    assert!((session.visibility_options.overhead_chevron_brightness - 0.80).abs() < 1e-4);
+    assert!(!session.visibility_options.frontal_chevron);
+    assert!((session.visibility_options.frontal_chevron_brightness - 0.80).abs() < 1e-4);
     assert!(!session.visibility_options.roof_beacon);
     assert!(!session.visibility_options.adaptive_visibility);
     assert!(!session.visibility_options.sonar_ping);

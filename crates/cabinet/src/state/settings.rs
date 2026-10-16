@@ -706,7 +706,7 @@ impl ArcadeSettingsModal {
             .with_suffix("x"),
             ribbon_scale_slider: SliderWidget::new("RIBBON SCALE", 0.50, 2.00, 0.05, 1.00)
                 .with_suffix("x"),
-            chevron_dropdown: DropdownWidget::new("OVERHEAD CHEVRON", enabled_options.clone(), 0),
+            chevron_dropdown: DropdownWidget::new("FRONTAL CHEVRON", enabled_options.clone(), 0),
             chevron_brightness_slider: SliderWidget::new(
                 "CHEVRON BRIGHTNESS",
                 0.20,
