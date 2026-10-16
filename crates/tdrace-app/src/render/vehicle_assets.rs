@@ -695,4 +695,17 @@ pub fn get_wheel_texture(wheel_id: &str) -> Option<Texture2D> {
     Some(texture)
 }
 
-
+/// Returns `(topdown_cache_entries, lateral_cache_entries)` for runtime memory profiling.
+pub fn cached_texture_counts() -> (usize, usize) {
+    let topdown = TOPDOWN_CACHE
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .as_ref()
+        .map_or(0, |m| m.len());
+    let lateral = LATERAL_CACHE
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .as_ref()
+        .map_or(0, |m| m.len());
+    (topdown, lateral)
+}

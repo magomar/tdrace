@@ -153,6 +153,8 @@ async fn main() {
                 Some("car") => session.open_lan_garage(),
                 _ => {}
             }
+        } else if clean_arg == "profile" || clean_arg == "prof" || arg == "-p" {
+            session.profiler.borrow_mut().enabled = true;
         }
     }
 

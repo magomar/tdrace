@@ -61,6 +61,7 @@ scanline_mode = "disabled"
 vignette_intensity = 0.0
 line_spacing = 3.0
 vehicle_shadows = true
+skidmark_buffer_cap = 262144
 
 [player_helpers]
 frontal_chevron = true

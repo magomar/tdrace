@@ -4,7 +4,10 @@ pub mod skidmarks;
 
 pub use drift_popup::{DriftPopup, DriftPopupManager};
 pub use particles::{Particle, ParticleSystem};
-pub use skidmarks::{SkidSegment, SkidmarkBuffer};
+pub use skidmarks::{
+    SkidSegment, SkidmarkBuffer, DEFAULT_SKIDMARK_CAPACITY, MAX_SKIDMARK_CAPACITY,
+    MIN_SKIDMARK_CAPACITY, SKID_CHUNK_SIZE,
+};
 
 use arcade_race_core::collision::car_collision::CarCarCollisionEvent;
 use arcade_race_core::collision::wall::WallCollisionEvent;
@@ -87,7 +90,7 @@ impl EffectsManager {
         }
     }
 
-    /// Creates an effects manager with persistent skidmark retention across the entire race.
+    /// Creates an effects manager with persistent skidmark retention across the entire race (`256K` default cap).
     pub fn new_persistent(max_particles: usize) -> Self {
         Self {
             skidmarks: SkidmarkBuffer::new_persistent(),
@@ -95,6 +98,21 @@ impl EffectsManager {
             drift_popups: DriftPopupManager::new(32),
             prev_drifting: Vec::new(),
         }
+    }
+
+    /// Creates an effects manager with a configurable persistent skidmark ring buffer cap (`32K..=1M`).
+    pub fn new_persistent_with_capacity(skidmark_cap: usize, max_particles: usize) -> Self {
+        Self {
+            skidmarks: SkidmarkBuffer::new_persistent_with_capacity(skidmark_cap),
+            particles: ParticleSystem::new(max_particles),
+            drift_popups: DriftPopupManager::new(32),
+            prev_drifting: Vec::new(),
+        }
+    }
+
+    /// Updates the skidmark ring buffer capacity at runtime (`32K..=1M`).
+    pub fn set_skidmark_capacity(&mut self, capacity: usize) {
+        self.skidmarks.set_capacity(capacity);
     }
 
     pub fn clear(&mut self) {

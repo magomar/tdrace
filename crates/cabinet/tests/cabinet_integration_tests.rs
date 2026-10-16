@@ -708,7 +708,7 @@ fn test_arcade_settings_modal_display_tab_integration() {
     modal.tab_bar.set_tab(2);
     modal.nav.focused_col = 2;
     assert_eq!(modal.tab_bar.active_tab_name(), "DISPLAY");
-    assert_eq!(modal.nav.column_lengths[2], 7); // 6 widgets + 1 bottom button row
+    assert_eq!(modal.nav.column_lengths[2], 8); // 7 widgets + 1 bottom button row
 
     // Verify initial values
     assert_eq!(modal.selected_resolution(), (1920, 1080));
@@ -716,11 +716,26 @@ fn test_arcade_settings_modal_display_tab_integration() {
     assert!(!modal.is_fullscreen());
     assert!(!modal.vehicle_shadows());
     assert_eq!(modal.vehicle_shadows_dropdown.selected_index, 1);
+    assert_eq!(modal.skidmark_buffer_cap(), 262_144);
+    assert_eq!(modal.skidmark_cap_slider.formatted_value(), "256K");
 
     // Toggle vehicle shadows
     modal.set_vehicle_shadows(true);
     assert!(modal.vehicle_shadows());
     assert_eq!(modal.vehicle_shadows_dropdown.selected_index, 0);
+
+    // Adjust and clamp skidmark buffer cap (32K..=1024K)
+    modal.set_skidmark_buffer_cap(4_096);
+    assert_eq!(modal.skidmark_buffer_cap(), 32_768);
+    assert_eq!(modal.skidmark_cap_slider.formatted_value(), "32K");
+
+    modal.set_skidmark_buffer_cap(524_288);
+    assert_eq!(modal.skidmark_buffer_cap(), 524_288);
+    assert_eq!(modal.skidmark_cap_slider.formatted_value(), "512K");
+
+    modal.set_skidmark_buffer_cap(4_000_000);
+    assert_eq!(modal.skidmark_buffer_cap(), 1_048_576);
+    assert_eq!(modal.skidmark_cap_slider.formatted_value(), "1024K");
 
     // Set display state
     modal.set_display_state(1280, 720, true);
@@ -740,6 +755,7 @@ fn test_arcade_settings_modal_display_tab_integration() {
     assert_eq!(modal.scanlines_dropdown.selected_index, 0);
     assert_eq!(modal.vehicle_shadows_dropdown.selected_index, 1);
     assert!(!modal.vehicle_shadows());
+    assert_eq!(modal.skidmark_buffer_cap(), 262_144);
     assert_eq!(modal.theme_dropdown.selected_index, 0);
 }
 
