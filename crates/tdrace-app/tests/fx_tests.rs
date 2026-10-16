@@ -580,3 +580,130 @@ fn test_grass_and_dirt_pavement_transfer_irregularity_and_reduction() {
     assert!(seg.color.a <= 0.60, "Grass deposit alpha {:.3} should be slightly reduced", seg.color.a);
 }
 
+#[test]
+fn test_skidmark_capacity_constants_and_clamping() {
+    use tdrace_app::fx::{
+        DEFAULT_SKIDMARK_CAPACITY, MAX_SKIDMARK_CAPACITY, MIN_SKIDMARK_CAPACITY,
+    };
+
+    assert_eq!(MIN_SKIDMARK_CAPACITY, 32_768);
+    assert_eq!(DEFAULT_SKIDMARK_CAPACITY, 262_144);
+    assert_eq!(MAX_SKIDMARK_CAPACITY, 1_048_576);
+
+    let default_buf = SkidmarkBuffer::new_persistent();
+    assert_eq!(default_buf.capacity(), DEFAULT_SKIDMARK_CAPACITY);
+    assert!(default_buf.is_persistent());
+
+    let low_buf = SkidmarkBuffer::new_persistent_with_capacity(1_000);
+    assert_eq!(low_buf.capacity(), MIN_SKIDMARK_CAPACITY);
+
+    let high_buf = SkidmarkBuffer::new_persistent_with_capacity(5_000_000);
+    assert_eq!(high_buf.capacity(), MAX_SKIDMARK_CAPACITY);
+
+    let mut fx = EffectsManager::new_persistent_with_capacity(131_072, 500);
+    assert_eq!(fx.skidmarks.capacity(), 131_072);
+    fx.set_skidmark_capacity(8_000);
+    assert_eq!(fx.skidmarks.capacity(), MIN_SKIDMARK_CAPACITY);
+    fx.set_skidmark_capacity(2_000_000);
+    assert_eq!(fx.skidmarks.capacity(), MAX_SKIDMARK_CAPACITY);
+}
+
+#[test]
+fn test_skidmark_cell_overdraw_saturation_caps_repeated_overdraw() {
+    let mut buffer = SkidmarkBuffer::new_persistent();
+    let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(0.0, 0.0), 0.0);
+    car.state.wheels[0].skid_intensity = 0.85;
+    let surfaces = vec![[SurfaceType::Asphalt; 4]];
+
+    // Repeatedly slide back and forth across the exact same 0.30m strip for 60 passes
+    for pass in 0..60 {
+        let x = if pass % 2 == 0 { 0.0 } else { 0.25 };
+        car.state.position = Vec2::new(x, 0.0);
+        buffer.update_for_cars(&[car.clone()], &surfaces);
+    }
+
+    // Without cell saturation, 59 passes * 2 ribbons = 118 segments in the same tiny spot.
+    // With 8-segment-per-cell saturation on the 0.35m grid, segment count plateaus strictly <= 16.
+    assert!(
+        buffer.count() <= 16,
+        "Cell saturation must cap repeated overdraw in the same 0.35m cells (got {})",
+        buffer.count()
+    );
+    assert!(buffer.count() >= 8);
+}
+
+#[test]
+fn test_skidmark_coarse_rolling_rut_single_ribbon() {
+    let mut buffer = SkidmarkBuffer::new_persistent();
+    let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(0.0, 0.0), 0.0);
+    car.state.speed = 10.0;
+    car.state.velocity = Vec2::new(10.0, 0.0);
+    for w in 0..4 {
+        car.state.wheels[w].skid_intensity = 0.0;
+        car.state.wheels[w].is_skidding = false;
+        car.state.wheels[w].slip_ratio = 0.0;
+        car.state.wheels[w].slip_angle = 0.0;
+    }
+    let surfaces = vec![[SurfaceType::PackedGravel; 4]];
+
+    // Anchor at origin
+    buffer.update_for_cars(&[car.clone()], &surfaces);
+    assert_eq!(buffer.count(), 0);
+
+    // Move 0.30m (< 0.45m coarse rolling step): should accumulate without emitting yet
+    car.state.position = Vec2::new(0.30, 0.0);
+    buffer.update_for_cars(&[car.clone()], &surfaces);
+    assert_eq!(
+        buffer.count(),
+        0,
+        "Pure rolling rut should wait for 0.45m step threshold"
+    );
+
+    // Move to 0.50m (>= 0.45m): emits 1 single full-width rut ribbon per wheel (4 wheels = 4 segments)
+    car.state.position = Vec2::new(0.50, 0.0);
+    buffer.update_for_cars(&[car.clone()], &surfaces);
+    assert_eq!(
+        buffer.count(),
+        4,
+        "4 rolling wheels without slip must emit 4 single-ribbon rut segments (not 8 dual-ribbons)"
+    );
+    let seg = &buffer.segments()[0];
+    assert!((seg.uv0.x - 0.0).abs() < 1e-5);
+    assert!((seg.uv1.x - 1.0).abs() < 1e-5);
+}
+
+#[test]
+fn test_skidmark_spatial_chunk_partitioning_and_culling() {
+    let mut buffer = SkidmarkBuffer::new_persistent();
+    let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(4.0, 4.0), 0.0);
+    car.state.wheels[0].skid_intensity = 0.85;
+    let surfaces = vec![[SurfaceType::Asphalt; 4]];
+
+    // Emit in chunk (0, 0) [0..32m]
+    buffer.update_for_cars(&[car.clone()], &surfaces);
+    car.state.position = Vec2::new(4.5, 4.0);
+    buffer.update_for_cars(&[car.clone()], &surfaces);
+    assert_eq!(buffer.chunk_count(), 1);
+
+    // Teleport to chunk (10, 10) [320..352m] and emit
+    car.state.position = Vec2::new(330.0, 330.0);
+    buffer.update_for_cars(&[car.clone()], &surfaces);
+    car.state.position = Vec2::new(330.5, 330.0);
+    buffer.update_for_cars(&[car.clone()], &surfaces);
+
+    assert_eq!(buffer.chunk_count(), 2);
+    assert_eq!(
+        buffer.visible_chunk_count(Some((Vec2::new(0.0, 0.0), Vec2::new(20.0, 20.0)))),
+        1
+    );
+    assert_eq!(
+        buffer.visible_chunk_count(Some((Vec2::new(325.0, 325.0), Vec2::new(345.0, 345.0)))),
+        1
+    );
+    assert_eq!(
+        buffer.visible_chunk_count(Some((Vec2::new(100.0, 100.0), Vec2::new(150.0, 150.0)))),
+        0
+    );
+}
+
+
