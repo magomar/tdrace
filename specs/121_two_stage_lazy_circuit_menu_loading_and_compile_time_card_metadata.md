@@ -3,7 +3,8 @@ type: Architecture Spec
 template: architecture
 title: "Two-Stage Lazy Circuit Menu Loading and Compile-Time Card Metadata"
 description: "Eliminates multi-second circuit menu category switching stalls and startup prewarm overhead via compile-time embedded card metadata and thumbnail polylines, lightweight on-demand preview deserialization (Track::from_json_menu), zero-clone Arc<Track> menu caching, and lazy runtime geometry compilation."
-status: in_progress
+status: implemented
+receipt: "docs/receipts/spec-121-receipt.md"
 verified: { by: human:mario, at: 2026-10-16T13:03:00Z, hash: "0648365bfc58" }
 created: 2026-10-16
 generated: { by: agent/antigravity, at: 2026-10-16T13:02:00Z }
@@ -143,42 +144,42 @@ Not applicable. All compile-time extraction and runtime lazy deserialization ope
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Compile-time EmbeddedCircuit metadata matches full Track metrics**
-  - [ ] **Given** every official circuit embedded in `tdrace_core::catalog::circuits()`
-  - [ ] **When** its compile-time `total_length_m`, `surface_summary`, `scale`, `is_inspired`, `default_surface`, and non-empty `thumbnail_samples` are compared against `circuit.load_menu()`
-  - [ ] **Then** `total_length_m` matches within `0.5 m`, `surface_summary`, `scale`, `is_inspired`, and `default_surface` match identically, and `thumbnail_samples` contains between `2` and `160` valid points within `bounds_min..=bounds_max`
+  - [x] **Given** every official circuit embedded in `tdrace_core::catalog::circuits()`
+  - [x] **When** its compile-time `total_length_m`, `surface_summary`, `scale`, `is_inspired`, `default_surface`, and non-empty `thumbnail_samples` are compared against `circuit.load_menu()`
+  - [x] **Then** `total_length_m` matches within `0.5 m`, `surface_summary`, `scale`, `is_inspired`, and `default_surface` match identically, and `thumbnail_samples` contains between `2` and `160` valid points within `bounds_min..=bounds_max`
 
 - **Scenario: Switching circuit categories in the menu does not load unselected list cards into MENU_TRACK_CACHE**
-  - [ ] **Given** an empty `MENU_TRACK_CACHE` (`clear_menu_track_cache()`) and normal mode (`!is_dev_mode()`)
-  - [ ] **When** the menu resolves card metadata and thumbnail geometry for all 7 visible list cards of a module (`Gt`, `Rally`, `Autocross`) and resolves only the 1 selected circuit via `resolve_track_for_menu_arc`
-  - [ ] **Then** `MENU_TRACK_CACHE` contains only the 1 selected circuit and switching categories + resolving the selected preview completes in under `25 ms`
+  - [x] **Given** an empty `MENU_TRACK_CACHE` (`clear_menu_track_cache()`) and normal mode (`!is_dev_mode()`)
+  - [x] **When** the menu resolves card metadata and thumbnail geometry for all 7 visible list cards of a module (`Gt`, `Rally`, `Autocross`) and resolves only the 1 selected circuit via `resolve_track_for_menu_arc`
+  - [x] **Then** `MENU_TRACK_CACHE` contains only the 1 selected circuit and switching categories + resolving the selected preview completes in under `25 ms`
 
 - **Scenario: Lightweight menu deserialization skips heavy CAD passes while preserving preview fidelity**
-  - [ ] **Given** complex circuits with pit lanes and branching networks (e.g., `gt/suzuka`, `gt/spa`, `rally/holjes_rx`, `autocross/prerov_ax`)
-  - [ ] **When** loaded via `Track::from_json_menu` / `resolve_track_for_menu_arc`
-  - [ ] **Then** `compute_track_bounds`, `branch_roads`, `total_length_m`, `width_summary_string`, `surface_breakdown`, `checkpoints`, and `grid_positions` match the full `Track::from_json` load
-  - [ ] **And** calling `ensure_runtime_geometry()` upgrades the menu track to match the full `Track::from_json` geometry (including `network_walls`, `pit_lane_junctions`, and `scenery_obstacles`)
+  - [x] **Given** complex circuits with pit lanes and branching networks (e.g., `gt/suzuka`, `gt/spa`, `rally/holjes_rx`, `autocross/prerov_ax`)
+  - [x] **When** loaded via `Track::from_json_menu` / `resolve_track_for_menu_arc`
+  - [x] **Then** `compute_track_bounds`, `branch_roads`, `total_length_m`, `width_summary_string`, `surface_breakdown`, `checkpoints`, and `grid_positions` match the full `Track::from_json` load
+  - [x] **And** calling `ensure_runtime_geometry()` upgrades the menu track to match the full `Track::from_json` geometry (including `network_walls`, `pit_lane_junctions`, and `scenery_obstacles`)
 
 - **Scenario: Cached menu lookups return shared Arc<Track> without deep cloning**
-  - [ ] **Given** a circuit resolved via `resolve_track_for_menu_arc`
-  - [ ] **When** `resolve_track_for_menu_arc` is called again for the same circuit before `clear_menu_track_cache()`
-  - [ ] **Then** both calls return `Arc<Track>` pointers sharing the exact same heap allocation (`Arc::ptr_eq(&a, &b) == true`)
+  - [x] **Given** a circuit resolved via `resolve_track_for_menu_arc`
+  - [x] **When** `resolve_track_for_menu_arc` is called again for the same circuit before `clear_menu_track_cache()`
+  - [x] **Then** both calls return `Arc<Track>` pointers sharing the exact same heap allocation (`Arc::ptr_eq(&a, &b) == true`)
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Created/Modified Files
-- `[ ]` `crates/arcade-race-core/src/track/mod.rs` -> Adds `Track::from_json_menu`, `Track::load_from_file_menu`, `Track::ensure_runtime_geometry`, and `runtime_geometry_ready`.
-- `[ ]` `crates/tdrace-core/build.rs` -> Computes and embeds `total_length_m`, `surface_summary`, `scale`, `is_inspired`, `default_surface`, `closed`, `bounds_min`, `bounds_max`, `thumbnail_samples`, and `thumbnail_branches` at compile time.
-- `[ ]` `crates/tdrace-core/src/catalog.rs` -> Extends `EmbeddedCircuit` with compile-time card/thumbnail fields and adds `EmbeddedCircuit::load_menu`.
-- `[ ]` `crates/tdrace-app/src/tracks/official.rs` -> Adds `official::load_menu` and `official::embedded_for_menu` (respecting dev-mode disk overrides).
-- `[ ]` `crates/tdrace-app/src/ui/track_preview.rs` -> Adds `render_embedded_track_thumbnail` to render `58×44` vector thumbnails directly from static `EmbeddedCircuit` slices.
-- `[ ]` `crates/tdrace-app/src/ui/menu.rs` -> Stores `Arc<Track>` in `MENU_TRACK_CACHE`, adds `resolve_track_for_menu_arc` / `resolve_track_for_menu_arc_with_dir`, uses `Track::from_json_menu` for menu cache loads, and renders official list cards in `render_track_select_menu` directly from `EmbeddedCircuit` without loading `Track`s.
-- `[ ]` `crates/tdrace-app/src/ui/track_manager_ui.rs` -> Uses `EmbeddedCircuit` for official list card thumbnails/metrics and `resolve_track_for_menu_arc_with_dir` for the selected dossier card.
-- `[ ]` `crates/tdrace-app/src/game/mod.rs` -> Calls `track.ensure_runtime_geometry()` in `open_circuit_viewer`.
-- `[ ]` `crates/tdrace-app/src/main.rs` -> Removes eager `session.prewarm_menu_tracks()` startup call.
-- `[ ]` `crates/tdrace-app/tests/track_preview_tests.rs` -> Adds unit and integration tests for compile-time card metadata, lazy menu loading, `Arc::ptr_eq`, and `ensure_runtime_geometry`.
-- `[ ]` `crates/tdrace-app/tests/official_catalog_tests.rs` -> Verifies `resolve_track_for_menu_with_dir` parity with `ensure_runtime_geometry()`.
+- `[x]` `crates/arcade-race-core/src/track/mod.rs` -> Adds `Track::from_json_menu`, `Track::load_from_file_menu`, `Track::ensure_runtime_geometry`, and `runtime_geometry_ready`.
+- `[x]` `crates/tdrace-core/build.rs` -> Computes and embeds `total_length_m`, `surface_summary`, `scale`, `is_inspired`, `default_surface`, `closed`, `bounds_min`, `bounds_max`, `thumbnail_samples`, and `thumbnail_branches` at compile time.
+- `[x]` `crates/tdrace-core/src/catalog.rs` -> Extends `EmbeddedCircuit` with compile-time card/thumbnail fields and adds `EmbeddedCircuit::load_menu`.
+- `[x]` `crates/tdrace-app/src/tracks/official.rs` -> Adds `official::load_menu` and `official::embedded_for_menu` (respecting dev-mode disk overrides).
+- `[x]` `crates/tdrace-app/src/ui/track_preview.rs` -> Adds `render_embedded_track_thumbnail` to render `58×44` vector thumbnails directly from static `EmbeddedCircuit` slices.
+- `[x]` `crates/tdrace-app/src/ui/menu.rs` -> Stores `Arc<Track>` in `MENU_TRACK_CACHE`, adds `resolve_track_for_menu_arc` / `resolve_track_for_menu_arc_with_dir`, uses `Track::from_json_menu` for menu cache loads, and renders official list cards in `render_track_select_menu` directly from `EmbeddedCircuit` without loading `Track`s.
+- `[x]` `crates/tdrace-app/src/ui/track_manager_ui.rs` -> Uses `EmbeddedCircuit` for official list card thumbnails/metrics and `resolve_track_for_menu_arc_with_dir` for the selected dossier card.
+- `[x]` `crates/tdrace-app/src/game/mod.rs` -> Calls `track.ensure_runtime_geometry()` in `open_circuit_viewer`.
+- `[x]` `crates/tdrace-app/src/main.rs` -> Removes eager `session.prewarm_menu_tracks()` startup call.
+- `[x]` `crates/tdrace-app/tests/track_preview_tests.rs` -> Adds unit and integration tests for compile-time card metadata, lazy menu loading, `Arc::ptr_eq`, and `ensure_runtime_geometry`.
+- `[x]` `crates/tdrace-app/tests/official_catalog_tests.rs` -> Verifies `resolve_track_for_menu_with_dir` parity with `ensure_runtime_geometry()`.
 
 ### Verification Assertions
 - `crates/tdrace-core/src/catalog.rs` and `crates/tdrace-app/src/ui/menu.rs` reference `specs/121_two_stage_lazy_circuit_menu_loading_and_compile_time_card_metadata.md` in their comments.

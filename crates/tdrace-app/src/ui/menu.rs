@@ -207,6 +207,7 @@ fn module_label(module: &str) -> &'static str {
     }
 }
 
+/// Shared `Arc<Track>` cache for menu dossier previews (`specs/121_two_stage_lazy_circuit_menu_loading_and_compile_time_card_metadata.md`).
 static MENU_TRACK_CACHE: std::sync::Mutex<
     Option<std::collections::HashMap<String, std::sync::Arc<tdrace_core::track::Track>>>,
 > = std::sync::Mutex::new(None);
