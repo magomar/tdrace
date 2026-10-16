@@ -1169,18 +1169,10 @@ impl BotAiDriver {
         let ahead_curv = spline.sample_at_distance((curr_dist + 6.0) % total_len);
         let turn_dir = normalize_angle(ahead_curv.tangent.y.atan2(ahead_curv.tangent.x) - near.tangent.y.atan2(near.tangent.x));
         // proj.lateral_offset is + right, - left; turn_dir > 0 is left turn, < 0 is right turn.
-        let on_inside_of_turn = (turn_dir > 0.03 && proj.lateral_offset < 0.0)
-            || (turn_dir < -0.03 && proj.lateral_offset > 0.0);
-        let side_curb = |s: &arcade_race_core::track::spline::SplineSample| {
-            if proj.lateral_offset < 0.0 { s.left_curb } else { s.right_curb }
-        };
-        let has_apex_curb = proj.is_on_curb
-            || side_curb(&near)
-            || (on_inside_of_turn
-                && (side_curb(&spline.sample_at_distance((curr_dist + 10.0).rem_euclid(total_len)))
-                    || side_curb(&spline.sample_at_distance((curr_dist - 10.0).rem_euclid(total_len)))));
+        let on_inside_of_turn = (turn_dir > 0.02 && proj.lateral_offset < 0.0)
+            || (turn_dir < -0.02 && proj.lateral_offset > 0.0);
         let actively_cornering = car_speed > 3.5 && car_fwd.dot(proj.tangent) > 0.7;
-        let on_road = if actively_cornering && has_apex_curb {
+        let on_road = if actively_cornering && (proj.is_on_curb || on_inside_of_turn) {
             proj.lateral_offset.abs() <= proj.track_width * 0.5 + 1.5
         } else {
             proj.is_on_track
@@ -1385,12 +1377,18 @@ impl BotAiDriver {
             } else {
                 (mid.right_wall, mid.right_wall_distance)
             };
+            let mut max_chord_lat = if self.human.is_active() {
+                mid.width * 0.5 + 0.3
+            } else {
+                f32::INFINITY
+            };
             if let (true, Some(d)) = (wall_on, wall_dist) {
-                let excess = chord_lat.abs() - (mid.width * 0.5 + d - WALL_CLEARANCE_M);
-                if excess > 0.0 {
-                    // Moving the target moves the middle of the line by half as much.
-                    target_point -= mid.normal * (chord_lat.signum() * excess * 2.0);
-                }
+                max_chord_lat = max_chord_lat.min(mid.width * 0.5 + d - WALL_CLEARANCE_M);
+            }
+            let excess = chord_lat.abs() - max_chord_lat;
+            if excess > 0.0 {
+                // Moving the target moves the middle of the line by half as much.
+                target_point -= mid.normal * (chord_lat.signum() * excess * 2.0);
             }
             // The same for the car itself, at close walls only: a bot drifting towards a close wall at a shallow
             // angle kept a small heading error and slid along the wall.
@@ -1867,15 +1865,15 @@ mod tests {
         use crate::{RaceFormat, RaceRules, RaceWorld};
         use wheelbase::CarConfig;
 
-        for (name, is_gt) in [
-            ("kart_pine_grove", false),
-            ("kart_riverbend_circuit", false),
-            ("kart_summit_international", false),
-            ("gt_coastal_grand_prix", true),
-            ("gt_ridge_ring", true),
+        for (path, is_gt) in [
+            ("../../tracks/classic/kart_pine_grove.json", false),
+            ("../../tracks/classic/kart_riverbend_circuit.json", false),
+            ("../../tracks/classic/kart_summit_international.json", false),
+            ("../../tracks/kart/franciacorta.json", false),
+            ("../../tracks/classic/gt_coastal_grand_prix.json", true),
+            ("../../tracks/classic/gt_ridge_ring.json", true),
         ] {
-            let path = format!("../../tracks/classic/{name}.json");
-            let track = Track::load_from_file(&path).expect("load track");
+            let track = Track::load_from_file(path).expect("load track");
             let mut world: RaceWorld<Car> = RaceWorld::new(RaceRules {
                 format: RaceFormat::Laps(2),
                 ..RaceRules::default()
@@ -1912,10 +1910,10 @@ mod tests {
                 }
                 world.step(&track, &[ctrl], dt);
             }
-            assert!(curb_ticks > 0, "{name}: expected bot to touch apex curbs");
+            assert!(curb_ticks > 0, "{path}: expected bot to touch apex curbs");
             assert_eq!(
                 snap_ticks, 0,
-                "{name}: bot snapped to opposite lock {snap_ticks} ticks while riding inside apex curb"
+                "{path}: bot snapped to opposite lock {snap_ticks} ticks while riding inside apex curb"
             );
         }
     }

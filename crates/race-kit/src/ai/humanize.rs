@@ -33,7 +33,7 @@ const CURB_CUT_MIN_WIDTH: f32 = 8.0;
 const CURB_CUT_FULL_WIDTH: f32 = 12.0;
 /// Line wander time constant (s).
 const WANDER_TAU: f32 = 6.0;
-/// Time constant of the line-offset smoothing (s).
+/// Time constant of the line-wander smoothing (s).
 const LINE_SMOOTH_TAU: f32 = 0.5;
 /// A brake-point shift acts fully at this distance before a corner point, and fades to 0 at it (m).
 const BRAKE_SHIFT_RAMP: f32 = 20.0;
@@ -140,6 +140,7 @@ impl HumanTraits {
             DrivingStyle::Bold => (1.3, 0.4, 0.7, 1.3, [0.20, 0.30, 0.30, 0.15, 0.05], 2.0),
             DrivingStyle::Balanced => (1.0, 0.5, 0.5, 1.0, [0.20, 0.20, 0.15, 0.15, 0.30], 2.0),
         };
+        let apex = (apex + 0.30 * quality.consistency).min(0.95);
         let curb_cut = match quality.tier {
             super::DriverTier::Legend => match style {
                 DrivingStyle::Aggressive => 0.9,
@@ -236,8 +237,9 @@ fn ahead(from: f32, to: f32, len: f32) -> f32 {
 
 fn signed_curvature(spline: &TrackSpline, s: f32) -> f32 {
     let len = spline.total_length();
-    let t0 = spline.sample_at_distance(s.rem_euclid(len)).tangent;
-    let t1 = spline.sample_at_distance((s + CURVATURE_SPAN).rem_euclid(len)).tangent;
+    let half = CURVATURE_SPAN * 0.5;
+    let t0 = spline.sample_at_distance((s - half).rem_euclid(len)).tangent;
+    let t1 = spline.sample_at_distance((s + half).rem_euclid(len)).tangent;
     normalize_angle(t1.y.atan2(t1.x) - t0.y.atan2(t0.x)) / CURVATURE_SPAN
 }
 
@@ -265,11 +267,10 @@ pub fn find_corners(spline: &TrackSpline) -> Vec<Corner> {
             continue;
         }
         let first = i;
-        let (mut apex_i, mut apex_k) = (i, curv[idx].abs());
+        let mut apex_k = curv[idx].abs();
         while i < n && class(curv[(origin + i) % n]) == c {
             let k = curv[(origin + i) % n].abs();
             if k > apex_k {
-                apex_i = i;
                 apex_k = k;
             }
             i += 1;
@@ -277,10 +278,20 @@ pub fn find_corners(spline: &TrackSpline) -> Vec<Corner> {
         let corner_len = (i - first) as f32 * CORNER_STEP;
         if corner_len >= MIN_CORNER_LEN {
             let start = ((origin + first) % n) as f32 * CORNER_STEP;
-            let apex = (apex_i - first) as f32 * CORNER_STEP;
+            let plateau_start = (first..i)
+                .find(|&j| curv[(origin + j) % n].abs() >= apex_k * 0.85)
+                .unwrap_or(first);
+            let plateau_end = (first..i)
+                .rev()
+                .find(|&j| curv[(origin + j) % n].abs() >= apex_k * 0.85)
+                .unwrap_or(first);
+            let apex = ((plateau_start + plateau_end) as f32 * 0.5 - first as f32) * CORNER_STEP;
             let apex_s = (start + apex).rem_euclid(len);
-            let apex_sample = spline.sample_at_distance(apex_s);
-            let has_inside_curb = if c > 0 { apex_sample.left_curb } else { apex_sample.right_curb };
+            let check_curb = |s_val: f32| {
+                let smp = spline.sample_at_distance(s_val.rem_euclid(len));
+                if c > 0 { smp.left_curb } else { smp.right_curb }
+            };
+            let has_inside_curb = check_curb(apex_s) || check_curb(apex_s - 5.0) || check_curb(apex_s + 5.0);
             corners.push(Corner {
                 start,
                 apex,
@@ -601,12 +612,8 @@ impl HumanDriver {
             } else {
                 c.turn * p.apex_share * free
             };
-            let (apex_start, apex_end) = if c.has_inside_curb && self.traits.curb_cut_m > 0.0 {
-                let dwell = (c.len * 0.15).min(12.0);
-                ((c.apex - dwell).max(0.0), (c.apex + dwell).min(c.len))
-            } else {
-                (c.apex, c.apex)
-            };
+            let dwell = (c.len * 0.15).min(12.0);
+            let (apex_start, apex_end) = ((c.apex - dwell).max(0.0), (c.apex + dwell).min(c.len));
             shape += if x < -c.ramp_in || x > c.len + c.ramp_out {
                 0.0
             } else if x < 0.0 {
