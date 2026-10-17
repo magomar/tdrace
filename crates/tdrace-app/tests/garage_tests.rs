@@ -684,3 +684,74 @@ fn leaving_the_garage_by_any_path_restores_the_discipline() {
     assert_eq!(session.active_module_id, "gt");
     assert_eq!(session.garage_entry, None);
 }
+
+#[test]
+fn custom_race_allows_selecting_any_car_in_garage_and_starting_grid() {
+    let mut session = RaceSession::new();
+    session.active_profile.owned_cars.clear();
+    session.active_profile.credits = 0;
+    session.active_career_progress.unlocked_cars.clear();
+    session.game_mode = GameMode::ExperimentalRace;
+    session.free_car_selection = true;
+
+    // 1. Garage from Menu: pick an unowned Tier 3 GT car, then launch a GT track from Menu
+    session.switch_to_gt();
+    session.state = GameState::Garage(GarageOrigin::Menu);
+    session.garage_tier = 3;
+    session.garage_car_idx = 1;
+    let t3_gt_car = get_models_for_module_and_tier("gt", 3)[1];
+    garage_press(&mut session, GarageOrigin::Menu, &[KeyCode::Enter]);
+    assert_eq!(session.state, GameState::Menu);
+    assert_eq!(session.selected_car_model_id, Some(t3_gt_car.id));
+    assert_eq!(session.car_choice, t3_gt_car.base_car_choice);
+
+    // Confirming an unlocked circuit in Menu preserves the chosen Tier 3 car on StartingGrid
+    let gt_tracks = session.filtered_menu_tracks();
+    session.menu_track_idx = gt_tracks
+        .iter()
+        .position(|t| session.is_track_unlocked(t.track_id()))
+        .expect("Unlocked GT track");
+    inject_key_presses_for_tests(&[KeyCode::Enter]);
+    session.update_menu();
+    inject_key_presses_for_tests(&[]);
+    assert_eq!(session.state, GameState::StartingGrid);
+    assert_eq!(session.selected_car_model_id, Some(t3_gt_car.id));
+    assert_eq!(session.car_choice, t3_gt_car.base_car_choice);
+    assert_eq!(session.car_model_ids[0], Some(t3_gt_car.id));
+    let player_entry = session.grid_participants.iter().find(|p| p.is_player).expect("player participant");
+    assert_eq!(player_entry.model_id, Some(t3_gt_car.id));
+    let req_tier = session.current_race_required_tier();
+    assert!(session.is_active_player_car_eligible(req_tier));
+    assert!(session.is_active_player_car_unlocked());
+
+    // 2. Garage from StartingGrid on a Rallycross ("rally") circuit: pick an unowned Tier 2 RX car
+    session.switch_to_rally();
+    session.init_race();
+    session.open_garage_from_starting_grid();
+    assert_eq!(session.state, GameState::Garage(GarageOrigin::StartingGrid));
+    session.garage_tier = 2;
+    session.garage_car_idx = 1;
+    let rx_car = get_models_for_module_and_tier("rallycross", 2)[1];
+    garage_press(&mut session, GarageOrigin::StartingGrid, &[KeyCode::Enter]);
+    assert_eq!(session.state, GameState::StartingGrid);
+    assert_eq!(session.selected_car_model_id, Some(rx_car.id));
+    assert_eq!(session.car_model_ids[0], Some(rx_car.id));
+    let player_entry = session.grid_participants.iter().find(|p| p.is_player).expect("player participant");
+    assert_eq!(player_entry.model_id, Some(rx_car.id));
+    let req_tier = session.current_race_required_tier();
+    assert!(session.is_active_player_car_eligible(req_tier));
+    assert!(session.is_active_player_car_unlocked());
+
+    // 3. Cycling player car on StartingGrid in Custom Race keeps vehicle unlocked & eligible
+    session.starting_grid_roster_idx = session.grid_participants.iter().position(|p| p.is_player).expect("player idx");
+    session.cycle_starting_grid_participant_model(true);
+    let cycled_id = session.selected_car_model_id.expect("cycled model id");
+    assert_ne!(cycled_id, rx_car.id);
+    assert_eq!(session.car_model_ids[0], Some(cycled_id));
+    let player_entry = session.grid_participants.iter().find(|p| p.is_player).expect("player participant");
+    assert_eq!(player_entry.model_id, Some(cycled_id));
+    let req_tier = session.current_race_required_tier();
+    assert!(session.is_active_player_car_eligible(req_tier));
+    assert!(session.is_active_player_car_unlocked());
+}
+

@@ -1705,13 +1705,30 @@ impl RaceSession {
         self.active_player_car_choice().surface_warning(track_surface)
     }
 
+    /// Checks whether two module identifiers refer to the same motorsport discipline.
+    #[inline]
+    pub fn modules_match(a: &str, b: &str) -> bool {
+        fn norm(m: &str) -> &str {
+            match m {
+                "rally" | "rallycross" | "rx" => "rallycross",
+                "gt" | "gt_challenge" => "gt",
+                other => other,
+            }
+        }
+        norm(a) == norm(b)
+    }
+
     /// Checks whether the player's active vehicle is unlocked under career progression.
     pub fn is_active_player_car_unlocked(&self) -> bool {
-        if self.is_dev_mode() || self.active_module_id == "classic" || self.game_mode == GameMode::StandardRace {
+        if self.is_dev_mode()
+            || self.active_module_id == "classic"
+            || self.game_mode != GameMode::Career
+        {
             return true;
         }
         if let Some(model_id) = self.selected_car_model_id {
-            return self.active_career_progress.is_car_unlocked(model_id, self.is_dev_mode());
+            return self.active_profile.is_car_owned(model_id)
+                || self.active_career_progress.is_car_unlocked(model_id, self.is_dev_mode());
         }
         self.is_car_unlocked(self.active_player_car_choice())
     }
@@ -2023,11 +2040,19 @@ impl RaceSession {
         self.garage_origin = GarageOrigin::StartingGrid;
         self.garage_tier = self.current_race_required_tier();
         if self.active_module_id == "classic" {
-            let target_model_id = self.track.car_model_id.as_deref()
+            let target_model_id = self.selected_car_model_id
+                .or_else(|| self.track.car_model_id.as_deref())
                 .or_else(|| crate::catalog::get_classic_model_for_category(self.track.car_category).id.into());
             let models = crate::catalog::get_models_for_module("classic");
             self.garage_car_idx = models.iter().position(|m| Some(m.id) == target_model_id).unwrap_or(0);
         } else {
+            if let Some(selected_id) = self.selected_car_model_id {
+                if let Some(model) = crate::catalog::find_model_by_id(selected_id) {
+                    if Self::modules_match(model.module_id, self.active_module_id) {
+                        self.garage_tier = model.tier;
+                    }
+                }
+            }
             let tier_models = crate::catalog::get_models_for_module_and_tier(self.active_module_id, self.garage_tier);
             if let Some(selected_id) = self.selected_car_model_id {
                 self.garage_car_idx = tier_models.iter().position(|m| m.id == selected_id).unwrap_or(0);
@@ -2217,6 +2242,7 @@ impl RaceSession {
     /// (hierarchical merging: general base_config merged with in-file [modules.<id>] and external config files).
     pub fn apply_module_config(&mut self, module_id: &'static str) {
         self.active_module_id = module_id;
+        self.menu_category_filter = MenuCategoryFilter::from_module_id(module_id);
         self.config = self.base_config.for_module(module_id);
 
         // Apply audio settings
@@ -4260,7 +4286,7 @@ impl RaceSession {
         let mut player_model = if effective_module != "classic" {
             self.selected_car_model_id
                 .and_then(crate::catalog::find_model_by_id)
-                .filter(|m| m.module_id == effective_module && m.base_car_choice == player_car_choice)
+                .filter(|m| Self::modules_match(m.module_id, effective_module) && m.base_car_choice == player_car_choice)
                 .or_else(|| {
                     crate::catalog::get_models_for_module(effective_module)
                         .into_iter()
@@ -4273,9 +4299,10 @@ impl RaceSession {
                                 .into_iter()
                                 .find(|m| m.base_car_choice == player_car_choice)
                         })
+                        .or_else(|| crate::catalog::get_models_for_module(effective_module).into_iter().next())
                 })
         } else {
-            if self.free_car_selection || self.active_academy_lesson.is_some() {
+            if self.free_car_selection || self.game_mode.allows_car_change() || self.active_academy_lesson.is_some() {
                 self.selected_car_model_id
                     .and_then(crate::catalog::find_model_by_id)
                     .filter(|m| m.module_id == "classic" && m.base_car_choice == player_car_choice)
@@ -6473,6 +6500,7 @@ impl RaceSession {
                 self.selected_car_model_id = Some(next_m.id);
                 self.car_choice = next_m.base_car_choice;
                 self.current_visual_type = next_m.visual_type;
+                self.free_car_selection = true;
                 if let Some(cs) = self.color_schemes.get_mut(0) {
                     *cs = new_scheme;
                 }
@@ -10929,10 +10957,18 @@ impl RaceSession {
         if buy_pressed || confirm_pressed {
             if let Some(active_car) = models.get(self.garage_car_idx) {
                 let is_car_heritage = (self.active_module_id == "rallycross" || self.active_module_id == "rally" || self.active_module_id == "rx") && active_car.tier == 7;
+                let is_non_career_race_setup = matches!(
+                    origin,
+                    GarageOrigin::StartingGrid | GarageOrigin::Menu | GarageOrigin::LanLobby
+                ) && self.game_mode != GameMode::Career;
                 let is_unlocked = self.active_module_id == "classic"
                     || is_car_heritage
                     || self.is_dev_mode()
-                    || self.active_profile.is_car_owned(active_car.id);
+                    || self.active_profile.is_car_owned(active_car.id)
+                    || (is_non_career_race_setup
+                        && (self.game_mode.allows_car_change()
+                            || origin == GarageOrigin::LanLobby
+                            || self.active_career_progress.is_car_unlocked(active_car.id, self.is_dev_mode())));
 
                 if is_unlocked {
                     if confirm_pressed {
@@ -10955,7 +10991,7 @@ impl RaceSession {
                         // A car from another discipline than the Garage opened in switches the whole
                         // session to that discipline, but only while no race is set up yet.
                         let entry_module = self.garage_entry.map(|(m, _, _)| m).unwrap_or(self.active_module_id);
-                        if active_car.module_id != entry_module {
+                        if !Self::modules_match(active_car.module_id, entry_module) {
                             let can_switch = matches!(origin, GarageOrigin::Menu | GarageOrigin::ModalitySelect)
                                 && self.game_mode != GameMode::Career
                                 && self.championship_session.is_none()
@@ -10975,12 +11011,12 @@ impl RaceSession {
                             self.switch_to_module(active_car.module_id);
                             self.garage_tier = tier;
                             self.garage_car_idx = car_idx;
-                            self.garage_entry = Some((self.active_module_id, tier, car_idx));
                         }
                         self.car_choice = active_car.base_car_choice;
                         self.current_visual_type = active_car.visual_type;
                         self.selected_car_model_id = Some(active_car.id);
                         self.free_car_selection = true;
+                        self.garage_entry = None;
                         self.audio.play_sfx(SfxType::UiSelect);
                         match origin {
                             GarageOrigin::StartingGrid => {
@@ -11833,7 +11869,20 @@ impl RaceSession {
                 };
                 self.active_module_id = target_mod;
                 self.sync_career_progress_for_active_module();
-                self.car_choice = resolve_predefined_car_for_track(loaded.as_ref(), self.active_module_id);
+                if self.free_car_selection || self.game_mode.allows_car_change() {
+                    if let Some(model) = self.selected_car_model_id.and_then(crate::catalog::find_model_by_id) {
+                        if Self::modules_match(model.module_id, self.active_module_id) {
+                            self.car_choice = model.base_car_choice;
+                        } else {
+                            self.selected_car_model_id = None;
+                            self.car_choice = resolve_predefined_car_for_track(loaded.as_ref(), self.active_module_id);
+                        }
+                    } else {
+                        self.car_choice = resolve_predefined_car_for_track(loaded.as_ref(), self.active_module_id);
+                    }
+                } else {
+                    self.car_choice = resolve_predefined_car_for_track(loaded.as_ref(), self.active_module_id);
+                }
                 self.init_race();
             } else if has_tm_entry {
                 let has_module_customs = !self.track_manager.module_custom_tracks(self.active_module_id).is_empty();
@@ -14318,6 +14367,11 @@ impl RaceSession {
                 } else {
                     true
                 };
+                let free_garage_selection = matches!(
+                    self.state,
+                    GameState::Garage(GarageOrigin::StartingGrid | GarageOrigin::Menu | GarageOrigin::LanLobby)
+                ) && self.game_mode != GameMode::Career
+                    && (self.game_mode.allows_car_change() || is_lan);
                 let module_locked = is_lan || !car_change_allowed;
                 crate::ui::render_garage_screen(
                     &self.fonts,
@@ -14332,8 +14386,8 @@ impl RaceSession {
                     self.garage_gallery_mode,
                     self.garage_gallery_filter,
                     self.garage_gallery_sel,
-                    self.is_dev_mode(),
-                    unlocked_tier as u32,
+                    self.is_dev_mode() || free_garage_selection,
+                    if free_garage_selection { 5 } else { unlocked_tier as u32 },
                     Some(&self.active_career_progress),
                     self.active_profile.credits,
                     module_locked,
