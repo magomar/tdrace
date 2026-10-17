@@ -141,24 +141,22 @@ impl Vehicle for Car {
         let was_airborne = self.state.is_airborne;
         let mut on_any_ramp = false;
 
-        if !was_airborne {
-            for ramp in ramps {
-                if ramp.contains(self.state.position) {
-                    on_any_ramp = true;
-                    if self.step_ramp_interaction(ramp, dt) {
-                        break;
-                    }
+        for ramp in ramps {
+            if ramp.contains(self.state.position) {
+                on_any_ramp = true;
+                if self.step_ramp_interaction(ramp, dt) {
+                    break;
                 }
             }
-            if !on_any_ramp {
-                if self.state.ramp_elevation > 0.10 {
-                    // Rolled off an elevated ramp edge without launching at speed
-                    self.state.elevation = self.state.ramp_elevation;
-                    self.state.is_airborne = true;
-                    self.state.vertical_velocity = 0.0;
-                }
-                self.state.ramp_elevation = 0.0;
+        }
+        if !was_airborne && !on_any_ramp {
+            if self.state.ramp_elevation > 0.10 {
+                // Rolled off an elevated ramp edge without launching at speed
+                self.state.elevation = self.state.ramp_elevation;
+                self.state.is_airborne = true;
+                self.state.vertical_velocity = 0.0;
             }
+            self.state.ramp_elevation = 0.0;
         }
     }
 

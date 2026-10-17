@@ -1,4 +1,5 @@
 use glam::Vec2;
+use tdrace_core::track::network::SegmentId;
 use tdrace_core::track::validation::{validate_track, TrackValidationError};
 use tdrace_core::track::{BarrierType, Track};
 
@@ -66,6 +67,8 @@ pub enum Selection {
     None,
     Waypoint(usize),
     MultipleWaypoints(Vec<usize>),
+    BranchWaypoint(SegmentId, usize),
+    MultipleBranchWaypoints(Vec<(SegmentId, usize)>),
     SurfaceZone(usize),
     Obstacle(usize),
     JumpRamp(usize),
@@ -74,6 +77,7 @@ pub enum Selection {
     PitBox,
     Multi {
         waypoints: Vec<usize>,
+        branch_waypoints: Vec<(SegmentId, usize)>,
         surface_zones: Vec<usize>,
         obstacles: Vec<usize>,
         jump_ramps: Vec<usize>,
@@ -89,6 +93,7 @@ impl Selection {
             Self::None => true,
             Self::Multi {
                 waypoints,
+                branch_waypoints,
                 surface_zones,
                 obstacles,
                 jump_ramps,
@@ -97,6 +102,7 @@ impl Selection {
                 pit_box,
             } => {
                 waypoints.is_empty()
+                    && branch_waypoints.is_empty()
                     && surface_zones.is_empty()
                     && obstacles.is_empty()
                     && jump_ramps.is_empty()
@@ -105,6 +111,7 @@ impl Selection {
                     && !*pit_box
             }
             Self::MultipleWaypoints(wps) => wps.is_empty(),
+            Self::MultipleBranchWaypoints(wps) => wps.is_empty(),
             _ => false,
         }
     }
@@ -121,6 +128,7 @@ impl Selection {
         match self {
             Self::None => 0,
             Self::Waypoint(_)
+            | Self::BranchWaypoint(_, _)
             | Self::SurfaceZone(_)
             | Self::Obstacle(_)
             | Self::JumpRamp(_)
@@ -128,8 +136,10 @@ impl Selection {
             | Self::GridSlot(_)
             | Self::PitBox => 1,
             Self::MultipleWaypoints(indices) => indices.len(),
+            Self::MultipleBranchWaypoints(indices) => indices.len(),
             Self::Multi {
                 waypoints,
+                branch_waypoints,
                 surface_zones,
                 obstacles,
                 jump_ramps,
@@ -138,6 +148,7 @@ impl Selection {
                 pit_box,
             } => {
                 waypoints.len()
+                    + branch_waypoints.len()
                     + surface_zones.len()
                     + obstacles.len()
                     + jump_ramps.len()
@@ -153,6 +164,17 @@ impl Selection {
             Self::Waypoint(idx) => vec![*idx],
             Self::MultipleWaypoints(indices) => indices.clone(),
             Self::Multi { waypoints, .. } => waypoints.clone(),
+            _ => Vec::new(),
+        }
+    }
+
+    pub fn selected_branch_waypoints(&self) -> Vec<(SegmentId, usize)> {
+        match self {
+            Self::BranchWaypoint(seg_id, idx) => vec![(*seg_id, *idx)],
+            Self::MultipleBranchWaypoints(indices) => indices.clone(),
+            Self::Multi {
+                branch_waypoints, ..
+            } => branch_waypoints.clone(),
             _ => Vec::new(),
         }
     }
@@ -202,6 +224,17 @@ impl Selection {
             Self::Waypoint(i) => *i == idx,
             Self::MultipleWaypoints(indices) => indices.contains(&idx),
             Self::Multi { waypoints, .. } => waypoints.contains(&idx),
+            _ => false,
+        }
+    }
+
+    pub fn is_branch_waypoint_selected(&self, seg_id: SegmentId, idx: usize) -> bool {
+        match self {
+            Self::BranchWaypoint(s, i) => *s == seg_id && *i == idx,
+            Self::MultipleBranchWaypoints(indices) => indices.contains(&(seg_id, idx)),
+            Self::Multi {
+                branch_waypoints, ..
+            } => branch_waypoints.contains(&(seg_id, idx)),
             _ => false,
         }
     }
@@ -257,6 +290,7 @@ impl Selection {
     pub fn contains_entity(&self, other: &Selection) -> bool {
         match other {
             Self::Waypoint(i) => self.is_waypoint_selected(*i),
+            Self::BranchWaypoint(s, i) => self.is_branch_waypoint_selected(*s, *i),
             Self::SurfaceZone(i) => self.is_surface_zone_selected(*i),
             Self::Obstacle(i) => self.is_obstacle_selected(*i),
             Self::JumpRamp(i) => self.is_jump_ramp_selected(*i),
@@ -268,7 +302,30 @@ impl Selection {
     }
 
     pub fn from_multi(
+        waypoints: Vec<usize>,
+        surface_zones: Vec<usize>,
+        obstacles: Vec<usize>,
+        jump_ramps: Vec<usize>,
+        checkpoints: Vec<usize>,
+        grid_slots: Vec<usize>,
+        pit_box: bool,
+    ) -> Self {
+        Self::from_multi_with_branches(
+            waypoints,
+            Vec::new(),
+            surface_zones,
+            obstacles,
+            jump_ramps,
+            checkpoints,
+            grid_slots,
+            pit_box,
+        )
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn from_multi_with_branches(
         mut waypoints: Vec<usize>,
+        mut branch_waypoints: Vec<(SegmentId, usize)>,
         mut surface_zones: Vec<usize>,
         mut obstacles: Vec<usize>,
         mut jump_ramps: Vec<usize>,
@@ -278,6 +335,8 @@ impl Selection {
     ) -> Self {
         waypoints.sort_unstable();
         waypoints.dedup();
+        branch_waypoints.sort_unstable();
+        branch_waypoints.dedup();
         surface_zones.sort_unstable();
         surface_zones.dedup();
         obstacles.sort_unstable();
@@ -291,6 +350,7 @@ impl Selection {
 
         Self::Multi {
             waypoints,
+            branch_waypoints,
             surface_zones,
             obstacles,
             jump_ramps,
@@ -305,6 +365,7 @@ impl Selection {
         match self {
             Self::Multi {
                 waypoints,
+                branch_waypoints,
                 surface_zones,
                 obstacles,
                 jump_ramps,
@@ -313,6 +374,7 @@ impl Selection {
                 pit_box,
             } => {
                 let total = waypoints.len()
+                    + branch_waypoints.len()
                     + surface_zones.len()
                     + obstacles.len()
                     + jump_ramps.len()
@@ -325,6 +387,8 @@ impl Selection {
                 } else if total == 1 {
                     if let Some(&w) = waypoints.first() {
                         Self::Waypoint(w)
+                    } else if let Some(&(seg_id, w)) = branch_waypoints.first() {
+                        Self::BranchWaypoint(seg_id, w)
                     } else if let Some(&sz) = surface_zones.first() {
                         Self::SurfaceZone(sz)
                     } else if let Some(&obs) = obstacles.first() {
@@ -342,9 +406,12 @@ impl Selection {
                     }
                 } else if waypoints.len() == total {
                     Self::MultipleWaypoints(waypoints)
+                } else if branch_waypoints.len() == total {
+                    Self::MultipleBranchWaypoints(branch_waypoints)
                 } else {
                     Self::Multi {
                         waypoints,
+                        branch_waypoints,
                         surface_zones,
                         obstacles,
                         jump_ramps,
@@ -360,6 +427,7 @@ impl Selection {
 
     pub fn union(&self, other: &Selection) -> Self {
         let mut waypoints = self.selected_waypoint_indices();
+        let mut branch_waypoints = self.selected_branch_waypoints();
         let mut surface_zones = self.selected_surface_zone_indices();
         let mut obstacles = self.selected_obstacle_indices();
         let mut jump_ramps = self.selected_jump_ramp_indices();
@@ -368,14 +436,16 @@ impl Selection {
         let pit_box = self.is_pit_box_selected() || other.is_pit_box_selected();
 
         waypoints.extend(other.selected_waypoint_indices());
+        branch_waypoints.extend(other.selected_branch_waypoints());
         surface_zones.extend(other.selected_surface_zone_indices());
         obstacles.extend(other.selected_obstacle_indices());
         jump_ramps.extend(other.selected_jump_ramp_indices());
         checkpoints.extend(other.selected_checkpoint_indices());
         grid_slots.extend(other.selected_grid_slot_indices());
 
-        Self::from_multi(
+        Self::from_multi_with_branches(
             waypoints,
+            branch_waypoints,
             surface_zones,
             obstacles,
             jump_ramps,
@@ -422,7 +492,52 @@ impl Selection {
                 *self = self.clone().normalize();
             }
             _ => {
-                *self = Self::Waypoint(idx);
+                *self = self.union(&Self::Waypoint(idx));
+            }
+        }
+    }
+
+    pub fn toggle_branch_waypoint(&mut self, seg_id: SegmentId, idx: usize) {
+        let key = (seg_id, idx);
+        match self {
+            Self::BranchWaypoint(es, ei) => {
+                if (*es, *ei) == key {
+                    *self = Self::None;
+                } else {
+                    let mut list = vec![(*es, *ei), key];
+                    list.sort_unstable();
+                    list.dedup();
+                    *self = Self::MultipleBranchWaypoints(list);
+                }
+            }
+            Self::MultipleBranchWaypoints(indices) => {
+                if let Some(pos) = indices.iter().position(|&x| x == key) {
+                    indices.remove(pos);
+                    if indices.is_empty() {
+                        *self = Self::None;
+                    } else if indices.len() == 1 {
+                        *self = Self::BranchWaypoint(indices[0].0, indices[0].1);
+                    }
+                } else {
+                    indices.push(key);
+                    indices.sort_unstable();
+                    indices.dedup();
+                }
+            }
+            Self::Multi {
+                branch_waypoints, ..
+            } => {
+                if let Some(pos) = branch_waypoints.iter().position(|&x| x == key) {
+                    branch_waypoints.remove(pos);
+                } else {
+                    branch_waypoints.push(key);
+                    branch_waypoints.sort_unstable();
+                    branch_waypoints.dedup();
+                }
+                *self = self.clone().normalize();
+            }
+            _ => {
+                *self = self.union(&Self::BranchWaypoint(seg_id, idx));
             }
         }
     }
@@ -597,6 +712,7 @@ impl EditorState {
     /// Performs undo operation.
     pub fn undo(&mut self) -> bool {
         if self.history.undo(&mut self.track) {
+            crate::render::track::clear_track_render_cache();
             self.revalidate();
             self.is_dirty = true;
             true
@@ -608,6 +724,7 @@ impl EditorState {
     /// Performs redo operation.
     pub fn redo(&mut self) -> bool {
         if self.history.redo(&mut self.track) {
+            crate::render::track::clear_track_render_cache();
             self.revalidate();
             self.is_dirty = true;
             true
@@ -625,7 +742,32 @@ impl EditorState {
     pub fn rebuild_geometry(&mut self) {
         self.track.rebuild_geometry(self.barrier_offset, self.barrier_type);
         self.auto_generate_grid();
+        crate::render::track::clear_track_render_cache();
         self.revalidate();
+    }
+
+    /// Recomputes edited network branch segments and rebuilds track geometry.
+    pub fn rebuild_branch_segments(&mut self, seg_ids: &[SegmentId]) {
+        if seg_ids.is_empty() {
+            return;
+        }
+        let chute_id = self
+            .track
+            .network
+            .as_ref()
+            .and_then(|n| n.launch_chute.as_ref().map(|c| c.segment_id));
+        if seg_ids.iter().any(|&sid| Some(sid) != chute_id) {
+            self.track.branch_layout = None;
+        }
+        if let Some(ref mut net) = self.track.network {
+            let mut unique = seg_ids.to_vec();
+            unique.sort_unstable();
+            unique.dedup();
+            for sid in unique {
+                net.rebuild_segment_samples(sid);
+            }
+        }
+        self.rebuild_geometry();
     }
 
     /// Returns the current number of starting grid positions configured for the circuit.

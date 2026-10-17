@@ -456,20 +456,44 @@ impl RoadSegment {
                 let bank = catmull_rom_1d(b0, b1, b2, b3, t);
                 let w = wp1.width + (wp2.width - wp1.width) * t;
 
+                let lc = if t < 0.5 { wp1.left_curb } else { wp2.left_curb };
+                let rc = if t < 0.5 { wp1.right_curb } else { wp2.right_curb };
+                let surf = (if t < 0.5 { wp1.surface } else { wp2.surface })
+                    .or(wp1.surface)
+                    .or(wp2.surface)
+                    .unwrap_or(SurfaceType::Asphalt);
+                let lw = if t < 0.5 { wp1.left_wall } else { wp2.left_wall };
+                let rw = if t < 0.5 { wp1.right_wall } else { wp2.right_wall };
+                let lwd = match (wp1.left_wall_distance, wp2.left_wall_distance) {
+                    (Some(d1), Some(d2)) => Some(d1 + (d2 - d1) * t),
+                    (Some(d1), None) => if t < 0.5 { Some(d1) } else { None },
+                    (None, Some(d2)) => if t < 0.5 { None } else { Some(d2) },
+                    (None, None) => None,
+                };
+                let rwd = match (wp1.right_wall_distance, wp2.right_wall_distance) {
+                    (Some(d1), Some(d2)) => Some(d1 + (d2 - d1) * t),
+                    (Some(d1), None) => if t < 0.5 { Some(d1) } else { None },
+                    (None, Some(d2)) => if t < 0.5 { None } else { Some(d2) },
+                    (None, None) => None,
+                };
+                let wt = if t < 0.5 { wp1.wall_type } else { wp2.wall_type };
+                let l_ro = if t < 0.5 { wp1.left_runoff_surface } else { wp2.left_runoff_surface };
+                let r_ro = if t < 0.5 { wp1.right_runoff_surface } else { wp2.right_runoff_surface };
+
                 raw_points.push(pt);
                 raw_widths.push(w);
-                raw_left_curbs.push(if t < 0.5 { wp1.left_curb } else { wp2.left_curb });
-                raw_right_curbs.push(if t < 0.5 { wp1.right_curb } else { wp2.right_curb });
-                raw_surfaces.push(wp1.surface.or(wp2.surface).unwrap_or(SurfaceType::Asphalt));
+                raw_left_curbs.push(lc);
+                raw_right_curbs.push(rc);
+                raw_surfaces.push(surf);
                 raw_elevations.push(elev);
                 raw_bank_angles.push(bank);
-                raw_left_walls.push(if t < 0.5 { wp1.left_wall } else { wp2.left_wall });
-                raw_right_walls.push(if t < 0.5 { wp1.right_wall } else { wp2.right_wall });
-                raw_left_wall_dists.push(wp1.left_wall_distance.or(wp2.left_wall_distance));
-                raw_right_wall_dists.push(wp1.right_wall_distance.or(wp2.right_wall_distance));
-                raw_wall_types.push(wp1.wall_type.or(wp2.wall_type));
-                raw_left_runoffs.push(wp1.left_runoff_surface.or(wp2.left_runoff_surface));
-                raw_right_runoffs.push(wp1.right_runoff_surface.or(wp2.right_runoff_surface));
+                raw_left_walls.push(lw);
+                raw_right_walls.push(rw);
+                raw_left_wall_dists.push(lwd);
+                raw_right_wall_dists.push(rwd);
+                raw_wall_types.push(wt);
+                raw_left_runoffs.push(l_ro);
+                raw_right_runoffs.push(r_ro);
             }
         }
 
@@ -1027,6 +1051,110 @@ impl TrackNetwork {
         self.cached_composite_splines = splines;
     }
 
+    /// Recomputes samples, connected junction socket positions/widths, layout lap lengths,
+    /// and composite splines after editing a segment's waypoints.
+    pub fn rebuild_segment_samples(&mut self, seg_id: SegmentId) {
+        let Some((entry_sock_id, exit_sock_id, wp0, wp_last)) = self.get_segment(seg_id).and_then(|s| {
+            let first = s.waypoints.first()?.clone();
+            let last = s.waypoints.last()?.clone();
+            Some((s.entry_junction, s.exit_junction, first, last))
+        }) else {
+            return;
+        };
+
+        if let Some(sid) = entry_sock_id {
+            if let Some(j) = self.get_junction_mut(sid.junction_id) {
+                match &mut j.kind {
+                    JunctionKind::Split { egress_sockets, .. } => {
+                        if let Some(sock) = egress_sockets.get_mut(sid.socket_index) {
+                            sock.point = wp0.point;
+                            sock.width = wp0.width.max(1.0);
+                            sock.elevation = wp0.elevation;
+                            sock.bank_angle = wp0.bank_angle;
+                            if let Some(surf) = wp0.surface {
+                                sock.surface = surf;
+                            }
+                        }
+                    }
+                    JunctionKind::Merge { egress_socket, .. } if sid.socket_index == 0 => {
+                        egress_socket.point = wp0.point;
+                        egress_socket.width = wp0.width.max(1.0);
+                        egress_socket.elevation = wp0.elevation;
+                        egress_socket.bank_angle = wp0.bank_angle;
+                        if let Some(surf) = wp0.surface {
+                            egress_socket.surface = surf;
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        if let Some(sid) = exit_sock_id {
+            if let Some(j) = self.get_junction_mut(sid.junction_id) {
+                match &mut j.kind {
+                    JunctionKind::Split { ingress_socket, .. } if sid.socket_index == 0 => {
+                        ingress_socket.point = wp_last.point;
+                        ingress_socket.width = wp_last.width.max(1.0);
+                        ingress_socket.elevation = wp_last.elevation;
+                        ingress_socket.bank_angle = wp_last.bank_angle;
+                        if let Some(surf) = wp_last.surface {
+                            ingress_socket.surface = surf;
+                        }
+                    }
+                    JunctionKind::Merge { ingress_sockets, .. } => {
+                        if let Some(sock) = ingress_sockets.get_mut(sid.socket_index) {
+                            sock.point = wp_last.point;
+                            sock.width = wp_last.width.max(1.0);
+                            sock.elevation = wp_last.elevation;
+                            sock.bank_angle = wp_last.bank_angle;
+                            if let Some(surf) = wp_last.surface {
+                                sock.surface = surf;
+                            }
+                        }
+                    }
+                    JunctionKind::Terminal { socket } if sid.socket_index == 0 => {
+                        socket.point = wp_last.point;
+                        socket.width = wp_last.width.max(1.0);
+                        socket.elevation = wp_last.elevation;
+                        socket.bank_angle = wp_last.bank_angle;
+                        if let Some(surf) = wp_last.surface {
+                            socket.surface = surf;
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        let entry_sock = entry_sock_id
+            .and_then(|sid| self.get_junction(sid.junction_id).and_then(|j| j.egress_socket(sid.socket_index)))
+            .copied();
+        let exit_sock = exit_sock_id
+            .and_then(|sid| self.get_junction(sid.junction_id).and_then(|j| j.ingress_socket(sid.socket_index)))
+            .copied();
+
+        if let Some(seg) = self.get_segment_mut(seg_id) {
+            seg.recompute_samples(entry_sock.as_ref(), exit_sock.as_ref());
+        }
+
+        let self_clone_for_len: Vec<(usize, Vec<SegmentId>)> = self
+            .layouts
+            .iter()
+            .enumerate()
+            .map(|(i, l)| (i, l.segment_sequence.clone()))
+            .collect();
+        for (idx, seq) in self_clone_for_len {
+            let len: f32 = seq
+                .iter()
+                .filter_map(|&sid| self.get_segment(sid))
+                .map(|s| s.length)
+                .sum();
+            self.layouts[idx].total_lap_length = len;
+        }
+        self.recompute_composite_splines();
+    }
+
     /// Returns a pre-cached composite spline for the given layout ID, if available (Spec 084).
     pub fn composite_spline_for_layout(&self, layout_id: &str) -> Option<&TrackSpline> {
         self.cached_composite_splines
@@ -1318,6 +1446,35 @@ impl TrackNetwork {
                     }
                 }
                 JunctionKind::Terminal { .. } => {}
+            }
+        }
+
+        // 3. Check explicit runoff corridors on branch segments
+        for seg in &self.segments {
+            if self.is_branch_segment(seg.id) && seg.samples.len() >= 2 {
+                let seg_proj = seg.project_point(point);
+                let half_w = seg_proj.track_width * 0.5;
+                if seg_proj.lateral_offset < -half_w {
+                    if let Some(runoff) = seg_proj.left_runoff_surface {
+                        let limit = half_w
+                            + seg_proj
+                                .left_wall_distance
+                                .unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
+                        if -seg_proj.lateral_offset <= limit {
+                            return Some(runoff);
+                        }
+                    }
+                } else if seg_proj.lateral_offset > half_w {
+                    if let Some(runoff) = seg_proj.right_runoff_surface {
+                        let limit = half_w
+                            + seg_proj
+                                .right_wall_distance
+                                .unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
+                        if seg_proj.lateral_offset <= limit {
+                            return Some(runoff);
+                        }
+                    }
+                }
             }
         }
 

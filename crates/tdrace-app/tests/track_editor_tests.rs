@@ -711,20 +711,22 @@ fn test_all_entity_duplications_and_undo() {
     assert_eq!(state.track.geometry.surface_zones.len(), zone_idx + 1);
 
     // 2. Jump Ramp Duplication
-    state.track.geometry.jump_ramps.push(JumpRamp {
-        id: 10,
-        name: "Big Air Ramp".to_string(),
-        shape: SurfaceShape::OrientedBox {
-            center: Vec2::new(50.0, 50.0),
-            half_extents: Vec2::new(10.0, 5.0),
-            angle: 0.0,
-        },
-        direction: Vec2::new(1.0, 0.0),
-        launch_speed: 25.0,
-        height: 2.5,
-        ramp_angle_deg: 18.0,
-        surface: SurfaceType::Asphalt,
-    });
+    state.track.geometry.jump_ramps.push(
+        JumpRamp::new(
+            10,
+            SurfaceShape::OrientedBox {
+                center: Vec2::new(50.0, 50.0),
+                half_extents: Vec2::new(10.0, 5.0),
+                angle: 0.0,
+            },
+            Vec2::new(1.0, 0.0),
+            25.0,
+            2.5,
+            18.0,
+            "Big Air Ramp",
+        )
+        .with_surface(SurfaceType::Asphalt),
+    );
     let ramp_idx = state.track.geometry.jump_ramps.len() - 1;
     state.selection = Selection::JumpRamp(ramp_idx);
     assert!(tools.duplicate_selected(&mut state));
@@ -2411,13 +2413,15 @@ fn test_arena_floor_tool_hull_closure_and_wall_synthesis() {
 fn test_whoop_section_tool_placement_and_spacing() {
     use tdrace_app::editor::{EditorState, EditorToolType, ToolSettings};
     use tdrace_core::physics::surface::SurfaceType;
-    use tdrace_core::track::geometry::SurfaceShape;
+    use tdrace_core::track::geometry::{RampKind, SurfaceShape};
     
     let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let mut state = EditorState::new(track);
     let mut tools = ToolSettings::default();
 
-    tools.active_tool = EditorToolType::WhoopSection;
+    // Unified JumpRamp tool with Whoops component selected
+    tools.active_tool = EditorToolType::JumpRamp;
+    tools.active_ramp_kind = RampKind::Whoops;
     tools.active_surface = SurfaceType::Dirt;
     tools.whoop_spacing = 5.0;
     tools.whoop_height = 0.85;
@@ -2425,23 +2429,38 @@ fn test_whoop_section_tool_placement_and_spacing() {
 
     let initial_ramps = state.track.geometry.jump_ramps.len();
 
-    // Drag 40m along X axis -> should create 40 / 5 = 8 whoop moguls
+    // Drag 40m along X axis -> creates 1 cohesive Whoops Moguls component with 8 ridges (40m / 5m)
     tools.handle_secondary_down(&mut state, Vec2::new(10.0, 10.0));
     assert!(tools.is_placing);
     tools.handle_secondary_drag(&mut state, Vec2::new(50.0, 10.0));
     tools.handle_secondary_up(&mut state, Vec2::new(50.0, 10.0));
     assert!(!tools.is_placing);
 
-    assert_eq!(state.track.geometry.jump_ramps.len(), initial_ramps + 8);
-    for ramp in &state.track.geometry.jump_ramps[initial_ramps..] {
-        assert_eq!(ramp.height, 0.85);
-        assert_eq!(ramp.surface, SurfaceType::Dirt);
-        if let SurfaceShape::OrientedBox { half_extents, .. } = ramp.shape {
-            assert!((half_extents.y - 7.0).abs() < 0.1, "Half width should be 7.0m");
-        } else {
-            panic!("Expected OrientedBox shape for whoop");
-        }
+    assert_eq!(state.track.geometry.jump_ramps.len(), initial_ramps + 1);
+    let ramp = &state.track.geometry.jump_ramps[initial_ramps];
+    assert_eq!(ramp.kind, RampKind::Whoops);
+    assert_eq!(ramp.whoop_spacing, 5.0);
+    assert_eq!(ramp.whoop_count(), 8);
+    assert_eq!(ramp.height, 0.85);
+    assert_eq!(ramp.surface, SurfaceType::Dirt);
+    assert!(ramp.name.starts_with("Whoops Moguls"));
+    if let SurfaceShape::OrientedBox { half_extents, .. } = ramp.shape {
+        assert!((half_extents.x - 20.0).abs() < 0.1, "Half length should be 20.0m (total 40m)");
+        assert!((half_extents.y - 7.0).abs() < 0.1, "Half width should be 7.0m");
+    } else {
+        panic!("Expected OrientedBox shape for whoops moguls");
     }
+
+    // Verify multi-ridge sinusoidal elevation profile has alternating peaks and valleys
+    let mut crest_count = 0;
+    for i in 0..8 {
+        let s_trough = (i as f32) / 8.0;
+        let s_crest = (i as f32 + 0.5) / 8.0;
+        assert!(ramp.surface_elevation_at_progress(s_trough) < 0.05);
+        assert!((ramp.surface_elevation_at_progress(s_crest) - 0.85).abs() < 0.05);
+        crest_count += 1;
+    }
+    assert_eq!(crest_count, 8);
 
     // Select all for active tool selects all jump ramps
     assert!(tools.select_all_for_active_tool(&mut state));
@@ -2451,28 +2470,42 @@ fn test_whoop_section_tool_placement_and_spacing() {
 fn test_stunt_ramp_tool_high_launch_and_multiplier() {
     use tdrace_app::editor::{EditorState, EditorToolType, ToolSettings};
     use tdrace_core::physics::surface::SurfaceType;
+    use tdrace_core::track::geometry::RampKind;
     
     let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
     let mut state = EditorState::new(track);
     let mut tools = ToolSettings::default();
 
-    tools.active_tool = EditorToolType::StuntRamp;
+    // Unified JumpRamp tool with MegaRamp component selected
+    tools.active_tool = EditorToolType::JumpRamp;
+    tools.active_ramp_kind = RampKind::MegaRamp;
     tools.active_surface = SurfaceType::DeepSand;
     tools.stunt_ramp_height = 4.5;
     tools.stunt_ramp_multiplier = 1.8;
+    tools.mega_gap_length = 12.0;
 
     let initial_ramps = state.track.geometry.jump_ramps.len();
 
-    // Drag from (20, 20) to (45, 20)
+    // Drag 36m from (20, 20) to (56, 20)
     tools.handle_secondary_down(&mut state, Vec2::new(20.0, 20.0));
-    tools.handle_secondary_up(&mut state, Vec2::new(45.0, 20.0));
+    tools.handle_secondary_up(&mut state, Vec2::new(56.0, 20.0));
 
     assert_eq!(state.track.geometry.jump_ramps.len(), initial_ramps + 1);
     let ramp = &state.track.geometry.jump_ramps[initial_ramps];
+    assert_eq!(ramp.kind, RampKind::MegaRamp);
     assert_eq!(ramp.height, 4.5);
+    assert_eq!(ramp.gap_length, 12.0);
     assert!((ramp.launch_speed - 28.0 * 1.8).abs() < 0.1);
     assert_eq!(ramp.surface, SurfaceType::DeepSand);
     assert!(ramp.name.starts_with("Stunt Mega Ramp"));
+
+    // Verify two-segment profile: rising take-off, open gap at 0m, and descending landing ramp
+    let (s_takeoff, s_landing) = ramp.mega_segment_bounds();
+    assert!(s_takeoff > 0.2 && s_landing < 0.8 && s_takeoff < s_landing);
+    assert!((ramp.surface_elevation_at_progress(s_takeoff * 0.99) - 4.5).abs() < 0.2);
+    assert_eq!(ramp.surface_elevation_at_progress((s_takeoff + s_landing) * 0.5), 0.0, "open gap has 0 elevation");
+    assert!(ramp.surface_elevation_at_progress(s_landing + 0.02) > 3.5, "landing catch deck is elevated");
+    assert!(ramp.surface_elevation_at_progress(1.0) < 0.01, "landing ramp returns to ground at exit");
 }
 
 #[test]

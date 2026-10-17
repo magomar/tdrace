@@ -621,3 +621,174 @@ fn slider_drag_keeps_working_off_the_bar_and_only_starts_from_a_press_on_it() {
     let mut drag = StepperDrag::press(Prop::WpWidth, true, 120.0, 12.0);
     assert_eq!(update_stepper_drag(&mut drag, Prop::WpBanking, true, 600.0, 150.0, (-45.0, 45.0, 1.0), 3.0, false), DragOutcome::None);
 }
+
+#[test]
+fn waypoint_and_circuit_runoff_surface_edits_update_spline_and_samples() {
+    let mut state = selected(&[0, 1]);
+    let mut tools = ToolSettings::default();
+
+    let gravel = SURFACES.iter().position(|&s| s == SurfaceType::PackedGravel).unwrap();
+    let sand = SURFACES.iter().position(|&s| s == SurfaceType::DeepSand).unwrap();
+
+    // 1. Per-waypoint Runoff L / Runoff R edits update selected waypoints and recompute spline samples.
+    apply_edit(&mut state, &mut tools, Edit::Pick(Prop::WpRunoffL, gravel));
+    apply_edit(&mut state, &mut tools, Edit::Pick(Prop::WpRunoffR, sand));
+
+    for i in [0, 1] {
+        assert_eq!(state.track.spline.waypoints[i].left_runoff_surface, Some(SurfaceType::PackedGravel));
+        assert_eq!(state.track.spline.waypoints[i].right_runoff_surface, Some(SurfaceType::DeepSand));
+    }
+    assert_eq!(state.track.spline.samples[0].left_runoff_surface, Some(SurfaceType::PackedGravel));
+    assert_eq!(state.track.spline.samples[0].right_runoff_surface, Some(SurfaceType::DeepSand));
+    assert_eq!(tools.new_waypoint_left_runoff_surface, Some(SurfaceType::PackedGravel));
+    assert_eq!(tools.new_waypoint_right_runoff_surface, Some(SurfaceType::DeepSand));
+
+    // Verify physics surface sampling in the left and right runoff corridors at waypoint 0.
+    let s0 = &state.track.spline.samples[0];
+    let left_runoff_pt = s0.point + s0.normal * (s0.width * 0.5 + 3.0);
+    let right_runoff_pt = s0.point - s0.normal * (s0.width * 0.5 + 3.0);
+    assert_eq!(state.track.sample_surface(left_runoff_pt), SurfaceType::PackedGravel);
+    assert_eq!(state.track.sample_surface(right_runoff_pt), SurfaceType::DeepSand);
+
+    // 2. Circuit-wide GlobalRunoff edit sets left and right runoff across all waypoints.
+    state.deselect();
+    let asphalt = SURFACES.iter().position(|&s| s == SurfaceType::Asphalt).unwrap();
+    apply_edit(&mut state, &mut tools, Edit::Pick(Prop::GlobalRunoff, asphalt));
+    for wp in &state.track.spline.waypoints {
+        assert_eq!(wp.left_runoff_surface, Some(SurfaceType::Asphalt));
+        assert_eq!(wp.right_runoff_surface, Some(SurfaceType::Asphalt));
+    }
+    assert_eq!(state.track.spline.samples[0].left_runoff_surface, Some(SurfaceType::Asphalt));
+    assert_eq!(state.track.sample_surface(left_runoff_pt), SurfaceType::Asphalt);
+}
+
+#[test]
+fn magenta_branch_waypoints_can_be_selected_dragged_and_edited_in_inspector() {
+    use tdrace_core::track::network::SegmentId;
+
+    let mut state = fixture_state();
+    let mut tools = ToolSettings {
+        active_tool: EditorToolType::RoadSplit,
+        ..ToolSettings::default()
+    };
+
+    // Place a split junction near waypoint 0; this seeds a magenta branch segment with 2 waypoints.
+    let wp0_pt = state.track.spline.waypoints[0].point;
+    tools.handle_mouse_down(&mut state, wp0_pt);
+    tools.handle_mouse_up(&mut state, wp0_pt);
+
+    // Extend the branch with a third waypoint in open space.
+    let branch_pt = Vec2::new(-60.0, -110.0);
+    tools.handle_mouse_down(&mut state, branch_pt);
+    tools.handle_mouse_up(&mut state, branch_pt);
+    tools.active_branch_socket = None;
+
+    let branch_seg_id = state
+        .track
+        .network
+        .as_ref()
+        .unwrap()
+        .segments
+        .iter()
+        .find(|s| state.track.network.as_ref().unwrap().is_branch_segment(s.id))
+        .map(|s| s.id)
+        .expect("branch segment created");
+
+    // Switch to Select tool and click the magenta branch waypoint at `branch_pt`.
+    tools.active_tool = EditorToolType::Select;
+    tools.handle_mouse_down(&mut state, branch_pt);
+    tools.handle_mouse_up(&mut state, branch_pt);
+
+    assert_eq!(state.selection, Selection::BranchWaypoint(branch_seg_id, 2));
+
+    // Inspector builds the full waypoint editor for the selected branch waypoint.
+    let model = build_inspector(&state, &tools).expect("branch waypoint opens inspector");
+    assert!(model.title.contains("Branch"));
+    let (used, room) = fits_720p(&model);
+    assert!(used <= room, "branch waypoint inspector fits 720p: {used} <= {room}");
+
+    // Edit width, surface, curbs, and runoff surface on the branch waypoint via the inspector.
+    let dirt = SURFACES.iter().position(|&s| s == SurfaceType::Dirt).unwrap();
+    let gravel = SURFACES.iter().position(|&s| s == SurfaceType::PackedGravel).unwrap();
+    apply_edit(&mut state, &mut tools, Edit::Set(Prop::WpWidth, 15.0));
+    apply_edit(&mut state, &mut tools, Edit::Pick(Prop::WpSurface, dirt));
+    apply_edit(&mut state, &mut tools, Edit::Flag(Prop::WpLeftCurb, true));
+    apply_edit(&mut state, &mut tools, Edit::Pick(Prop::WpRunoffL, gravel));
+
+    {
+        let seg = state
+            .track
+            .network
+            .as_ref()
+            .unwrap()
+            .segments
+            .iter()
+            .find(|s| s.id == branch_seg_id)
+            .unwrap();
+        let wp = &seg.waypoints[2];
+        assert_eq!(wp.width, 15.0);
+        assert_eq!(wp.surface, Some(SurfaceType::Dirt));
+        assert!(wp.left_curb);
+        assert_eq!(wp.left_runoff_surface, Some(SurfaceType::PackedGravel));
+        let last_sample = seg.samples.last().unwrap();
+        assert_eq!(last_sample.surface, SurfaceType::Dirt);
+        assert_eq!(last_sample.left_runoff_surface, Some(SurfaceType::PackedGravel));
+    }
+
+    // Drag the magenta branch waypoint to a new world position and verify segment samples update.
+    let dragged_pt = Vec2::new(-50.0, -120.0);
+    tools.handle_mouse_down(&mut state, branch_pt);
+    tools.handle_mouse_drag(&mut state, dragged_pt);
+    tools.handle_mouse_up(&mut state, dragged_pt);
+
+    {
+        let seg = state
+            .track
+            .network
+            .as_ref()
+            .unwrap()
+            .segments
+            .iter()
+            .find(|s| s.id == SegmentId(branch_seg_id.0))
+            .unwrap();
+        assert_eq!(seg.waypoints[2].point, dragged_pt);
+        assert!((seg.samples.last().unwrap().point - dragged_pt).length() < 1e-3);
+    }
+}
+
+#[test]
+fn jump_tool_and_ramp_component_switching_in_inspector() {
+    use tdrace_core::track::geometry::RampKind;
+
+    let mut state = with_selection(Selection::None);
+    let mut tools = ToolSettings {
+        active_tool: EditorToolType::JumpRamp,
+        ..ToolSettings::default()
+    };
+
+    // 1. Tool-level component selector in circuit inspector when JumpRamp tool is active.
+    let model = build_inspector(&state, &tools).unwrap();
+    assert!(matches!(find_row(&model, "Kind"), Row::Segmented { value: Common::Same(0), .. }));
+
+    apply_edit(&mut state, &mut tools, Edit::Pick(Prop::ToolRampKind, 1));
+    assert_eq!(tools.active_ramp_kind, RampKind::Whoops);
+    let model = build_inspector(&state, &tools).unwrap();
+    assert!(matches!(find_row(&model, "Spacing"), Row::Stepper { .. }));
+
+    apply_edit(&mut state, &mut tools, Edit::Pick(Prop::ToolRampKind, 2));
+    assert_eq!(tools.active_ramp_kind, RampKind::MegaRamp);
+    let model = build_inspector(&state, &tools).unwrap();
+    assert!(matches!(find_row(&model, "Gap"), Row::Stepper { .. }));
+
+    // 2. Selected JumpRamp inspector switches between Ramp, Whoops Moguls, and Mega Ramp.
+    state.select(Selection::JumpRamp(0));
+    apply_edit(&mut state, &mut tools, Edit::Pick(Prop::RampKind, 1));
+    assert_eq!(state.track.geometry.jump_ramps[0].kind, RampKind::Whoops);
+    apply_edit(&mut state, &mut tools, Edit::Set(Prop::RampWhoopSpacing, 3.5));
+    assert!((state.track.geometry.jump_ramps[0].whoop_spacing - 3.5).abs() < 1e-3);
+
+    apply_edit(&mut state, &mut tools, Edit::Pick(Prop::RampKind, 2));
+    assert_eq!(state.track.geometry.jump_ramps[0].kind, RampKind::MegaRamp);
+    apply_edit(&mut state, &mut tools, Edit::Set(Prop::RampMegaGap, 15.0));
+    assert!((state.track.geometry.jump_ramps[0].gap_length - 15.0).abs() < 1e-3);
+}

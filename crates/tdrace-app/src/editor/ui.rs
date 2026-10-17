@@ -7,7 +7,7 @@ use macroquad::input::{
 use macroquad::shapes::{draw_rectangle, draw_rectangle_lines};
 use macroquad::window::{screen_height, screen_width};
 use tdrace_core::physics::surface::SurfaceType;
-use tdrace_core::track::geometry::{JumpRamp, SurfaceLayer};
+use tdrace_core::track::geometry::{JumpRamp, RampKind, SurfaceLayer};
 use tdrace_core::track::presets::{RaceDirection, TrackShape};
 use tdrace_core::track::validation::{validate_track, ValidationSeverity};
 
@@ -157,18 +157,19 @@ pub fn is_mouse_over_editor_ui(
     // Left tool palette (and active sub-palette if applicable)
     let tool_w = scaler.s(165.0);
     let tool_y = top_h + scaler.s(12.0);
-    let tool_h = scaler.s(520.0);
+    let tool_h = scaler.s(440.0);
     let has_sub = matches!(
         active_tool,
         EditorToolType::SurfaceZone
             | EditorToolType::ArenaFloor
+            | EditorToolType::JumpRamp
             | EditorToolType::WhoopSection
             | EditorToolType::StuntRamp
             | EditorToolType::RoadSplit
             | EditorToolType::LaunchChute
     );
     let tool_bottom = if has_sub {
-        let sub_h = scaler.s(180.0);
+        let sub_h = scaler.s(210.0);
         let sub_y = tool_y + tool_h + scaler.s(8.0);
         sub_y + sub_h
     } else {
@@ -364,11 +365,11 @@ pub fn render_editor_ui(
     // 2. LEFT TOOL PALETTE
     let tool_w = scaler.s(165.0);
     let tool_y = top_h + scaler.s(12.0);
-    let tool_h = scaler.s(520.0);
+    let tool_h = scaler.s(440.0);
     scaler.draw_glass_card(scaler.s(12.0), tool_y, tool_w, tool_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.2);
 
     fonts.draw_ui_bold(
-        "TOOLS [1-0,-,L]",
+        "TOOLS [1-9, L]",
         scaler.s(22.0),
         tool_y + scaler.s(16.0),
         scaler.font_s(13.0),
@@ -380,19 +381,19 @@ pub fn render_editor_ui(
         (EditorToolType::RoadSpline, "[2] Road Spline"),
         (EditorToolType::RoadSplit, "[3] Road Split"),
         (EditorToolType::SurfaceZone, "[4] Surface Zone"),
-        (EditorToolType::JumpRamp, "[5] Jump Ramp"),
+        (EditorToolType::JumpRamp, "[5] Jump / Ramp"),
         (EditorToolType::Obstacle, "[6] Obstacle Prop"),
         (EditorToolType::Checkpoint, "[7] Checkpoint Gate"),
         (EditorToolType::PitLane, "[8] Pit Lane"),
         (EditorToolType::ArenaFloor, "[9] Arena Floor"),
-        (EditorToolType::WhoopSection, "[0] Whoops Moguls"),
-        (EditorToolType::StuntRamp, "[-] Stunt Mega Ramp"),
         (EditorToolType::LaunchChute, "[L] Launch Chute"),
     ];
 
     let mut item_y = tool_y + scaler.s(26.0);
     for (tool_type, label) in tools_list {
-        let is_active = tools.active_tool == tool_type;
+        let is_active = tools.active_tool == tool_type
+            || (tool_type == EditorToolType::JumpRamp
+                && matches!(tools.active_tool, EditorToolType::WhoopSection | EditorToolType::StuntRamp));
         let bg_col = if is_active { Palette::UI_CARD_BG_HOVER } else { Palette::UI_PILL_BG };
         let border_col = if is_active { Palette::NEON_CYAN } else { Palette::UI_CARD_BORDER };
 
@@ -553,64 +554,79 @@ pub fn render_editor_ui(
         }
     }
 
-    // 2d. Whoop Section Active Sub-Palette
-    if tools.active_tool == EditorToolType::WhoopSection {
-        let sub_h = scaler.s(160.0);
+    // 2d. Unified Jump / Ramp Active Sub-Palette (3 components: Ramp, Whoops Moguls, Mega Ramp)
+    if matches!(
+        tools.active_tool,
+        EditorToolType::JumpRamp | EditorToolType::WhoopSection | EditorToolType::StuntRamp
+    ) {
+        let sub_h = scaler.s(210.0);
         let sub_y = tool_y + tool_h + scaler.s(8.0);
         scaler.draw_glass_card(scaler.s(12.0), sub_y, tool_w, sub_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.2);
 
-        fonts.draw_ui_bold("WHOOPS CONFIG", scaler.s(22.0), sub_y + scaler.s(16.0), scaler.font_s(11.5), Palette::NEON_CYAN);
+        fonts.draw_ui_bold("JUMP COMPONENTS", scaler.s(22.0), sub_y + scaler.s(16.0), scaler.font_s(11.5), Palette::NEON_CYAN);
 
-        fonts.draw_ui_regular(&format!("Spacing: {:.1}m", tools.whoop_spacing), scaler.s(22.0), sub_y + scaler.s(32.0), scaler.font_s(10.5), Palette::WHITE);
+        let current_kind = tools.effective_ramp_kind();
+        let kind_buttons = [
+            (RampKind::Ramp, "Ramp", Palette::NEON_CYAN),
+            (RampKind::Whoops, "Whoops Moguls", Palette::NEON_GOLD),
+            (RampKind::MegaRamp, "Mega Ramp", Palette::NEON_MAGENTA),
+        ];
+
+        let mut btn_y = sub_y + scaler.s(22.0);
+        for (kind, label, accent) in kind_buttons {
+            let is_active = current_kind == kind;
+            let bg_col = if is_active { Palette::UI_CARD_BG_HOVER } else { Palette::UI_PILL_BG };
+            let border_col = if is_active { accent } else { Palette::UI_CARD_BORDER };
+            if draw_ui_btn(fonts, &scaler, scaler.s(20.0), btn_y, tool_w - scaler.s(16.0), scaler.s(24.0), label, bg_col, border_col, mouse_pos, bg_mouse_clicked) {
+                tools.active_tool = EditorToolType::JumpRamp;
+                tools.active_ramp_kind = kind;
+            }
+            btn_y += scaler.s(27.0);
+        }
+
         let third_w = (tool_w - scaler.s(26.0)) / 3.0;
-        let mut btn_y = sub_y + scaler.s(38.0);
-        let spacings = [3.5, 5.0, 6.5];
-        for (i, &sp) in spacings.iter().enumerate() {
-            let active = (tools.whoop_spacing - sp).abs() < 0.1;
-            if draw_ui_btn(fonts, &scaler, scaler.s(18.0) + (third_w + scaler.s(4.0)) * i as f32, btn_y, third_w, scaler.s(20.0), &format!("{:.1}m", sp), if active { Palette::UI_CARD_BG_HOVER } else { Palette::UI_PILL_BG }, if active { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER }, mouse_pos, bg_mouse_clicked) {
-                tools.whoop_spacing = sp;
+        match current_kind {
+            RampKind::Ramp => {
+                fonts.draw_ui_regular("Right-Click + Drag", scaler.s(22.0), btn_y + scaler.s(14.0), scaler.font_s(10.0), Palette::WHITE);
+                fonts.draw_ui_regular("to place launch ramp.", scaler.s(22.0), btn_y + scaler.s(28.0), scaler.font_s(10.0), Palette::UI_TEXT_MUTED);
             }
-        }
-
-        btn_y += scaler.s(25.0);
-        fonts.draw_ui_regular(&format!("Height: {:.2}m", tools.whoop_height), scaler.s(22.0), btn_y + scaler.s(10.0), scaler.font_s(10.5), Palette::WHITE);
-        btn_y += scaler.s(16.0);
-        let heights = [0.5, 0.7, 1.0];
-        for (i, &h) in heights.iter().enumerate() {
-            let active = (tools.whoop_height - h).abs() < 0.05;
-            if draw_ui_btn(fonts, &scaler, scaler.s(18.0) + (third_w + scaler.s(4.0)) * i as f32, btn_y, third_w, scaler.s(20.0), &format!("{:.1}m", h), if active { Palette::UI_CARD_BG_HOVER } else { Palette::UI_PILL_BG }, if active { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER }, mouse_pos, bg_mouse_clicked) {
-                tools.whoop_height = h;
+            RampKind::Whoops => {
+                fonts.draw_ui_regular(&format!("Spacing: {:.1}m", tools.whoop_spacing), scaler.s(22.0), btn_y + scaler.s(12.0), scaler.font_s(10.0), Palette::WHITE);
+                btn_y += scaler.s(16.0);
+                for (i, &sp) in [3.5f32, 5.0, 6.5].iter().enumerate() {
+                    let active = (tools.whoop_spacing - sp).abs() < 0.1;
+                    if draw_ui_btn(fonts, &scaler, scaler.s(18.0) + (third_w + scaler.s(4.0)) * i as f32, btn_y, third_w, scaler.s(20.0), &format!("{:.1}m", sp), if active { Palette::UI_CARD_BG_HOVER } else { Palette::UI_PILL_BG }, if active { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER }, mouse_pos, bg_mouse_clicked) {
+                        tools.whoop_spacing = sp;
+                    }
+                }
+                btn_y += scaler.s(24.0);
+                fonts.draw_ui_regular(&format!("Height: {:.2}m", tools.whoop_height), scaler.s(22.0), btn_y + scaler.s(10.0), scaler.font_s(10.0), Palette::WHITE);
+                btn_y += scaler.s(14.0);
+                for (i, &h) in [0.5f32, 0.7, 1.0].iter().enumerate() {
+                    let active = (tools.whoop_height - h).abs() < 0.05;
+                    if draw_ui_btn(fonts, &scaler, scaler.s(18.0) + (third_w + scaler.s(4.0)) * i as f32, btn_y, third_w, scaler.s(20.0), &format!("{:.1}m", h), if active { Palette::UI_CARD_BG_HOVER } else { Palette::UI_PILL_BG }, if active { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER }, mouse_pos, bg_mouse_clicked) {
+                        tools.whoop_height = h;
+                    }
+                }
             }
-        }
-    }
-
-    // 2e. Stunt Mega Ramp Active Sub-Palette
-    if tools.active_tool == EditorToolType::StuntRamp {
-        let sub_h = scaler.s(160.0);
-        let sub_y = tool_y + tool_h + scaler.s(8.0);
-        scaler.draw_glass_card(scaler.s(12.0), sub_y, tool_w, sub_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.2);
-
-        fonts.draw_ui_bold("STUNT MEGA RAMP", scaler.s(22.0), sub_y + scaler.s(16.0), scaler.font_s(11.5), Palette::NEON_MAGENTA);
-
-        fonts.draw_ui_regular(&format!("Height: {:.1}m", tools.stunt_ramp_height), scaler.s(22.0), sub_y + scaler.s(32.0), scaler.font_s(10.5), Palette::WHITE);
-        let third_w = (tool_w - scaler.s(26.0)) / 3.0;
-        let mut btn_y = sub_y + scaler.s(38.0);
-        let heights = [2.5, 3.5, 5.0];
-        for (i, &h) in heights.iter().enumerate() {
-            let active = (tools.stunt_ramp_height - h).abs() < 0.1;
-            if draw_ui_btn(fonts, &scaler, scaler.s(18.0) + (third_w + scaler.s(4.0)) * i as f32, btn_y, third_w, scaler.s(20.0), &format!("{:.1}m", h), if active { Palette::UI_CARD_BG_HOVER } else { Palette::UI_PILL_BG }, if active { Palette::NEON_MAGENTA } else { Palette::UI_CARD_BORDER }, mouse_pos, bg_mouse_clicked) {
-                tools.stunt_ramp_height = h;
-            }
-        }
-
-        btn_y += scaler.s(25.0);
-        fonts.draw_ui_regular(&format!("Boost: {:.1}x", tools.stunt_ramp_multiplier), scaler.s(22.0), btn_y + scaler.s(10.0), scaler.font_s(10.5), Palette::WHITE);
-        btn_y += scaler.s(16.0);
-        let boosts = [1.2, 1.5, 1.8];
-        for (i, &b) in boosts.iter().enumerate() {
-            let active = (tools.stunt_ramp_multiplier - b).abs() < 0.05;
-            if draw_ui_btn(fonts, &scaler, scaler.s(18.0) + (third_w + scaler.s(4.0)) * i as f32, btn_y, third_w, scaler.s(20.0), &format!("{:.1}x", b), if active { Palette::UI_CARD_BG_HOVER } else { Palette::UI_PILL_BG }, if active { Palette::NEON_MAGENTA } else { Palette::UI_CARD_BORDER }, mouse_pos, bg_mouse_clicked) {
-                tools.stunt_ramp_multiplier = b;
+            RampKind::MegaRamp => {
+                fonts.draw_ui_regular(&format!("Height: {:.1}m", tools.stunt_ramp_height), scaler.s(22.0), btn_y + scaler.s(12.0), scaler.font_s(10.0), Palette::WHITE);
+                btn_y += scaler.s(16.0);
+                for (i, &h) in [2.5f32, 3.5, 5.0].iter().enumerate() {
+                    let active = (tools.stunt_ramp_height - h).abs() < 0.1;
+                    if draw_ui_btn(fonts, &scaler, scaler.s(18.0) + (third_w + scaler.s(4.0)) * i as f32, btn_y, third_w, scaler.s(20.0), &format!("{:.1}m", h), if active { Palette::UI_CARD_BG_HOVER } else { Palette::UI_PILL_BG }, if active { Palette::NEON_MAGENTA } else { Palette::UI_CARD_BORDER }, mouse_pos, bg_mouse_clicked) {
+                        tools.stunt_ramp_height = h;
+                    }
+                }
+                btn_y += scaler.s(24.0);
+                fonts.draw_ui_regular(&format!("Gap: {:.0}m", tools.mega_gap_length), scaler.s(22.0), btn_y + scaler.s(10.0), scaler.font_s(10.0), Palette::WHITE);
+                btn_y += scaler.s(14.0);
+                for (i, &g) in [8.0f32, 12.0, 18.0].iter().enumerate() {
+                    let active = (tools.mega_gap_length - g).abs() < 0.5;
+                    if draw_ui_btn(fonts, &scaler, scaler.s(18.0) + (third_w + scaler.s(4.0)) * i as f32, btn_y, third_w, scaler.s(20.0), &format!("{:.0}m", g), if active { Palette::UI_CARD_BG_HOVER } else { Palette::UI_PILL_BG }, if active { Palette::NEON_MAGENTA } else { Palette::UI_CARD_BORDER }, mouse_pos, bg_mouse_clicked) {
+                        tools.mega_gap_length = g;
+                    }
+                }
             }
         }
     }
@@ -1038,7 +1054,7 @@ fn render_template_modal(
     None
 }
 
-/// Renders a 2D lateral cross-section diagram of a jump ramp showing incline slope, tabletop flat, launch lip, and surface material.
+/// Renders a 2D lateral cross-section diagram of a jump component (Ramp, Whoops Moguls, or two-segment Mega Ramp).
 fn draw_ramp_lateral_view(
     fonts: &Fonts,
     scaler: &UiScaler,
@@ -1062,100 +1078,204 @@ fn draw_ramp_lateral_view(
 
     let len = ramp.length().max(1.0);
     let height = ramp.height.max(0.1);
-    let incline_len = ramp.incline_length();
-    let flat_len = ramp.flat_length();
-
-    let s_x = draw_w / len;
-
-    let inc_w = (incline_len * s_x).clamp(0.0, draw_w);
-
-    let p0 = Vec2::new(origin_x, ground_y);
-    let p_inc = Vec2::new(origin_x + inc_w, ground_y - draw_h);
-    let p_top_exit = Vec2::new(origin_x + draw_w, ground_y - draw_h);
-    let p_bot_exit = Vec2::new(origin_x + draw_w, ground_y);
-
     let (base_col, border_opt, _) = crate::render::track::get_ramp_surface_colors(ramp.surface);
-
-    // Ground line
-    macroquad::shapes::draw_line(origin_x - scaler.s(6.0), ground_y, origin_x + draw_w + scaler.s(6.0), ground_y, scaler.s(1.2), Palette::UI_TEXT_MUTED);
-
-    // Draw ramp cross-section body fill with smooth progressive concave curve (t^2)
-    let num_curve_segs = 32;
     let slope_col = border_opt.unwrap_or(Palette::NEON_GOLD);
 
-    // 1. Incline curve body fill (sliced trapezoids under the quadratic curve)
-    for i in 0..num_curve_segs {
-        let t0 = i as f32 / num_curve_segs as f32;
-        let t1 = (i + 1) as f32 / num_curve_segs as f32;
-        let x0 = origin_x + t0 * inc_w;
-        let y0 = ground_y - draw_h * (t0 * t0);
-        let x1 = origin_x + t1 * inc_w;
-        let y1 = ground_y - draw_h * (t1 * t1);
+    // Ground line
+    macroquad::shapes::draw_line(
+        origin_x - scaler.s(6.0),
+        ground_y,
+        origin_x + draw_w + scaler.s(6.0),
+        ground_y,
+        scaler.s(1.2),
+        Palette::UI_TEXT_MUTED,
+    );
 
-        macroquad::shapes::draw_triangle(
-            macroquad::prelude::Vec2::new(x0, ground_y),
-            macroquad::prelude::Vec2::new(x0, y0),
-            macroquad::prelude::Vec2::new(x1, y1),
-            base_col,
-        );
-        macroquad::shapes::draw_triangle(
-            macroquad::prelude::Vec2::new(x0, ground_y),
-            macroquad::prelude::Vec2::new(x1, y1),
-            macroquad::prelude::Vec2::new(x1, ground_y),
-            base_col,
-        );
+    match ramp.kind {
+        RampKind::Ramp => {
+            let incline_len = ramp.incline_length();
+            let flat_len = ramp.flat_length();
+            let s_x = draw_w / len;
+            let inc_w = (incline_len * s_x).clamp(0.0, draw_w);
+
+            let p0 = Vec2::new(origin_x, ground_y);
+            let p_inc = Vec2::new(origin_x + inc_w, ground_y - draw_h);
+            let p_top_exit = Vec2::new(origin_x + draw_w, ground_y - draw_h);
+            let p_bot_exit = Vec2::new(origin_x + draw_w, ground_y);
+
+            let num_curve_segs = 32;
+            for i in 0..num_curve_segs {
+                let t0 = i as f32 / num_curve_segs as f32;
+                let t1 = (i + 1) as f32 / num_curve_segs as f32;
+                let x0 = origin_x + t0 * inc_w;
+                let y0 = ground_y - draw_h * (t0 * t0);
+                let x1 = origin_x + t1 * inc_w;
+                let y1 = ground_y - draw_h * (t1 * t1);
+
+                macroquad::shapes::draw_triangle(
+                    macroquad::prelude::Vec2::new(x0, ground_y),
+                    macroquad::prelude::Vec2::new(x0, y0),
+                    macroquad::prelude::Vec2::new(x1, y1),
+                    base_col,
+                );
+                macroquad::shapes::draw_triangle(
+                    macroquad::prelude::Vec2::new(x0, ground_y),
+                    macroquad::prelude::Vec2::new(x1, y1),
+                    macroquad::prelude::Vec2::new(x1, ground_y),
+                    base_col,
+                );
+                macroquad::shapes::draw_line(x0, y0, x1, y1, scaler.s(2.2), slope_col);
+            }
+
+            if flat_len > 0.05 && inc_w < draw_w - scaler.s(1.0) {
+                macroquad::shapes::draw_rectangle(origin_x + inc_w, ground_y - draw_h, draw_w - inc_w, draw_h, base_col);
+                macroquad::shapes::draw_line(p_inc.x, p_inc.y, p_top_exit.x, p_top_exit.y, scaler.s(2.0), Palette::NEON_CYAN);
+            }
+
+            for div in [0.25f32, 0.50, 0.75] {
+                let gx = origin_x + div * inc_w;
+                let gy = ground_y - draw_h * (div * div);
+                macroquad::shapes::draw_line(gx, ground_y, gx, gy, scaler.s(1.0), Color::new(1.0, 1.0, 1.0, 0.12));
+            }
+
+            macroquad::shapes::draw_line(p_top_exit.x, p_top_exit.y, p_bot_exit.x, p_bot_exit.y, scaler.s(2.0), Palette::NEON_CYAN);
+
+            let pitch_str = format!("{:.0}° (Curved)", ramp.ramp_angle_deg);
+            fonts.draw_ui_bold(&pitch_str, p0.x + scaler.s(8.0), ground_y - scaler.s(4.0), scaler.font_s(9.5), Palette::NEON_GOLD);
+
+            if flat_len > 0.05 {
+                let flat_str = format!("Flat:{:.1}m", flat_len);
+                let flat_x = origin_x + inc_w + (draw_w - inc_w) * 0.5 - scaler.s(18.0);
+                fonts.draw_ui_bold(&flat_str, flat_x.max(origin_x + inc_w), ground_y - draw_h - scaler.s(3.0), scaler.font_s(9.0), Palette::NEON_CYAN);
+            }
+        }
+        RampKind::Whoops => {
+            // Multi-ridge sinusoidal mogul rhythm section profile
+            let num_segs = 64;
+            for i in 0..num_segs {
+                let s0 = i as f32 / num_segs as f32;
+                let s1 = (i + 1) as f32 / num_segs as f32;
+                let h0 = (ramp.surface_elevation_at_progress(s0) / height).clamp(0.0, 1.0);
+                let h1 = (ramp.surface_elevation_at_progress(s1) / height).clamp(0.0, 1.0);
+                let x0 = origin_x + s0 * draw_w;
+                let x1 = origin_x + s1 * draw_w;
+                let y0 = ground_y - h0 * draw_h * 0.85;
+                let y1 = ground_y - h1 * draw_h * 0.85;
+
+                macroquad::shapes::draw_triangle(
+                    macroquad::prelude::Vec2::new(x0, ground_y),
+                    macroquad::prelude::Vec2::new(x0, y0),
+                    macroquad::prelude::Vec2::new(x1, y1),
+                    base_col,
+                );
+                macroquad::shapes::draw_triangle(
+                    macroquad::prelude::Vec2::new(x0, ground_y),
+                    macroquad::prelude::Vec2::new(x1, y1),
+                    macroquad::prelude::Vec2::new(x1, ground_y),
+                    base_col,
+                );
+                macroquad::shapes::draw_line(x0, y0, x1, y1, scaler.s(2.0), Palette::NEON_GOLD);
+            }
+
+            let info_str = format!("{} Moguls • {:.1}m spacing", ramp.whoop_count(), ramp.whoop_spacing);
+            fonts.draw_ui_bold(&info_str, origin_x + scaler.s(4.0), y + scaler.s(13.0), scaler.font_s(9.0), Palette::NEON_CYAN);
+        }
+        RampKind::MegaRamp => {
+            // Two-segment stunt jump: Take-Off + Open Gap + Downslope Landing
+            let (s_takeoff, s_landing) = ramp.mega_segment_bounds();
+            let num_segs = 32;
+
+            // 1. Take-Off segment [0.0, s_takeoff]
+            for i in 0..num_segs {
+                let u0 = i as f32 / num_segs as f32;
+                let u1 = (i + 1) as f32 / num_segs as f32;
+                let s0 = u0 * s_takeoff;
+                let s1 = u1 * s_takeoff;
+                let h0 = (ramp.surface_elevation_at_progress(s0) / height).clamp(0.0, 1.0);
+                let h1 = (ramp.surface_elevation_at_progress(s1) / height).clamp(0.0, 1.0);
+                let x0 = origin_x + s0 * draw_w;
+                let x1 = origin_x + s1 * draw_w;
+                let y0 = ground_y - h0 * draw_h;
+                let y1 = ground_y - h1 * draw_h;
+
+                macroquad::shapes::draw_triangle(
+                    macroquad::prelude::Vec2::new(x0, ground_y),
+                    macroquad::prelude::Vec2::new(x0, y0),
+                    macroquad::prelude::Vec2::new(x1, y1),
+                    base_col,
+                );
+                macroquad::shapes::draw_triangle(
+                    macroquad::prelude::Vec2::new(x0, ground_y),
+                    macroquad::prelude::Vec2::new(x1, y1),
+                    macroquad::prelude::Vec2::new(x1, ground_y),
+                    base_col,
+                );
+                macroquad::shapes::draw_line(x0, y0, x1, y1, scaler.s(2.2), Palette::NEON_GOLD);
+            }
+            let x_takeoff = origin_x + s_takeoff * draw_w;
+            macroquad::shapes::draw_line(x_takeoff, ground_y - draw_h, x_takeoff, ground_y, scaler.s(2.0), Palette::NEON_GOLD);
+
+            // 2. Ballistic flight trajectory arc across the Gap (s_takeoff .. s_landing)
+            let x_landing = origin_x + s_landing * draw_w;
+            let catch_y = ground_y - 0.92 * draw_h;
+            for i in 0..10 {
+                let t0 = i as f32 / 10.0;
+                let t1 = (i as f32 + 0.6) / 10.0;
+                let ax0 = x_takeoff + t0 * (x_landing - x_takeoff);
+                let ax1 = x_takeoff + t1 * (x_landing - x_takeoff);
+                let arc0 = 4.0 * t0 * (1.0 - t0) * scaler.s(10.0);
+                let arc1 = 4.0 * t1 * (1.0 - t1) * scaler.s(10.0);
+                let ay0 = (ground_y - draw_h) * (1.0 - t0) + catch_y * t0 - arc0;
+                let ay1 = (ground_y - draw_h) * (1.0 - t1) + catch_y * t1 - arc1;
+                macroquad::shapes::draw_line(ax0, ay0, ax1, ay1, scaler.s(1.5), Palette::NEON_MAGENTA);
+            }
+
+            // 3. Downslope Landing segment [s_landing, 1.0]
+            macroquad::shapes::draw_line(x_landing, catch_y, x_landing, ground_y, scaler.s(2.0), Palette::NEON_CYAN);
+            for i in 0..num_segs {
+                let u0 = i as f32 / num_segs as f32;
+                let u1 = (i + 1) as f32 / num_segs as f32;
+                let s0 = s_landing + u0 * (1.0 - s_landing);
+                let s1 = s_landing + u1 * (1.0 - s_landing);
+                let h0 = (ramp.surface_elevation_at_progress(s0) / height).clamp(0.0, 1.0);
+                let h1 = (ramp.surface_elevation_at_progress(s1) / height).clamp(0.0, 1.0);
+                let x0 = origin_x + s0 * draw_w;
+                let x1 = origin_x + s1 * draw_w;
+                let y0 = ground_y - h0 * draw_h;
+                let y1 = ground_y - h1 * draw_h;
+
+                macroquad::shapes::draw_triangle(
+                    macroquad::prelude::Vec2::new(x0, ground_y),
+                    macroquad::prelude::Vec2::new(x0, y0),
+                    macroquad::prelude::Vec2::new(x1, y1),
+                    base_col,
+                );
+                macroquad::shapes::draw_triangle(
+                    macroquad::prelude::Vec2::new(x0, ground_y),
+                    macroquad::prelude::Vec2::new(x1, y1),
+                    macroquad::prelude::Vec2::new(x1, ground_y),
+                    base_col,
+                );
+                macroquad::shapes::draw_line(x0, y0, x1, y1, scaler.s(2.2), Palette::NEON_CYAN);
+            }
+
+            let gap_str = format!("Gap {:.0}m", ramp.effective_gap_length());
+            fonts.draw_ui_bold(
+                &gap_str,
+                (x_takeoff + x_landing) * 0.5 - scaler.s(18.0),
+                ground_y - scaler.s(4.0),
+                scaler.font_s(9.0),
+                Palette::NEON_MAGENTA,
+            );
+        }
     }
 
-    // 2. Tabletop flat rectangle body fill (if present)
-    if flat_len > 0.05 && inc_w < draw_w - scaler.s(1.0) {
-        macroquad::shapes::draw_rectangle(origin_x + inc_w, ground_y - draw_h, draw_w - inc_w, draw_h, base_col);
-    }
-
-    // 3. Subtle vertical guide contours along curved incline
-    for div in [0.25f32, 0.50, 0.75] {
-        let gx = origin_x + div * inc_w;
-        let gy = ground_y - draw_h * (div * div);
-        macroquad::shapes::draw_line(gx, ground_y, gx, gy, scaler.s(1.0), macroquad::color::Color::new(1.0, 1.0, 1.0, 0.12));
-    }
-
-    // 4. Smooth curved incline slope stroke
-    for i in 0..num_curve_segs {
-        let t0 = i as f32 / num_curve_segs as f32;
-        let t1 = (i + 1) as f32 / num_curve_segs as f32;
-        let x0 = origin_x + t0 * inc_w;
-        let y0 = ground_y - draw_h * (t0 * t0);
-        let x1 = origin_x + t1 * inc_w;
-        let y1 = ground_y - draw_h * (t1 * t1);
-        macroquad::shapes::draw_line(x0, y0, x1, y1, scaler.s(2.2), slope_col);
-    }
-
-    // 5. Tabletop stroke (if flat portion exists)
-    if flat_len > 0.05 && inc_w < draw_w - scaler.s(1.0) {
-        macroquad::shapes::draw_line(p_inc.x, p_inc.y, p_top_exit.x, p_top_exit.y, scaler.s(2.0), Palette::NEON_CYAN);
-    }
-
-    // 6. Exit launch lip (vertical drop line)
-    macroquad::shapes::draw_line(p_top_exit.x, p_top_exit.y, p_bot_exit.x, p_bot_exit.y, scaler.s(2.0), Palette::NEON_CYAN);
-
-    // Annotations text
-    // Length (bottom)
+    // Common annotations: Length (bottom) & Height (right)
     let len_str = format!("L:{:.1}m", len);
     fonts.draw_ui_regular(&len_str, origin_x + draw_w * 0.5 - scaler.s(16.0), ground_y + scaler.s(13.0), scaler.font_s(9.5), Palette::UI_TEXT_MUTED);
 
-    // Height (right vertical)
     let h_str = format!("H:{:.1}m", height);
-    fonts.draw_ui_regular(&h_str, (p_top_exit.x - scaler.s(36.0)).max(origin_x), ground_y - draw_h * 0.5 + scaler.s(3.0), scaler.font_s(9.5), Palette::NEON_GOLD);
-
-    // Pitch (along slope)
-    let pitch_str = format!("{:.0}° (Curved)", ramp.ramp_angle_deg);
-    fonts.draw_ui_bold(&pitch_str, p0.x + scaler.s(8.0), ground_y - scaler.s(4.0), scaler.font_s(9.5), Palette::NEON_GOLD);
-
-    // Flat label if present
-    if flat_len > 0.05 {
-        let flat_str = format!("Flat:{:.1}m", flat_len);
-        let flat_x = origin_x + inc_w + (draw_w - inc_w) * 0.5 - scaler.s(18.0);
-        fonts.draw_ui_bold(&flat_str, flat_x.max(origin_x + inc_w), ground_y - draw_h - scaler.s(3.0), scaler.font_s(9.0), Palette::NEON_CYAN);
-    }
+    fonts.draw_ui_regular(&h_str, (origin_x + draw_w - scaler.s(36.0)).max(origin_x), ground_y - draw_h * 0.5 + scaler.s(3.0), scaler.font_s(9.5), Palette::NEON_GOLD);
 }
 
 /// Renders modal overlay for specifying exact jump ramp dimension/orientation property.

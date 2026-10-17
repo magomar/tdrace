@@ -5,7 +5,7 @@ use macroquad::color::{Color, WHITE};
 use macroquad::models::{draw_mesh, Mesh, Vertex};
 use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_rectangle, draw_triangle};
 use wheelbase::surface::SurfaceType;
-use arcade_race_core::track::geometry::{LineSegment, PitLane, PitLaneJunctionData, SurfaceLayer, SurfaceShape, WallSuppressionRecord};
+use arcade_race_core::track::geometry::{LineSegment, PitLane, PitLaneJunctionData, RampKind, SurfaceLayer, SurfaceShape, WallSuppressionRecord};
 use arcade_race_core::track::junction_kit::Side;
 use arcade_race_core::track::network::{JunctionKind, RoadSegment};
 use arcade_race_core::track::spline::{SplineSample, TrackSpline};
@@ -1224,73 +1224,235 @@ pub fn render_jump_ramps(track: &Track) {
                 let right = Vec2::new(-angle.sin(), angle.cos());
                 let half_len = half_extents.x;
                 let half_wid = half_extents.y;
+                let full_len = half_len * 2.0;
 
                 let p0 = *center - fwd * half_len - right * half_wid;
                 let p1 = *center + fwd * half_len - right * half_wid;
                 let p2 = *center + fwd * half_len + right * half_wid;
                 let p3 = *center - fwd * half_len + right * half_wid;
-
-                // 1. Drop shadow beneath ramp platform
-                let s_off = Vec2::new(0.40, 0.55);
-                draw_quad(p0 + s_off, p1 + s_off, p2 + s_off, p3 + s_off, Palette::SHADOW);
-
-                // 2. Base metallic/surface ramp quad
-                draw_quad(p0, p1, p2, p3, ramp_base_col);
-
-                // 3. Natural curved elevation contour arcs across the ramp width (showing progressive mound incline)
-                let num_contours = if half_len >= 8.0 {
-                    4
-                } else if half_len >= 4.0 {
-                    3
-                } else {
-                    2
-                };
-
-                let arc_w = (half_wid * 0.82).max(0.6);
-                let arc_bulge = (half_len * 0.22).min(arc_w * 0.40);
-
-                for s in 0..num_contours {
-                    let t = (s as f32 + 1.0) / (num_contours as f32 + 1.0);
-                    let x_center = -half_len * 0.70 + t * (half_len * 1.35);
-
-                    // Draw smooth curved contour arc across the ramp width (12 segments)
-                    let num_segments = 12;
-                    let mut prev_pt: Option<Vec2> = None;
-
-                    for seg in 0..=num_segments {
-                        let frac = (seg as f32 / num_segments as f32) * 2.0 - 1.0; // [-1.0, 1.0]
-                        let y_offset = frac * arc_w;
-                        let curve_offset = (1.0 - frac * frac) * arc_bulge;
-                        let pt = *center + fwd * (x_center + curve_offset) + right * y_offset;
-
-                        if let Some(prev) = prev_pt {
-                            draw_line(prev.x, prev.y, pt.x, pt.y, 0.35, contour_col);
-                        }
-                        prev_pt = Some(pt);
-                    }
-                }
-
-                // 4. Elevated natural curved takeoff lip at exit edge
-                let lip_bulge = (half_len * 0.12).min(0.45);
-                let mut prev_lip: Option<Vec2> = None;
-                let num_lip_segs = 12;
-                for seg in 0..=num_lip_segs {
-                    let frac = (seg as f32 / num_lip_segs as f32) * 2.0 - 1.0;
-                    let y_offset = frac * half_wid;
-                    let curve_offset = (1.0 - frac * frac) * lip_bulge;
-                    let pt = *center + fwd * (half_len + curve_offset) + right * y_offset;
-
-                    if let Some(prev) = prev_lip {
-                        draw_line(prev.x, prev.y, pt.x, pt.y, 0.40, Color::new(0.95, 0.95, 0.98, 0.95));
-                    }
-                    prev_lip = Some(pt);
-                }
-
-                // 5. Ramp side border rails & entrance edge
                 let rail_col = border_opt.unwrap_or(Color::new(0.85, 0.85, 0.90, 1.0));
-                draw_line(p0.x, p0.y, p1.x, p1.y, 0.30, rail_col);
-                draw_line(p3.x, p3.y, p2.x, p2.y, 0.30, rail_col);
-                draw_line(p0.x, p0.y, p3.x, p3.y, 0.25, Color::new(0.55, 0.55, 0.60, 0.60));
+                let s_off = Vec2::new(0.40, 0.55);
+
+                match ramp.kind {
+                    RampKind::Ramp => {
+                        // 1. Drop shadow beneath ramp platform
+                        draw_quad(p0 + s_off, p1 + s_off, p2 + s_off, p3 + s_off, Palette::SHADOW);
+
+                        // 2. Base metallic/surface ramp quad
+                        draw_quad(p0, p1, p2, p3, ramp_base_col);
+
+                        // 3. Natural curved elevation contour arcs across the ramp width
+                        let num_contours = if half_len >= 8.0 {
+                            4
+                        } else if half_len >= 4.0 {
+                            3
+                        } else {
+                            2
+                        };
+
+                        let arc_w = (half_wid * 0.82).max(0.6);
+                        let arc_bulge = (half_len * 0.22).min(arc_w * 0.40);
+
+                        for s in 0..num_contours {
+                            let t = (s as f32 + 1.0) / (num_contours as f32 + 1.0);
+                            let x_center = -half_len * 0.70 + t * (half_len * 1.35);
+
+                            let num_segments = 12;
+                            let mut prev_pt: Option<Vec2> = None;
+
+                            for seg in 0..=num_segments {
+                                let frac = (seg as f32 / num_segments as f32) * 2.0 - 1.0;
+                                let y_offset = frac * arc_w;
+                                let curve_offset = (1.0 - frac * frac) * arc_bulge;
+                                let pt = *center + fwd * (x_center + curve_offset) + right * y_offset;
+
+                                if let Some(prev) = prev_pt {
+                                    draw_line(prev.x, prev.y, pt.x, pt.y, 0.35, contour_col);
+                                }
+                                prev_pt = Some(pt);
+                            }
+                        }
+
+                        // 4. Elevated natural curved takeoff lip at exit edge
+                        let lip_bulge = (half_len * 0.12).min(0.45);
+                        let mut prev_lip: Option<Vec2> = None;
+                        let num_lip_segs = 12;
+                        for seg in 0..=num_lip_segs {
+                            let frac = (seg as f32 / num_lip_segs as f32) * 2.0 - 1.0;
+                            let y_offset = frac * half_wid;
+                            let curve_offset = (1.0 - frac * frac) * lip_bulge;
+                            let pt = *center + fwd * (half_len + curve_offset) + right * y_offset;
+
+                            if let Some(prev) = prev_lip {
+                                draw_line(prev.x, prev.y, pt.x, pt.y, 0.40, Color::new(0.95, 0.95, 0.98, 0.95));
+                            }
+                            prev_lip = Some(pt);
+                        }
+
+                        // 5. Ramp side border rails & entrance edge
+                        draw_line(p0.x, p0.y, p1.x, p1.y, 0.30, rail_col);
+                        draw_line(p3.x, p3.y, p2.x, p2.y, 0.30, rail_col);
+                        draw_line(p0.x, p0.y, p3.x, p3.y, 0.25, Color::new(0.55, 0.55, 0.60, 0.60));
+                    }
+                    RampKind::Whoops => {
+                        // Cohesive multi-ridge rhythm section: multiple closely spaced mogul jumps
+                        draw_quad(p0 + s_off * 0.6, p1 + s_off * 0.6, p2 + s_off * 0.6, p3 + s_off * 0.6, Palette::SHADOW);
+                        draw_quad(p0, p1, p2, p3, ramp_base_col);
+
+                        let n_ridges = ramp.whoop_count();
+                        let ridge_len = full_len / n_ridges as f32;
+                        let trough_col = Color::new(
+                            (ramp_base_col.r * 0.68).clamp(0.0, 1.0),
+                            (ramp_base_col.g * 0.68).clamp(0.0, 1.0),
+                            (ramp_base_col.b * 0.68).clamp(0.0, 1.0),
+                            0.88,
+                        );
+                        let crest_band_col = Color::new(
+                            (ramp_base_col.r * 1.25 + 0.08).clamp(0.0, 1.0),
+                            (ramp_base_col.g * 1.25 + 0.07).clamp(0.0, 1.0),
+                            (ramp_base_col.b * 1.25 + 0.05).clamp(0.0, 1.0),
+                            0.92,
+                        );
+                        let crest_line_col = Color::new(0.96, 0.92, 0.78, 0.92);
+
+                        for idx in 0..n_ridges {
+                            let x_start = -half_len + idx as f32 * ridge_len;
+                            let x_crest = x_start + ridge_len * 0.50;
+                            let x_trough = x_start + ridge_len * 0.88;
+
+                            // Sunlit crest band across the mogul peak
+                            let c0 = *center + fwd * (x_crest - ridge_len * 0.18) - right * (half_wid * 0.96);
+                            let c1 = *center + fwd * (x_crest + ridge_len * 0.18) - right * (half_wid * 0.96);
+                            let c2 = *center + fwd * (x_crest + ridge_len * 0.18) + right * (half_wid * 0.96);
+                            let c3 = *center + fwd * (x_crest - ridge_len * 0.18) + right * (half_wid * 0.96);
+                            draw_quad(c0, c1, c2, c3, crest_band_col);
+
+                            // Shadowed valley trough band between moguls
+                            let t0 = *center + fwd * (x_trough - ridge_len * 0.12) - right * (half_wid * 0.96);
+                            let t1 = *center + fwd * (x_trough + ridge_len * 0.12) - right * (half_wid * 0.96);
+                            let t2 = *center + fwd * (x_trough + ridge_len * 0.12) + right * (half_wid * 0.96);
+                            let t3 = *center + fwd * (x_trough - ridge_len * 0.12) + right * (half_wid * 0.96);
+                            draw_quad(t0, t1, t2, t3, trough_col);
+
+                            // Crisp ridge line along the crest
+                            let l_pt = *center + fwd * x_crest - right * (half_wid * 0.92);
+                            let r_pt = *center + fwd * x_crest + right * (half_wid * 0.92);
+                            draw_line(l_pt.x, l_pt.y, r_pt.x, r_pt.y, 0.28, crest_line_col);
+
+                            // Upslope contour line
+                            let u_x = x_start + ridge_len * 0.25;
+                            let u_l = *center + fwd * u_x - right * (half_wid * 0.82);
+                            let u_r = *center + fwd * u_x + right * (half_wid * 0.82);
+                            draw_line(u_l.x, u_l.y, u_r.x, u_r.y, 0.20, contour_col);
+                        }
+
+                        // Side rails and entrance/exit markers
+                        draw_line(p0.x, p0.y, p1.x, p1.y, 0.30, rail_col);
+                        draw_line(p3.x, p3.y, p2.x, p2.y, 0.30, rail_col);
+                        draw_line(p0.x, p0.y, p3.x, p3.y, 0.22, Color::new(0.65, 0.65, 0.70, 0.65));
+                        draw_line(p1.x, p1.y, p2.x, p2.y, 0.22, Color::new(0.65, 0.65, 0.70, 0.65));
+                    }
+                    RampKind::MegaRamp => {
+                        // Two-segment stunt jump:
+                        // Segment 1: Take-Off Ramp [0.0, s_takeoff]
+                        // Gap: Open mid-air gap (s_takeoff, s_landing)
+                        // Segment 2: Downslope Landing Ramp [s_landing, 1.0]
+                        let (s_takeoff, s_landing) = ramp.mega_segment_bounds();
+                        let x_takeoff_end = -half_len + s_takeoff * full_len;
+                        let x_landing_start = -half_len + s_landing * full_len;
+
+                        // --- Segment 1: Take-Off Ramp ---
+                        let t0 = p0;
+                        let t1 = *center + fwd * x_takeoff_end - right * half_wid;
+                        let t2 = *center + fwd * x_takeoff_end + right * half_wid;
+                        let t3 = p3;
+                        draw_quad(t0 + s_off, t1 + s_off, t2 + s_off, t3 + s_off, Palette::SHADOW);
+                        draw_quad(t0, t1, t2, t3, ramp_base_col);
+
+                        // Curved contours on Take-Off Ramp
+                        let takeoff_len = (x_takeoff_end - (-half_len)).max(1.0);
+                        let arc_w = (half_wid * 0.82).max(0.6);
+                        let arc_bulge = (takeoff_len * 0.14).min(arc_w * 0.35);
+                        for idx in 1..=3 {
+                            let frac_x = idx as f32 / 4.0;
+                            let x_c = -half_len + frac_x * takeoff_len;
+                            let mut prev_pt: Option<Vec2> = None;
+                            for seg in 0..=10 {
+                                let frac = (seg as f32 / 10.0) * 2.0 - 1.0;
+                                let y_off = frac * arc_w;
+                                let bulge = (1.0 - frac * frac) * arc_bulge;
+                                let pt = *center + fwd * (x_c + bulge) + right * y_off;
+                                if let Some(prev) = prev_pt {
+                                    draw_line(prev.x, prev.y, pt.x, pt.y, 0.32, contour_col);
+                                }
+                                prev_pt = Some(pt);
+                            }
+                        }
+
+                        // Bright launch chevron & high-contrast lip bar at end of Take-Off segment
+                        let chev_x = -half_len + takeoff_len * 0.68;
+                        let chev_tip = *center + fwd * (chev_x + takeoff_len * 0.18);
+                        let chev_l = *center + fwd * chev_x - right * (half_wid * 0.55);
+                        let chev_r = *center + fwd * chev_x + right * (half_wid * 0.55);
+                        let accent_col = Color::new(1.0, 0.82, 0.20, 0.92);
+                        draw_line(chev_l.x, chev_l.y, chev_tip.x, chev_tip.y, 0.38, accent_col);
+                        draw_line(chev_r.x, chev_r.y, chev_tip.x, chev_tip.y, 0.38, accent_col);
+
+                        draw_line(t1.x, t1.y, t2.x, t2.y, 0.48, Color::new(1.0, 0.92, 0.35, 0.98));
+                        draw_line(t0.x, t0.y, t1.x, t1.y, 0.32, rail_col);
+                        draw_line(t3.x, t3.y, t2.x, t2.y, 0.32, rail_col);
+                        draw_line(t0.x, t0.y, t3.x, t3.y, 0.25, Color::new(0.55, 0.55, 0.60, 0.65));
+
+                        // --- Middle Gap: dashed trajectory guide lines between Take-Off and Landing ---
+                        let gap_len = (x_landing_start - x_takeoff_end).max(1.0);
+                        let dash_count = ((gap_len / 2.2).round() as usize).clamp(2, 10);
+                        let guide_col = Color::new(1.0, 0.78, 0.22, 0.45);
+                        for d in 0..dash_count {
+                            let u0 = (d as f32 + 0.15) / dash_count as f32;
+                            let u1 = (d as f32 + 0.65) / dash_count as f32;
+                            let gx0 = x_takeoff_end + u0 * gap_len;
+                            let gx1 = x_takeoff_end + u1 * gap_len;
+                            for side in [-1.0f32, 1.0f32] {
+                                let gp0 = *center + fwd * gx0 + right * (half_wid * 0.92 * side);
+                                let gp1 = *center + fwd * gx1 + right * (half_wid * 0.92 * side);
+                                draw_line(gp0.x, gp0.y, gp1.x, gp1.y, 0.20, guide_col);
+                            }
+                        }
+
+                        // --- Segment 2: Downslope Landing Ramp ---
+                        let l0 = *center + fwd * x_landing_start - right * half_wid;
+                        let l1 = p1;
+                        let l2 = p2;
+                        let l3 = *center + fwd * x_landing_start + right * half_wid;
+                        draw_quad(l0 + s_off, l1 + s_off, l2 + s_off, l3 + s_off, Palette::SHADOW);
+                        draw_quad(l0, l1, l2, l3, ramp_base_col);
+
+                        // Elevated catch-lip bar at start of Landing segment
+                        draw_line(l0.x, l0.y, l3.x, l3.y, 0.44, Color::new(0.35, 0.92, 1.0, 0.95));
+
+                        // Downslope contours on Landing Ramp
+                        let landing_len = (half_len - x_landing_start).max(1.0);
+                        for idx in 1..=3 {
+                            let frac_x = idx as f32 / 4.0;
+                            let x_c = x_landing_start + frac_x * landing_len;
+                            let mut prev_pt: Option<Vec2> = None;
+                            for seg in 0..=10 {
+                                let frac = (seg as f32 / 10.0) * 2.0 - 1.0;
+                                let y_off = frac * arc_w;
+                                let bulge = -(1.0 - frac * frac) * arc_bulge;
+                                let pt = *center + fwd * (x_c + bulge) + right * y_off;
+                                if let Some(prev) = prev_pt {
+                                    draw_line(prev.x, prev.y, pt.x, pt.y, 0.30, contour_col);
+                                }
+                                prev_pt = Some(pt);
+                            }
+                        }
+
+                        draw_line(l0.x, l0.y, l1.x, l1.y, 0.32, rail_col);
+                        draw_line(l3.x, l3.y, l2.x, l2.y, 0.32, rail_col);
+                        draw_line(l1.x, l1.y, l2.x, l2.y, 0.25, Color::new(0.55, 0.55, 0.60, 0.65));
+                    }
+                }
             }
             _ => {
                 render_surface_shape(&ramp.shape, ramp_base_col, border_opt);

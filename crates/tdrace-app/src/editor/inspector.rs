@@ -5,9 +5,11 @@ use std::collections::HashSet;
 
 use cabinet::ui::FieldDropdown;
 use tdrace_core::physics::surface::SurfaceType;
-use tdrace_core::track::geometry::{BarrierType, JumpRamp, ObstacleShape, SurfaceLayer, SurfaceShape};
+use tdrace_core::track::geometry::{BarrierType, JumpRamp, ObstacleShape, RampKind, SurfaceLayer, SurfaceShape};
 use tdrace_core::track::junction_kit::{JunctionComponent, JunctionShape, Side};
 use tdrace_core::track::launch_chute::PAD_WIDTH_RANGE;
+use tdrace_core::track::network::SegmentId;
+use tdrace_core::track::spline::TrackWaypoint;
 use tdrace_core::track::PackedGridPattern;
 use tdrace_core::CarCategory;
 
@@ -200,6 +202,10 @@ pub const RAMP_LENGTH_RANGE: (f32, f32) = (2.0, 50.0);
 pub const RAMP_WIDTH_RANGE: (f32, f32) = (1.0, 30.0);
 pub const RAMP_HEIGHT_RANGE: (f32, f32) = (0.2, 10.0);
 pub const RAMP_PITCH_RANGE: (f32, f32) = (1.0, 60.0);
+pub const RAMP_WHOOP_SPACING_RANGE: (f32, f32) = (2.0, 15.0);
+pub const RAMP_MEGA_GAP_RANGE: (f32, f32) = (3.0, 40.0);
+pub const RAMP_MEGA_BOOST_RANGE: (f32, f32) = (0.5, 3.0);
+pub const RAMP_KIND_LABELS: [&str; 3] = ["Ramp", "Whoops", "Mega"];
 pub const GRID_SLOTS_RANGE: (f32, f32) = (1.0, 24.0);
 
 /// The one surface catalogue every inspector surface picker uses (order and names).
@@ -297,23 +303,37 @@ pub enum Prop {
     WpWallDistR,
     WpWallType,
     WpSurface,
+    WpRunoffL,
+    WpRunoffR,
     ZoneSurface,
     ZoneLayer,
+    RampKind,
     RampAngle,
     RampLength,
     RampWidth,
     RampHeight,
     RampPitch,
+    RampWhoopSpacing,
+    RampMegaGap,
     RampSurface,
     CpFinish,
     ToolSurface,
+    ToolRunoff,
     ToolWidth,
     ToolBanking,
     ToolWallDist,
     ToolWallType,
     ToolBranches,
+    ToolRampKind,
+    ToolWhoopSpacing,
+    ToolWhoopHeight,
+    ToolWhoopWidth,
+    ToolMegaHeight,
+    ToolMegaBoost,
+    ToolMegaGap,
     GlobalWallOffset,
     GlobalWallType,
+    GlobalRunoff,
     OffTrack,
     Category,
     GridSlots,
@@ -599,20 +619,24 @@ fn title_for(kind: &str, plural: &str, indices: &[usize]) -> String {
 pub fn build_inspector(state: &EditorState, tools: &ToolSettings) -> Option<InspectorModel> {
     match &state.selection {
         Selection::None => Some(build_track(state, tools)),
-        Selection::Waypoint(_) | Selection::MultipleWaypoints(_) => build_waypoints(state),
+        Selection::Waypoint(_)
+        | Selection::MultipleWaypoints(_)
+        | Selection::BranchWaypoint(_, _)
+        | Selection::MultipleBranchWaypoints(_) => build_waypoints(state),
         Selection::SurfaceZone(_) => build_zones(state),
         Selection::Obstacle(_) => build_obstacles(state),
         Selection::JumpRamp(_) => build_ramps(state),
         Selection::Checkpoint(_) => build_checkpoints(state),
         Selection::GridSlot(_) => build_grid_slots(state),
         Selection::PitBox => Some(build_pit(state, tools)),
-        Selection::Multi { waypoints, surface_zones, obstacles, jump_ramps, checkpoints, grid_slots, pit_box } => {
+        Selection::Multi { waypoints, branch_waypoints, surface_zones, obstacles, jump_ramps, checkpoints, grid_slots, pit_box } => {
             // Several entities of one kind get that kind's view; mixed kinds wait for HC-3.
-            let kinds = [!waypoints.is_empty(), !surface_zones.is_empty(), !obstacles.is_empty(), !jump_ramps.is_empty(), !checkpoints.is_empty(), !grid_slots.is_empty(), *pit_box];
+            let has_waypoints = !waypoints.is_empty() || !branch_waypoints.is_empty();
+            let kinds = [has_waypoints, !surface_zones.is_empty(), !obstacles.is_empty(), !jump_ramps.is_empty(), !checkpoints.is_empty(), !grid_slots.is_empty(), *pit_box];
             if kinds.iter().filter(|&&k| k).count() != 1 {
                 return Some(build_mixed(state, tools));
             }
-            if !waypoints.is_empty() {
+            if has_waypoints {
                 build_waypoints(state)
             } else if !surface_zones.is_empty() {
                 build_zones(state)
@@ -634,8 +658,9 @@ pub fn build_inspector(state: &EditorState, tools: &ToolSettings) -> Option<Insp
 /// Mixed-kind selection: a chip row per kind and the chosen kind's own view (HC-3 option B).
 fn build_mixed(state: &EditorState, tools: &ToolSettings) -> InspectorModel {
     let sel = &state.selection;
+    let wp_count = sel.selected_waypoint_indices().len() + sel.selected_branch_waypoints().len();
     let parts: Vec<(MixedKind, usize, Option<InspectorModel>)> = [
-        (MixedKind::Waypoints, sel.selected_waypoint_indices().len(), build_waypoints as fn(&EditorState) -> Option<InspectorModel>),
+        (MixedKind::Waypoints, wp_count, build_waypoints as fn(&EditorState) -> Option<InspectorModel>),
         (MixedKind::Zones, sel.selected_surface_zone_indices().len(), build_zones),
         (MixedKind::Obstacles, sel.selected_obstacle_indices().len(), build_obstacles),
         (MixedKind::Ramps, sel.selected_jump_ramp_indices().len(), build_ramps),
@@ -661,40 +686,92 @@ fn build_mixed(state: &EditorState, tools: &ToolSettings) -> InspectorModel {
 fn build_waypoints(state: &EditorState) -> Option<InspectorModel> {
     let wps = &state.track.spline.waypoints;
     let indices: Vec<usize> = state.selection.selected_waypoint_indices().into_iter().filter(|&i| i < wps.len()).collect();
-    let first = *indices.first()?;
-    let sel = || indices.iter().map(|&i| &wps[i]);
+    let branch_indices: Vec<(SegmentId, usize)> = state
+        .selection
+        .selected_branch_waypoints()
+        .into_iter()
+        .filter(|&(sid, i)| {
+            state
+                .track
+                .network
+                .as_ref()
+                .and_then(|n| n.get_segment(sid))
+                .is_some_and(|s| i < s.waypoints.len())
+        })
+        .collect();
+    let selected_wps: Vec<&TrackWaypoint> = indices
+        .iter()
+        .map(|&i| &wps[i])
+        .chain(branch_indices.iter().filter_map(|&(sid, i)| {
+            state.track.network.as_ref()?.get_segment(sid)?.waypoints.get(i)
+        }))
+        .collect();
+    let first_wp = *selected_wps.first()?;
+    let sel = || selected_wps.iter().copied();
     let offset = state.barrier_offset;
+    let default_ro = state.track.default_runoff_surface().unwrap_or(state.track.default_surface);
 
     let banking = common_value(sel().map(|w| w.bank_angle));
-    let info = if let [i] = indices[..] {
-        let p = wps[i].point;
-        Row::Info(format!("Position ({:.1}, {:.1})", p.x, p.y))
+    let (title, info) = if branch_indices.is_empty() {
+        let info = if let [i] = indices[..] {
+            let p = wps[i].point;
+            Row::Info(format!("Position ({:.1}, {:.1})", p.x, p.y))
+        } else {
+            let list: Vec<String> = indices.iter().map(|i| format!("#{i}")).collect();
+            Row::Info(format!("Waypoints {}", list.join(", ")))
+        };
+        (title_for("Waypoint", "Waypoints", &indices), info)
+    } else if indices.is_empty() {
+        if let [(sid, i)] = branch_indices[..] {
+            let p = first_wp.point;
+            let seg_name = state
+                .track
+                .network
+                .as_ref()
+                .and_then(|n| n.get_segment(sid))
+                .map(|s| s.name.as_str())
+                .unwrap_or("Branch");
+            (
+                format!("{seg_name} #{i}"),
+                Row::Info(format!("Segment {} · ({:.1}, {:.1})", sid.0, p.x, p.y)),
+            )
+        } else {
+            let list: Vec<String> = branch_indices.iter().map(|(s, i)| format!("S{}#{i}", s.0)).collect();
+            (
+                "Branch Waypoints".to_string(),
+                Row::Info(format!("Waypoints {}", list.join(", "))),
+            )
+        }
     } else {
-        let list: Vec<String> = indices.iter().map(|i| format!("#{i}")).collect();
-        Row::Info(format!("Waypoints {}", list.join(", ")))
+        (
+            "Waypoints".to_string(),
+            Row::Info(format!("{} main + {} branch waypoints", indices.len(), branch_indices.len())),
+        )
     };
 
     Some(InspectorModel {
-        title: title_for("Waypoint", "Waypoints", &indices),
-        count: indices.len(),
+        title,
+        count: selected_wps.len(),
         subtitle: None,
         footer: FOOTER,
         sections: vec![
             Section::new("wp.road", "ROAD", vec![
-                stepper(Prop::WpWidth, "Width", common_value(sel().map(|w| w.width)), wps[first].width, WIDTH_RANGE, 0.5, "m"),
+                stepper(Prop::WpWidth, "Width", common_value(sel().map(|w| w.width)), first_wp.width, WIDTH_RANGE, 0.5, "m"),
                 Row::Dropdown { prop: Prop::WpSurface, label: "Surface", options: Options::Surfaces, value: common_value(sel().map(|w| surface_index(w.surface.unwrap_or(SurfaceType::Asphalt)))) },
             ]),
             Section::new("wp.banking", "BANKING", vec![
-                Row::Stepper { prop: Prop::WpBanking, label: "Angle", value: banking, anchor: wps[first].bank_angle, min: BANKING_RANGE.0, max: BANKING_RANGE.1, step: 1.0, unit: "°", signed: true },
+                Row::Stepper { prop: Prop::WpBanking, label: "Angle", value: banking, anchor: first_wp.bank_angle, min: BANKING_RANGE.0, max: BANKING_RANGE.1, step: 1.0, unit: "°", signed: true },
                 banking_chips(Prop::WpBanking, banking, Edit::Do(Action::InvertBanking)),
             ]),
             {
                 let mut edge_rows = vec![
                     Row::Sides { label: "Curb", left: (Prop::WpLeftCurb, common_value(sel().map(|w| w.left_curb))), right: (Prop::WpRightCurb, common_value(sel().map(|w| w.right_curb))) },
                     Row::Sides { label: "Wall", left: (Prop::WpLeftWall, common_value(sel().map(|w| w.left_wall))), right: (Prop::WpRightWall, common_value(sel().map(|w| w.right_wall))) },
-                    stepper(Prop::WpWallDistL, "Dist L", common_value(sel().map(|w| w.left_wall_distance.unwrap_or(offset))), wps[first].left_wall_distance.unwrap_or(offset), WALL_DISTANCE_RANGE, 0.5, "m"),
-                    stepper(Prop::WpWallDistR, "Dist R", common_value(sel().map(|w| w.right_wall_distance.unwrap_or(offset))), wps[first].right_wall_distance.unwrap_or(offset), WALL_DISTANCE_RANGE, 0.5, "m"),
+                    stepper(Prop::WpWallDistL, "Dist L", common_value(sel().map(|w| w.left_wall_distance.unwrap_or(offset))), first_wp.left_wall_distance.unwrap_or(offset), WALL_DISTANCE_RANGE, 0.5, "m"),
+                    stepper(Prop::WpWallDistR, "Dist R", common_value(sel().map(|w| w.right_wall_distance.unwrap_or(offset))), first_wp.right_wall_distance.unwrap_or(offset), WALL_DISTANCE_RANGE, 0.5, "m"),
                     Row::Segmented { prop: Prop::WpWallType, label: "Wall type", labels: &WALL_TYPE_LABELS, value: common_value(sel().map(|w| wall_type_index(w.wall_type.unwrap_or(state.barrier_type)))) },
+                    Row::Dropdown { prop: Prop::WpRunoffL, label: "Runoff L", options: Options::Surfaces, value: common_value(sel().map(|w| surface_index(w.left_runoff_surface.unwrap_or(default_ro)))) },
+                    Row::Dropdown { prop: Prop::WpRunoffR, label: "Runoff R", options: Options::Surfaces, value: common_value(sel().map(|w| surface_index(w.right_runoff_surface.unwrap_or(default_ro)))) },
                 ];
 
                 let mut suppressed_warnings = Vec::new();
@@ -798,6 +875,14 @@ fn build_obstacles(state: &EditorState) -> Option<InspectorModel> {
     })
 }
 
+fn ramp_kind_index(kind: RampKind) -> usize {
+    match kind {
+        RampKind::Ramp => 0,
+        RampKind::Whoops => 1,
+        RampKind::MegaRamp => 2,
+    }
+}
+
 fn build_ramps(state: &EditorState) -> Option<InspectorModel> {
     let ramps = &state.track.geometry.jump_ramps;
     let indices: Vec<usize> = state.selection.selected_jump_ramp_indices().into_iter().filter(|&i| i < ramps.len()).collect();
@@ -809,26 +894,66 @@ fn build_ramps(state: &EditorState) -> Option<InspectorModel> {
         ("Fit pitch".to_string(), "Fit height".to_string())
     };
     let has_flat = sel().any(|r| r.flat_length() > 0.05);
+    let kind_val = common_value(sel().map(|r| ramp_kind_index(r.kind)));
+    let mut profile_rows = vec![
+        stepper(Prop::RampHeight, "Height", common_value(sel().map(|r| r.height)), first.height, RAMP_HEIGHT_RANGE, 0.1, "m"),
+        stepper(Prop::RampPitch, "Pitch", common_value(sel().map(|r| r.ramp_angle_deg)), first.ramp_angle_deg, RAMP_PITCH_RANGE, 1.0, "°"),
+    ];
+    match first.kind {
+        RampKind::Ramp => {
+            profile_rows.push(Row::Buttons(vec![
+                Button { label: fit_pitch, edit: Edit::Do(Action::FitPitch), highlight: has_flat },
+                Button { label: fit_height, edit: Edit::Do(Action::FitHeight), highlight: has_flat },
+            ]));
+        }
+        RampKind::Whoops => {
+            profile_rows.push(stepper(
+                Prop::RampWhoopSpacing,
+                "Spacing",
+                common_value(sel().map(|r| r.whoop_spacing)),
+                first.whoop_spacing,
+                RAMP_WHOOP_SPACING_RANGE,
+                0.5,
+                "m",
+            ));
+            profile_rows.push(Row::Info(format!("Mogul ridges: {} jumps", first.whoop_count())));
+        }
+        RampKind::MegaRamp => {
+            profile_rows.push(stepper(
+                Prop::RampMegaGap,
+                "Gap",
+                common_value(sel().map(|r| r.effective_gap_length())),
+                first.effective_gap_length(),
+                RAMP_MEGA_GAP_RANGE,
+                1.0,
+                "m",
+            ));
+            let (s_t, s_l) = first.mega_segment_bounds();
+            let len = first.length();
+            profile_rows.push(Row::Info(format!(
+                "Take-off {:.1}m • Gap {:.1}m • Landing {:.1}m",
+                s_t * len,
+                (s_l - s_t) * len,
+                (1.0 - s_l) * len
+            )));
+        }
+    }
+    profile_rows.push(Row::RampProfile(Box::new(first.clone())));
+
+    let singular_title = first.kind.label();
     Some(InspectorModel {
-        title: title_for("Jump Ramp", "Jump Ramps", &indices),
+        title: title_for(singular_title, "Jump Components", &indices),
         count: indices.len(),
         subtitle: None,
         footer: FOOTER,
         sections: vec![
             Section::new("ramp.shape", "SHAPE", vec![
+                Row::Segmented { prop: Prop::RampKind, label: "Kind", labels: &RAMP_KIND_LABELS, value: kind_val },
                 stepper(Prop::RampAngle, "Angle", common_value(sel().map(|r| r.angle_deg())), first.angle_deg(), RAMP_ANGLE_RANGE, 1.0, "°"),
                 stepper(Prop::RampLength, "Length", common_value(sel().map(|r| r.length())), first.length(), RAMP_LENGTH_RANGE, 0.5, "m"),
                 stepper(Prop::RampWidth, "Width", common_value(sel().map(|r| r.width())), first.width(), RAMP_WIDTH_RANGE, 0.5, "m"),
             ]),
-            Section::new("ramp.profile", "PROFILE", vec![
-                stepper(Prop::RampHeight, "Height", common_value(sel().map(|r| r.height)), first.height, RAMP_HEIGHT_RANGE, 0.1, "m"),
-                stepper(Prop::RampPitch, "Pitch", common_value(sel().map(|r| r.ramp_angle_deg)), first.ramp_angle_deg, RAMP_PITCH_RANGE, 1.0, "°"),
-                Row::Buttons(vec![
-                    Button { label: fit_pitch, edit: Edit::Do(Action::FitPitch), highlight: has_flat },
-                    Button { label: fit_height, edit: Edit::Do(Action::FitHeight), highlight: has_flat },
-                ]),
-                Row::RampProfile(Box::new(first.clone())),
-            ]),
+            Section::new("ramp.profile", "PROFILE", profile_rows),
             Section::new("ramp.surface", "SURFACE", vec![Row::Dropdown { prop: Prop::RampSurface, label: "Material", options: Options::Surfaces, value: common_value(sel().map(|r| surface_index(r.surface))) }]),
         ],
     })
@@ -933,13 +1058,16 @@ fn build_pit(state: &EditorState, tools: &ToolSettings) -> InspectorModel {
 
 fn build_track(state: &EditorState, tools: &ToolSettings) -> InspectorModel {
     let mut sections = Vec::new();
+    let default_ro = state.track.default_runoff_surface().unwrap_or(state.track.default_surface);
     match tools.active_tool {
         EditorToolType::RoadSpline => {
             let bank = tools.new_waypoint_bank_angle;
             let dist = tools.new_waypoint_left_wall_distance.unwrap_or(state.barrier_offset);
             let wall = tools.new_waypoint_wall_type.unwrap_or(state.barrier_type);
+            let runoff = tools.new_waypoint_left_runoff_surface.unwrap_or(default_ro);
             sections.push(Section::new("tool.spline", "NEW WAYPOINTS", vec![
                 Row::Dropdown { prop: Prop::ToolSurface, label: "Surface", options: Options::Surfaces, value: Common::Same(surface_index(tools.active_surface)) },
+                Row::Dropdown { prop: Prop::ToolRunoff, label: "Runoff", options: Options::Surfaces, value: Common::Same(surface_index(runoff)) },
                 stepper(Prop::ToolWidth, "Width", Common::Same(tools.new_waypoint_width), tools.new_waypoint_width, WIDTH_RANGE, 0.5, "m"),
                 Row::Stepper { prop: Prop::ToolBanking, label: "Banking", value: Common::Same(bank), anchor: bank, min: BANKING_RANGE.0, max: BANKING_RANGE.1, step: 1.0, unit: "°", signed: true },
                 banking_chips(Prop::ToolBanking, Common::Same(bank), Edit::Set(Prop::ToolBanking, -bank)),
@@ -957,22 +1085,66 @@ fn build_track(state: &EditorState, tools: &ToolSettings) -> InspectorModel {
             ]));
         }
         EditorToolType::LaunchChute => sections.push(chute_section(state, tools, "tool.chute", "LAUNCH CHUTE")),
-        EditorToolType::JumpRamp => {
-            let preview = JumpRamp::new(
-                0,
-                SurfaceShape::OrientedBox { center: glam::Vec2::ZERO, half_extents: glam::Vec2::new(6.0, 4.0), angle: 0.0 },
-                glam::Vec2::X,
-                4.0,
-                15.0,
-                1.8,
-                "Preview Ramp",
-            )
-            .with_surface(tools.active_surface);
-            sections.push(Section::new("tool.ramp", "NEW RAMPS", vec![
-                Row::Info("Click and drag on the track to place a ramp.".to_string()),
+        EditorToolType::JumpRamp | EditorToolType::WhoopSection | EditorToolType::StuntRamp => {
+            let kind = tools.effective_ramp_kind();
+            let preview = match kind {
+                RampKind::Ramp => JumpRamp::new(
+                    0,
+                    SurfaceShape::OrientedBox { center: glam::Vec2::ZERO, half_extents: glam::Vec2::new(6.0, 4.0), angle: 0.0 },
+                    glam::Vec2::X,
+                    4.0,
+                    15.0,
+                    1.8,
+                    "Preview Ramp",
+                )
+                .with_kind(RampKind::Ramp)
+                .with_surface(tools.active_surface),
+                RampKind::Whoops => JumpRamp::new(
+                    0,
+                    SurfaceShape::OrientedBox { center: glam::Vec2::ZERO, half_extents: glam::Vec2::new(15.0, tools.whoop_width * 0.5), angle: 0.0 },
+                    glam::Vec2::X,
+                    4.0,
+                    14.0,
+                    tools.whoop_height,
+                    "Preview Whoops",
+                )
+                .with_kind(RampKind::Whoops)
+                .with_whoop_spacing(tools.whoop_spacing)
+                .with_surface(tools.active_surface),
+                RampKind::MegaRamp => JumpRamp::new(
+                    0,
+                    SurfaceShape::OrientedBox { center: glam::Vec2::ZERO, half_extents: glam::Vec2::new(18.0, 6.0), angle: 0.0 },
+                    glam::Vec2::X,
+                    28.0 * tools.stunt_ramp_multiplier,
+                    35.0,
+                    tools.stunt_ramp_height,
+                    "Preview Mega Ramp",
+                )
+                .with_kind(RampKind::MegaRamp)
+                .with_gap_length(tools.mega_gap_length)
+                .with_surface(tools.active_surface),
+            };
+            let mut rows = vec![
+                Row::Segmented { prop: Prop::ToolRampKind, label: "Kind", labels: &RAMP_KIND_LABELS, value: Common::Same(ramp_kind_index(kind)) },
                 Row::Dropdown { prop: Prop::ToolSurface, label: "Surface", options: Options::Surfaces, value: Common::Same(surface_index(tools.active_surface)) },
-                Row::RampProfile(Box::new(preview)),
-            ]));
+            ];
+            match kind {
+                RampKind::Ramp => {
+                    rows.push(Row::Info("Right-click and drag to place a launch ramp.".to_string()));
+                }
+                RampKind::Whoops => {
+                    rows.push(stepper(Prop::ToolWhoopSpacing, "Spacing", Common::Same(tools.whoop_spacing), tools.whoop_spacing, RAMP_WHOOP_SPACING_RANGE, 0.5, "m"));
+                    rows.push(stepper(Prop::ToolWhoopHeight, "Height", Common::Same(tools.whoop_height), tools.whoop_height, (0.3, 2.5), 0.1, "m"));
+                    rows.push(stepper(Prop::ToolWhoopWidth, "Width", Common::Same(tools.whoop_width), tools.whoop_width, RAMP_WIDTH_RANGE, 1.0, "m"));
+                }
+                RampKind::MegaRamp => {
+                    rows.push(stepper(Prop::ToolMegaHeight, "Height", Common::Same(tools.stunt_ramp_height), tools.stunt_ramp_height, RAMP_HEIGHT_RANGE, 0.5, "m"));
+                    rows.push(stepper(Prop::ToolMegaGap, "Gap", Common::Same(tools.mega_gap_length), tools.mega_gap_length, RAMP_MEGA_GAP_RANGE, 1.0, "m"));
+                    rows.push(stepper(Prop::ToolMegaBoost, "Boost", Common::Same(tools.stunt_ramp_multiplier), tools.stunt_ramp_multiplier, RAMP_MEGA_BOOST_RANGE, 0.1, "x"));
+                }
+            }
+            rows.push(Row::RampProfile(Box::new(preview)));
+            sections.push(Section::new("tool.ramp", "NEW RAMPS", rows));
         }
         _ => {}
     }
@@ -982,10 +1154,24 @@ fn build_track(state: &EditorState, tools: &ToolSettings) -> InspectorModel {
         .iter()
         .map(|&m| Chip { label: if m.fract() == 0.0 { format!("{m:.0} m") } else { format!("{m:.1}") }, edit: Edit::Set(Prop::GlobalWallOffset, m), active: (offset - m).abs() < 0.05 })
         .collect();
+    let global_runoff = if state.track.spline.waypoints.is_empty() {
+        Common::Same(surface_index(default_ro))
+    } else {
+        common_value(
+            state
+                .track
+                .spline
+                .waypoints
+                .iter()
+                .flat_map(|w| [w.left_runoff_surface.unwrap_or(default_ro), w.right_runoff_surface.unwrap_or(default_ro)])
+                .map(surface_index),
+        )
+    };
     sections.push(Section::new("circuit.walls", "CIRCUIT WALLS", vec![
         stepper(Prop::GlobalWallOffset, "Offset", Common::Same(offset), offset, GLOBAL_WALL_OFFSET_RANGE, 0.5, "m"),
         Row::Chips { label: "Presets", chips: wall_chips },
         Row::Segmented { prop: Prop::GlobalWallType, label: "Type", labels: &WALL_TYPE_LABELS, value: Common::Same(wall_type_index(state.barrier_type)) },
+        Row::Dropdown { prop: Prop::GlobalRunoff, label: "Runoff", options: Options::Surfaces, value: global_runoff },
     ]));
 
     let grid = state.grid_count();
@@ -1086,10 +1272,11 @@ pub fn apply_edit(state: &mut EditorState, tools: &mut ToolSettings, edit: Edit)
             tools.delete_selected(state);
         }
         (_, Edit::Do(Action::ShowKind(kind))) => tools.inspector.mixed_kind = Some(kind),
-        (Some(WpWidth | WpBanking | WpLeftCurb | WpRightCurb | WpLeftWall | WpRightWall | WpWallDistL | WpWallDistR | WpWallType | WpSurface), _)
+        (Some(WpWidth | WpBanking | WpLeftCurb | WpRightCurb | WpLeftWall | WpRightWall | WpWallDistL | WpWallDistR | WpWallType | WpSurface | WpRunoffL | WpRunoffR), _)
         | (_, Edit::Do(Action::InvertBanking)) => apply_waypoint_edit(state, tools, edit),
         (Some(ZoneSurface | ZoneLayer), _) => apply_zone_edit(state, edit),
-        (Some(RampAngle | RampLength | RampWidth | RampHeight | RampPitch | RampSurface), _) | (_, Edit::Do(Action::FitPitch | Action::FitHeight)) => {
+        (Some(RampKind | RampAngle | RampLength | RampWidth | RampHeight | RampPitch | RampWhoopSpacing | RampMegaGap | RampSurface), _)
+        | (_, Edit::Do(Action::FitPitch | Action::FitHeight)) => {
             apply_ramp_edit(state, tools, edit)
         }
         (Some(CpFinish), Edit::Flag(_, on)) => {
@@ -1156,53 +1343,94 @@ fn apply_pit_layout_edit(state: &mut EditorState, tools: &mut ToolSettings, edit
 fn apply_waypoint_edit(state: &mut EditorState, tools: &mut ToolSettings, edit: Edit) {
     let len = state.track.spline.waypoints.len();
     let indices: Vec<usize> = state.selection.selected_waypoint_indices().into_iter().filter(|&i| i < len).collect();
-    let Some(&first) = indices.first() else {
+    let branch_indices: Vec<(SegmentId, usize)> = state
+        .selection
+        .selected_branch_waypoints()
+        .into_iter()
+        .filter(|&(sid, i)| {
+            state
+                .track
+                .network
+                .as_ref()
+                .and_then(|n| n.get_segment(sid))
+                .is_some_and(|s| i < s.waypoints.len())
+        })
+        .collect();
+    if indices.is_empty() && branch_indices.is_empty() {
         return;
-    };
+    }
     state.record_undo();
     let offset = state.barrier_offset;
+    let mutate_wp = |wp: &mut TrackWaypoint| match edit {
+        Edit::Set(Prop::WpWidth, v) => wp.width = clamp_to(v, WIDTH_RANGE),
+        Edit::Step(Prop::WpWidth, d) => wp.width = clamp_to(wp.width + d, WIDTH_RANGE),
+        Edit::Set(Prop::WpBanking, v) => wp.bank_angle = clamp_to(v, BANKING_RANGE),
+        Edit::Step(Prop::WpBanking, d) => wp.bank_angle = clamp_to(wp.bank_angle + d, BANKING_RANGE),
+        Edit::Do(Action::InvertBanking) => wp.bank_angle = -wp.bank_angle,
+        Edit::Set(Prop::WpWallDistL, v) => wp.left_wall_distance = Some(clamp_to(v, WALL_DISTANCE_RANGE)),
+        Edit::Step(Prop::WpWallDistL, d) => wp.left_wall_distance = Some(clamp_to(wp.left_wall_distance.unwrap_or(offset) + d, WALL_DISTANCE_RANGE)),
+        Edit::Set(Prop::WpWallDistR, v) => wp.right_wall_distance = Some(clamp_to(v, WALL_DISTANCE_RANGE)),
+        Edit::Step(Prop::WpWallDistR, d) => wp.right_wall_distance = Some(clamp_to(wp.right_wall_distance.unwrap_or(offset) + d, WALL_DISTANCE_RANGE)),
+        Edit::Flag(Prop::WpLeftCurb, on) => wp.left_curb = on,
+        Edit::Flag(Prop::WpRightCurb, on) => wp.right_curb = on,
+        Edit::Flag(Prop::WpLeftWall, on) => wp.left_wall = on,
+        Edit::Flag(Prop::WpRightWall, on) => wp.right_wall = on,
+        Edit::Pick(Prop::WpWallType, k) => wp.wall_type = WALL_TYPES.get(k).copied(),
+        Edit::Pick(Prop::WpSurface, k) => wp.surface = SURFACES.get(k).copied(),
+        Edit::Pick(Prop::WpRunoffL, k) => wp.left_runoff_surface = SURFACES.get(k).copied(),
+        Edit::Pick(Prop::WpRunoffR, k) => wp.right_runoff_surface = SURFACES.get(k).copied(),
+        _ => {}
+    };
+
     for &i in &indices {
-        let wp = &mut state.track.spline.waypoints[i];
-        match edit {
-            Edit::Set(Prop::WpWidth, v) => wp.width = clamp_to(v, WIDTH_RANGE),
-            Edit::Step(Prop::WpWidth, d) => wp.width = clamp_to(wp.width + d, WIDTH_RANGE),
-            Edit::Set(Prop::WpBanking, v) => wp.bank_angle = clamp_to(v, BANKING_RANGE),
-            Edit::Step(Prop::WpBanking, d) => wp.bank_angle = clamp_to(wp.bank_angle + d, BANKING_RANGE),
-            Edit::Do(Action::InvertBanking) => wp.bank_angle = -wp.bank_angle,
-            Edit::Set(Prop::WpWallDistL, v) => wp.left_wall_distance = Some(clamp_to(v, WALL_DISTANCE_RANGE)),
-            Edit::Step(Prop::WpWallDistL, d) => wp.left_wall_distance = Some(clamp_to(wp.left_wall_distance.unwrap_or(offset) + d, WALL_DISTANCE_RANGE)),
-            Edit::Set(Prop::WpWallDistR, v) => wp.right_wall_distance = Some(clamp_to(v, WALL_DISTANCE_RANGE)),
-            Edit::Step(Prop::WpWallDistR, d) => wp.right_wall_distance = Some(clamp_to(wp.right_wall_distance.unwrap_or(offset) + d, WALL_DISTANCE_RANGE)),
-            Edit::Flag(Prop::WpLeftCurb, on) => wp.left_curb = on,
-            Edit::Flag(Prop::WpRightCurb, on) => wp.right_curb = on,
-            Edit::Flag(Prop::WpLeftWall, on) => wp.left_wall = on,
-            Edit::Flag(Prop::WpRightWall, on) => wp.right_wall = on,
-            Edit::Pick(Prop::WpWallType, k) => wp.wall_type = WALL_TYPES.get(k).copied(),
-            Edit::Pick(Prop::WpSurface, k) => wp.surface = SURFACES.get(k).copied(),
-            _ => {}
+        mutate_wp(&mut state.track.spline.waypoints[i]);
+    }
+    let mut edited_segments = Vec::new();
+    if let Some(ref mut net) = state.track.network {
+        for &(sid, i) in &branch_indices {
+            if let Some(seg) = net.get_segment_mut(sid) {
+                if let Some(wp) = seg.waypoints.get_mut(i) {
+                    mutate_wp(wp);
+                    edited_segments.push(sid);
+                }
+            }
         }
     }
 
     // Edits also become the placement defaults for new waypoints, as before.
-    let wp = state.track.spline.waypoints[first].clone();
-    match edit {
-        Edit::Set(Prop::WpWidth, _) | Edit::Step(Prop::WpWidth, _) => tools.new_waypoint_width = wp.width,
-        Edit::Set(Prop::WpBanking, _) | Edit::Step(Prop::WpBanking, _) | Edit::Do(Action::InvertBanking) => tools.new_waypoint_bank_angle = wp.bank_angle,
-        Edit::Set(Prop::WpWallDistL, _) | Edit::Step(Prop::WpWallDistL, _) => tools.new_waypoint_left_wall_distance = wp.left_wall_distance,
-        Edit::Set(Prop::WpWallDistR, _) | Edit::Step(Prop::WpWallDistR, _) => tools.new_waypoint_right_wall_distance = wp.right_wall_distance,
-        Edit::Flag(Prop::WpLeftCurb, on) => tools.new_waypoint_left_curb = on,
-        Edit::Flag(Prop::WpRightCurb, on) => tools.new_waypoint_right_curb = on,
-        Edit::Flag(Prop::WpLeftWall, on) => tools.new_waypoint_left_wall = on,
-        Edit::Flag(Prop::WpRightWall, on) => tools.new_waypoint_right_wall = on,
-        Edit::Pick(Prop::WpWallType, _) => tools.new_waypoint_wall_type = wp.wall_type,
-        Edit::Pick(Prop::WpSurface, _) => {
-            if let Some(s) = wp.surface {
-                tools.active_surface = s;
+    let first_wp = indices
+        .first()
+        .map(|&i| state.track.spline.waypoints[i].clone())
+        .or_else(|| {
+            let &(sid, i) = branch_indices.first()?;
+            state.track.network.as_ref()?.get_segment(sid)?.waypoints.get(i).cloned()
+        });
+    if let Some(wp) = first_wp {
+        match edit {
+            Edit::Set(Prop::WpWidth, _) | Edit::Step(Prop::WpWidth, _) => tools.new_waypoint_width = wp.width,
+            Edit::Set(Prop::WpBanking, _) | Edit::Step(Prop::WpBanking, _) | Edit::Do(Action::InvertBanking) => tools.new_waypoint_bank_angle = wp.bank_angle,
+            Edit::Set(Prop::WpWallDistL, _) | Edit::Step(Prop::WpWallDistL, _) => tools.new_waypoint_left_wall_distance = wp.left_wall_distance,
+            Edit::Set(Prop::WpWallDistR, _) | Edit::Step(Prop::WpWallDistR, _) => tools.new_waypoint_right_wall_distance = wp.right_wall_distance,
+            Edit::Flag(Prop::WpLeftCurb, on) => tools.new_waypoint_left_curb = on,
+            Edit::Flag(Prop::WpRightCurb, on) => tools.new_waypoint_right_curb = on,
+            Edit::Flag(Prop::WpLeftWall, on) => tools.new_waypoint_left_wall = on,
+            Edit::Flag(Prop::WpRightWall, on) => tools.new_waypoint_right_wall = on,
+            Edit::Pick(Prop::WpWallType, _) => tools.new_waypoint_wall_type = wp.wall_type,
+            Edit::Pick(Prop::WpSurface, _) => {
+                if let Some(s) = wp.surface {
+                    tools.active_surface = s;
+                }
             }
+            Edit::Pick(Prop::WpRunoffL, _) => tools.new_waypoint_left_runoff_surface = wp.left_runoff_surface,
+            Edit::Pick(Prop::WpRunoffR, _) => tools.new_waypoint_right_runoff_surface = wp.right_runoff_surface,
+            _ => {}
         }
-        _ => {}
     }
-    state.rebuild_geometry();
+    if !edited_segments.is_empty() {
+        state.rebuild_branch_segments(&edited_segments);
+    } else {
+        state.rebuild_geometry();
+    }
 }
 
 fn apply_zone_edit(state: &mut EditorState, edit: Edit) {
@@ -1237,6 +1465,12 @@ fn apply_ramp_edit(state: &mut EditorState, tools: &mut ToolSettings, edit: Edit
     for i in indices {
         let ramp = &mut state.track.geometry.jump_ramps[i];
         match edit {
+            Edit::Pick(Prop::RampKind, k) => {
+                if let Some(&kind) = RampKind::ALL.get(k) {
+                    ramp.kind = kind;
+                    tools.active_ramp_kind = kind;
+                }
+            }
             Edit::Set(Prop::RampAngle, v) => ramp.set_angle_deg(clamp_to(v, RAMP_ANGLE_RANGE)),
             Edit::Step(Prop::RampAngle, d) => ramp.set_angle_deg((ramp.angle_deg() + d).rem_euclid(360.0)),
             Edit::Set(Prop::RampLength, v) => ramp.set_length(clamp_to(v, RAMP_LENGTH_RANGE)),
@@ -1247,6 +1481,10 @@ fn apply_ramp_edit(state: &mut EditorState, tools: &mut ToolSettings, edit: Edit
             Edit::Step(Prop::RampHeight, d) => ramp.height = clamp_to(ramp.height + d, RAMP_HEIGHT_RANGE),
             Edit::Set(Prop::RampPitch, v) => ramp.ramp_angle_deg = clamp_to(v, RAMP_PITCH_RANGE),
             Edit::Step(Prop::RampPitch, d) => ramp.ramp_angle_deg = clamp_to(ramp.ramp_angle_deg + d, RAMP_PITCH_RANGE),
+            Edit::Set(Prop::RampWhoopSpacing, v) => ramp.whoop_spacing = clamp_to(v, RAMP_WHOOP_SPACING_RANGE),
+            Edit::Step(Prop::RampWhoopSpacing, d) => ramp.whoop_spacing = clamp_to(ramp.whoop_spacing + d, RAMP_WHOOP_SPACING_RANGE),
+            Edit::Set(Prop::RampMegaGap, v) => ramp.gap_length = clamp_to(v, RAMP_MEGA_GAP_RANGE),
+            Edit::Step(Prop::RampMegaGap, d) => ramp.gap_length = clamp_to(ramp.effective_gap_length() + d, RAMP_MEGA_GAP_RANGE),
             Edit::Pick(Prop::RampSurface, k) => {
                 if let Some(&s) = SURFACES.get(k) {
                     ramp.surface = s;
@@ -1263,9 +1501,33 @@ fn apply_ramp_edit(state: &mut EditorState, tools: &mut ToolSettings, edit: Edit
 
 fn apply_track_edit(state: &mut EditorState, tools: &mut ToolSettings, edit: Edit) {
     match edit {
+        Edit::Pick(Prop::ToolRampKind, k) => {
+            if let Some(&kind) = RampKind::ALL.get(k) {
+                tools.active_ramp_kind = kind;
+                tools.active_tool = EditorToolType::JumpRamp;
+            }
+        }
+        Edit::Set(Prop::ToolWhoopSpacing, v) => tools.whoop_spacing = clamp_to(v, RAMP_WHOOP_SPACING_RANGE),
+        Edit::Step(Prop::ToolWhoopSpacing, d) => tools.whoop_spacing = clamp_to(tools.whoop_spacing + d, RAMP_WHOOP_SPACING_RANGE),
+        Edit::Set(Prop::ToolWhoopHeight, v) => tools.whoop_height = clamp_to(v, (0.3, 2.5)),
+        Edit::Step(Prop::ToolWhoopHeight, d) => tools.whoop_height = clamp_to(tools.whoop_height + d, (0.3, 2.5)),
+        Edit::Set(Prop::ToolWhoopWidth, v) => tools.whoop_width = clamp_to(v, RAMP_WIDTH_RANGE),
+        Edit::Step(Prop::ToolWhoopWidth, d) => tools.whoop_width = clamp_to(tools.whoop_width + d, RAMP_WIDTH_RANGE),
+        Edit::Set(Prop::ToolMegaHeight, v) => tools.stunt_ramp_height = clamp_to(v, RAMP_HEIGHT_RANGE),
+        Edit::Step(Prop::ToolMegaHeight, d) => tools.stunt_ramp_height = clamp_to(tools.stunt_ramp_height + d, RAMP_HEIGHT_RANGE),
+        Edit::Set(Prop::ToolMegaGap, v) => tools.mega_gap_length = clamp_to(v, RAMP_MEGA_GAP_RANGE),
+        Edit::Step(Prop::ToolMegaGap, d) => tools.mega_gap_length = clamp_to(tools.mega_gap_length + d, RAMP_MEGA_GAP_RANGE),
+        Edit::Set(Prop::ToolMegaBoost, v) => tools.stunt_ramp_multiplier = clamp_to(v, RAMP_MEGA_BOOST_RANGE),
+        Edit::Step(Prop::ToolMegaBoost, d) => tools.stunt_ramp_multiplier = clamp_to(tools.stunt_ramp_multiplier + d, RAMP_MEGA_BOOST_RANGE),
         Edit::Pick(Prop::ToolSurface, k) => {
             if let Some(&s) = SURFACES.get(k) {
                 tools.active_surface = s;
+            }
+        }
+        Edit::Pick(Prop::ToolRunoff, k) => {
+            if let Some(&s) = SURFACES.get(k) {
+                tools.new_waypoint_left_runoff_surface = Some(s);
+                tools.new_waypoint_right_runoff_surface = Some(s);
             }
         }
         Edit::Set(Prop::ToolWidth, v) => tools.new_waypoint_width = clamp_to(v, WIDTH_RANGE),
@@ -1293,6 +1555,18 @@ fn apply_track_edit(state: &mut EditorState, tools: &mut ToolSettings, edit: Edi
         Edit::Pick(Prop::GlobalWallType, k) => {
             if let Some(&t) = WALL_TYPES.get(k) {
                 tools.set_global_barrier_type(state, t);
+            }
+        }
+        Edit::Pick(Prop::GlobalRunoff, k) => {
+            if let Some(&s) = SURFACES.get(k) {
+                state.record_undo();
+                for wp in &mut state.track.spline.waypoints {
+                    wp.left_runoff_surface = Some(s);
+                    wp.right_runoff_surface = Some(s);
+                }
+                tools.new_waypoint_left_runoff_surface = Some(s);
+                tools.new_waypoint_right_runoff_surface = Some(s);
+                state.rebuild_geometry();
             }
         }
         Edit::Pick(Prop::OffTrack, k) => {

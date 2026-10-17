@@ -736,23 +736,21 @@ impl PyEngine {
         let was_airborne = car.state.is_airborne;
         let mut on_any_ramp = false;
 
-        if !was_airborne {
-            for ramp in ramps {
-                if ramp.contains(car.state.position) {
-                    on_any_ramp = true;
-                    if car.step_ramp_interaction(ramp, dt) {
-                        break;
-                    }
+        for ramp in ramps {
+            if ramp.contains(car.state.position) {
+                on_any_ramp = true;
+                if car.step_ramp_interaction(ramp, dt) {
+                    break;
                 }
             }
-            if !on_any_ramp {
-                if car.state.ramp_elevation > 0.10 {
-                    car.state.elevation = car.state.ramp_elevation;
-                    car.state.is_airborne = true;
-                    car.state.vertical_velocity = 0.0;
-                }
-                car.state.ramp_elevation = 0.0;
+        }
+        if !was_airborne && !on_any_ramp {
+            if car.state.ramp_elevation > 0.10 {
+                car.state.elevation = car.state.ramp_elevation;
+                car.state.is_airborne = true;
+                car.state.vertical_velocity = 0.0;
             }
+            car.state.ramp_elevation = 0.0;
         }
     }
 

@@ -4,7 +4,7 @@ use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_rectangl
 use macroquad::window::{screen_height, screen_width};
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::checkpoint::Checkpoint;
-use tdrace_core::track::geometry::{BarrierType, JumpRamp, LineSegment, Obstacle, PitBox, PitLane, SurfaceLayer, SurfaceShape, SurfaceZone, WallBarrier};
+use tdrace_core::track::geometry::{BarrierType, JumpRamp, LineSegment, Obstacle, PitBox, PitLane, RampKind, SurfaceLayer, SurfaceShape, SurfaceZone, WallBarrier};
 use tdrace_core::track::network::{GoreConfig, JunctionId, JunctionKind, MergeConfig, RoadJunction, RoadSegment, SegmentId, SocketId, SplineSocket, TrackLayout};
 use tdrace_core::track::junction_kit::{JunctionComponent, JunctionShape, Side};
 use tdrace_core::track::pit_kit::{self, PitBoxRow, PitLaneLayout};
@@ -133,15 +133,19 @@ pub struct ToolSettings {
     pub new_waypoint_left_wall_distance: Option<f32>,
     pub new_waypoint_right_wall_distance: Option<f32>,
     pub new_waypoint_wall_type: Option<BarrierType>,
+    pub new_waypoint_left_runoff_surface: Option<SurfaceType>,
+    pub new_waypoint_right_runoff_surface: Option<SurfaceType>,
     pub new_waypoint_bank_angle: f32,
 
-    // Arena & Stunt settings
+    // Arena & Stunt / Jump component settings
     pub active_arena_barrier: Option<BarrierType>,
+    pub active_ramp_kind: RampKind,
     pub whoop_spacing: f32,
     pub whoop_height: f32,
     pub whoop_width: f32,
     pub stunt_ramp_height: f32,
     pub stunt_ramp_multiplier: f32,
+    pub mega_gap_length: f32,
 
     // Dragging / selection interaction state
     pub is_dragging: bool,
@@ -153,6 +157,7 @@ pub struct ToolSettings {
     pub drag_current_world: Vec2,
     pub drag_initial_entity_pos: Vec2,
     pub drag_initial_waypoints: Vec<(usize, Vec2)>,
+    pub drag_initial_branch_waypoints: Vec<((SegmentId, usize), Vec2)>,
     pub drag_initial_surface_zones: Vec<(usize, Vec2)>,
     pub drag_initial_obstacles: Vec<(usize, Vec2)>,
     pub drag_initial_jump_ramps: Vec<(usize, Vec2)>,
@@ -221,13 +226,17 @@ impl Default for ToolSettings {
             new_waypoint_left_wall_distance: None,
             new_waypoint_right_wall_distance: None,
             new_waypoint_wall_type: None,
+            new_waypoint_left_runoff_surface: None,
+            new_waypoint_right_runoff_surface: None,
             new_waypoint_bank_angle: 0.0,
             active_arena_barrier: Some(BarrierType::Concrete),
+            active_ramp_kind: RampKind::Ramp,
             whoop_spacing: 5.0,
             whoop_height: 0.70,
             whoop_width: 14.0,
             stunt_ramp_height: 3.5,
             stunt_ramp_multiplier: 1.5,
+            mega_gap_length: 12.0,
             is_dragging: false,
             is_box_selecting: false,
             is_placing: false,
@@ -237,6 +246,7 @@ impl Default for ToolSettings {
             drag_current_world: Vec2::ZERO,
             drag_initial_entity_pos: Vec2::ZERO,
             drag_initial_waypoints: Vec::new(),
+            drag_initial_branch_waypoints: Vec::new(),
             drag_initial_surface_zones: Vec::new(),
             drag_initial_obstacles: Vec::new(),
             drag_initial_jump_ramps: Vec::new(),
@@ -255,6 +265,18 @@ impl Default for ToolSettings {
             chute_surface: SurfaceType::Concrete,
             chute_status: None,
             escape_consumed: false,
+        }
+    }
+}
+
+impl ToolSettings {
+    /// Returns the active jump component kind, honoring both the unified `JumpRamp` tool's
+    /// `active_ramp_kind` and legacy `WhoopSection` / `StuntRamp` tool variants.
+    pub fn effective_ramp_kind(&self) -> RampKind {
+        match self.active_tool {
+            EditorToolType::WhoopSection => RampKind::Whoops,
+            EditorToolType::StuntRamp => RampKind::MegaRamp,
+            _ => self.active_ramp_kind,
         }
     }
 }
@@ -590,6 +612,53 @@ impl ToolSettings {
                         self.new_waypoint_right_wall = wp.right_wall;
                         self.new_waypoint_left_wall_distance = wp.left_wall_distance;
                         self.new_waypoint_right_wall_distance = wp.right_wall_distance;
+                        self.new_waypoint_left_runoff_surface = wp.left_runoff_surface;
+                        self.new_waypoint_right_runoff_surface = wp.right_runoff_surface;
+                        self.new_waypoint_bank_angle = wp.bank_angle;
+                    }
+                    return true;
+                }
+            }
+            Selection::BranchWaypoint(seg_id, idx) => {
+                let can_dup = state
+                    .track
+                    .network
+                    .as_ref()
+                    .and_then(|net| net.segments.iter().find(|s| s.id == seg_id))
+                    .is_some_and(|s| idx < s.waypoints.len());
+                if can_dup {
+                    state.record_undo();
+                    let insert_idx = idx + 1;
+                    if let Some(net) = state.track.network.as_mut() {
+                        if let Some(seg) = net.segments.iter_mut().find(|s| s.id == seg_id) {
+                            let mut copy = seg.waypoints[idx].clone();
+                            copy.point += Vec2::new(4.0, 4.0);
+                            if insert_idx < seg.waypoints.len() {
+                                seg.waypoints.insert(insert_idx, copy);
+                            } else {
+                                seg.waypoints.push(copy);
+                            }
+                        }
+                    }
+                    state.rebuild_branch_segments(&[seg_id]);
+                    state.select(Selection::BranchWaypoint(seg_id, insert_idx));
+                    if let Some(wp) = state
+                        .track
+                        .network
+                        .as_ref()
+                        .and_then(|net| net.segments.iter().find(|s| s.id == seg_id))
+                        .and_then(|s| s.waypoints.get(insert_idx))
+                    {
+                        self.active_surface = wp.surface.unwrap_or(SurfaceType::Asphalt);
+                        self.new_waypoint_width = wp.width;
+                        self.new_waypoint_left_curb = wp.left_curb;
+                        self.new_waypoint_right_curb = wp.right_curb;
+                        self.new_waypoint_left_wall = wp.left_wall;
+                        self.new_waypoint_right_wall = wp.right_wall;
+                        self.new_waypoint_left_wall_distance = wp.left_wall_distance;
+                        self.new_waypoint_right_wall_distance = wp.right_wall_distance;
+                        self.new_waypoint_left_runoff_surface = wp.left_runoff_surface;
+                        self.new_waypoint_right_runoff_surface = wp.right_runoff_surface;
                         self.new_waypoint_bank_angle = wp.bank_angle;
                     }
                     return true;
@@ -648,8 +717,39 @@ impl ToolSettings {
                     return true;
                 }
             }
+            Selection::MultipleBranchWaypoints(items) => {
+                if !items.is_empty() {
+                    state.record_undo();
+                    let mut sorted = items.clone();
+                    sorted.sort_by_key(|&(s, i)| (s.0, i));
+                    sorted.dedup();
+                    let mut new_items = Vec::new();
+                    let mut affected_segs = Vec::new();
+                    if let Some(net) = state.track.network.as_mut() {
+                        for &(seg_id, idx) in &sorted {
+                            if let Some(seg) = net.segments.iter_mut().find(|s| s.id == seg_id) {
+                                if idx < seg.waypoints.len() {
+                                    let mut copy = seg.waypoints[idx].clone();
+                                    copy.point += Vec2::new(4.0, 4.0);
+                                    seg.waypoints.push(copy);
+                                    new_items.push((seg_id, seg.waypoints.len() - 1));
+                                    if !affected_segs.contains(&seg_id) {
+                                        affected_segs.push(seg_id);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if !affected_segs.is_empty() {
+                        state.rebuild_branch_segments(&affected_segs);
+                        state.select(Selection::MultipleBranchWaypoints(new_items));
+                        return true;
+                    }
+                }
+            }
             Selection::Multi {
                 waypoints,
+                branch_waypoints,
                 surface_zones,
                 obstacles,
                 jump_ramps,
@@ -659,6 +759,7 @@ impl ToolSettings {
             } => {
                 let mut any_duplicated = false;
                 let mut new_waypoints = Vec::new();
+                let mut new_branch_waypoints = Vec::new();
                 let mut new_surface_zones = Vec::new();
                 let mut new_obstacles = Vec::new();
                 let mut new_jump_ramps = Vec::new();
@@ -666,6 +767,7 @@ impl ToolSettings {
                 let mut new_grid_slots = Vec::new();
 
                 if !waypoints.is_empty()
+                    || !branch_waypoints.is_empty()
                     || !surface_zones.is_empty()
                     || !obstacles.is_empty()
                     || !jump_ramps.is_empty()
@@ -690,6 +792,33 @@ impl ToolSettings {
                         }
                     }
                     state.rebuild_geometry();
+                }
+
+                // 1b. Branch Waypoints
+                if !branch_waypoints.is_empty() {
+                    let mut sorted = branch_waypoints.clone();
+                    sorted.sort_by_key(|&(s, i)| (s.0, i));
+                    sorted.dedup();
+                    let mut affected_segs = Vec::new();
+                    if let Some(net) = state.track.network.as_mut() {
+                        for &(seg_id, idx) in &sorted {
+                            if let Some(seg) = net.segments.iter_mut().find(|s| s.id == seg_id) {
+                                if idx < seg.waypoints.len() {
+                                    let mut copy = seg.waypoints[idx].clone();
+                                    copy.point += Vec2::new(4.0, 4.0);
+                                    seg.waypoints.push(copy);
+                                    new_branch_waypoints.push((seg_id, seg.waypoints.len() - 1));
+                                    if !affected_segs.contains(&seg_id) {
+                                        affected_segs.push(seg_id);
+                                    }
+                                    any_duplicated = true;
+                                }
+                            }
+                        }
+                    }
+                    if !affected_segs.is_empty() {
+                        state.rebuild_branch_segments(&affected_segs);
+                    }
                 }
 
                 // 2. Surface Zones
@@ -767,8 +896,9 @@ impl ToolSettings {
                 }
 
                 if any_duplicated {
-                    state.select(Selection::from_multi(
+                    state.select(Selection::from_multi_with_branches(
                         new_waypoints,
+                        new_branch_waypoints,
                         new_surface_zones,
                         new_obstacles,
                         new_jump_ramps,
@@ -1147,48 +1277,46 @@ impl ToolSettings {
 
     /// Batch modifies track width for all selected waypoints.
     pub fn batch_set_width(&mut self, state: &mut EditorState, width: f32) -> bool {
-        let indices = state.selection.selected_waypoint_indices();
-        if !indices.is_empty() {
-            state.record_undo();
-            for idx in indices {
-                if idx < state.track.spline.waypoints.len() {
-                    state.track.spline.waypoints[idx].width = width.clamp(WIDTH_RANGE.0, WIDTH_RANGE.1);
-                }
-            }
-            state.rebuild_geometry();
-            return true;
-        }
-        false
+        let clamped = width.clamp(WIDTH_RANGE.0, WIDTH_RANGE.1);
+        apply_to_selected_waypoints(state, |wp, _| wp.width = clamped)
     }
 
     /// Batch adjusts track width by delta (+/-) for all selected waypoints.
     pub fn batch_adjust_width(&mut self, state: &mut EditorState, delta: f32) -> bool {
-        let indices = state.selection.selected_waypoint_indices();
-        if !indices.is_empty() {
-            state.record_undo();
-            for idx in indices {
-                if idx < state.track.spline.waypoints.len() {
-                    let w = state.track.spline.waypoints[idx].width;
-                    state.track.spline.waypoints[idx].width = (w + delta).clamp(WIDTH_RANGE.0, WIDTH_RANGE.1);
-                }
-            }
-            state.rebuild_geometry();
-            return true;
-        }
-        false
+        apply_to_selected_waypoints(state, |wp, _| {
+            wp.width = (wp.width + delta).clamp(WIDTH_RANGE.0, WIDTH_RANGE.1);
+        })
     }
 
     /// Batch applies surface material for all selected waypoints, surface zones, and jump ramps.
     pub fn batch_set_surface(&mut self, state: &mut EditorState, surface: Option<SurfaceType>) -> bool {
         let wp_indices = state.selection.selected_waypoint_indices();
+        let branch_wps = state.selection.selected_branch_waypoints();
         let ramp_indices = state.selection.selected_jump_ramp_indices();
         let zone_indices = state.selection.selected_surface_zone_indices();
 
-        if !wp_indices.is_empty() || (!ramp_indices.is_empty() && surface.is_some()) || (!zone_indices.is_empty() && surface.is_some()) {
+        if !wp_indices.is_empty()
+            || !branch_wps.is_empty()
+            || (!ramp_indices.is_empty() && surface.is_some())
+            || (!zone_indices.is_empty() && surface.is_some())
+        {
             state.record_undo();
             for idx in wp_indices {
                 if idx < state.track.spline.waypoints.len() {
                     state.track.spline.waypoints[idx].surface = surface;
+                }
+            }
+            let mut affected_segs = Vec::new();
+            if let Some(net) = state.track.network.as_mut() {
+                for (seg_id, idx) in branch_wps {
+                    if let Some(seg) = net.segments.iter_mut().find(|s| s.id == seg_id) {
+                        if let Some(wp) = seg.waypoints.get_mut(idx) {
+                            wp.surface = surface;
+                            if !affected_segs.contains(&seg_id) {
+                                affected_segs.push(seg_id);
+                            }
+                        }
+                    }
                 }
             }
             if let Some(st) = surface {
@@ -1204,7 +1332,11 @@ impl ToolSettings {
                     }
                 }
             }
-            state.rebuild_geometry();
+            if !affected_segs.is_empty() {
+                state.rebuild_branch_segments(&affected_segs);
+            } else {
+                state.rebuild_geometry();
+            }
             return true;
         }
         false
@@ -1212,36 +1344,18 @@ impl ToolSettings {
 
     /// Batch applies left/right curbs for all selected waypoints.
     pub fn batch_set_curbs(&mut self, state: &mut EditorState, left: bool, right: bool) -> bool {
-        let indices = state.selection.selected_waypoint_indices();
-        if !indices.is_empty() {
-            state.record_undo();
-            for idx in indices {
-                if idx < state.track.spline.waypoints.len() {
-                    state.track.spline.waypoints[idx].left_curb = left;
-                    state.track.spline.waypoints[idx].right_curb = right;
-                }
-            }
-            state.rebuild_geometry();
-            return true;
-        }
-        false
+        apply_to_selected_waypoints(state, |wp, _| {
+            wp.left_curb = left;
+            wp.right_curb = right;
+        })
     }
 
     /// Batch applies left/right walls for all selected waypoints.
     pub fn batch_set_walls(&mut self, state: &mut EditorState, left: bool, right: bool) -> bool {
-        let indices = state.selection.selected_waypoint_indices();
-        if !indices.is_empty() {
-            state.record_undo();
-            for idx in indices {
-                if idx < state.track.spline.waypoints.len() {
-                    state.track.spline.waypoints[idx].left_wall = left;
-                    state.track.spline.waypoints[idx].right_wall = right;
-                }
-            }
-            state.rebuild_geometry();
-            return true;
-        }
-        false
+        apply_to_selected_waypoints(state, |wp, _| {
+            wp.left_wall = left;
+            wp.right_wall = right;
+        })
     }
 
     /// Batch applies left and right wall distances for all selected waypoints (None resets to default offset).
@@ -1251,44 +1365,22 @@ impl ToolSettings {
         left: Option<f32>,
         right: Option<f32>,
     ) -> bool {
-        let indices = state.selection.selected_waypoint_indices();
-        if !indices.is_empty() {
-            state.record_undo();
-            for idx in indices {
-                if idx < state.track.spline.waypoints.len() {
-                    state.track.spline.waypoints[idx].left_wall_distance = left;
-                    state.track.spline.waypoints[idx].right_wall_distance = right;
-                }
-            }
-            state.rebuild_geometry();
-            return true;
-        }
-        false
+        apply_to_selected_waypoints(state, |wp, _| {
+            wp.left_wall_distance = left;
+            wp.right_wall_distance = right;
+        })
     }
 
     /// Batch adjusts wall distances by delta for all selected waypoints.
     pub fn batch_adjust_wall_distances(&mut self, state: &mut EditorState, delta: f32) -> bool {
-        let indices = state.selection.selected_waypoint_indices();
-        if !indices.is_empty() {
-            state.record_undo();
-            for idx in indices {
-                if idx < state.track.spline.waypoints.len() {
-                    let current_l = state.track.spline.waypoints[idx]
-                        .left_wall_distance
-                        .unwrap_or(state.barrier_offset);
-                    let current_r = state.track.spline.waypoints[idx]
-                        .right_wall_distance
-                        .unwrap_or(state.barrier_offset);
-                    state.track.spline.waypoints[idx].left_wall_distance =
-                        Some((current_l + delta).clamp(WALL_DISTANCE_RANGE.0, WALL_DISTANCE_RANGE.1));
-                    state.track.spline.waypoints[idx].right_wall_distance =
-                        Some((current_r + delta).clamp(WALL_DISTANCE_RANGE.0, WALL_DISTANCE_RANGE.1));
-                }
-            }
-            state.rebuild_geometry();
-            return true;
-        }
-        false
+        apply_to_selected_waypoints(state, |wp, default_offset| {
+            let current_l = wp.left_wall_distance.unwrap_or(default_offset);
+            let current_r = wp.right_wall_distance.unwrap_or(default_offset);
+            wp.left_wall_distance =
+                Some((current_l + delta).clamp(WALL_DISTANCE_RANGE.0, WALL_DISTANCE_RANGE.1));
+            wp.right_wall_distance =
+                Some((current_r + delta).clamp(WALL_DISTANCE_RANGE.0, WALL_DISTANCE_RANGE.1));
+        })
     }
 
     /// Sets global default barrier offset for the circuit and rebuilds geometry.
@@ -1307,110 +1399,55 @@ impl ToolSettings {
 
     /// Batch applies wall type override for all selected waypoints (None inherits global barrier type).
     pub fn batch_set_wall_type(&mut self, state: &mut EditorState, wall_type: Option<BarrierType>) -> bool {
-        let indices = state.selection.selected_waypoint_indices();
-        if !indices.is_empty() {
-            state.record_undo();
-            for idx in indices {
-                if idx < state.track.spline.waypoints.len() {
-                    state.track.spline.waypoints[idx].wall_type = wall_type;
-                }
-            }
-            state.rebuild_geometry();
-            return true;
-        }
-        false
+        apply_to_selected_waypoints(state, |wp, _| {
+            wp.wall_type = wall_type;
+        })
     }
 
     /// Batch adjusts elevation for all selected waypoints.
     pub fn batch_adjust_elevation(&mut self, state: &mut EditorState, delta: f32) -> bool {
-        let indices = state.selection.selected_waypoint_indices();
-        if !indices.is_empty() {
-            state.record_undo();
-            for idx in indices {
-                if idx < state.track.spline.waypoints.len() {
-                    let elev = state.track.spline.waypoints[idx].elevation;
-                    state.track.spline.waypoints[idx].elevation = (elev + delta).max(0.0);
-                }
-            }
-            state.rebuild_geometry();
-            return true;
-        }
-        false
+        apply_to_selected_waypoints(state, |wp, _| {
+            wp.elevation = (wp.elevation + delta).max(0.0);
+        })
     }
 
     /// Batch adjusts banking angle for all selected waypoints.
     pub fn batch_adjust_banking(&mut self, state: &mut EditorState, delta: f32) -> bool {
-        let indices = state.selection.selected_waypoint_indices();
-        if !indices.is_empty() {
-            state.record_undo();
-            for idx in indices {
-                if idx < state.track.spline.waypoints.len() {
-                    let bank = state.track.spline.waypoints[idx].bank_angle;
-                    state.track.spline.waypoints[idx].bank_angle = (bank + delta).clamp(BANKING_RANGE.0, BANKING_RANGE.1);
-                }
-            }
-            state.rebuild_geometry();
-            return true;
-        }
-        false
+        apply_to_selected_waypoints(state, |wp, _| {
+            wp.bank_angle = (wp.bank_angle + delta).clamp(BANKING_RANGE.0, BANKING_RANGE.1);
+        })
     }
 
     /// Batch sets banking angle for all selected waypoints.
     pub fn batch_set_banking(&mut self, state: &mut EditorState, bank_angle: f32) -> bool {
-        let indices = state.selection.selected_waypoint_indices();
-        if !indices.is_empty() {
-            state.record_undo();
-            for idx in indices {
-                if idx < state.track.spline.waypoints.len() {
-                    state.track.spline.waypoints[idx].bank_angle = bank_angle.clamp(BANKING_RANGE.0, BANKING_RANGE.1);
-                }
-            }
-            state.rebuild_geometry();
-            return true;
-        }
-        false
+        let clamped = bank_angle.clamp(BANKING_RANGE.0, BANKING_RANGE.1);
+        apply_to_selected_waypoints(state, |wp, _| {
+            wp.bank_angle = clamped;
+        })
     }
 
     /// Batch inverts banking angle (+/-) for all selected waypoints.
     pub fn batch_invert_banking(&mut self, state: &mut EditorState) -> bool {
-        let indices = state.selection.selected_waypoint_indices();
-        if !indices.is_empty() {
-            state.record_undo();
-            for idx in indices {
-                if idx < state.track.spline.waypoints.len() {
-                    state.track.spline.waypoints[idx].bank_angle = -state.track.spline.waypoints[idx].bank_angle;
-                }
-            }
-            state.rebuild_geometry();
-            return true;
-        }
-        false
+        apply_to_selected_waypoints(state, |wp, _| {
+            wp.bank_angle = -wp.bank_angle;
+        })
     }
 
     /// Cycles banking preset (0° -> 10° -> 18° -> 22° -> 0°) for all selected waypoints.
     pub fn cycle_selected_banking(&mut self, state: &mut EditorState) -> bool {
-        let indices = state.selection.selected_waypoint_indices();
-        if !indices.is_empty() {
-            state.record_undo();
-            for idx in indices {
-                if idx < state.track.spline.waypoints.len() {
-                    let curr = state.track.spline.waypoints[idx].bank_angle;
-                    let next = if curr.abs() < 1.0 {
-                        10.0
-                    } else if (curr - 10.0).abs() < 2.0 {
-                        18.0
-                    } else if (curr - 18.0).abs() < 2.0 {
-                        22.0
-                    } else {
-                        0.0
-                    };
-                    state.track.spline.waypoints[idx].bank_angle = next;
-                }
-            }
-            state.rebuild_geometry();
-            return true;
-        }
-        false
+        apply_to_selected_waypoints(state, |wp, _| {
+            let curr = wp.bank_angle;
+            let next = if curr.abs() < 1.0 {
+                10.0
+            } else if (curr - 10.0).abs() < 2.0 {
+                18.0
+            } else if (curr - 18.0).abs() < 2.0 {
+                22.0
+            } else {
+                0.0
+            };
+            wp.bank_angle = next;
+        })
     }
 }
 
@@ -1493,6 +1530,28 @@ impl ToolSettings {
                     self.new_waypoint_right_wall = wp.right_wall;
                     self.new_waypoint_left_wall_distance = wp.left_wall_distance;
                     self.new_waypoint_right_wall_distance = wp.right_wall_distance;
+                    self.new_waypoint_left_runoff_surface = wp.left_runoff_surface;
+                    self.new_waypoint_right_runoff_surface = wp.right_runoff_surface;
+                    self.new_waypoint_bank_angle = wp.bank_angle;
+                }
+            } else if let Selection::BranchWaypoint(seg_id, idx) = sel {
+                if let Some(wp) = state
+                    .track
+                    .network
+                    .as_ref()
+                    .and_then(|net| net.segments.iter().find(|s| s.id == seg_id))
+                    .and_then(|s| s.waypoints.get(idx))
+                {
+                    self.active_surface = wp.surface.unwrap_or(SurfaceType::Asphalt);
+                    self.new_waypoint_width = wp.width;
+                    self.new_waypoint_left_curb = wp.left_curb;
+                    self.new_waypoint_right_curb = wp.right_curb;
+                    self.new_waypoint_left_wall = wp.left_wall;
+                    self.new_waypoint_right_wall = wp.right_wall;
+                    self.new_waypoint_left_wall_distance = wp.left_wall_distance;
+                    self.new_waypoint_right_wall_distance = wp.right_wall_distance;
+                    self.new_waypoint_left_runoff_surface = wp.left_runoff_surface;
+                    self.new_waypoint_right_runoff_surface = wp.right_runoff_surface;
                     self.new_waypoint_bank_angle = wp.bank_angle;
                 }
             } else if let Selection::SurfaceZone(idx) = sel {
@@ -1520,6 +1579,7 @@ impl ToolSettings {
             self.drag_start_world = mouse_world;
             self.drag_current_world = mouse_world;
             self.drag_initial_waypoints.clear();
+            self.drag_initial_branch_waypoints.clear();
             self.drag_initial_surface_zones.clear();
             self.drag_initial_obstacles.clear();
             self.drag_initial_jump_ramps.clear();
@@ -1567,6 +1627,20 @@ impl ToolSettings {
             }
         }
 
+        let mut affected_branch_segs = Vec::new();
+        for ((seg_id, idx), initial_pt) in &self.drag_initial_branch_waypoints {
+            if let Some(net) = state.track.network.as_mut() {
+                if let Some(seg) = net.segments.iter_mut().find(|s| s.id == *seg_id) {
+                    if *idx < seg.waypoints.len() {
+                        seg.waypoints[*idx].point = *initial_pt + delta;
+                        if !affected_branch_segs.contains(seg_id) {
+                            affected_branch_segs.push(*seg_id);
+                        }
+                    }
+                }
+            }
+        }
+
         for (idx, initial_center) in &self.drag_initial_surface_zones {
             if *idx < state.track.geometry.surface_zones.len() {
                 set_surface_zone_position(&mut state.track.geometry.surface_zones[*idx], *initial_center + delta);
@@ -1605,7 +1679,9 @@ impl ToolSettings {
             }
         }
 
-        if geometry_dirty {
+        if !affected_branch_segs.is_empty() {
+            state.rebuild_branch_segments(&affected_branch_segs);
+        } else if geometry_dirty {
             state.rebuild_geometry();
         }
     }
@@ -1666,20 +1742,84 @@ impl ToolSettings {
             EditorToolType::RoadSpline => {
                 state.record_undo();
 
-                let inherited_surface = match state
+                if let Selection::BranchWaypoint(seg_id, idx) = state.selection {
+                    let prev_wp = state
+                        .track
+                        .network
+                        .as_ref()
+                        .and_then(|net| net.segments.iter().find(|s| s.id == seg_id))
+                        .and_then(|s| s.waypoints.get(idx))
+                        .cloned();
+
+                    let inherited_surface = prev_wp
+                        .as_ref()
+                        .and_then(|w| w.surface)
+                        .unwrap_or(self.active_surface);
+                    let inherited_wall_type = prev_wp
+                        .as_ref()
+                        .and_then(|w| w.wall_type)
+                        .or(self.new_waypoint_wall_type);
+                    let inherited_left_runoff = prev_wp
+                        .as_ref()
+                        .and_then(|w| w.left_runoff_surface)
+                        .or(self.new_waypoint_left_runoff_surface);
+                    let inherited_right_runoff = prev_wp
+                        .as_ref()
+                        .and_then(|w| w.right_runoff_surface)
+                        .or(self.new_waypoint_right_runoff_surface);
+
+                    let mut wp = TrackWaypoint::new(snapped_mouse, self.new_waypoint_width);
+                    wp.surface = Some(inherited_surface);
+                    wp.left_curb = self.new_waypoint_left_curb;
+                    wp.right_curb = self.new_waypoint_right_curb;
+                    wp.left_wall = self.new_waypoint_left_wall;
+                    wp.right_wall = self.new_waypoint_right_wall;
+                    wp.left_wall_distance = self.new_waypoint_left_wall_distance;
+                    wp.right_wall_distance = self.new_waypoint_right_wall_distance;
+                    wp.wall_type = inherited_wall_type;
+                    wp.left_runoff_surface = inherited_left_runoff;
+                    wp.right_runoff_surface = inherited_right_runoff;
+                    wp.bank_angle = self.new_waypoint_bank_angle;
+
+                    let mut insert_idx = idx + 1;
+                    if let Some(net) = state.track.network.as_mut() {
+                        if let Some(seg) = net.segments.iter_mut().find(|s| s.id == seg_id) {
+                            insert_idx = (idx + 1).min(seg.waypoints.len());
+                            if insert_idx < seg.waypoints.len() {
+                                seg.waypoints.insert(insert_idx, wp);
+                            } else {
+                                seg.waypoints.push(wp);
+                            }
+                        }
+                    }
+                    state.rebuild_branch_segments(&[seg_id]);
+                    state.select(Selection::BranchWaypoint(seg_id, insert_idx));
+                    self.active_surface = inherited_surface;
+                    return;
+                }
+
+                let prev_wp = state
                     .current_or_last_waypoint_idx()
-                    .and_then(|idx| state.track.spline.waypoints.get(idx))
-                {
-                    Some(prev_wp) => prev_wp.surface.unwrap_or(self.active_surface),
+                    .and_then(|idx| state.track.spline.waypoints.get(idx));
+
+                let inherited_surface = match prev_wp {
+                    Some(prev) => prev.surface.unwrap_or(self.active_surface),
                     None => self.active_surface,
                 };
 
-                let inherited_wall_type = match state
-                    .current_or_last_waypoint_idx()
-                    .and_then(|idx| state.track.spline.waypoints.get(idx))
-                {
-                    Some(prev_wp) => prev_wp.wall_type.or(self.new_waypoint_wall_type),
+                let inherited_wall_type = match prev_wp {
+                    Some(prev) => prev.wall_type.or(self.new_waypoint_wall_type),
                     None => self.new_waypoint_wall_type,
+                };
+
+                let inherited_left_runoff = match prev_wp {
+                    Some(prev) => prev.left_runoff_surface.or(self.new_waypoint_left_runoff_surface),
+                    None => self.new_waypoint_left_runoff_surface,
+                };
+
+                let inherited_right_runoff = match prev_wp {
+                    Some(prev) => prev.right_runoff_surface.or(self.new_waypoint_right_runoff_surface),
+                    None => self.new_waypoint_right_runoff_surface,
                 };
 
                 let mut wp = TrackWaypoint::new(snapped_mouse, self.new_waypoint_width);
@@ -1691,6 +1831,8 @@ impl ToolSettings {
                 wp.left_wall_distance = self.new_waypoint_left_wall_distance;
                 wp.right_wall_distance = self.new_waypoint_right_wall_distance;
                 wp.wall_type = inherited_wall_type;
+                wp.left_runoff_surface = inherited_left_runoff;
+                wp.right_runoff_surface = inherited_right_runoff;
                 wp.bank_angle = self.new_waypoint_bank_angle;
 
                 let insert_idx = match state.current_or_last_waypoint_idx() {
@@ -2185,24 +2327,91 @@ impl ToolSettings {
                     }
                 }
             }
-            EditorToolType::JumpRamp => {
-                let dir = (snapped_mouse - self.drag_start_world).normalize_or_zero();
-                let length = (snapped_mouse - self.drag_start_world).length().max(6.0);
-                let center = (self.drag_start_world + snapped_mouse) * 0.5;
+            EditorToolType::JumpRamp | EditorToolType::WhoopSection | EditorToolType::StuntRamp => {
+                let kind = self.effective_ramp_kind();
+                let v = snapped_mouse - self.drag_start_world;
+                let dir = if v.length() > 0.1 { v.normalize() } else { Vec2::X };
                 let angle = dir.y.atan2(dir.x);
-
-                state.record_undo();
                 let ramp_id = state.track.geometry.jump_ramps.len() + 1;
-                let shape = SurfaceShape::OrientedBox {
-                    center,
-                    half_extents: Vec2::new(length * 0.5, 4.0),
-                    angle,
-                };
-                let ramp = JumpRamp::new(ramp_id, shape, dir, 4.0, 15.0, 1.8, format!("Jump Ramp {}", ramp_id))
-                    .with_surface(self.active_surface);
-                state.track.geometry.jump_ramps.push(ramp);
-                state.selection = Selection::JumpRamp(state.track.geometry.jump_ramps.len() - 1);
-                state.revalidate();
+
+                match kind {
+                    RampKind::Ramp => {
+                        let length = v.length().max(6.0);
+                        let center = (self.drag_start_world + snapped_mouse) * 0.5;
+                        state.record_undo();
+                        let shape = SurfaceShape::OrientedBox {
+                            center,
+                            half_extents: Vec2::new(length * 0.5, 4.0),
+                            angle,
+                        };
+                        let ramp = JumpRamp::new(
+                            ramp_id,
+                            shape,
+                            dir,
+                            4.0,
+                            15.0,
+                            1.8,
+                            format!("Jump Ramp {}", ramp_id),
+                        )
+                        .with_kind(RampKind::Ramp)
+                        .with_surface(self.active_surface);
+                        state.track.geometry.jump_ramps.push(ramp);
+                        state.selection = Selection::JumpRamp(state.track.geometry.jump_ramps.len() - 1);
+                        state.revalidate();
+                    }
+                    RampKind::Whoops => {
+                        let total_len = v.length().max(self.whoop_spacing * 2.0);
+                        let center = (self.drag_start_world + snapped_mouse) * 0.5;
+                        let half_wid = (self.whoop_width * 0.5).max(2.0);
+                        state.record_undo();
+                        let shape = SurfaceShape::OrientedBox {
+                            center,
+                            half_extents: Vec2::new(total_len * 0.5, half_wid),
+                            angle,
+                        };
+                        let whoop = JumpRamp::new(
+                            ramp_id,
+                            shape,
+                            dir,
+                            4.0,
+                            14.0,
+                            self.whoop_height,
+                            format!("Whoops Moguls {}", ramp_id),
+                        )
+                        .with_kind(RampKind::Whoops)
+                        .with_whoop_spacing(self.whoop_spacing)
+                        .with_surface(self.active_surface);
+                        state.track.geometry.jump_ramps.push(whoop);
+                        state.selection = Selection::JumpRamp(state.track.geometry.jump_ramps.len() - 1);
+                        state.revalidate();
+                    }
+                    RampKind::MegaRamp => {
+                        let length = v.length().max(24.0);
+                        let center = (self.drag_start_world + snapped_mouse) * 0.5;
+                        let gap_len = self.mega_gap_length.clamp(length * 0.15, length * 0.55);
+                        state.record_undo();
+                        let shape = SurfaceShape::OrientedBox {
+                            center,
+                            half_extents: Vec2::new(length * 0.5, 6.0),
+                            angle,
+                        };
+                        let ramp = JumpRamp::new(
+                            ramp_id,
+                            shape,
+                            dir,
+                            28.0 * self.stunt_ramp_multiplier,
+                            35.0,
+                            self.stunt_ramp_height,
+                            format!("Stunt Mega Ramp {}", ramp_id),
+                        )
+                        .with_kind(RampKind::MegaRamp)
+                        .with_gap_length(gap_len)
+                        .with_surface(self.active_surface);
+                        state.track.geometry.jump_ramps.push(ramp);
+                        state.selection = Selection::JumpRamp(state.track.geometry.jump_ramps.len() - 1);
+                        state.revalidate();
+                    }
+                }
             }
             EditorToolType::Obstacle => {
                 if self.active_obstacle_shape == ObstacleShapeType::Box {
@@ -2256,70 +2465,6 @@ impl ToolSettings {
                     state.revalidate();
                 }
             }
-            EditorToolType::WhoopSection => {
-                let v = snapped_mouse - self.drag_start_world;
-                let total_len = v.length();
-                if total_len >= self.whoop_spacing {
-                    state.record_undo();
-                    let dir = v.normalize();
-                    let angle = dir.y.atan2(dir.x);
-                    let count = (total_len / self.whoop_spacing).floor() as usize;
-                    let ramp_start_id = state.track.geometry.jump_ramps.len();
-                    for i in 0..count {
-                        let ramp_id = ramp_start_id + i + 1;
-                        let center = self.drag_start_world + dir * (self.whoop_spacing * (i as f32 + 0.5));
-                        let half_len = (self.whoop_spacing * 0.42).max(1.0);
-                        let half_wid = (self.whoop_width * 0.5).max(2.0);
-                        let shape = SurfaceShape::OrientedBox {
-                            center,
-                            half_extents: Vec2::new(half_len, half_wid),
-                            angle,
-                        };
-                        let whoop = JumpRamp::new(
-                            ramp_id,
-                            shape,
-                            dir,
-                            20.0,
-                            16.0,
-                            self.whoop_height,
-                            format!("Whoop Mogul {}", ramp_id),
-                        )
-                        .with_surface(self.active_surface);
-                        state.track.geometry.jump_ramps.push(whoop);
-                    }
-                    if count > 0 {
-                        state.selection = Selection::JumpRamp(state.track.geometry.jump_ramps.len() - 1);
-                    }
-                    state.revalidate();
-                }
-            }
-            EditorToolType::StuntRamp => {
-                let v = snapped_mouse - self.drag_start_world;
-                let length = v.length().max(10.0);
-                let dir = if v.length() > 0.1 { v.normalize() } else { Vec2::X };
-                let center = (self.drag_start_world + snapped_mouse) * 0.5;
-                let angle = dir.y.atan2(dir.x);
-                state.record_undo();
-                let ramp_id = state.track.geometry.jump_ramps.len() + 1;
-                let shape = SurfaceShape::OrientedBox {
-                    center,
-                    half_extents: Vec2::new(length * 0.5, 6.0),
-                    angle,
-                };
-                let ramp = JumpRamp::new(
-                    ramp_id,
-                    shape,
-                    dir,
-                    28.0 * self.stunt_ramp_multiplier,
-                    35.0,
-                    self.stunt_ramp_height,
-                    format!("Stunt Mega Ramp {}", ramp_id),
-                )
-                .with_surface(self.active_surface);
-                state.track.geometry.jump_ramps.push(ramp);
-                state.selection = Selection::JumpRamp(state.track.geometry.jump_ramps.len() - 1);
-                state.revalidate();
-            }
             _ => {}
         }
     }
@@ -2336,7 +2481,9 @@ impl ToolSettings {
                 self.handle_primary_down(state, mouse_world, is_multi_key);
             }
             EditorToolType::RoadSpline => {
-                if find_closest_waypoint(state, mouse_world, 8.0).is_some() {
+                if find_closest_waypoint(state, mouse_world, 8.0).is_some()
+                    || find_closest_branch_waypoint(state, mouse_world, 8.0).is_some()
+                {
                     self.handle_primary_down(state, mouse_world, is_multi_key);
                 } else {
                     self.handle_secondary_down(state, mouse_world);
@@ -2353,7 +2500,9 @@ impl ToolSettings {
                         }
                     })
                 };
-                if is_near_socket {
+                let is_near_branch_wp = self.active_branch_socket.is_none()
+                    && find_closest_branch_waypoint(state, mouse_world, 6.0).is_some();
+                if is_near_socket || is_near_branch_wp {
                     self.handle_primary_down(state, mouse_world, is_multi_key);
                 } else {
                     self.handle_secondary_down(state, mouse_world);
@@ -2433,6 +2582,25 @@ impl ToolSettings {
                     return true;
                 }
             }
+            Selection::BranchWaypoint(seg_id, idx) => {
+                let can_delete = state
+                    .track
+                    .network
+                    .as_ref()
+                    .and_then(|net| net.segments.iter().find(|s| s.id == seg_id))
+                    .is_some_and(|s| s.waypoints.len() > 2 && idx < s.waypoints.len());
+                if can_delete {
+                    state.record_undo();
+                    if let Some(net) = state.track.network.as_mut() {
+                        if let Some(seg) = net.segments.iter_mut().find(|s| s.id == seg_id) {
+                            seg.waypoints.remove(idx);
+                        }
+                    }
+                    state.rebuild_branch_segments(&[seg_id]);
+                    state.selection = Selection::None;
+                    return true;
+                }
+            }
             Selection::MultipleWaypoints(indices) => {
                 if !indices.is_empty() && state.track.spline.waypoints.len() > indices.len() {
                     state.record_undo();
@@ -2448,6 +2616,32 @@ impl ToolSettings {
                     state.selection = Selection::None;
                     state.last_selected_waypoint = None;
                     return true;
+                }
+            }
+            Selection::MultipleBranchWaypoints(items) => {
+                if !items.is_empty() {
+                    let mut sorted = items.clone();
+                    sorted.sort_by_key(|&(s, i)| (s.0, i));
+                    sorted.dedup();
+                    let mut affected_segs = Vec::new();
+                    state.record_undo();
+                    if let Some(net) = state.track.network.as_mut() {
+                        for &(seg_id, idx) in sorted.iter().rev() {
+                            if let Some(seg) = net.segments.iter_mut().find(|s| s.id == seg_id) {
+                                if seg.waypoints.len() > 2 && idx < seg.waypoints.len() {
+                                    seg.waypoints.remove(idx);
+                                    if !affected_segs.contains(&seg_id) {
+                                        affected_segs.push(seg_id);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if !affected_segs.is_empty() {
+                        state.rebuild_branch_segments(&affected_segs);
+                        state.selection = Selection::None;
+                        return true;
+                    }
                 }
             }
             Selection::SurfaceZone(idx) => {
@@ -2511,6 +2705,7 @@ impl ToolSettings {
             }
             Selection::Multi {
                 waypoints,
+                branch_waypoints,
                 surface_zones,
                 obstacles,
                 jump_ramps,
@@ -2520,6 +2715,7 @@ impl ToolSettings {
             } => {
                 let mut any_deleted = false;
                 if !waypoints.is_empty()
+                    || !branch_waypoints.is_empty()
                     || !surface_zones.is_empty()
                     || !obstacles.is_empty()
                     || !jump_ramps.is_empty()
@@ -2543,6 +2739,30 @@ impl ToolSettings {
                     }
                     state.rebuild_geometry();
                     state.last_selected_waypoint = None;
+                }
+
+                // 1b. Branch Waypoints
+                if !branch_waypoints.is_empty() {
+                    let mut sorted_bw = branch_waypoints.clone();
+                    sorted_bw.sort_by_key(|&(s, i)| (s.0, i));
+                    sorted_bw.dedup();
+                    let mut affected_segs = Vec::new();
+                    if let Some(net) = state.track.network.as_mut() {
+                        for &(seg_id, idx) in sorted_bw.iter().rev() {
+                            if let Some(seg) = net.segments.iter_mut().find(|s| s.id == seg_id) {
+                                if seg.waypoints.len() > 2 && idx < seg.waypoints.len() {
+                                    seg.waypoints.remove(idx);
+                                    if !affected_segs.contains(&seg_id) {
+                                        affected_segs.push(seg_id);
+                                    }
+                                    any_deleted = true;
+                                }
+                            }
+                        }
+                    }
+                    if !affected_segs.is_empty() {
+                        state.rebuild_branch_segments(&affected_segs);
+                    }
                 }
 
                 // 2. Obstacles (in reverse order)
@@ -2624,13 +2844,61 @@ impl ToolSettings {
     }
 }
 
+fn apply_to_selected_waypoints(
+    state: &mut EditorState,
+    mut f: impl FnMut(&mut TrackWaypoint, f32),
+) -> bool {
+    let indices = state.selection.selected_waypoint_indices();
+    let branch_wps = state.selection.selected_branch_waypoints();
+    if indices.is_empty() && branch_wps.is_empty() {
+        return false;
+    }
+    state.record_undo();
+    let default_offset = state.barrier_offset;
+    for idx in indices {
+        if let Some(wp) = state.track.spline.waypoints.get_mut(idx) {
+            f(wp, default_offset);
+        }
+    }
+    let mut affected_segs = Vec::new();
+    if let Some(net) = state.track.network.as_mut() {
+        for (seg_id, idx) in branch_wps {
+            if let Some(seg) = net.segments.iter_mut().find(|s| s.id == seg_id) {
+                if let Some(wp) = seg.waypoints.get_mut(idx) {
+                    f(wp, default_offset);
+                    if !affected_segs.contains(&seg_id) {
+                        affected_segs.push(seg_id);
+                    }
+                }
+            }
+        }
+    }
+    if !affected_segs.is_empty() {
+        state.rebuild_branch_segments(&affected_segs);
+    } else {
+        state.rebuild_geometry();
+    }
+    true
+}
+
 /// Helper to find closest entity to query point.
 fn find_closest_entity(state: &EditorState, point: Vec2) -> Option<Selection> {
     let pick_dist = 6.0;
 
-    // 1. Waypoints
-    if let Some(idx) = find_closest_waypoint(state, point, pick_dist) {
-        return Some(Selection::Waypoint(idx));
+    // 1. Waypoints (main spline and branch segments)
+    let closest_main = find_closest_waypoint_with_dist(state, point, pick_dist);
+    let closest_branch = find_closest_branch_waypoint_with_dist(state, point, pick_dist);
+    match (closest_main, closest_branch) {
+        (Some((m_idx, m_d)), Some(((seg_id, b_idx), b_d))) => {
+            if b_d < m_d {
+                return Some(Selection::BranchWaypoint(seg_id, b_idx));
+            } else {
+                return Some(Selection::Waypoint(m_idx));
+            }
+        }
+        (Some((m_idx, _)), None) => return Some(Selection::Waypoint(m_idx)),
+        (None, Some(((seg_id, b_idx), _))) => return Some(Selection::BranchWaypoint(seg_id, b_idx)),
+        (None, None) => {}
     }
 
     // 2. Checkpoints
@@ -2702,6 +2970,10 @@ fn find_closest_entity(state: &EditorState, point: Vec2) -> Option<Selection> {
 }
 
 fn find_closest_waypoint(state: &EditorState, point: Vec2, max_dist: f32) -> Option<usize> {
+    find_closest_waypoint_with_dist(state, point, max_dist).map(|(i, _)| i)
+}
+
+fn find_closest_waypoint_with_dist(state: &EditorState, point: Vec2, max_dist: f32) -> Option<(usize, f32)> {
     let mut closest = None;
     let mut min_d = max_dist;
 
@@ -2709,7 +2981,34 @@ fn find_closest_waypoint(state: &EditorState, point: Vec2, max_dist: f32) -> Opt
         let d = (wp.point - point).length();
         if d < min_d {
             min_d = d;
-            closest = Some(i);
+            closest = Some((i, d));
+        }
+    }
+    closest
+}
+
+fn find_closest_branch_waypoint(state: &EditorState, point: Vec2, max_dist: f32) -> Option<(SegmentId, usize)> {
+    find_closest_branch_waypoint_with_dist(state, point, max_dist).map(|(id, _)| id)
+}
+
+fn find_closest_branch_waypoint_with_dist(
+    state: &EditorState,
+    point: Vec2,
+    max_dist: f32,
+) -> Option<((SegmentId, usize), f32)> {
+    let net = state.track.network.as_ref()?;
+    let mut closest = None;
+    let mut min_d = max_dist;
+
+    for seg in &net.segments {
+        if net.is_branch_segment(seg.id) {
+            for (i, wp) in seg.waypoints.iter().enumerate() {
+                let d = (wp.point - point).length();
+                if d < min_d {
+                    min_d = d;
+                    closest = Some(((seg.id, i), d));
+                }
+            }
         }
     }
     closest
@@ -2718,10 +3017,36 @@ fn find_closest_waypoint(state: &EditorState, point: Vec2, max_dist: f32) -> Opt
 fn get_selection_position(state: &EditorState, sel: &Selection) -> Option<Vec2> {
     match sel {
         Selection::Waypoint(idx) => state.track.spline.waypoints.get(*idx).map(|w| w.point),
+        Selection::BranchWaypoint(seg_id, idx) => state
+            .track
+            .network
+            .as_ref()
+            .and_then(|net| net.segments.iter().find(|s| s.id == *seg_id))
+            .and_then(|s| s.waypoints.get(*idx))
+            .map(|w| w.point),
         Selection::MultipleWaypoints(indices) => {
             let pts: Vec<Vec2> = indices
                 .iter()
                 .filter_map(|&i| state.track.spline.waypoints.get(i).map(|w| w.point))
+                .collect();
+            if pts.is_empty() {
+                None
+            } else {
+                let sum: Vec2 = pts.iter().copied().sum();
+                Some(sum / pts.len() as f32)
+            }
+        }
+        Selection::MultipleBranchWaypoints(items) => {
+            let net = state.track.network.as_ref()?;
+            let pts: Vec<Vec2> = items
+                .iter()
+                .filter_map(|&(seg_id, i)| {
+                    net.segments
+                        .iter()
+                        .find(|s| s.id == seg_id)
+                        .and_then(|s| s.waypoints.get(i))
+                        .map(|w| w.point)
+                })
                 .collect();
             if pts.is_empty() {
                 None
@@ -2748,6 +3073,7 @@ fn get_selection_position(state: &EditorState, sel: &Selection) -> Option<Vec2> 
         }
         Selection::Multi {
             waypoints,
+            branch_waypoints,
             surface_zones,
             obstacles,
             jump_ramps,
@@ -2759,6 +3085,18 @@ fn get_selection_position(state: &EditorState, sel: &Selection) -> Option<Vec2> 
             for &i in waypoints {
                 if let Some(w) = state.track.spline.waypoints.get(i) {
                     pts.push(w.point);
+                }
+            }
+            if let Some(net) = state.track.network.as_ref() {
+                for &(seg_id, i) in branch_waypoints {
+                    if let Some(w) = net
+                        .segments
+                        .iter()
+                        .find(|s| s.id == seg_id)
+                        .and_then(|s| s.waypoints.get(i))
+                    {
+                        pts.push(w.point);
+                    }
                 }
             }
             for &i in surface_zones {
@@ -2870,6 +3208,21 @@ fn prepare_drag_initial_positions(state: &EditorState, tools: &mut ToolSettings)
         .selected_waypoint_indices()
         .iter()
         .filter_map(|&i| state.track.spline.waypoints.get(i).map(|wp| (i, wp.point)))
+        .collect();
+
+    tools.drag_initial_branch_waypoints = state
+        .selection
+        .selected_branch_waypoints()
+        .iter()
+        .filter_map(|&(seg_id, i)| {
+            state
+                .track
+                .network
+                .as_ref()
+                .and_then(|net| net.segments.iter().find(|s| s.id == seg_id))
+                .and_then(|s| s.waypoints.get(i))
+                .map(|wp| ((seg_id, i), wp.point))
+        })
         .collect();
 
     tools.drag_initial_surface_zones = state
@@ -3036,6 +3389,7 @@ fn obstacle_intersects_aabb(obs: &Obstacle, min: Vec2, max: Vec2) -> bool {
 
 pub fn find_entities_in_box(state: &EditorState, min: Vec2, max: Vec2) -> Selection {
     let mut waypoints = Vec::new();
+    let mut branch_waypoints = Vec::new();
     let mut surface_zones = Vec::new();
     let mut obstacles = Vec::new();
     let mut jump_ramps = Vec::new();
@@ -3045,6 +3399,18 @@ pub fn find_entities_in_box(state: &EditorState, min: Vec2, max: Vec2) -> Select
     for (i, wp) in state.track.spline.waypoints.iter().enumerate() {
         if point_in_aabb(wp.point, min, max) {
             waypoints.push(i);
+        }
+    }
+
+    if let Some(ref net) = state.track.network {
+        for seg in &net.segments {
+            if net.is_branch_segment(seg.id) {
+                for (i, wp) in seg.waypoints.iter().enumerate() {
+                    if point_in_aabb(wp.point, min, max) {
+                        branch_waypoints.push((seg.id, i));
+                    }
+                }
+            }
         }
     }
 
@@ -3078,8 +3444,9 @@ pub fn find_entities_in_box(state: &EditorState, min: Vec2, max: Vec2) -> Select
         }
     }
 
-    Selection::from_multi(
+    Selection::from_multi_with_branches(
         waypoints,
+        branch_waypoints,
         surface_zones,
         obstacles,
         jump_ramps,
@@ -3372,8 +3739,30 @@ pub fn render_editor_gizmos(state: &EditorState, tools: &ToolSettings, _camera: 
         if network.is_branch_segment(seg.id) && !seg.waypoints.is_empty() {
             let n_bwp = seg.waypoints.len();
             for (w_i, wp) in seg.waypoints.iter().enumerate() {
-                draw_circle(wp.point.x, wp.point.y, 1.2, Palette::NEON_MAGENTA);
+                let is_selected = state.selection.is_branch_waypoint_selected(seg.id, w_i);
+                let node_col = if is_selected {
+                    Palette::NEON_GOLD
+                } else {
+                    Palette::NEON_MAGENTA
+                };
+
+                draw_circle(wp.point.x, wp.point.y, 1.2, node_col);
                 draw_circle_lines(wp.point.x, wp.point.y, 1.2, 0.25, Color::new(0.05, 0.05, 0.08, 0.9));
+
+                if wp.left_curb || wp.right_curb {
+                    let sample = seg.samples.iter().find(|s| (s.point - wp.point).length() < 2.0);
+                    if let Some(s) = sample {
+                        let hw = wp.width * 0.5;
+                        if wp.left_curb {
+                            let curbl = wp.point + s.normal * hw;
+                            draw_circle(curbl.x, curbl.y, 0.8, Palette::CURB_RED);
+                        }
+                        if wp.right_curb {
+                            let curbr = wp.point - s.normal * hw;
+                            draw_circle(curbr.x, curbr.y, 0.8, Palette::CURB_RED);
+                        }
+                    }
+                }
 
                 if w_i + 1 < n_bwp {
                     let next_p = seg.waypoints[w_i + 1].point;
@@ -3461,9 +3850,36 @@ pub fn render_editor_gizmos(state: &EditorState, tools: &ToolSettings, _camera: 
                 SurfaceShape::OrientedBox { center, half_extents, angle } => {
                     draw_oriented_box_lines(*center, *half_extents + Vec2::splat(0.6), *angle, 0.5, col);
 
-                    // Direction arrow handle from center forward through launch lip
                     let fwd = Vec2::new(angle.cos(), angle.sin());
                     let right = Vec2::new(-angle.sin(), angle.cos());
+                    match ramp.kind {
+                        RampKind::Ramp => {}
+                        RampKind::Whoops => {
+                            let n = ramp.whoop_count();
+                            let full_len = half_extents.x * 2.0;
+                            let ridge_len = full_len / n as f32;
+                            for idx in 0..n {
+                                let x_crest = -half_extents.x + (idx as f32 + 0.5) * ridge_len;
+                                let l = *center + fwd * x_crest - right * half_extents.y;
+                                let r = *center + fwd * x_crest + right * half_extents.y;
+                                draw_line(l.x, l.y, r.x, r.y, 0.30, Palette::NEON_CYAN);
+                            }
+                        }
+                        RampKind::MegaRamp => {
+                            let (s_takeoff, s_landing) = ramp.mega_segment_bounds();
+                            let full_len = half_extents.x * 2.0;
+                            let x_t = -half_extents.x + s_takeoff * full_len;
+                            let x_l = -half_extents.x + s_landing * full_len;
+                            let t_l = *center + fwd * x_t - right * half_extents.y;
+                            let t_r = *center + fwd * x_t + right * half_extents.y;
+                            let l_l = *center + fwd * x_l - right * half_extents.y;
+                            let l_r = *center + fwd * x_l + right * half_extents.y;
+                            draw_line(t_l.x, t_l.y, t_r.x, t_r.y, 0.45, Palette::NEON_GOLD);
+                            draw_line(l_l.x, l_l.y, l_r.x, l_r.y, 0.45, Palette::NEON_CYAN);
+                        }
+                    }
+
+                    // Direction arrow handle from center forward through launch lip
                     let arrow_start = *center;
                     let arrow_end = *center + fwd * (half_extents.x + 2.5);
                     draw_line(arrow_start.x, arrow_start.y, arrow_end.x, arrow_end.y, 0.45, col);
@@ -3574,46 +3990,104 @@ pub fn render_editor_gizmos(state: &EditorState, tools: &ToolSettings, _camera: 
                     Palette::NEON_CYAN,
                 );
             }
-            EditorToolType::JumpRamp => {
+            EditorToolType::JumpRamp | EditorToolType::WhoopSection | EditorToolType::StuntRamp => {
+                let kind = tools.effective_ramp_kind();
                 let start = tools.drag_start_world;
                 let current = tools.drag_current_world;
-                let dir = (current - start).normalize_or_zero();
-                let length = (current - start).length().max(6.0);
-                let center = (start + current) * 0.5;
-                let angle = dir.y.atan2(dir.x);
-                let half_extents = Vec2::new(length * 0.5, 4.0);
-
-                draw_oriented_box_lines(center, half_extents, angle, 0.4, Palette::NEON_CYAN);
-                draw_line(start.x, start.y, current.x, current.y, 0.5, Palette::NEON_GOLD);
-
+                let v = current - start;
+                let dir = if v.length() > 0.1 { v.normalize() } else { Vec2::X };
                 let right = Vec2::new(-dir.y, dir.x);
-                let arrow_tip = current;
-                let l_wing = arrow_tip - dir * 1.8 - right * 1.2;
-                let r_wing = arrow_tip - dir * 1.8 + right * 1.2;
-                draw_line(arrow_tip.x, arrow_tip.y, l_wing.x, l_wing.y, 0.5, Palette::NEON_GOLD);
-                draw_line(arrow_tip.x, arrow_tip.y, r_wing.x, r_wing.y, 0.5, Palette::NEON_GOLD);
+                let angle = dir.y.atan2(dir.x);
 
-                // Progressive curved contour arcs across ramp width showing the curved surface
-                let half_len = half_extents.x;
-                let half_wid = half_extents.y;
-                let arc_w = (half_wid * 0.82).max(0.6);
-                let arc_bulge = (half_len * 0.22).min(arc_w * 0.40);
-                let contour_col = Color::new(Palette::NEON_CYAN.r, Palette::NEON_CYAN.g, Palette::NEON_CYAN.b, 0.6);
+                match kind {
+                    RampKind::Ramp => {
+                        let length = v.length().max(6.0);
+                        let center = (start + current) * 0.5;
+                        let half_extents = Vec2::new(length * 0.5, 4.0);
 
-                for s in 0..3 {
-                    let t = (s as f32 + 1.0) / 4.0;
-                    let x_center = -half_len * 0.70 + t * (half_len * 1.35);
-                    let num_segments = 10;
-                    let mut prev_pt: Option<Vec2> = None;
-                    for seg in 0..=num_segments {
-                        let frac = (seg as f32 / num_segments as f32) * 2.0 - 1.0;
-                        let y_offset = frac * arc_w;
-                        let curve_offset = (1.0 - frac * frac) * arc_bulge;
-                        let pt = center + dir * (x_center + curve_offset) + right * y_offset;
-                        if let Some(prev) = prev_pt {
-                            draw_line(prev.x, prev.y, pt.x, pt.y, 0.35, contour_col);
+                        draw_oriented_box_lines(center, half_extents, angle, 0.4, Palette::NEON_CYAN);
+                        draw_line(start.x, start.y, current.x, current.y, 0.5, Palette::NEON_GOLD);
+
+                        let arrow_tip = current;
+                        let l_wing = arrow_tip - dir * 1.8 - right * 1.2;
+                        let r_wing = arrow_tip - dir * 1.8 + right * 1.2;
+                        draw_line(arrow_tip.x, arrow_tip.y, l_wing.x, l_wing.y, 0.5, Palette::NEON_GOLD);
+                        draw_line(arrow_tip.x, arrow_tip.y, r_wing.x, r_wing.y, 0.5, Palette::NEON_GOLD);
+
+                        let half_len = half_extents.x;
+                        let half_wid = half_extents.y;
+                        let arc_w = (half_wid * 0.82).max(0.6);
+                        let arc_bulge = (half_len * 0.22).min(arc_w * 0.40);
+                        let contour_col = Color::new(Palette::NEON_CYAN.r, Palette::NEON_CYAN.g, Palette::NEON_CYAN.b, 0.6);
+
+                        for s in 0..3 {
+                            let t = (s as f32 + 1.0) / 4.0;
+                            let x_center = -half_len * 0.70 + t * (half_len * 1.35);
+                            let num_segments = 10;
+                            let mut prev_pt: Option<Vec2> = None;
+                            for seg in 0..=num_segments {
+                                let frac = (seg as f32 / num_segments as f32) * 2.0 - 1.0;
+                                let y_offset = frac * arc_w;
+                                let curve_offset = (1.0 - frac * frac) * arc_bulge;
+                                let pt = center + dir * (x_center + curve_offset) + right * y_offset;
+                                if let Some(prev) = prev_pt {
+                                    draw_line(prev.x, prev.y, pt.x, pt.y, 0.35, contour_col);
+                                }
+                                prev_pt = Some(pt);
+                            }
                         }
-                        prev_pt = Some(pt);
+                    }
+                    RampKind::Whoops => {
+                        let total_len = v.length().max(tools.whoop_spacing * 2.0);
+                        let center = (start + current) * 0.5;
+                        let half_wid = (tools.whoop_width * 0.5).max(2.0);
+                        let half_extents = Vec2::new(total_len * 0.5, half_wid);
+                        draw_oriented_box_lines(center, half_extents, angle, 0.45, Palette::NEON_GOLD);
+                        draw_line(start.x, start.y, current.x, current.y, 0.5, Palette::NEON_CYAN);
+
+                        let count = ((total_len / tools.whoop_spacing.max(1.5)).round() as usize).clamp(2, 32);
+                        let ridge_len = total_len / count as f32;
+                        for i in 0..count {
+                            let x_crest = -half_extents.x + (i as f32 + 0.5) * ridge_len;
+                            let l = center + dir * x_crest - right * half_wid * 0.92;
+                            let r = center + dir * x_crest + right * half_wid * 0.92;
+                            draw_line(l.x, l.y, r.x, r.y, 0.35, Palette::NEON_CYAN);
+                        }
+                    }
+                    RampKind::MegaRamp => {
+                        let length = v.length().max(24.0);
+                        let center = (start + current) * 0.5;
+                        let half_wid = 6.0;
+                        let half_len = length * 0.5;
+                        let gap_len = tools.mega_gap_length.clamp(length * 0.15, length * 0.55);
+                        let takeoff_len = (length - gap_len) * 0.46;
+                        let landing_len = length - gap_len - takeoff_len;
+
+                        let takeoff_center = center - dir * (half_len - takeoff_len * 0.5);
+                        let landing_center = center + dir * (half_len - landing_len * 0.5);
+
+                        draw_oriented_box_lines(
+                            takeoff_center,
+                            Vec2::new(takeoff_len * 0.5, half_wid),
+                            angle,
+                            0.5,
+                            Palette::NEON_GOLD,
+                        );
+                        draw_oriented_box_lines(
+                            landing_center,
+                            Vec2::new(landing_len * 0.5, half_wid),
+                            angle,
+                            0.5,
+                            Palette::NEON_CYAN,
+                        );
+                        draw_oriented_box_lines(
+                            center,
+                            Vec2::new(half_len, half_wid),
+                            angle,
+                            0.25,
+                            Color::new(1.0, 0.2, 0.8, 0.45),
+                        );
+                        draw_line(start.x, start.y, current.x, current.y, 0.5, Palette::NEON_MAGENTA);
                     }
                 }
             }
@@ -3629,56 +4103,6 @@ pub fn render_editor_gizmos(state: &EditorState, tools: &ToolSettings, _camera: 
                 let w = max.x - min.x;
                 let h = max.y - min.y;
                 draw_rectangle_lines(min.x, min.y, w, h, 0.4, Palette::NEON_MAGENTA);
-            }
-            EditorToolType::WhoopSection => {
-                let start = tools.drag_start_world;
-                let current = tools.drag_current_world;
-                let v = current - start;
-                let total_len = v.length();
-                draw_line(start.x, start.y, current.x, current.y, 0.5, Palette::NEON_CYAN);
-                if total_len >= tools.whoop_spacing {
-                    let dir = v.normalize();
-                    let angle = dir.y.atan2(dir.x);
-                    let count = (total_len / tools.whoop_spacing).floor() as usize;
-                    for i in 0..count {
-                        let center = start + dir * (tools.whoop_spacing * (i as f32 + 0.5));
-                        let half_len = (tools.whoop_spacing * 0.42).max(1.0);
-                        let half_wid = (tools.whoop_width * 0.5).max(2.0);
-                        draw_oriented_box_lines(center, Vec2::new(half_len, half_wid), angle, 0.4, Palette::NEON_GOLD);
-                        draw_circle(center.x, center.y, 0.6, Palette::NEON_CYAN);
-                    }
-                }
-            }
-            EditorToolType::StuntRamp => {
-                let start = tools.drag_start_world;
-                let current = tools.drag_current_world;
-                let v = current - start;
-                let length = v.length().max(10.0);
-                let dir = if v.length() > 0.1 { v.normalize() } else { Vec2::X };
-                let center = (start + current) * 0.5;
-                let angle = dir.y.atan2(dir.x);
-                let half_extents = Vec2::new(length * 0.5, 6.0);
-                draw_oriented_box_lines(center, half_extents, angle, 0.5, Palette::NEON_MAGENTA);
-                draw_line(start.x, start.y, current.x, current.y, 0.6, Palette::NEON_MAGENTA);
-
-                // Projected ballistic trajectory envelope
-                let launch_tip = center + dir * half_extents.x;
-                let v0 = 26.0 * tools.stunt_ramp_multiplier;
-                let num_steps = 18;
-                let dt = 0.08;
-                let mut prev = launch_tip;
-                for step in 1..=num_steps {
-                    let t = step as f32 * dt;
-                    let fwd_dist = v0 * t;
-                    let height_offset = tools.stunt_ramp_height + 8.5 * t - 0.5 * 9.81 * t * t;
-                    if height_offset < 0.0 {
-                        break;
-                    }
-                    let next = launch_tip + dir * fwd_dist;
-                    draw_line(prev.x, prev.y, next.x, next.y, 0.45, Palette::NEON_GOLD);
-                    prev = next;
-                }
-                draw_circle(prev.x, prev.y, 1.2, Palette::NEON_GREEN);
             }
             _ => {}
         }

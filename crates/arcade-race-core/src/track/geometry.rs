@@ -832,7 +832,47 @@ impl SpawnPose {
     }
 }
 
-/// A track jump ramp launching vehicles into the air.
+/// Type of jump component in the track studio and physics engine.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub enum RampKind {
+    /// Standard single-segment curved launch ramp.
+    #[default]
+    Ramp,
+    /// Cohesive multi-ridge rhythm section (multiple small mogul jumps close together).
+    Whoops,
+    /// Two-segment stunt mega jump: upward take-off ramp, open gap, and downslope landing ramp.
+    MegaRamp,
+}
+
+impl RampKind {
+    pub const ALL: [RampKind; 3] = [Self::Ramp, Self::Whoops, Self::MegaRamp];
+
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::Ramp => "Ramp",
+            Self::Whoops => "Whoops Moguls",
+            Self::MegaRamp => "Mega Ramp",
+        }
+    }
+
+    pub fn short_label(self) -> &'static str {
+        match self {
+            Self::Ramp => "Ramp",
+            Self::Whoops => "Whoops",
+            Self::MegaRamp => "Mega",
+        }
+    }
+}
+
+fn default_whoop_spacing() -> f32 {
+    4.0
+}
+
+fn default_mega_gap_length() -> f32 {
+    12.0
+}
+
+/// A track jump component launching vehicles into the air (Ramp, Whoops Moguls, or two-segment Mega Ramp).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct JumpRamp {
     pub id: usize,
@@ -844,6 +884,12 @@ pub struct JumpRamp {
     pub name: String,
     #[serde(default)]
     pub surface: SurfaceType,
+    #[serde(default)]
+    pub kind: RampKind,
+    #[serde(default = "default_whoop_spacing")]
+    pub whoop_spacing: f32,
+    #[serde(default = "default_mega_gap_length")]
+    pub gap_length: f32,
 }
 
 impl JumpRamp {
@@ -865,12 +911,57 @@ impl JumpRamp {
             height,
             name: name.into(),
             surface: SurfaceType::Asphalt,
+            kind: RampKind::Ramp,
+            whoop_spacing: default_whoop_spacing(),
+            gap_length: default_mega_gap_length(),
         }
     }
 
     pub fn with_surface(mut self, surface: SurfaceType) -> Self {
         self.surface = surface;
         self
+    }
+
+    pub fn with_kind(mut self, kind: RampKind) -> Self {
+        self.kind = kind;
+        self
+    }
+
+    pub fn with_whoop_spacing(mut self, spacing: f32) -> Self {
+        self.whoop_spacing = spacing.clamp(1.5, 25.0);
+        self
+    }
+
+    pub fn with_gap_length(mut self, gap_length: f32) -> Self {
+        self.gap_length = gap_length.clamp(2.0, 80.0);
+        self
+    }
+
+    /// Number of closely spaced mogul ridges when `kind == RampKind::Whoops`.
+    pub fn whoop_count(&self) -> usize {
+        ((self.length() / self.whoop_spacing.max(1.5)).round() as usize).clamp(2, 32)
+    }
+
+    /// Clamped gap length in meters between take-off and landing segments for `RampKind::MegaRamp`.
+    pub fn effective_gap_length(&self) -> f32 {
+        let len = self.length().max(4.0);
+        let raw = if self.gap_length > 0.1 {
+            self.gap_length
+        } else {
+            len * 0.34
+        };
+        raw.clamp(len * 0.15, len * 0.60)
+    }
+
+    /// Returns `(s_takeoff_end, s_landing_start)` in normalized `[0.0, 1.0]` progress for `RampKind::MegaRamp`.
+    pub fn mega_segment_bounds(&self) -> (f32, f32) {
+        let len = self.length().max(4.0);
+        let gap = self.effective_gap_length();
+        let rem = (len - gap).max(2.0);
+        let takeoff_len = rem * 0.46;
+        let s_takeoff_end = (takeoff_len / len).clamp(0.18, 0.48);
+        let s_landing_start = ((takeoff_len + gap) / len).clamp(s_takeoff_end + 0.12, 0.82);
+        (s_takeoff_end, s_landing_start)
     }
 
     pub fn contains(&self, p: Vec2) -> bool {
@@ -1041,7 +1132,7 @@ impl JumpRamp {
         );
     }
 
-    /// Returns the normalized progress [0.0, 1.0] from entrance (0.0) to takeoff lip (1.0).
+    /// Returns the normalized progress [0.0, 1.0] from entrance (0.0) to exit (1.0).
     pub fn progress_along_ramp(&self, point: Vec2) -> f32 {
         let center = self.shape.center();
         let half_len = self.half_extents().x;
@@ -1050,38 +1141,110 @@ impl JumpRamp {
         ((u + half_len) / (2.0 * half_len)).clamp(0.0, 1.0)
     }
 
-    /// Returns the natural curved surface elevation at a given point on the ramp.
-    /// Rather than a rigid triangular wedge, natural ramps feature a smooth progressive
-    /// concave transition curve from 0.0 at the ground entrance up to height H at the takeoff lip.
-    pub fn surface_elevation_at(&self, point: Vec2) -> f32 {
-        let s = self.progress_along_ramp(point);
-        let len = self.length().max(0.1);
-        let incline_len = self.incline_length().min(len);
-        let s_incline = (incline_len / len).clamp(0.01, 1.0);
+    /// Returns the surface elevation at normalized progress `s` in `[0.0, 1.0]`.
+    pub fn surface_elevation_at_progress(&self, s: f32) -> f32 {
+        let s = s.clamp(0.0, 1.0);
+        match self.kind {
+            RampKind::Ramp => {
+                let len = self.length().max(0.1);
+                let incline_len = self.incline_length().min(len);
+                let s_incline = (incline_len / len).clamp(0.01, 1.0);
 
-        if s <= s_incline {
-            let t = s / s_incline;
-            (self.height * t * t).clamp(0.0, self.height)
-        } else {
-            self.height
+                if s <= s_incline {
+                    let t = s / s_incline;
+                    (self.height * t * t).clamp(0.0, self.height)
+                } else {
+                    self.height
+                }
+            }
+            RampKind::Whoops => {
+                let n = self.whoop_count() as f32;
+                let f = (s * n).fract();
+                (self.height * 0.5 * (1.0 - (std::f32::consts::TAU * f).cos()))
+                    .clamp(0.0, self.height)
+            }
+            RampKind::MegaRamp => {
+                let (s_takeoff, s_landing) = self.mega_segment_bounds();
+                if s <= s_takeoff {
+                    let t = (s / s_takeoff.max(0.01)).clamp(0.0, 1.0);
+                    (self.height * t * t).clamp(0.0, self.height)
+                } else if s < s_landing {
+                    0.0
+                } else {
+                    let u = ((s - s_landing) / (1.0 - s_landing).max(0.01)).clamp(0.0, 1.0);
+                    let catch_h = self.height * 0.92;
+                    if u <= 0.15 {
+                        catch_h
+                    } else {
+                        let d = (u - 0.15) / 0.85;
+                        (catch_h * 0.5 * (1.0 + (std::f32::consts::PI * d).cos()))
+                            .clamp(0.0, catch_h)
+                    }
+                }
+            }
         }
     }
+
+    /// Returns the natural curved surface elevation at a given world point on the component.
+    pub fn surface_elevation_at(&self, point: Vec2) -> f32 {
+        let s = self.progress_along_ramp(point);
+        self.surface_elevation_at_progress(s)
+    }
+
     /// Returns the local instantaneous pitch angle in radians of the ramp surface at the given point.
-    /// On a parabolic / clothoid curve, the slope starts at 0 rad at the ground entrance (s=0)
-    /// and smoothly transitions to the takeoff lip angle at s = s_incline.
+    /// Positive values indicate an upward incline; negative values indicate a downward landing slope.
     pub fn surface_slope_angle_rad_at(&self, point: Vec2) -> f32 {
         let s = self.progress_along_ramp(point);
         let len = self.length().max(0.1);
-        let incline_len = self.incline_length().min(len);
-        let s_incline = (incline_len / len).clamp(0.01, 1.0);
+        match self.kind {
+            RampKind::Ramp => {
+                let incline_len = self.incline_length().min(len);
+                let s_incline = (incline_len / len).clamp(0.01, 1.0);
 
-        if s <= s_incline {
-            let t = s / s_incline;
-            let slope_tan = (2.0 * self.height / incline_len.max(0.1)) * t;
-            let max_slope = self.ramp_angle_deg.to_radians().max(0.05);
-            slope_tan.atan().clamp(0.0, max_slope)
-        } else {
-            0.0
+                if s <= s_incline {
+                    let t = s / s_incline;
+                    let slope_tan = (2.0 * self.height / incline_len.max(0.1)) * t;
+                    let max_slope = self.ramp_angle_deg.to_radians().max(0.05);
+                    slope_tan.atan().clamp(0.0, max_slope)
+                } else {
+                    0.0
+                }
+            }
+            RampKind::Whoops => {
+                let n = self.whoop_count() as f32;
+                let ridge_len = (len / n).max(1.0);
+                let f = (s * n).fract();
+                let dh_dx =
+                    self.height * 0.5 * (std::f32::consts::TAU / ridge_len) * (std::f32::consts::TAU * f).sin();
+                let max_slope = self.ramp_angle_deg.max(12.0).to_radians();
+                dh_dx.atan().clamp(-max_slope, max_slope)
+            }
+            RampKind::MegaRamp => {
+                let (s_takeoff, s_landing) = self.mega_segment_bounds();
+                if s <= s_takeoff {
+                    let takeoff_len = (s_takeoff * len).max(0.5);
+                    let t = (s / s_takeoff.max(0.01)).clamp(0.0, 1.0);
+                    let slope_tan = (2.0 * self.height / takeoff_len) * t;
+                    let max_slope = self.ramp_angle_deg.to_radians().max(0.05);
+                    slope_tan.atan().clamp(0.0, max_slope)
+                } else if s < s_landing {
+                    0.0
+                } else {
+                    let landing_len = ((1.0 - s_landing) * len).max(0.5);
+                    let u = ((s - s_landing) / (1.0 - s_landing).max(0.01)).clamp(0.0, 1.0);
+                    if u <= 0.15 {
+                        0.0
+                    } else {
+                        let d = (u - 0.15) / 0.85;
+                        let catch_h = self.height * 0.92;
+                        let dh_dx = -catch_h
+                            * 0.5
+                            * (std::f32::consts::PI / (landing_len * 0.85))
+                            * (std::f32::consts::PI * d).sin();
+                        dh_dx.atan().clamp(-0.65, 0.0)
+                    }
+                }
+            }
         }
     }
 }
@@ -1110,40 +1273,101 @@ impl JumpRampCarExt for wheelbase::Car {
     }
 
     fn step_ramp_interaction(&mut self, ramp: &JumpRamp, dt: f32) -> bool {
-        if self.state.is_airborne {
+        if !ramp.contains(self.state.position) {
             return false;
         }
 
-        if !ramp.contains(self.state.position) {
+        // Handle descending airborne car landing onto an elevated ramp surface (e.g. MegaRamp landing deck or Whoops crest)
+        if self.state.is_airborne {
+            if self.state.vertical_velocity < 0.0 {
+                let surf_elev = ramp.surface_elevation_at(self.state.position);
+                if surf_elev > 0.05 && self.state.elevation <= surf_elev {
+                    let touchdown_vz = self.state.vertical_velocity.abs();
+                    let slope = ramp.surface_slope_angle_rad_at(self.state.position);
+                    let cushion = if slope < 0.0 { 0.45 } else { 0.85 };
+                    self.state.elevation = 0.0;
+                    self.state.ramp_elevation = surf_elev;
+                    self.state.vertical_velocity = 0.0;
+                    self.state.is_airborne = false;
+                    self.state.last_air_time = self.state.air_time;
+                    self.state.last_touchdown_speed = touchdown_vz * cushion;
+                    self.state.air_time = 0.0;
+                    self.state.just_landed = true;
+                }
+            }
             return false;
         }
 
         let s = ramp.progress_along_ramp(self.state.position);
         let speed_along = self.state.velocity.dot(ramp.direction);
 
-        // Takeoff lip trigger:
-        // When vehicle reaches the lip (s >= 0.85) at launch speed (> 3.5 m/s)
-        if s >= 0.85 && speed_along > 3.5 {
-            let props = wheelbase::JumpRampProperties {
-                direction: ramp.direction,
-                launch_speed: ramp.launch_speed,
-                ramp_angle_deg: ramp.ramp_angle_deg,
-                height: ramp.height,
-            };
-            let triggered = self.try_trigger_jump(true, &props);
-            if triggered {
-                self.state.ramp_elevation = 0.0;
-                return true;
+        match ramp.kind {
+            RampKind::Ramp => {
+                // Takeoff lip trigger when vehicle reaches the lip (s >= 0.85) at launch speed (> 3.5 m/s)
+                if s >= 0.85 && speed_along > 3.5 {
+                    let props = wheelbase::JumpRampProperties {
+                        direction: ramp.direction,
+                        launch_speed: ramp.launch_speed,
+                        ramp_angle_deg: ramp.ramp_angle_deg,
+                        height: ramp.height,
+                    };
+                    if self.try_trigger_jump(true, &props) {
+                        self.state.ramp_elevation = 0.0;
+                        return true;
+                    }
+                }
+            }
+            RampKind::Whoops => {
+                // Multi-ridge rhythm section: each mogul ridge crests at local phase f ~ 0.42..0.54
+                let n = ramp.whoop_count() as f32;
+                let f = (s * n).fract();
+                if (0.40..=0.55).contains(&f) && speed_along > 6.5 {
+                    let props = wheelbase::JumpRampProperties {
+                        direction: ramp.direction,
+                        launch_speed: ramp.launch_speed.min(6.0),
+                        ramp_angle_deg: ramp.ramp_angle_deg.clamp(6.0, 16.0),
+                        height: ramp.height,
+                    };
+                    if self.try_trigger_jump(true, &props) {
+                        self.state.ramp_elevation = 0.0;
+                        return true;
+                    }
+                }
+            }
+            RampKind::MegaRamp => {
+                let (s_takeoff, s_landing) = ramp.mega_segment_bounds();
+                // Launch at the end of the Take-Off segment (just before the gap)
+                let lip_start = (s_takeoff - 0.08).max(0.10);
+                if s >= lip_start && s <= s_takeoff + 0.02 && speed_along > 3.5 {
+                    let props = wheelbase::JumpRampProperties {
+                        direction: ramp.direction,
+                        launch_speed: ramp.launch_speed,
+                        ramp_angle_deg: ramp.ramp_angle_deg,
+                        height: ramp.height,
+                    };
+                    if self.try_trigger_jump(true, &props) {
+                        self.state.ramp_elevation = 0.0;
+                        return true;
+                    }
+                } else if s > s_takeoff && s < s_landing && self.state.ramp_elevation > 0.20 {
+                    // Rolled slowly off the take-off lip into the gap
+                    self.state.elevation = self.state.ramp_elevation;
+                    self.state.ramp_elevation = 0.0;
+                    self.state.is_airborne = true;
+                    self.state.vertical_velocity = 0.0;
+                    return false;
+                }
             }
         }
 
         // On-ramp continuous surface traversal:
         self.state.ramp_elevation = ramp.surface_elevation_at(self.state.position);
         let slope = ramp.surface_slope_angle_rad_at(self.state.position);
-        // Downhill slope gravity (grade resistance):
+        // Slope gravity (uphill decel when slope > 0, downhill acceleration when slope < 0):
         let grade_decel = 9.81 * slope.sin();
         if speed_along > 0.0 {
-            self.state.velocity -= ramp.direction * (grade_decel * dt).min(speed_along);
+            let dv = (grade_decel * dt).min(speed_along);
+            self.state.velocity -= ramp.direction * dv;
             self.state.speed = self.state.velocity.length();
         }
 
@@ -2063,5 +2287,85 @@ mod tests {
         let deserialized: PitLane = serde_json::from_str(&serialized).expect("Deserialize pit lane");
         assert_eq!(pit_lane, deserialized);
     }
-}
 
+    #[test]
+    fn test_whoops_moguls_and_mega_ramp_profiles_and_vehicle_interaction() {
+        use wheelbase::{Car, CarConfig};
+
+        // 1. Whoops Moguls: 30m long, 5m spacing => 6 ridges
+        let whoops = JumpRamp::new(
+            1,
+            SurfaceShape::OrientedBox {
+                center: Vec2::new(15.0, 0.0),
+                half_extents: Vec2::new(15.0, 6.0),
+                angle: 0.0,
+            },
+            Vec2::X,
+            4.0,
+            14.0,
+            0.9,
+            "Whoops Section",
+        )
+        .with_kind(RampKind::Whoops)
+        .with_whoop_spacing(5.0);
+
+        assert_eq!(whoops.whoop_count(), 6);
+        // Crest 0 is at s = 0.5 / 6.0 -> x = 2.5m
+        let elev_crest = whoops.surface_elevation_at(Vec2::new(2.5, 0.0));
+        let elev_trough = whoops.surface_elevation_at(Vec2::new(5.0, 0.0));
+        assert!((elev_crest - 0.9).abs() < 0.05);
+        assert!(elev_trough < 0.05);
+        // Upslope has positive slope, downslope has negative slope
+        assert!(whoops.surface_slope_angle_rad_at(Vec2::new(1.25, 0.0)) > 0.05);
+        assert!(whoops.surface_slope_angle_rad_at(Vec2::new(3.75, 0.0)) < -0.05);
+
+        // 2. Mega Ramp: 40m total length (x = 0..40), 12m gap
+        let mega = JumpRamp::new(
+            2,
+            SurfaceShape::OrientedBox {
+                center: Vec2::new(20.0, 0.0),
+                half_extents: Vec2::new(20.0, 6.0),
+                angle: 0.0,
+            },
+            Vec2::X,
+            45.0,
+            30.0,
+            4.0,
+            "Mega Ramp",
+        )
+        .with_kind(RampKind::MegaRamp)
+        .with_gap_length(12.0);
+
+        let (s_takeoff, s_landing) = mega.mega_segment_bounds();
+        assert!((s_takeoff - 0.322).abs() < 0.02);
+        assert!((s_landing - 0.622).abs() < 0.02);
+
+        // Take-off lip near x = 12.7m is near peak height (4.0m)
+        assert!(mega.surface_elevation_at(Vec2::new(12.7, 0.0)) > 3.7);
+        // Open gap at x = 20.0m has 0.0m elevation
+        assert_eq!(mega.surface_elevation_at(Vec2::new(20.0, 0.0)), 0.0);
+        // Landing catch deck at x = 25.5m is elevated and slopes downward
+        assert!(mega.surface_elevation_at(Vec2::new(25.5, 0.0)) > 3.5);
+        assert!(mega.surface_slope_angle_rad_at(Vec2::new(33.0, 0.0)) < -0.05);
+
+        // Vehicle interaction: car reaching take-off lip at speed launches into the air
+        let mut car = Car::new(CarConfig::default());
+        car.state.position = Vec2::new(12.6, 0.0);
+        car.state.velocity = Vec2::new(25.0, 0.0);
+        assert!(car.step_ramp_interaction(&mega, 1.0 / 60.0));
+        assert!(car.state.is_airborne);
+        assert!(car.state.vertical_velocity > 5.0);
+
+        // Descending airborne car reaching the landing segment surface is caught smoothly on the downslope
+        let landing_elev = mega.surface_elevation_at(Vec2::new(30.0, 0.0));
+        car.state.position = Vec2::new(30.0, 0.0);
+        car.state.elevation = landing_elev - 0.02;
+        car.state.vertical_velocity = -8.0;
+        car.state.is_airborne = true;
+        car.step_ramp_interaction(&mega, 1.0 / 60.0);
+        assert!(!car.state.is_airborne);
+        assert!(car.state.just_landed);
+        assert_eq!(car.state.vertical_velocity, 0.0);
+        assert!((car.state.ramp_elevation - landing_elev).abs() < 0.05);
+    }
+}

@@ -28,8 +28,8 @@ pub use launch_chute::{ChuteSide, LaunchChuteError, LaunchChuteSpec};
 pub use geometry::{
     point_in_polygon, point_in_quad_2d, point_in_triangle_2d, BarrierType, JumpRamp,
     JumpRampCarExt, LineSegment, Obstacle, ObstacleShape, PitBox, PitLane, PitLaneChevron,
-    PitLaneExitQuad, PitLaneJunctionData, SpawnPose, SurfaceLayer, SurfaceShape, SurfaceZone,
-    TrackGeometry, WallBarrier, WallSuppressionRecord,
+    PitLaneExitQuad, PitLaneJunctionData, RampKind, SpawnPose, SurfaceLayer, SurfaceShape,
+    SurfaceZone, TrackGeometry, WallBarrier, WallSuppressionRecord,
 };
 pub use scenery::{
     Building, BuildingStyle, Grandstand, GrandstandStyle, Rock, RockType, Tree, TreeType,
@@ -1396,7 +1396,7 @@ fn branch_throat_bridges<'a>(
             let dist = p.distance(q);
             if dist > JOINED_M && dist < REACH_M {
                 let candidate = WallBarrier::new(p, q, barrier_type);
-                if wall_clear_of_roads(segments.iter(), &candidate, 2.0, 0.0) {
+                if wall_clear_of_roads(segments.iter(), &candidate, f32::INFINITY, 0.0) {
                     let crosses = b_refs.iter().chain(m_refs.iter()).any(|w| {
                         w.segment.intersect_segment(&candidate.segment).is_some_and(|hit| {
                             hit.distance(p) > JOINED_M && hit.distance(q) > JOINED_M
