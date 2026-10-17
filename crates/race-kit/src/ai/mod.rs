@@ -328,47 +328,48 @@ pub struct DriverQuality {
 }
 
 impl DriverQuality {
+    #[allow(clippy::approx_constant)]
     pub const fn for_tier(tier: DriverTier) -> Self {
         match tier {
             DriverTier::Rookie => Self {
                 tier,
-                pace_limit: 0.80,
-                brake_padding: 0.16,
+                pace_limit: 0.8194,
+                brake_padding: 0.2027,
                 avoidance_padding: 2.5,
-                consistency: 0.60,
-                composure: 0.50,
+                consistency: 0.599,
+                composure: 0.4874,
             },
             DriverTier::Amateur => Self {
                 tier,
-                pace_limit: 0.88,
-                brake_padding: 0.13,
+                pace_limit: 0.8952,
+                brake_padding: 0.1272,
                 avoidance_padding: 1.4,
-                consistency: 0.70,
-                composure: 0.60,
+                consistency: 0.7257,
+                composure: 0.6318,
             },
             DriverTier::Contender => Self {
                 tier,
-                pace_limit: 0.95,
-                brake_padding: 0.065,
+                pace_limit: 0.962,
+                brake_padding: 0.0545,
                 avoidance_padding: 0.7,
-                consistency: 0.80,
-                composure: 0.76,
+                consistency: 0.786,
+                composure: 0.7402,
             },
             DriverTier::Pro => Self {
                 tier,
-                pace_limit: 1.00,
-                brake_padding: 0.00,
+                pace_limit: 1.0,
+                brake_padding: 0.0,
                 avoidance_padding: 0.0,
                 consistency: 0.93,
-                composure: 0.90,
+                composure: 0.9,
             },
             DriverTier::Legend => Self {
                 tier,
-                pace_limit: 1.05,
-                brake_padding: -0.07,
+                pace_limit: 1.0334,
+                brake_padding: -0.032,
                 avoidance_padding: -0.5,
-                consistency: 0.99,
-                composure: 0.99,
+                consistency: 0.9948,
+                composure: 0.9804,
             },
         }
     }
@@ -389,16 +390,72 @@ pub struct StyleTuning {
 }
 
 impl StyleTuning {
-    pub const fn for_style(style: DrivingStyle) -> Self {
-        let (lookahead_time, steering_kp, steering_kd, brake_margin, aggression, avoidance_distance, speed_mult) = match style {
-            DrivingStyle::Smooth => (0.24, 2.75, 0.14, 1.00, 0.70, 6.5, 1.13),
-            DrivingStyle::Aggressive => (0.20, 2.95, 0.11, 0.88, 0.95, 5.0, 1.14),
-            DrivingStyle::Tenacious => (0.26, 2.65, 0.14, 1.03, 0.82, 6.0, 1.11),
-            DrivingStyle::Calculating => (0.23, 2.85, 0.13, 0.98, 0.75, 6.5, 1.12),
-            DrivingStyle::Bold => (0.20, 3.15, 0.10, 0.86, 0.92, 5.2, 1.13),
-            DrivingStyle::Balanced => (0.30, 2.30, 0.12, 1.03, 0.65, 7.0, 1.10),
-        };
+    #[allow(clippy::approx_constant)]
+    pub const fn for_modality_and_style(modality: &str, style: DrivingStyle) -> Self {
+        let (lookahead_time, steering_kp, steering_kd, brake_margin, aggression, avoidance_distance, speed_mult) =
+            match modality.as_bytes() {
+                b"kart" | b"karting" => match style {
+                    DrivingStyle::Smooth => (0.4223, 1.8675, 0.0899, 1.1109, 0.7, 6.5, 1.0731),
+                    DrivingStyle::Aggressive => (0.2479, 2.6126, 0.0837, 0.9416, 0.95, 5.0, 1.0843),
+                    DrivingStyle::Tenacious => (0.4258, 1.9435, 0.0969, 1.1576, 0.82, 6.0, 1.0169),
+                    DrivingStyle::Calculating => (0.2985, 2.6199, 0.082, 1.0298, 0.75, 6.5, 1.0573),
+                    DrivingStyle::Bold => (0.2794, 2.745, 0.0512, 0.8692, 0.92, 5.2, 1.0759),
+                    DrivingStyle::Balanced => (0.4243, 2.1927, 0.0694, 1.1574, 0.65, 7.0, 1.0147),
+                },
+                b"autocross" | b"ax" => match style {
+                    DrivingStyle::Smooth => (0.4204, 1.915, 0.0758, 1.0158, 0.7, 6.5, 1.069),
+                    DrivingStyle::Aggressive => (0.3402, 2.3804, 0.0628, 0.9786, 0.95, 5.0, 1.0763),
+                    DrivingStyle::Tenacious => (0.3655, 2.5987, 0.1027, 1.1143, 0.82, 6.0, 1.0433),
+                    DrivingStyle::Calculating => (0.3625, 2.4729, 0.0732, 1.1078, 0.75, 6.5, 1.0278),
+                    DrivingStyle::Bold => (0.3044, 2.3958, 0.0612, 0.9535, 0.92, 5.2, 1.0757),
+                    DrivingStyle::Balanced => (0.3568, 2.1396, 0.063, 1.1261, 0.65, 7.0, 1.0351),
+                },
+                b"rally" | b"rallycross" | b"rx" => match style {
+                    DrivingStyle::Smooth => (0.4579, 2.0172, 0.0703, 1.0147, 0.7, 6.5, 1.0399),
+                    DrivingStyle::Aggressive => (0.2933, 2.3119, 0.0531, 0.9528, 0.95, 5.0, 1.06),
+                    DrivingStyle::Tenacious => (0.4067, 2.1008, 0.1064, 1.0743, 0.82, 6.0, 1.0299),
+                    DrivingStyle::Calculating => (0.4429, 2.4743, 0.0774, 1.0097, 0.75, 6.5, 1.0243),
+                    DrivingStyle::Bold => (0.2376, 2.7542, 0.0725, 0.9169, 0.92, 5.2, 1.052),
+                    DrivingStyle::Balanced => (0.3755, 2.0324, 0.0783, 1.0537, 0.65, 7.0, 0.9951),
+                },
+                b"gt" | b"gt_challenge" | b"gt_world_challenge" => match style {
+                    DrivingStyle::Smooth => (0.3716, 2.3756, 0.1113, 1.0286, 0.7, 6.5, 1.0562),
+                    DrivingStyle::Aggressive => (0.271, 2.5152, 0.0848, 0.8834, 0.95, 5.0, 1.0845),
+                    DrivingStyle::Tenacious => (0.3282, 1.8172, 0.1021, 1.0873, 0.82, 6.0, 1.0375),
+                    DrivingStyle::Calculating => (0.3759, 2.3479, 0.0722, 1.0496, 0.75, 6.5, 1.0351),
+                    DrivingStyle::Bold => (0.2482, 3.35, 0.0411, 0.88, 0.92, 5.2, 1.0735),
+                    DrivingStyle::Balanced => (0.3818, 1.7504, 0.08, 1.0866, 0.65, 7.0, 1.0446),
+                },
+                b"nascar" | b"stock_car" | b"trans_am" => match style {
+                    DrivingStyle::Smooth => (0.4369, 2.4373, 0.1067, 1.1106, 0.7, 6.5, 1.0283),
+                    DrivingStyle::Aggressive => (0.2738, 2.5194, 0.0751, 0.9167, 0.95, 5.0, 1.0534),
+                    DrivingStyle::Tenacious => (0.3932, 2.3492, 0.0951, 1.0786, 0.82, 6.0, 1.021),
+                    DrivingStyle::Calculating => (0.3631, 2.7012, 0.1024, 1.0384, 0.75, 6.5, 1.0265),
+                    DrivingStyle::Bold => (0.2847, 3.0781, 0.04, 0.8968, 0.92, 5.2, 1.0696),
+                    DrivingStyle::Balanced => (0.4094, 2.5651, 0.0744, 1.08, 0.65, 7.0, 1.0372),
+                },
+                b"extreme_offroad" | b"off_road" | b"offroad" => match style {
+                    DrivingStyle::Smooth => (0.4099, 2.087, 0.0905, 1.0653, 0.7, 6.5, 1.0577),
+                    DrivingStyle::Aggressive => (0.2797, 2.3101, 0.0444, 0.9144, 0.95, 5.0, 1.0614),
+                    DrivingStyle::Tenacious => (0.4083, 2.3924, 0.0994, 1.0471, 0.82, 6.0, 1.0303),
+                    DrivingStyle::Calculating => (0.4486, 2.2203, 0.0896, 1.0804, 0.75, 6.5, 1.0254),
+                    DrivingStyle::Bold => (0.2714, 2.8783, 0.0611, 0.9115, 0.92, 5.2, 1.05),
+                    DrivingStyle::Balanced => (0.3343, 1.9553, 0.086, 1.0883, 0.65, 7.0, 1.0163),
+                },
+                _ => match style {
+                    DrivingStyle::Smooth => (0.3867, 2.1279, 0.0614, 1.0618, 0.7, 6.5, 1.0641),
+                    DrivingStyle::Aggressive => (0.35, 2.3048, 0.0663, 0.9321, 0.95, 5.0, 1.0845),
+                    DrivingStyle::Tenacious => (0.3325, 2.3978, 0.115, 1.1476, 0.82, 6.0, 1.0649),
+                    DrivingStyle::Calculating => (0.3513, 2.7221, 0.0685, 1.1265, 0.75, 6.5, 1.0686),
+                    DrivingStyle::Bold => (0.2937, 2.3298, 0.0446, 0.9586, 0.92, 5.2, 1.0769),
+                    DrivingStyle::Balanced => (0.3078, 2.1978, 0.1062, 1.0861, 0.65, 7.0, 1.0225),
+                },
+            };
         Self { lookahead_time, steering_kp, steering_kd, brake_margin, aggression, avoidance_distance, speed_mult }
+    }
+
+    pub const fn for_style(style: DrivingStyle) -> Self {
+        Self::for_modality_and_style("classic", style)
     }
 }
 
@@ -558,18 +615,22 @@ impl BotProfile {
         Self::from_tuning_and_quality(style, &StyleTuning::for_style(style), quality)
     }
 
+    pub fn from_modality_style_and_quality(modality: &str, style: DrivingStyle, quality: &DriverQuality) -> Self {
+        Self::from_tuning_and_quality(style, &StyleTuning::for_modality_and_style(modality, style), quality)
+    }
+
     /// `from_style_and_quality` with an explicit style tuning, so offline calibration (spec 083) can
     /// evaluate candidate tunings without changing the constants.
     pub fn from_tuning_and_quality(style: DrivingStyle, tuning: &StyleTuning, quality: &DriverQuality) -> Self {
         Self {
             name: "Composite Bot",
             lookahead_time: (tuning.lookahead_time * (0.80 + 0.20 * quality.consistency)).clamp(0.20, 0.55),
-            speed_factor: (quality.pace_limit * tuning.speed_mult).clamp(0.75, 1.20),
-            steering_kp: tuning.steering_kp,
-            steering_kd: tuning.steering_kd * (0.75 + 0.25 * quality.consistency),
-            brake_margin: (tuning.brake_margin + quality.brake_padding).clamp(0.70, 1.45),
-            aggression: tuning.aggression,
-            avoidance_distance: (tuning.avoidance_distance + quality.avoidance_padding).clamp(2.5, 12.0),
+            speed_factor: (quality.pace_limit * tuning.speed_mult).clamp(0.80, 1.15),
+            steering_kp: tuning.steering_kp.clamp(1.50, 3.50),
+            steering_kd: (tuning.steering_kd * (0.75 + 0.25 * quality.consistency)).clamp(0.03, 0.12),
+            brake_margin: (tuning.brake_margin + quality.brake_padding).clamp(0.80, 1.45),
+            aggression: tuning.aggression.clamp(0.20, 1.00),
+            avoidance_distance: (tuning.avoidance_distance + quality.avoidance_padding).clamp(3.5, 12.0),
             traits: HumanTraits::for_style_and_quality(style, quality, tuning.aggression),
         }
     }

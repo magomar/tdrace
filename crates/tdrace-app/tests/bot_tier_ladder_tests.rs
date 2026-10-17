@@ -35,3 +35,4 @@ fn test_tier_pace_ladder_holds_on_every_sample_track() {
     }
     assert!(failures.is_empty(), "tier ladder broken:\n{}", failures.join("\n"));
 }
+

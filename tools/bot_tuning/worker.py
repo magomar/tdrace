@@ -16,7 +16,7 @@ from typing import Any
 
 REPO = Path(__file__).resolve().parents[2]
 
-# Spec 083 training set: (module, circuit id).
+# Legacy 13-circuit launch subset kept for backwards-compatible smoke checks.
 TRAINING_CIRCUITS: list[tuple[str, str]] = [
     ("classic", "gt_coastal_grand_prix"),
     ("classic", "stock_tri_oval_speedway"),
@@ -34,6 +34,16 @@ TRAINING_CIRCUITS: list[tuple[str, str]] = [
 ]
 
 LAUNCH_MODULES = ("classic", "kart", "autocross", "rally")
+ALL_MODALITIES = (
+    "classic",
+    "kart",
+    "autocross",
+    "rally",
+    "gt",
+    "nascar",
+    "extreme_offroad",
+)
+STYLES = ("smooth", "aggressive", "tenacious", "calculating", "bold", "balanced")
 
 
 def worker_binary() -> Path:
@@ -51,7 +61,7 @@ def worker_binary() -> Path:
 
 
 def launch_circuits() -> list[tuple[str, str]]:
-    """(module, circuit id) of every launch circuit, as `bot_eval_worker` lists them."""
+    """(module, circuit id) of every launch circuit (75 circuits), as `bot_eval_worker` lists them."""
     out = subprocess.run(
         [str(worker_binary()), "--list-launch-circuits"],
         check=True,
@@ -59,6 +69,22 @@ def launch_circuits() -> list[tuple[str, str]]:
         text=True,
     ).stdout
     return [(c["module"], c["id"]) for c in json.loads(out)]
+
+
+def all_circuits() -> list[tuple[str, str]]:
+    """(module, circuit id) of every closed-loop circuit across all 7 modalities (127 circuits)."""
+    out = subprocess.run(
+        [str(worker_binary()), "--list-all-circuits"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout
+    return [(c["module"], c["id"]) for c in json.loads(out)]
+
+
+def modality_circuits(modality: str) -> list[tuple[str, str]]:
+    """All closed-loop (module, circuit id) pairs belonging to `modality`."""
+    return [(m, cid) for m, cid in all_circuits() if m == modality]
 
 
 class Worker:

@@ -1,10 +1,11 @@
-"""EvoRL play function for spec 083 bot calibration.
+"""EvoRL play functions for spec 083 multi-modality bot calibration.
 
 See specs/083_evorl_bot_driving_style_and_performance_optimization.md.
 
 EvoRL calls `stage_a_play_fn(subject, opponent, seed, seat, params_str)` in pool worker processes.
 - `subject` is "candidate@<genome key>"; the genome is `json.loads(params_str)["params"]`.
-- `opponent` is the circuit, "module/id". The opponent car is always the current T4 Balanced bot.
+- `opponent` is either "<style>@<module>/<id>" (per-style per-modality Stage A) or "<module>/<id>"
+  (defaults to "balanced"). The opponent car is the incumbent T4 bot of the same style and modality.
 - `seat` is the subject's grid slot (0 = pole, 1 = second). Both seats use the same seed (common
   random numbers); `bot_eval_worker` keeps each driver's random stream across the swap.
 """
@@ -25,9 +26,13 @@ MAX_WALL_CONTACTS = 3
 
 
 def stage_a_request(
-    circuit: str, seed: int, seat: int, genome: dict[str, float]
+    circuit: str,
+    seed: int,
+    seat: int,
+    genome: dict[str, float],
+    style: str = "balanced",
 ) -> dict[str, Any]:
-    t4 = {"style": "balanced", "tier": 4}
+    t4 = {"style": style, "tier": 4}
     return {
         "circuit": circuit,
         "laps": LAPS,
@@ -54,12 +59,18 @@ def stage_a_play_fn(
     subject: str, opponent: str, seed: int, seat: int, params_str: str | None
 ) -> tuple[Outcome, int, str | None, float | None, dict[str, Any] | None]:
     try:
+        if "@" in opponent:
+            style, circuit = opponent.split("@", 1)
+        else:
+            style, circuit = "balanced", opponent
         genome = json.loads(params_str)["params"] if params_str else {}
-        result = worker.race(stage_a_request(opponent, seed, seat, genome))
+        result = worker.race(stage_a_request(circuit, seed, seat, genome, style=style))
         if result["error"]:
             return Outcome.ERROR, 0, result["error"], None, {"error": result["error"]}
         disqualified = (
-            result["spins"] > 0 or result["longest_no_progress_s"] > MAX_NO_PROGRESS_S
+            result["spins"] > 0
+            or result["longest_no_progress_s"] > MAX_NO_PROGRESS_S
+            or result["dnf"]
         )
         metrics = {
             "mean_flying_lap": result["mean_flying_lap"],
@@ -85,23 +96,38 @@ def stage_a_play_fn(
         return Outcome.ERROR, 0, str(exc), None, {"error": str(exc)}
 
 
-_STAGE_A_PARAMS: dict[str, float] | None = None
+_STAGE_A_DATA: dict[str, Any] | None = None
 
 
-def get_stage_a_params() -> dict[str, float]:
-    global _STAGE_A_PARAMS
-    if _STAGE_A_PARAMS is None:
+def get_stage_a_params(modality: str = "classic", style: str = "balanced") -> dict[str, float]:
+    """Returns calibrated Stage A params for `(modality, style)` from `runs/stage_a.json`."""
+    global _STAGE_A_DATA
+    if _STAGE_A_DATA is None:
         path = Path(__file__).resolve().parent / "runs" / "stage_a.json"
         if not path.exists():
-            raise FileNotFoundError(f"{path} not found; Stage A must be completed before Stage B")
-        _STAGE_A_PARAMS = json.loads(path.read_text())["best"]["params"]
-    return _STAGE_A_PARAMS
+            raise FileNotFoundError(
+                f"{path} not found; Stage A must be completed before Stage B"
+            )
+        _STAGE_A_DATA = json.loads(path.read_text())
+
+    if "modalities" in _STAGE_A_DATA:
+        mod_entry = _STAGE_A_DATA["modalities"].get(
+            modality, _STAGE_A_DATA["modalities"].get("classic", {})
+        )
+        styles_entry = mod_entry.get("styles", {})
+        if style in styles_entry:
+            return dict(styles_entry[style]["best"]["params"])
+        if "balanced" in styles_entry:
+            return dict(styles_entry["balanced"]["best"]["params"])
+
+    return dict(_STAGE_A_DATA["best"]["params"])
 
 
 def stage_b_request(
     circuit: str, tier: int, seed: int, seat: int, tier_params: dict[str, float]
 ) -> dict[str, Any]:
-    stage_a = get_stage_a_params()
+    modality = circuit.split("/", 1)[0]
+    stage_a = get_stage_a_params(modality, "balanced")
     t4 = {"style": "balanced", "tier": 4, "genome": stage_a}
     return {
         "circuit": circuit,

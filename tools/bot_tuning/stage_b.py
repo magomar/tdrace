@@ -2,15 +2,16 @@
 
 See specs/083_evorl_bot_driving_style_and_performance_optimization.md, "What gets tuned".
 
-Runs tier by tier outward from T4 Pro (T3, T2, T1, T5).
-Each tier is tuned against the T4 Pro reference car (equipped with calibrated Stage A controller)
-to hit its target pace delta band:
+Runs tier by tier outward from T4 Pro (T3, T2, T1, T5) across ALL 127 closed-loop circuits
+spanning all 7 modalities.
+Each tier is tuned against the T4 Pro reference car (equipped with its modality's calibrated
+Stage A controller) to hit its target pace delta band:
   - T3: +2.5% +- 1.0% (+1.5% to +3.5%)
   - T2: +7.0% +- 2.0% (+5.0% to +9.0%)
   - T1: +13.0% +- 3.0% (+10.0% to +16.0%)
   - T5: -2.25% +- 0.75% (-3.0% to -1.5%)
 
-    python tools/bot_tuning/stage_b.py --workers 28 --generations 12 --out results/stage_b
+    python tools/bot_tuning/stage_b.py --workers 28 --generations 7 --out tools/bot_tuning/runs
 """
 
 from __future__ import annotations
@@ -29,8 +30,8 @@ import harness
 import numpy as np
 import worker
 from evorl.core.genome import Genome, ParameterKind, ParameterSpace, ParameterSpec
-from evorl.core.ledger import MatchLedger
-from evorl.evo.evaluator import Evaluator
+from evorl.core.ledger import MatchLedger, MatchRecord, Outcome
+from evorl.evo.evaluator import Evaluator, _worker_execute_match
 from evorl.evo.search import CMAESEmitter
 
 TIER_CONFIGS = [
@@ -42,14 +43,14 @@ TIER_CONFIGS = [
         "defaults": {
             "pace_limit": 0.96,
             "brake_padding": 0.06,
-            "consistency": 0.83,
-            "composure": 0.78,
+            "consistency": 0.80,
+            "composure": 0.76,
         },
         "specs": [
-            ("pace_limit", 0.88, 1.04, 0.96),
-            ("brake_padding", -0.05, 0.20, 0.06),
-            ("consistency", 0.78, 0.91, 0.83),
-            ("composure", 0.68, 0.88, 0.78),
+            ("pace_limit", 0.93, 0.98, 0.96),
+            ("brake_padding", 0.03, 0.09, 0.06),
+            ("consistency", 0.78, 0.88, 0.80),
+            ("composure", 0.70, 0.84, 0.76),
         ],
     },
     {
@@ -64,10 +65,10 @@ TIER_CONFIGS = [
             "composure": 0.60,
         },
         "specs": [
-            ("pace_limit", 0.82, 0.98, 0.90),
-            ("brake_padding", 0.00, 0.25, 0.12),
-            ("consistency", 0.65, 0.77, 0.72),
-            ("composure", 0.52, 0.67, 0.60),
+            ("pace_limit", 0.86, 0.92, 0.90),
+            ("brake_padding", 0.10, 0.17, 0.12),
+            ("consistency", 0.66, 0.76, 0.72),
+            ("composure", 0.54, 0.67, 0.60),
         ],
     },
     {
@@ -76,34 +77,34 @@ TIER_CONFIGS = [
         "target_centre": 0.130,
         "target_half_width": 0.030,
         "defaults": {
-            "pace_limit": 0.82,
+            "pace_limit": 0.81,
             "brake_padding": 0.20,
             "consistency": 0.60,
             "composure": 0.48,
         },
         "specs": [
-            ("pace_limit", 0.72, 0.92, 0.82),
-            ("brake_padding", 0.05, 0.30, 0.20),
-            ("consistency", 0.45, 0.64, 0.60),
-            ("composure", 0.35, 0.51, 0.48),
+            ("pace_limit", 0.805, 0.85, 0.81),
+            ("brake_padding", 0.19, 0.26, 0.20),
+            ("consistency", 0.50, 0.64, 0.60),
+            ("composure", 0.40, 0.52, 0.48),
         ],
     },
     {
         "tier": 5,
         "name": "Legend",
-        "target_centre": -0.055,
-        "target_half_width": 0.015,
+        "target_centre": -0.0225,
+        "target_half_width": 0.0075,
         "defaults": {
-            "pace_limit": 1.06,
-            "brake_padding": -0.05,
+            "pace_limit": 1.035,
+            "brake_padding": -0.03,
             "consistency": 0.99,
             "composure": 0.98,
         },
         "specs": [
-            ("pace_limit", 1.00, 1.15, 1.06),
-            ("brake_padding", -0.15, 0.05, -0.05),
-            ("consistency", 0.94, 1.00, 0.99),
-            ("composure", 0.91, 1.00, 0.98),
+            ("pace_limit", 1.03, 1.055, 1.035),
+            ("brake_padding", -0.05, -0.02, -0.03),
+            ("consistency", 0.96, 0.995, 0.99),
+            ("composure", 0.94, 0.995, 0.98),
         ],
     },
 ]
@@ -128,6 +129,54 @@ class IncumbentCMAES(CMAESEmitter):
             "popsize": population,
         }
         self._es = cma.CMAEvolutionStrategy(space.normalize_vector(x0), sigma0, opts)
+
+
+class BatchEvaluator(Evaluator):
+    """`Evaluator` subclass that dispatches all candidate matches of a generation in one parallel batch."""
+
+    def evaluate_candidates(
+        self,
+        campaign: str,
+        candidates: list[Genome],
+        opponents: list[str],
+        seeds: list[int],
+    ) -> None:
+        assert self._executor is not None and self.play_fn is not None
+        futures = []
+        for candidate in candidates:
+            subj_id = f"candidate@{candidate.key}"
+            params_json = candidate.to_json()
+            for opponent in opponents:
+                for seed in seeds:
+                    for seat in (0, 1):
+                        fut = self._executor.submit(
+                            _worker_execute_match,
+                            self.play_fn,
+                            campaign,
+                            subj_id,
+                            opponent,
+                            seed,
+                            seat,
+                            params_json,
+                        )
+                        futures.append((campaign, subj_id, fut))
+        records: list[MatchRecord] = []
+        for campaign, subj_id, fut in futures:
+            try:
+                records.append(fut.result(timeout=self.timeout_per_match))
+            except Exception as exc:
+                records.append(
+                    MatchRecord(
+                        campaign=campaign,
+                        subject=subj_id,
+                        opponent="unknown",
+                        seed=0,
+                        seat=0,
+                        outcome=Outcome.TIMEOUT,
+                        metrics={"error": str(exc)},
+                    )
+                )
+        self.ledger.record_matches(records)
 
 
 def score_tier(
@@ -215,7 +264,8 @@ def score_tier(
 
 def tune_tier(
     tier_cfg: dict[str, Any],
-    evaluator: Evaluator,
+    all_circs: list[tuple[str, str]],
+    evaluator: BatchEvaluator,
     ledger: MatchLedger,
     args: argparse.Namespace,
 ) -> dict[str, Any]:
@@ -224,7 +274,8 @@ def tune_tier(
     target_c = tier_cfg["target_centre"]
     target_h = tier_cfg["target_half_width"]
     print(
-        f"\n=== Calibrating Tier {tier} ({name}) | Target: {target_c*100:+.2f}% +- {target_h*100:.2f}% ==="
+        f"\n=== Calibrating Tier {tier} ({name}) across {len(all_circs)} circuits | Target: {target_c*100:+.2f}% +- {target_h*100:.2f}% ===",
+        flush=True,
     )
 
     space = ParameterSpace(
@@ -243,7 +294,7 @@ def tune_tier(
         args.sigma0,
         args.seed + tier * 10_000,
     )
-    opponents = [f"{tier}@{m}/{c}" for m, c in worker.TRAINING_CIRCUITS]
+    opponents = [f"{tier}@{m}/{c}" for m, c in all_circs]
 
     history: list[dict[str, Any]] = []
     seen: dict[str, dict[str, Any]] = {}
@@ -317,13 +368,25 @@ def tune_tier(
     )
     baseline = next(f for f in final if f["key"] == incumbent.key)
     best_final = final[0]
+    for cand in final[1:]:
+        if (
+            cand["score"] >= baseline["score"]
+            and cand["metrics"]["disq_rate"] < best_final["metrics"]["disq_rate"]
+            and cand["metrics"]["circuits_in_band"]
+            >= best_final["metrics"]["circuits_in_band"]
+        ):
+            best_final = cand
+            break
+    if best_final["score"] < baseline["score"]:
+        best_final = baseline
 
     print(
         f"T{tier} Finalist Best: Score {best_final['score']:.4f} | "
         f"Delta: {best_final['metrics']['mean_delta_pct']:+.2f}% (Target: {target_c*100:+.2f}%) | "
-        f"In-band: {best_final['metrics']['circuits_in_band']}/{best_final['metrics']['total_circuits']}"
+        f"In-band: {best_final['metrics']['circuits_in_band']}/{best_final['metrics']['total_circuits']}",
+        flush=True,
     )
-    print(f"  Params: {best_final['params']}")
+    print(f"  Params: {best_final['params']}", flush=True)
 
     return {
         "tier": tier,
@@ -339,11 +402,11 @@ def tune_tier(
 
 def run(args: argparse.Namespace) -> dict[str, Any]:
     args.out.mkdir(parents=True, exist_ok=True)
-    # Ensure Stage A params are present
-    harness.get_stage_a_params()
+    harness.get_stage_a_params("classic", "balanced")
+    all_circs = worker.all_circuits()
 
-    ledger = MatchLedger(args.out / "ledger.sqlite")
-    evaluator = Evaluator(
+    ledger = MatchLedger(args.out / "stage_b_ledger.sqlite")
+    evaluator = BatchEvaluator(
         ledger=ledger,
         play_fn=harness.stage_b_play_fn,
         max_workers=args.workers,
@@ -357,7 +420,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     try:
         for cfg in configs:
             tier_results[f"tier_{cfg['tier']}"] = tune_tier(
-                cfg, evaluator, ledger, args
+                cfg, all_circs, evaluator, ledger, args
             )
     finally:
         evaluator.shutdown()
@@ -370,6 +433,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "population": args.population,
         "seeds_per_gen": args.seeds,
         "final_seeds": args.final_seeds,
+        "total_circuits": len(all_circs),
         "elapsed_s": time.perf_counter() - started,
         "tiers": tier_results,
     }
@@ -384,10 +448,10 @@ def main() -> None:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument("--workers", type=int, default=28)
-    parser.add_argument("--generations", type=int, default=12)
-    parser.add_argument("--population", type=int, default=10)
+    parser.add_argument("--generations", type=int, default=7)
+    parser.add_argument("--population", type=int, default=7)
     parser.add_argument(
-        "--seeds", type=int, default=4, help="seed pairs per circuit per generation"
+        "--seeds", type=int, default=1, help="seed pairs per circuit per generation"
     )
     parser.add_argument(
         "--sigma0",
@@ -395,13 +459,17 @@ def main() -> None:
         default=0.25,
         help="initial step in normalized [-1, 1] box",
     )
-    parser.add_argument("--finalists", type=int, default=4)
-    parser.add_argument("--final-seeds", type=int, default=16)
+    parser.add_argument("--finalists", type=int, default=3)
+    parser.add_argument("--final-seeds", type=int, default=2)
     parser.add_argument("--seed", type=int, default=83)
     parser.add_argument("--tier", type=int, default=None, help="only tune a single tier")
     parser.add_argument("--evorl-commit", default="11b9ac3")
-    parser.add_argument("--tdrace-commit", default="61e334dd")
-    parser.add_argument("--out", type=Path, default=Path("results/stage_b"))
+    parser.add_argument("--tdrace-commit", default="5b52e86a")
+    parser.add_argument(
+        "--out",
+        type=Path,
+        default=Path(__file__).resolve().parent / "runs",
+    )
     run(parser.parse_args())
 
 

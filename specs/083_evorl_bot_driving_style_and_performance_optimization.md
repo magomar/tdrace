@@ -158,35 +158,34 @@ as `Outcome.ERROR`.
 | | `consistency` | same | 0.40 – 1.00 |
 | | `composure` | same | 0.30 – 1.00 |
 
-- **Stage A** tunes the Balanced style tuple. The other 5 style tuples keep their current offsets from
-  Balanced, so styles move with the shared controller and stay distinct. Tuning the style offsets
-  themselves is spec 107.
-- **Stage B** tunes 4 values per tier (20 values, run tier by tier from T4 outward). `avoidance_padding`
-  stays fixed: it shapes pack behaviour, which is spec 107.
+- **Stage A** (expanded 2026-10-17) tunes all 6 `DrivingStyle` tuples independently per modality via
+  `StyleTuning::for_modality_and_style(modality, style)` (`7 modalities x 6 styles = 42` controller
+  calibrations of `lookahead_time`, `steering_kp`, `steering_kd`, `brake_margin`, `speed_mult`).
+  `StyleTuning::for_style(style)` delegates to `"classic"` for backwards compatibility.
+- **Stage B** tunes 4 values per tier (`T3`, `T2`, `T1`, `T5` relative to `T4 Pro` reference) across all
+  127 closed-loop circuits. `avoidance_padding` stays fixed: it shapes pack behaviour, which is spec 107.
 - **Out of scope:** `reaction_tau_s` (not applied in code), the 4 parameters with no code
   (`wake_align_gain`, `defend_threshold_ttc`, `defend_corridor_bias`, `scan_lookahead_gain`), and the
   per-style `aggression` and `avoidance` values.
 
 ### 2. Circuits and cars
-- **Launch modules only:** `classic`, `kart`, `autocross`, `rally` (Rallycross). Each circuit runs with
-  its own-category car from that module (same rule as `classic_circuits_bot_tests.rs`). One table,
-  `launch_circuit_cars()`, holds the pairs.
-- **Closed-loop circuits only.** A circuit that the harness cannot run as a lap race is excluded. The
-  report lists each exclusion and the reason.
-- **Training set (13):**
-  - classic: `gt_coastal_grand_prix`, `stock_tri_oval_speedway`, `gt_ridge_ring`, `kart_pine_grove`
-  - kart: `lonato`, `genk`, `whilton_mill`
-  - autocross: `maggiora_ax`, `nova_paka_ax`, `st_junien_ax`
-  - rally: `holjes_rx`, `mettet_rx`, `montalegre_rx`
-- **Held-out set:** every other closed-loop launch circuit (about 60). The campaign never sees them.
-- **Circuits with a known circuit bug** are left out of the held-out checks while that bug is open.
-  These are the Rallycross circuits listed in `tdrace-699t6`, `tdrace-xg1x`, `tdrace-bppc` and
-  `tdrace-4nmh3` (13 circuits at the baseline audit). Their bots fail to finish, stall for minutes, or
-  set impossible laps, so they cannot measure the bot. The report still shows them. They are
-  re-checked after spec 105 (Rallycross joker redraw) lands.
+- **All 7 modalities (expanded 2026-10-17):** `classic` (18), `kart` (20), `autocross` (17), `rally` (20),
+  `gt` (18), `nascar` (17), and `extreme_offroad` (17 closed-loop: 15 `circuit` + 2 closed-loop `hybrid`
+  [`arctic_frozen_lake`, `supercross_stadium_arena`]), totaling **127 closed-loop circuits** out of 130
+  catalog tracks. Each circuit runs with its own-category car from that module via
+  `all_modality_circuit_cars()` (and `launch_circuit_cars()` for the 4 launch modules).
+- **Closed-loop circuits only.** The 3 open arenas in `extreme_offroad` (`monster_colosseum`,
+  `mud_slough_arena`, `stunt_city_megastructure`) have 0 checkpoints and non-closed splines and are
+  excluded from lap-race evaluation. The report lists each exclusion and the reason.
+- **Full-modality training (2026-10-17):** Every closed-loop circuit of a modality is used to train the
+  6 style controllers of that modality in Stage A (with fresh validation seeds for finalist selection),
+  and all 127 closed-loop circuits are used to train the shared `DriverQuality::for_tier` ladder in
+  Stage B.
 
-> **Amendment (2026-10-11).** The baseline audit found these circuit bugs after approval.
-> `lydden_hill` (24 DNFs) was replaced in training by `mettet_rx` (no stalls, no DNFs).
+> **Amendment (2026-10-11 & 2026-10-17).** In the initial 4-module pass (2026-10-11), `lydden_hill`
+> (24 DNFs) was replaced in the 13-circuit subset by `mettet_rx`. In the 2026-10-17 campaign expansion,
+> Stage A and Stage B were upgraded to evaluate across all 127 closed-loop circuits spanning all 7
+> modalities using parallel batch evaluation (`BatchEvaluator`) across 28 persistent workers.
 
 ### 3. Fitness
 **Stage A (shared controller).** This stage uses T4 Balanced head-to-head against the current baseline
@@ -368,16 +367,22 @@ cargo run -p tdrace-app --release --bin bot_behaviour_benchmark
 ## 🔗 Traceability & Codebase Mapping
 
 ### Created/Modified Files
-- [x] `crates/tdrace-app/src/bin/bot_eval_worker.rs` -> JSON-lines evaluation worker over `run_harness_race`.
-- [x] `crates/tdrace-app/src/ai/bot_harness.rs` -> `launch_circuit_cars()` table and a genome-to-`BotProfile` helper with clamping.
-- [x] `crates/tdrace-app/tests/bot_eval_worker_tests.rs` -> Determinism, parity and bad-input tests.
+- [x] `crates/tdrace-app/src/bin/bot_eval_worker.rs` -> JSON-lines evaluation worker over `run_harness_race` with `--list-all-circuits`.
+- [x] `crates/tdrace-app/src/ai/bot_harness.rs` -> `launch_circuit_cars()`, `all_modality_circuit_cars()`, and `BotGenome::profile_for_modality` helper with clamping.
+- [x] `crates/tdrace-app/src/ai/driver.rs` -> `DriverCharacter::resolve_profile_for_module` for modality-aware AI resolution.
+- [x] `crates/tdrace-app/src/game/mod.rs` -> Wired `RaceSession` to call `resolve_profile_for_module`.
+- [x] `crates/tdrace-app/tests/bot_eval_worker_tests.rs` -> Determinism, parity, bad-input, and 7-modality circuit catalog tests.
 - [x] `crates/tdrace-app/tests/bot_tier_ladder_tests.rs` -> Fast tier-ladder regression gate.
-- [x] `crates/race-kit/src/ai/mod.rs` -> Baked Stage A style tuple and Stage B `DriverQuality::for_tier` rows.
-- [x] `tools/bot_tuning/harness.py` -> EvoRL `PlayFn` that drives a persistent `bot_eval_worker`.
-- [x] `tools/bot_tuning/run_campaign.py` -> Throughput benchmark, baseline audit, Stage A, Stage B, held-out sweep.
-- [x] `tools/bot_tuning/export.py` -> Prints the Rust constant table from `best.json` for review.
+- [x] `crates/race-kit/src/ai/mod.rs` -> Baked Stage A `StyleTuning::for_modality_and_style` (42 calibrations) and Stage B `DriverQuality::for_tier` rows.
+- [x] `tools/bot_tuning/worker.py` -> Persistent `bot_eval_worker` pool and `BatchEvaluator` for parallel batch evaluation.
+- [x] `tools/bot_tuning/harness.py` -> EvoRL `PlayFn` and outcome/disqualification rules.
+- [x] `tools/bot_tuning/stage_a.py` -> Per-modality x per-style Stage A CMA-ES + EvoRL `MatchLedger` calibration across all 127 closed-loop circuits.
+- [x] `tools/bot_tuning/stage_b.py` -> Global Stage B `DriverQuality::for_tier` CMA-ES calibration across all 127 closed-loop circuits.
+- [x] `tools/bot_tuning/run_campaign.py` -> Throughput benchmark, baseline audit, Stage A, Stage B, post-calibration audit.
+- [x] `tools/bot_tuning/export.py` -> Exports 42 `StyleTuning::for_modality_and_style` arms and 5 `DriverQuality::for_tier` rows to Rust.
+- [x] `tools/bot_tuning/report.py` -> Generates markdown audit and full calibration reports from `tools/bot_tuning/runs/*.json`.
 - [x] `tools/bot_tuning/runs/<run>.json` -> Seeds, commits and best genome of the baked run.
-- [x] `reports/bot_calibration_report.md` -> Throughput, baseline audit, before/after and held-out results.
+- [x] `reports/bot_calibration_report.md` -> Throughput, Stage A, Stage B, baseline and post-calibration 127-circuit audit results.
 - [x] `specs/constitution/TECH_STACK.md` -> "Offline bot tuning (not shipped)" rows.
 - [x] `specs/constitution/ROADMAP.md` -> Updated 083 entry; 107 and 108 entries.
 

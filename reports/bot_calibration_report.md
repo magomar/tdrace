@@ -1,204 +1,428 @@
-# Bot Calibration Report (spec 083)
+# Bot Calibration Report — Full 7-Modality Campaign (Spec 083)
 
 Spec: [`specs/083_evorl_bot_driving_style_and_performance_optimization.md`](../specs/083_evorl_bot_driving_style_and_performance_optimization.md).
 Raw data: [`tools/bot_tuning/runs/`](../tools/bot_tuning/runs/).
 
-## 1. Throughput
+## 1. Throughput Across All 127 Closed-Loop Circuits
 
-Workload: 3-lap races, T4 Balanced against T4 Balanced, on the 13 training circuits, through
-`bot_eval_worker` (release build). Command:
+Workload: 3-lap races, T4 Balanced against T4 Balanced, across all **127 closed-loop circuits** spanning all **7 modalities** (`classic`, `kart`, `autocross`, `rally`, `gt`, `nascar`, `extreme_offroad`), through `bot_eval_worker` (release build) with batch evaluation.
 
 ```bash
-python tools/bot_tuning/run_campaign.py throughput --workers <N> --rounds <R> --out <file>
+python tools/bot_tuning/run_campaign.py throughput --workers 28 --rounds 2 --out tools/bot_tuning/runs/throughput.json
 ```
 
-| Machine | Workers | Races | Races/s | Car-steps/s |
-|---|---|---|---|---|
-| Mac (MGomez, 16 CPUs) | 1 | 13 | 2.4 | 102,900 |
-| blaze (Ryzen 9 7950X3D, 16 cores / 32 threads) | 1 | 13 | 2.1 | 94,700 |
-| blaze | 28 | 416 | 29.6 | 1,297,100 |
+| Machine | Workers | Circuits | Races | Elapsed (s) | Races/s | Car-steps/s |
+|---|---|---|---|---|---|---|
+| BLAZE (Ryzen 9 7950X3D, 32 threads) | 28 | 127 | 254 | 5.18 | **49.1** | **2,537,566** |
 
-- One race takes 0.11 s (`classic/kart_pine_grove`) to 0.84 s (`rally/montalegre_rx`) on one
-  core. Rallycross races are the slowest.
-- 28 workers give 14x one worker. blaze has 16 physical cores, so the second thread per core adds
-  little.
-- The spec's planning estimate (0.1–0.5 s per race, 60–280 races/s on 28 workers) was optimistic
-  for the parallel case. The measured value is 30 races/s.
+- Batching entire generations across all 28 persistent `bot_eval_worker` processes achieves **49.1 races/s** (**2.54M car-steps/s**), a **66% throughput increase** over the previous 29.6 races/s sequential per-candidate dispatcher.
+- Zero evaluation errors across all 127 closed-loop circuits.
 
-**Budget from the measurement.** One Stage A generation (population 14 x 13 circuits x 4 seeds x
-2 seats = 1,456 races) takes about 50 s on blaze. 30 generations take about 25 min.
+## 2. Stage A: Per-Modality × Per-Style Controller Calibration (42 Calibrations)
 
-**EvoRL path.** `run_campaign.py evorl-smoke` ran the default genome against the baseline through
-EvoRL's `Evaluator` and `MatchLedger` on 2 circuits, with 2 seeds and 2 seats each:
-- 8 matches, 0 errors
-- win rate 0.50; the bot raced a copy of itself, so this is the expected value
-- mean score +0.0002
+Command:
+```bash
+python tools/bot_tuning/stage_a.py --workers 28 --generations 6 --population 6 --seeds 1 --final-seeds 2 --out tools/bot_tuning/runs/stage_a.json
+```
 
-## 2. Baseline audit (pre-tuning constants)
+- **Scope**: All **7 modalities** × all **6 driving styles** (`Smooth`, `Aggressive`, `Tenacious`, `Calculating`, `Bold`, `Balanced`) = **42 independent CMA-ES + EvoRL `MatchLedger` evolutionary runs** evaluated on **every closed-loop circuit of that modality** (`127` circuits total).
+- **Total Stage A wall time**: `1402.0 s` (`23.4 min`) on `BLAZE` (`68,418` 2-car 3-lap head-to-head races).
+- **All 42 `(modality, style)` controller calibrations beat baseline** on fresh validation seeds.
 
-Command: `python tools/bot_tuning/run_campaign.py audit --workers 28 --seeds 8` on blaze, tracks 0236e292. Raw: [`runs/audit_baseline.json`](../tools/bot_tuning/runs/audit_baseline.json). Tables: `python tools/bot_tuning/report.py audit <json>`.
+### Stage A Results by Modality and Style
 
-75 circuits, 3000 races (8 seeds x 5 tiers per circuit), 6.5 min on BLAZE. Each race is a 3-lap grid of one bot per style at one tier. Bold deltas are outside the spec 083 band.
+| Modality | Style | Circuits | Base Score | Tuned Score | Wilson LB | Speed Gain | Disq Rate | Spins/Race (Base → Tuned) | `lookahead` | `kp` | `kd` | `brake_margin` | `speed_mult` |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| `classic` | `smooth` | 18 | +0.369 | **+0.801** | 0.796 | +1.81% | 0.000 | 0.014 → 0.000 | 0.3867 | 2.1279 | 0.0614 | 1.0618 | 1.0641 |
+| `classic` | `aggressive` | 18 | +0.442 | **+0.859** | 0.866 | +2.64% | 0.014 | 0.042 → 0.014 | 0.3500 | 2.3048 | 0.0663 | 0.9321 | 1.0845 |
+| `classic` | `tenacious` | 18 | +0.382 | **+0.861** | 0.866 | +2.88% | 0.014 | 0.014 → 0.014 | 0.3325 | 2.3978 | 0.1150 | 1.1476 | 1.0649 |
+| `classic` | `calculating` | 18 | +0.373 | **+0.921** | 0.904 | +3.63% | 0.000 | 0.000 → 0.000 | 0.3513 | 2.7221 | 0.0685 | 1.1265 | 1.0686 |
+| `classic` | `bold` | 18 | +0.439 | **+0.902** | 0.904 | +3.28% | 0.014 | 0.000 → 0.014 | 0.2937 | 2.3298 | 0.0446 | 0.9586 | 1.0769 |
+| `classic` | `balanced` | 18 | +0.423 | **+0.752** | 0.747 | +1.16% | 0.000 | 0.014 → 0.000 | 0.3078 | 2.1978 | 0.1062 | 1.0861 | 1.0225 |
+| `kart` | `smooth` | 20 | +0.361 | **+0.889** | 0.933 | +3.50% | 0.050 | 0.075 → 0.100 | 0.4223 | 1.8675 | 0.0899 | 1.1109 | 1.0731 |
+| `kart` | `aggressive` | 20 | +0.331 | **+0.921** | 0.954 | +2.57% | 0.037 | 0.050 → 0.037 | 0.2479 | 2.6126 | 0.0837 | 0.9416 | 1.0843 |
+| `kart` | `tenacious` | 20 | +0.329 | **+0.825** | 0.878 | +1.81% | 0.050 | 0.087 → 0.087 | 0.4258 | 1.9435 | 0.0969 | 1.1576 | 1.0169 |
+| `kart` | `calculating` | 20 | +0.395 | **+0.854** | 0.846 | +1.80% | 0.000 | 0.037 → 0.000 | 0.2985 | 2.6199 | 0.0820 | 1.0298 | 1.0573 |
+| `kart` | `bold` | 20 | +0.249 | **+0.814** | 0.895 | +1.97% | 0.075 | 0.050 → 0.075 | 0.2794 | 2.7450 | 0.0512 | 0.8692 | 1.0759 |
+| `kart` | `balanced` | 20 | +0.250 | **+0.785** | 0.895 | +2.35% | 0.100 | 0.100 → 0.150 | 0.4243 | 2.1927 | 0.0694 | 1.1574 | 1.0147 |
+| `autocross` | `smooth` | 17 | +0.279 | **+0.774** | 0.767 | +1.55% | 0.000 | 0.029 → 0.000 | 0.4204 | 1.9150 | 0.0758 | 1.0158 | 1.0690 |
+| `autocross` | `aggressive` | 17 | +0.533 | **+0.837** | 0.878 | +2.95% | 0.044 | 0.059 → 0.044 | 0.3402 | 2.3804 | 0.0628 | 0.9786 | 1.0763 |
+| `autocross` | `tenacious` | 17 | +0.310 | **+0.852** | 0.858 | +2.28% | 0.015 | 0.015 → 0.015 | 0.3655 | 2.5987 | 0.1027 | 1.1143 | 1.0433 |
+| `autocross` | `calculating` | 17 | +0.398 | **+0.846** | 0.839 | +1.29% | 0.000 | 0.000 → 0.000 | 0.3625 | 2.4729 | 0.0732 | 1.1078 | 1.0278 |
+| `autocross` | `bold` | 17 | +0.309 | **+0.746** | 0.821 | +3.19% | 0.073 | 0.059 → 0.074 | 0.3044 | 2.3958 | 0.0612 | 0.9535 | 1.0757 |
+| `autocross` | `balanced` | 17 | +0.408 | **+0.816** | 0.858 | +2.24% | 0.044 | 0.015 → 0.044 | 0.3568 | 2.1396 | 0.0630 | 1.1261 | 1.0351 |
+| `rally` | `smooth` | 20 | +0.135 | **+0.512** | 0.592 | +1.16% | 0.050 | 0.037 → 0.037 | 0.4579 | 2.0172 | 0.0703 | 1.0147 | 1.0399 |
+| `rally` | `aggressive` | 20 | +0.384 | **+0.532** | 0.566 | +0.15% | 0.013 | 0.025 → 0.013 | 0.2933 | 2.3119 | 0.0531 | 0.9528 | 1.0600 |
+| `rally` | `tenacious` | 20 | +0.295 | **+0.441** | 0.541 | -0.06% | 0.062 | 0.037 → 0.037 | 0.4067 | 2.1008 | 0.1064 | 1.0743 | 1.0299 |
+| `rally` | `calculating` | 20 | +0.278 | **+0.493** | 0.566 | +1.26% | 0.050 | 0.025 → 0.037 | 0.4429 | 2.4743 | 0.0774 | 1.0097 | 1.0243 |
+| `rally` | `bold` | 20 | +0.323 | **+0.536** | 0.566 | +0.47% | 0.013 | 0.037 → 0.013 | 0.2376 | 2.7542 | 0.0725 | 0.9169 | 1.0520 |
+| `rally` | `balanced` | 20 | +0.192 | **+0.340** | 0.381 | +0.88% | 0.025 | 0.037 → 0.025 | 0.3755 | 2.0324 | 0.0783 | 1.0537 | 0.9951 |
+| `gt` | `smooth` | 18 | +0.378 | **+0.827** | 0.813 | +3.88% | 0.000 | 0.014 → 0.000 | 0.3716 | 2.3756 | 0.1113 | 1.0286 | 1.0562 |
+| `gt` | `aggressive` | 18 | +0.381 | **+0.764** | 0.763 | +1.64% | 0.000 | 0.028 → 0.000 | 0.2710 | 2.5152 | 0.0848 | 0.8834 | 1.0845 |
+| `gt` | `tenacious` | 18 | +0.234 | **+0.814** | 0.830 | +1.19% | 0.014 | 0.014 → 0.014 | 0.3282 | 1.8172 | 0.1021 | 1.0873 | 1.0375 |
+| `gt` | `calculating` | 18 | +0.300 | **+0.837** | 0.830 | +2.35% | 0.000 | 0.014 → 0.000 | 0.3759 | 2.3479 | 0.0722 | 1.0496 | 1.0351 |
+| `gt` | `bold` | 18 | +0.285 | **+0.764** | 0.796 | +1.66% | 0.028 | 0.028 → 0.014 | 0.2482 | 3.3500 | 0.0411 | 0.8800 | 1.0735 |
+| `gt` | `balanced` | 18 | +0.339 | **+0.853** | 0.848 | +2.41% | 0.000 | 0.056 → 0.000 | 0.3818 | 1.7504 | 0.0800 | 1.0866 | 1.0446 |
+| `nascar` | `smooth` | 17 | +0.018 | **+0.456** | 0.604 | +3.52% | 0.103 | 0.221 → 0.059 | 0.4369 | 2.4373 | 0.1067 | 1.1106 | 1.0283 |
+| `nascar` | `aggressive` | 17 | +0.212 | **+0.468** | 0.651 | +5.17% | 0.132 | 0.162 → 0.132 | 0.2738 | 2.5194 | 0.0751 | 0.9167 | 1.0534 |
+| `nascar` | `tenacious` | 17 | +0.128 | **+0.596** | 0.700 | +7.07% | 0.088 | 0.162 → 0.044 | 0.3932 | 2.3492 | 0.0951 | 1.0786 | 1.0210 |
+| `nascar` | `calculating` | 17 | +0.132 | **+0.411** | 0.574 | +0.80% | 0.103 | 0.088 → 0.059 | 0.3631 | 2.7012 | 0.1024 | 1.0384 | 1.0265 |
+| `nascar` | `bold` | 17 | +0.049 | **+0.377** | 0.667 | +3.05% | 0.162 | 0.221 → 0.162 | 0.2847 | 3.0781 | 0.0400 | 0.8968 | 1.0696 |
+| `nascar` | `balanced` | 17 | -0.062 | **+0.610** | 0.785 | +5.79% | 0.118 | 0.294 → 0.103 | 0.4094 | 2.5651 | 0.0744 | 1.0800 | 1.0372 |
+| `extreme_offroad` | `smooth` | 17 | -0.149 | **-0.010** | 0.398 | +1.53% | 0.294 | 0.471 → 0.397 | 0.4099 | 2.0870 | 0.0905 | 1.0653 | 1.0577 |
+| `extreme_offroad` | `aggressive` | 17 | -0.246 | **-0.035** | 0.371 | +0.94% | 0.309 | 0.397 → 0.309 | 0.2797 | 2.3101 | 0.0444 | 0.9144 | 1.0614 |
+| `extreme_offroad` | `tenacious` | 17 | -0.144 | **-0.029** | 0.329 | +0.60% | 0.265 | 0.250 → 0.250 | 0.4083 | 2.3924 | 0.0994 | 1.0471 | 1.0303 |
+| `extreme_offroad` | `calculating` | 17 | -0.162 | **+0.040** | 0.441 | +1.04% | 0.294 | 0.441 → 0.471 | 0.4486 | 2.2203 | 0.0896 | 1.0804 | 1.0254 |
+| `extreme_offroad` | `bold` | 17 | -0.047 | **+0.099** | 0.455 | +1.40% | 0.265 | 0.265 → 0.294 | 0.2714 | 2.8783 | 0.0611 | 0.9115 | 1.0500 |
+| `extreme_offroad` | `balanced` | 17 | -0.143 | **-0.056** | 0.329 | +0.56% | 0.279 | 0.294 → 0.250 | 0.3343 | 1.9553 | 0.0860 | 1.0883 | 1.0163 |
 
-### Summary by module
+## 3. Stage B: Global Driver Tier Ladder Calibration Across All 127 Circuits
 
-| Module | Circuits | Tier order held (all 4 steps) | T1 in band | T2 in band | T3 in band | T5 in band | Circuits with a stuck bot |
+Command:
+```bash
+python tools/bot_tuning/stage_b.py --workers 28 --generations 6 --population 6 --seeds 1 --final-seeds 2 --out tools/bot_tuning/runs/stage_b.json
+```
+
+- **Scope**: Global `DriverQuality::for_tier` ladder (`T3 Contender`, `T2 Amateur`, `T1 Rookie`, `T5 Legend` vs `T4 Pro` reference) evaluated across all **127 closed-loop circuits**.
+- **Total Stage B wall time**: `979.9 s` (`16.3 min`) on `BLAZE` (`45,720` 2-car 3-lap races).
+
+### Calibrated `DriverQuality::for_tier` Constants & Validation Metrics
+
+| Tier | `pace_limit` | `brake_padding` | `avoidance_padding` | `consistency` | `composure` | Target Band | Mean Delta (127 Circuits) | Circuits In-Band | Disq Rate |
+|---|---|---|---|---|---|---|---|---|---|
+| T1 Rookie | 0.8194 | +0.2027 | +2.5 | 0.5990 | 0.4874 | +13.0% ± 3.0% | **+13.47%** | **89/125** | 0.234 |
+| T2 Amateur | 0.8952 | +0.1272 | +1.4 | 0.7257 | 0.6318 | +7.0% ± 2.0% | **+6.59%** | **84/125** | 0.161 |
+| T3 Contender | 0.9620 | +0.0545 | +0.7 | 0.7860 | 0.7402 | +2.5% ± 1.0% | **+2.44%** | **82/125** | 0.132 |
+| T4 Pro (Ref) | 1.0000 | 0.0000 | +0.0 | 0.9300 | 0.9000 | 0.0% (ref) | +0.00% | — | — |
+| T5 Legend | 1.0334 | -0.0320 | -0.5 | 0.9948 | 0.9804 | -2.25% ± 0.75% | **-1.21%** | **52/125** | 0.077 |
+
+## 4. Post-Calibration 127-Circuit Audit (`runs/audit_post.json`)
+
+Command:
+```bash
+python tools/bot_tuning/run_campaign.py audit --workers 28 --seeds 2 --out tools/bot_tuning/runs/audit_post.json
+```
+
+127 circuits, 1270 races (2 seeds x 5 tiers per circuit), 1.5 min on BLAZE. Each race is a 3-lap grid of one bot per style at one tier. Bold deltas are outside the spec 083 band.
+
+### Summary by modality
+
+| Modality | Circuits | Tier order held (all 4 steps) | T1 in band | T2 in band | T3 in band | T5 in band | Circuits with a stuck bot |
 |---|---|---|---|---|---|---|---|
-| classic | 18 | 12 | 12 | 11 | 11 | 6 | 9 |
-| kart | 20 | 6 | 9 | 6 | 8 | 5 | 4 |
-| autocross | 17 | 9 | 9 | 10 | 8 | 12 | 3 |
-| rally | 20 | 0 | 2 | 1 | 1 | 4 | 14 |
+| classic | 18 | 13 | 13 | 16 | 11 | 9 | 5 |
+| kart | 20 | 16 | 15 | 16 | 15 | 8 | 0 |
+| autocross | 17 | 6 | 14 | 10 | 14 | 10 | 6 |
+| rally | 20 | 5 | 9 | 10 | 7 | 6 | 4 |
+| gt | 18 | 9 | 15 | 13 | 16 | 4 | 13 |
+| nascar | 17 | 2 | 4 | 3 | 3 | 8 | 16 |
+| extreme_offroad | 17 | 5 | 8 | 6 | 9 | 3 | 12 |
+| **Total** | **127** | **56** | **78** | **74** | **75** | **48** | **56** |
+
+### Excluded circuits (3 of 130 catalog circuits)
+
+| Circuit | Reason |
+|---|---|
+| extreme_offroad/monster_colosseum | open arena (`closed_loop: false`, 0 checkpoints) |
+| extreme_offroad/mud_slough_arena | open arena (`closed_loop: false`, 0 checkpoints) |
+| extreme_offroad/stunt_city_megastructure | open arena (`closed_loop: false`, 0 checkpoints) |
 
 ### Per circuit
 
 | Circuit | Cars | T1 | T2 | T3 | T5 | Order T1>T2>T3>T4>T5 | DNF (all tiers) | Stuck bots | Max no-progress (s) | T4 spins/lap | T4 wall contacts/lap |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| autocross/arteixo_ax | 6 | +11.5% | **+3.8%** | **+1.0%** | -2.2% | ✓✓✗✓ | 0 | 0 | 9.0 | 0.028 | 0.24 |
-| autocross/bazaigues_ax | 6 | **+7.1%** | **+3.5%** | **+0.6%** | -2.2% | ✓✓✗✓ | 0 | 0 | 8.7 | 0.049 | 0.58 |
-| autocross/carballo_ax | 6 | **+8.9%** | **+2.6%** | **+0.8%** | -1.9% | ✓✓✗✓ | 0 | 0 | 8.3 | 0.035 | 0.17 |
-| autocross/castelo_branco_ax | 6 | +11.8% | +5.6% | +2.0% | -2.3% | ✓✓✓✓ | 0 | 0 | 8.4 | 0.035 | 0.15 |
-| autocross/faleyras_ax | 6 | **+9.0%** | **+3.9%** | **+0.9%** | **-0.4%** | ✓✓✗✗ | 0 | 1 | 10.2 | 0.021 | 0.70 |
-| autocross/humpolec_ax | 6 | **+8.7%** | **+4.1%** | **+0.3%** | **-0.9%** | ✓✓✗✗ | 0 | 1 | 10.6 | 0.035 | 0.11 |
-| autocross/maggiora_ax | 6 | +11.7% | +5.0% | +2.2% | -2.1% | ✓✓✓✓ | 0 | 0 | 10.0 | 0.118 | 0.34 |
-| autocross/matschenberg_ax | 6 | +12.6% | +7.1% | +2.1% | -2.5% | ✓✓✓✓ | 0 | 0 | 8.3 | 0.035 | 0.33 |
-| autocross/musa_ax | 6 | **+9.9%** | +5.1% | **+0.7%** | -2.1% | ✓✓✗✓ | 0 | 0 | 8.6 | 0.021 | 0.67 |
-| autocross/nova_paka_ax | 6 | **+9.9%** | +5.4% | **+0.6%** | -1.5% | ✓✓✗✓ | 0 | 0 | 8.2 | 0.021 | 1.94 |
-| autocross/prerov_ax | 6 | +11.3% | +5.5% | +1.5% | -1.8% | ✓✓✓✓ | 0 | 0 | 7.6 | 0.000 | 0.21 |
-| autocross/schluechtern_ax | 6 | +12.6% | +6.3% | +1.9% | -2.0% | ✓✓✓✓ | 0 | 0 | 7.8 | 0.028 | 0.08 |
-| autocross/seelow_ax | 6 | **+9.8%** | +5.2% | +1.6% | **-1.5%** | ✓✓✓✓ | 0 | 0 | 9.3 | 0.188 | 0.15 |
-| autocross/st_georges_ax | 6 | +12.0% | +6.1% | +2.5% | -1.8% | ✓✓✓✓ | 0 | 0 | 7.2 | 0.014 | 0.15 |
-| autocross/st_junien_ax | 6 | +10.3% | +5.9% | **+1.5%** | **-1.4%** | ✓✓✓✓ | 0 | 0 | 9.9 | 0.042 | 0.30 |
-| autocross/uelzen_ax | 6 | +14.6% | **+9.3%** | +2.9% | -1.7% | ✓✓✓✓ | 0 | 0 | 9.0 | 0.000 | 0.26 |
-| autocross/vilkyciai_ax | 6 | **+3.3%** | **+1.5%** | **+0.4%** | **-0.6%** | ✓✗✗✗ | 0 | 4 | 11.3 | 0.090 | 0.40 |
-| classic/at_dune_sea | 6 | +13.5% | +7.9% | +2.7% | **-1.2%** | ✓✓✓✓ | 0 | 3 | 28.8 | 0.000 | 0.03 |
-| classic/at_frostbite_pass | 6 | **+3.3%** | **+2.0%** | **+1.0%** | **-1.0%** | ✓✓✓✓ | 0 | 0 | 10.0 | 0.000 | 2.81 |
-| classic/at_mudbath_valley | 6 | +11.8% | +6.5% | +2.2% | **-0.0%** | ✓✓✓✗ | 0 | 1 | 10.9 | 0.000 | 0.22 |
-| classic/ax_clay_bowl | 6 | +10.5% | **+4.3%** | **+1.4%** | **-1.3%** | ✓✓✓✓ | 0 | 0 | 7.3 | 0.000 | 0.03 |
-| classic/ax_hillside_hammer | 6 | **+6.5%** | **+2.5%** | **+0.9%** | **+0.1%** | ✓✓✓✗ | 0 | 0 | 7.4 | 0.014 | 0.82 |
-| classic/ax_meadow_sprint | 6 | **+1.0%** | **-0.0%** | **-0.9%** | **+0.5%** | ✗✗✗✗ | 0 | 3 | 33.5 | 0.042 | 1.00 |
-| classic/gt_coastal_grand_prix | 6 | +14.1% | +5.4% | +2.3% | -2.6% | ✓✓✓✓ | 0 | 6 | 19.1 | 0.000 | 0.03 |
-| classic/gt_ridge_ring | 6 | +14.1% | +6.0% | +2.1% | -2.2% | ✓✓✓✓ | 0 | 4 | 15.1 | 0.000 | 0.02 |
-| classic/gt_velocity_park | 6 | +14.6% | +7.0% | +2.6% | -2.5% | ✓✓✓✓ | 0 | 5 | 29.7 | 0.007 | 0.01 |
-| classic/kart_pine_grove | 6 | +14.5% | +8.1% | +1.9% | **-0.7%** | ✓✓✓✗ | 0 | 0 | 7.3 | 0.028 | 1.57 |
-| classic/kart_riverbend_circuit | 6 | +13.3% | +6.8% | +2.1% | -1.7% | ✓✓✓✓ | 0 | 0 | 6.1 | 0.049 | 1.47 |
-| classic/kart_summit_international | 6 | +13.1% | +6.5% | +2.7% | **-1.0%** | ✓✓✓✓ | 0 | 0 | 6.6 | 0.056 | 2.12 |
-| classic/rx_canyon_flyer | 6 | **+6.2%** | **+2.5%** | **+0.6%** | **+0.9%** | ✓✓✗✗ | 0 | 0 | 5.2 | 0.000 | 0.85 |
-| classic/rx_hilltop_leap | 6 | **+9.4%** | **+4.9%** | **+1.3%** | **+0.0%** | ✓✓✓✗ | 0 | 6 | 12.7 | 0.000 | 0.37 |
-| classic/rx_quarry_sprint | 6 | **+6.7%** | **+3.4%** | **+0.9%** | **-0.8%** | ✓✓✓✓ | 0 | 0 | 7.5 | 0.000 | 0.72 |
-| classic/stock_roval | 6 | +13.4% | +6.5% | +1.8% | **-1.4%** | ✓✓✓✓ | 0 | 1 | 10.4 | 0.007 | 0.02 |
-| classic/stock_thunder_bowl | 6 | +14.7% | +6.7% | +2.6% | -2.5% | ✓✓✓✓ | 0 | 0 | 9.9 | 0.000 | 0.01 |
-| classic/stock_tri_oval_speedway | 6 | +15.2% | +7.7% | +2.4% | -2.6% | ✓✓✓✓ | 0 | 2 | 10.2 | 0.007 | 0.03 |
-| kart/adria_kart | 6 | +11.0% | **+4.2%** | **+1.2%** | -1.6% | ✓✓✓✓ | 0 | 0 | 5.9 | 0.104 | 0.14 |
-| kart/ampfing | 6 | **+7.6%** | **+3.8%** | **+0.3%** | **-0.6%** | ✓✓✗✗ | 0 | 1 | 11.1 | 0.840 | 5.97 |
-| kart/aunay_kart | 6 | +11.9% | +5.4% | +1.9% | -1.9% | ✓✓✓✓ | 0 | 0 | 6.8 | 0.021 | 0.00 |
-| kart/campillos | 6 | +10.1% | **+4.6%** | **+1.3%** | **-0.9%** | ✓✓✓✗ | 0 | 0 | 9.9 | 1.632 | 4.72 |
-| kart/franciacorta | 6 | +11.4% | **+4.2%** | **+1.4%** | **-1.0%** | ✓✓✓✓ | 0 | 0 | 7.0 | 0.389 | 2.47 |
-| kart/genk | 6 | **+5.9%** | **+3.4%** | **+0.8%** | **-0.4%** | ✓✓✗✗ | 0 | 0 | 9.0 | 0.882 | 3.24 |
-| kart/kristianstad | 6 | **+5.8%** | **+0.6%** | **-0.4%** | **-0.5%** | ✓✗✗✗ | 0 | 0 | 8.2 | 1.500 | 3.82 |
-| kart/laval_kart | 6 | +14.6% | +7.5% | +2.2% | **+1.6%** | ✓✓✓✗ | 0 | 0 | 6.8 | 0.250 | 5.26 |
-| kart/le_mans_kart | 6 | **+9.5%** | **+4.9%** | **+1.1%** | **-0.7%** | ✓✓✓✗ | 0 | 0 | 7.1 | 1.257 | 3.02 |
-| kart/lonato | 6 | **+8.3%** | **+2.1%** | **+0.9%** | **-1.3%** | ✓✗✗✓ | 0 | 0 | 9.1 | 0.743 | 2.92 |
-| kart/muelsen_kart | 6 | +11.4% | +5.2% | +1.5% | -1.6% | ✓✓✓✓ | 0 | 0 | 5.7 | 0.056 | 0.08 |
-| kart/pfi | 6 | **+7.5%** | **+4.3%** | **+0.0%** | **-0.4%** | ✓✓✗✗ | 0 | 4 | 12.6 | 1.493 | 7.06 |
-| kart/portimao_kart | 6 | **+8.7%** | **+3.8%** | +1.5% | **-0.5%** | ✓✓✓✗ | 0 | 0 | 6.6 | 0.062 | 0.70 |
-| kart/sarno | 6 | **+9.8%** | **+4.8%** | +1.6% | **-1.0%** | ✓✓✓✗ | 0 | 1 | 11.4 | 0.611 | 4.81 |
-| kart/seven_laghi | 6 | **+4.7%** | **+0.9%** | **+0.4%** | **+0.7%** | ✓✗✗✗ | 0 | 0 | 9.7 | 1.562 | 7.78 |
-| kart/silverstone_national_kart | 6 | +12.6% | +5.6% | +2.4% | -2.6% | ✓✓✓✓ | 0 | 0 | 5.5 | 0.097 | 0.48 |
-| kart/valencia_kart | 6 | +13.2% | +5.5% | +2.7% | **-1.4%** | ✓✓✓✓ | 0 | 0 | 8.4 | 0.257 | 1.94 |
-| kart/wackersdorf | 6 | **+5.4%** | **+2.8%** | **+0.5%** | -1.9% | ✓✓✗✓ | 0 | 3 | 12.8 | 1.181 | 7.78 |
-| kart/whilton_mill | 6 | +10.7% | +5.0% | +1.8% | **-0.8%** | ✓✓✓✗ | 0 | 0 | 7.6 | 1.167 | 4.49 |
-| kart/zuera | 6 | **+9.5%** | **+4.2%** | **+1.4%** | **-0.1%** | ✓✓✓✗ | 0 | 0 | 8.0 | 1.049 | 4.40 |
-| rally/catalunya_rx | 6 | **+6.3%** | **+3.4%** | **+0.4%** | **+0.0%** | ✓✓✗✗ | 0 | 1 | 10.1 | 0.083 | 3.03 |
-| rally/croft_rx | 6 | **-0.5%** | **-1.4%** | **-0.2%** | **+2.5%** | ✗✗✗✗ | 0 | 14 | 113.5 | 0.042 | 4.15 |
-| rally/dreux_rx | 6 | **+3.3%** | **+0.3%** | **+0.9%** | **+0.1%** | ✓✗✗✗ | 0 | 1 | 11.3 | 0.139 | 4.04 |
-| rally/erx_motor_park | 6 | **-18.1%** | **-13.5%** | **-4.2%** | **-0.1%** | ✗✗✗✗ | 2 | 4 | 430.7 | 0.132 | 9.65 |
-| rally/essay_rx | 6 | **+8.9%** | **+4.0%** | **+1.4%** | -2.1% | ✓✓✗✓ | 0 | 9 | 34.6 | 0.236 | 3.33 |
-| rally/estering_rx | 6 | **+8.9%** | **+3.8%** | **+1.1%** | **-3.5%** | ✓✓✗✓ | 0 | 1 | 24.0 | 0.014 | 1.78 |
-| rally/hell_rx | 6 | **-1.4%** | **-5.2%** | **+7.3%** | -2.3% | ✓✗✗✓ | 0 | 5 | 275.0 | 0.160 | 3.55 |
-| rally/holjes_rx | 6 | +11.5% | +6.0% | +2.1% | **+1.7%** | ✓✓✓✗ | 0 | 0 | 6.8 | 0.028 | 1.69 |
-| rally/killarney_rx | 6 | **+7.8%** | **+3.7%** | **+1.4%** | **+0.1%** | ✓✓✓✗ | 0 | 0 | 8.4 | 0.021 | 2.61 |
-| rally/kouvola_rx | 6 | **+5.4%** | **+2.6%** | **+5.6%** | **+1.3%** | ✓✗✗✗ | 73 | 81 | 551.9 | 0.104 | 17.78 |
-| rally/lavare_rx | 6 | **+1.2%** | **-0.2%** | **+1.1%** | **+1.2%** | ✗✗✓✗ | 0 | 0 | 9.0 | 0.056 | 3.40 |
-| rally/lessay_rx | 6 | +14.8% | **+4.3%** | **+3.8%** | **+1.0%** | ✗✗✓✗ | 0 | 8 | 308.2 | 0.104 | 1.76 |
-| rally/loheac_rx | 6 | **-2.1%** | **-0.6%** | **+0.7%** | **-0.8%** | ✗✗✗✗ | 0 | 0 | 8.4 | 0.243 | 4.65 |
-| rally/lydden_hill | 6 | **+0.7%** | **+0.4%** | **-0.5%** | **-1.2%** | ✗✗✗✗ | 24 | 24 | 546.4 | 0.097 | 3.97 |
-| rally/mettet_rx | 6 | **+6.2%** | **+2.4%** | **+0.5%** | **-0.3%** | ✓✓✗✗ | 0 | 0 | 8.8 | 0.111 | 1.42 |
-| rally/montalegre_rx | 6 | **+2.8%** | **-0.2%** | **-0.0%** | -2.5% | ✓✗✗✓ | 0 | 0 | 9.4 | 0.444 | 3.81 |
-| rally/nyirad_rx | 6 | **+9.4%** | **+4.5%** | **+0.9%** | -1.8% | ✓✓✗✓ | 10 | 12 | 504.3 | 0.042 | 1.58 |
-| rally/riga_rx | 6 | **-29.3%** | **-29.6%** | **+0.9%** | **+12.0%** | ✗✗✗✗ | 75 | 134 | 504.3 | 0.326 | 57.34 |
-| rally/silverstone_rx | 6 | **+4.7%** | **+1.8%** | **+0.0%** | **+0.6%** | ✓✗✗✗ | 6 | 8 | 560.2 | 0.097 | 8.17 |
-| rally/spa_rx | 6 | **-3.0%** | **-3.8%** | **+0.5%** | **-3.5%** | ✗✗✗✗ | 0 | 7 | 177.3 | 0.069 | 2.94 |
+| autocross/arteixo_ax | 6 | **+9.0%** | +5.9% | **+1.1%** | -2.6% | ✓✓✗✓ | 0 | 0 | 8.7 | 0.056 | 0.14 |
+| autocross/bazaigues_ax | 6 | +10.7% | +5.2% | +3.4% | **-1.3%** | ✓✗✗✓ | 0 | 0 | 8.9 | 0.000 | 0.06 |
+| autocross/carballo_ax | 6 | +15.3% | **+4.7%** | +2.4% | -2.2% | ✓✓✓✓ | 0 | 1 | 13.1 | 0.000 | 0.00 |
+| autocross/castelo_branco_ax | 6 | +12.9% | **+9.1%** | +2.6% | -1.8% | ✗✓✓✓ | 0 | 2 | 12.7 | 0.000 | 0.00 |
+| autocross/faleyras_ax | 6 | **+18.5%** | +8.9% | **+5.8%** | **-1.4%** | ✓✗✓✓ | 0 | 0 | 6.8 | 0.000 | 0.00 |
+| autocross/humpolec_ax | 6 | +10.8% | **+4.4%** | +1.7% | **-0.6%** | ✓✓✓✓ | 0 | 0 | 9.2 | 0.000 | 0.06 |
+| autocross/maggiora_ax | 6 | +13.9% | **+9.5%** | +2.7% | -2.7% | ✗✓✓✓ | 0 | 0 | 9.2 | 0.028 | 0.06 |
+| autocross/matschenberg_ax | 6 | +14.6% | +6.8% | +3.0% | -2.1% | ✓✓✓✓ | 0 | 1 | 15.7 | 0.000 | 0.03 |
+| autocross/musa_ax | 6 | +13.0% | **+9.3%** | +2.4% | -1.6% | ✗✗✗✓ | 0 | 0 | 7.9 | 0.000 | 0.00 |
+| autocross/nova_paka_ax | 6 | +14.6% | +6.5% | +1.6% | **-3.2%** | ✓✓✗✗ | 0 | 0 | 7.3 | 0.056 | 0.28 |
+| autocross/prerov_ax | 6 | +13.4% | **+10.8%** | +2.5% | -2.1% | ✗✗✓✓ | 0 | 1 | 12.4 | 0.000 | 0.06 |
+| autocross/schluechtern_ax | 6 | +15.0% | +8.2% | +2.7% | -2.0% | ✓✓✓✓ | 0 | 1 | 14.1 | 0.028 | 0.06 |
+| autocross/seelow_ax | 6 | +13.8% | +5.9% | **+4.8%** | **-1.1%** | ✓✗✓✓ | 0 | 0 | 7.0 | 0.000 | 0.00 |
+| autocross/st_georges_ax | 6 | +12.1% | +5.2% | +1.9% | -1.9% | ✓✓✓✓ | 0 | 0 | 6.9 | 0.000 | 0.00 |
+| autocross/st_junien_ax | 6 | +12.5% | +6.0% | +3.1% | **-1.4%** | ✓✓✓✓ | 0 | 0 | 8.4 | 0.000 | 0.00 |
+| autocross/uelzen_ax | 6 | +13.3% | +7.8% | +2.6% | -2.7% | ✓✓✗✓ | 0 | 0 | 9.8 | 0.028 | 0.06 |
+| autocross/vilkyciai_ax | 6 | **+8.6%** | **+3.7%** | +2.5% | **-1.1%** | ✗✗✗✗ | 0 | 2 | 12.9 | 0.028 | 0.08 |
+| classic/at_dune_sea | 6 | +14.4% | +6.8% | +2.2% | -1.6% | ✓✓✓✓ | 0 | 0 | 6.8 | 0.000 | 0.00 |
+| classic/at_frostbite_pass | 6 | +10.6% | +5.4% | +2.1% | -1.9% | ✓✓✓✓ | 0 | 0 | 1.9 | 0.000 | 0.00 |
+| classic/at_mudbath_valley | 6 | +11.2% | +6.4% | +2.8% | -1.9% | ✓✓✓✓ | 0 | 0 | 2.6 | 0.000 | 0.00 |
+| classic/ax_clay_bowl | 6 | +11.1% | +6.6% | +3.1% | -1.8% | ✓✓✓✓ | 0 | 0 | 6.9 | 0.000 | 0.00 |
+| classic/ax_hillside_hammer | 6 | **+9.7%** | +5.1% | +1.7% | **-0.9%** | ✓✓✓✓ | 0 | 0 | 2.6 | 0.000 | 0.03 |
+| classic/ax_meadow_sprint | 6 | **+7.9%** | **+4.4%** | **+0.7%** | **-1.1%** | ✓✓✓✓ | 0 | 0 | 6.9 | 0.000 | 0.06 |
+| classic/gt_coastal_grand_prix | 6 | +12.8% | +8.1% | +2.9% | -1.9% | ✓✓✓✓ | 0 | 2 | 12.8 | 0.000 | 0.00 |
+| classic/gt_ridge_ring | 6 | +11.8% | +7.1% | +2.1% | **-1.4%** | ✓✓✓✓ | 0 | 0 | 3.0 | 0.000 | 0.00 |
+| classic/gt_velocity_park | 6 | +15.9% | +6.5% | +1.6% | -2.0% | ✓✓✓✓ | 0 | 1 | 15.3 | 0.000 | 0.00 |
+| classic/kart_pine_grove | 6 | **+9.8%** | +7.6% | **+5.4%** | **+1.6%** | ✗✗✓✗ | 0 | 0 | 7.7 | 0.028 | 0.81 |
+| classic/kart_riverbend_circuit | 6 | +13.1% | +6.5% | **+0.7%** | **-0.8%** | ✗✓✗✗ | 0 | 0 | 5.9 | 0.056 | 1.06 |
+| classic/kart_summit_international | 6 | +11.0% | +7.5% | **+1.3%** | **-0.9%** | ✗✓✗✓ | 0 | 0 | 7.0 | 0.028 | 1.17 |
+| classic/rx_canyon_flyer | 6 | **+9.9%** | +5.7% | +3.4% | **-1.1%** | ✓✓✓✓ | 0 | 0 | 6.5 | 0.000 | 0.00 |
+| classic/rx_hilltop_leap | 6 | +11.6% | +6.5% | +1.6% | -1.8% | ✓✓✓✓ | 0 | 0 | 5.7 | 0.000 | 0.03 |
+| classic/rx_quarry_sprint | 6 | **+18.0%** | +7.8% | **+3.5%** | **-1.1%** | ✓✓✓✓ | 0 | 0 | 5.5 | 0.000 | 0.08 |
+| classic/stock_roval | 6 | +12.0% | +7.6% | +2.6% | -1.8% | ✓✓✓✓ | 1 | 4 | 430.0 | 0.000 | 0.08 |
+| classic/stock_thunder_bowl | 6 | +13.3% | **+3.9%** | **+1.5%** | **-1.3%** | ✓✓✗✗ | 0 | 1 | 25.8 | 0.000 | 0.00 |
+| classic/stock_tri_oval_speedway | 6 | +13.6% | +7.5% | **+4.4%** | -2.4% | ✓✗✓✓ | 0 | 1 | 12.9 | 0.028 | 0.03 |
+| extreme_offroad/alpine_snow_ridge | 6 | **+7.4%** | **+3.7%** | +2.4% | **+1.8%** | ✓✗✓✗ | 0 | 3 | 13.0 | 0.028 | 7.83 |
+| extreme_offroad/arctic_frozen_lake | 6 | **+4.5%** | **+2.6%** | **+4.7%** | **-0.6%** | ✓✗✗✓ | 0 | 1 | 11.4 | 0.000 | 0.00 |
+| extreme_offroad/atacama_sand_basin | 6 | **+5.8%** | **+0.6%** | **+1.1%** | **+3.7%** | ✓✗✗✗ | 0 | 1 | 10.7 | 0.278 | 0.56 |
+| extreme_offroad/baja_500_desert_scrub | 6 | **+4.3%** | **+1.6%** | +2.0% | **+3.0%** | ✗✗✓✗ | 0 | 2 | 11.2 | 1.139 | 3.44 |
+| extreme_offroad/crandon_short_course | 6 | +11.1% | **+2.7%** | +2.3% | -2.4% | ✓✗✗✓ | 0 | 10 | 52.0 | 0.389 | 1.64 |
+| extreme_offroad/dirt_figure_eight | 6 | **+20.6%** | **+12.6%** | **+4.5%** | -1.6% | ✓✓✓✓ | 0 | 1 | 27.5 | 0.028 | 0.03 |
+| extreme_offroad/glacier_crest_pass | 6 | +11.7% | +6.8% | **+7.8%** | **-1.1%** | ✓✗✗✓ | 1 | 4 | 63.5 | 0.000 | 0.06 |
+| extreme_offroad/glamis_dunes | 6 | **+4.4%** | **+0.7%** | **+1.0%** | **-0.7%** | ✗✗✗✗ | 0 | 1 | 14.1 | 0.222 | 0.83 |
+| extreme_offroad/gravel_quarry_chasm | 6 | +14.5% | +7.4% | +2.1% | -1.7% | ✓✓✓✓ | 0 | 0 | 7.4 | 0.000 | 1.11 |
+| extreme_offroad/louisiana_mud_swampland | 6 | +11.5% | +6.9% | +2.2% | **-1.3%** | ✓✓✓✗ | 0 | 0 | 7.6 | 0.028 | 0.89 |
+| extreme_offroad/mint400_grand_loop | 6 | +14.8% | +8.0% | +2.9% | **-1.3%** | ✓✓✓✓ | 60 | 2 | 14.8 | 0.028 | 0.06 |
+| extreme_offroad/mint400_qualifying_loop | 6 | **—** | **—** | **—** | **—** | ???? | 60 | 1 | 18.1 | 0.056 | 0.14 |
+| extreme_offroad/mint400_short_course | 6 | +13.8% | +5.3% | +2.5% | **-1.2%** | ✓✓✓✓ | 0 | 1 | 21.3 | 0.028 | 0.06 |
+| extreme_offroad/red_rock_canyon | 6 | +13.0% | +7.0% | +1.9% | **-1.4%** | ✓✓✓✓ | 0 | 0 | 6.4 | 0.000 | 1.44 |
+| extreme_offroad/rovaniemi_ice_ring | 6 | **+3.8%** | **-1.0%** | **-4.4%** | **-6.0%** | ✓✓✗✓ | 0 | 9 | 127.0 | 0.139 | 0.28 |
+| extreme_offroad/sahara_dune_crossing | 6 | **+8.3%** | **+4.2%** | +2.9% | **+2.6%** | ✓✗✓✗ | 0 | 0 | 8.1 | 0.056 | 0.36 |
+| extreme_offroad/supercross_stadium_arena | 6 | +11.6% | **+4.3%** | **-0.1%** | **-7.5%** | ✗✗✗✗ | 0 | 0 | 7.9 | 0.111 | 0.00 |
+| gt/bahrain | 6 | **+8.8%** | **+4.2%** | +1.9% | **-1.5%** | ✓✗✗✗ | 0 | 6 | 14.4 | 0.028 | 0.06 |
+| gt/bathurst | 6 | **+25.6%** | +5.9% | +2.1% | **-1.1%** | ✗✓✓✓ | 1 | 1 | 12.1 | 0.028 | 0.00 |
+| gt/catalunya | 6 | +13.1% | +7.2% | +3.1% | **-1.2%** | ✓✓✓✓ | 0 | 0 | 5.6 | 0.000 | 0.03 |
+| gt/cota | 6 | **+9.9%** | +5.5% | +1.7% | -1.5% | ✓✓✓✓ | 0 | 0 | 7.8 | 0.000 | 0.19 |
+| gt/interlagos | 6 | +13.3% | +7.7% | +2.3% | **-1.1%** | ✓✓✓✓ | 0 | 2 | 20.7 | 0.000 | 0.03 |
+| gt/le_mans_sarthe | 6 | +11.4% | **+4.9%** | +1.8% | **-1.1%** | ✓✓✓✓ | 12 | 0 | 2.4 | 0.000 | 0.22 |
+| gt/madring | 6 | +14.8% | +7.5% | +3.2% | -2.1% | ✓✓✓✓ | 0 | 0 | 9.7 | 0.000 | 0.14 |
+| gt/marina_bay | 6 | +11.6% | +6.5% | +2.8% | **-0.6%** | ✓✓✓✓ | 0 | 0 | 2.5 | 0.000 | 0.33 |
+| gt/monaco | 6 | +14.4% | +7.1% | +3.1% | **-0.4%** | ✓✓✓✗ | 0 | 18 | 54.6 | 0.056 | 3.83 |
+| gt/montreal | 6 | +11.6% | **+4.8%** | +2.1% | **+0.3%** | ✓✓✓✗ | 0 | 3 | 12.9 | 0.028 | 0.11 |
+| gt/monza | 6 | +11.5% | +5.8% | +2.5% | **-1.0%** | ✓✓✓✓ | 6 | 6 | 508.8 | 0.000 | 0.06 |
+| gt/nurburgring_gp | 6 | +11.6% | +7.6% | +3.1% | **-0.7%** | ✓✓✓✗ | 0 | 1 | 11.3 | 0.000 | 0.11 |
+| gt/portimao_gp | 6 | +11.3% | +6.5% | +2.0% | -1.5% | ✓✓✓✓ | 7 | 7 | 475.3 | 0.000 | 0.03 |
+| gt/red_bull_ring | 6 | +13.0% | +6.4% | **+5.2%** | **-0.4%** | ✓✗✓✗ | 0 | 3 | 12.1 | 0.028 | 0.06 |
+| gt/silverstone | 6 | +14.0% | +6.7% | +2.4% | **-0.9%** | ✓✓✓✓ | 0 | 2 | 17.6 | 0.028 | 0.03 |
+| gt/spa | 6 | +13.1% | +6.5% | +3.2% | **-1.0%** | ✓✓✓✗ | 1 | 5 | 145.0 | 0.000 | 0.25 |
+| gt/suzuka | 6 | +11.6% | **+26.5%** | **+1.1%** | -2.5% | ✗✗✓✓ | 1 | 6 | 198.6 | 0.000 | 0.42 |
+| gt/zandvoort | 6 | +10.6% | **+15.9%** | +2.3% | **-0.4%** | ✗✗✓✗ | 21 | 24 | 473.3 | 0.000 | 0.06 |
+| kart/adria_kart | 6 | +12.8% | +5.6% | +2.0% | **-1.4%** | ✓✓✓✓ | 0 | 0 | 3.9 | 0.000 | 0.00 |
+| kart/ampfing | 6 | **+20.0%** | +7.5% | **+4.3%** | -2.1% | ✓✗✓✗ | 0 | 0 | 5.2 | 0.028 | 0.06 |
+| kart/aunay_kart | 6 | +15.3% | +7.6% | +2.7% | **-0.9%** | ✓✓✓✓ | 0 | 0 | 7.8 | 0.028 | 0.00 |
+| kart/campillos | 6 | +14.8% | +8.9% | **+4.4%** | **-1.3%** | ✓✓✓✓ | 0 | 0 | 8.0 | 0.028 | 0.00 |
+| kart/franciacorta | 6 | +11.2% | +5.8% | +2.3% | **-0.8%** | ✓✓✓✓ | 0 | 0 | 5.2 | 0.000 | 0.00 |
+| kart/genk | 6 | **+16.4%** | +6.5% | +2.2% | **-0.7%** | ✓✓✓✓ | 0 | 0 | 6.0 | 0.000 | 0.00 |
+| kart/kristianstad | 6 | +13.5% | **+9.2%** | +3.3% | -1.6% | ✓✓✓✓ | 0 | 0 | 7.9 | 0.028 | 0.00 |
+| kart/laval_kart | 6 | +14.2% | +8.8% | **+3.6%** | **-0.9%** | ✓✓✓✓ | 0 | 0 | 7.6 | 0.056 | 0.17 |
+| kart/le_mans_kart | 6 | +14.1% | +7.7% | +2.5% | **-1.1%** | ✓✓✓✓ | 0 | 0 | 5.7 | 0.000 | 0.00 |
+| kart/lonato | 6 | **+17.0%** | +8.5% | +1.7% | -2.1% | ✓✓✗✓ | 0 | 0 | 7.6 | 0.056 | 0.03 |
+| kart/muelsen_kart | 6 | **+17.1%** | +5.3% | +2.4% | -1.6% | ✓✓✓✓ | 0 | 0 | 2.8 | 0.000 | 0.00 |
+| kart/pfi | 6 | +10.1% | **+3.8%** | **+0.4%** | **+0.3%** | ✓✓✓✗ | 0 | 0 | 6.3 | 0.278 | 0.75 |
+| kart/portimao_kart | 6 | +12.5% | +5.1% | **+3.6%** | -1.5% | ✓✓✓✓ | 0 | 0 | 4.5 | 0.028 | 0.00 |
+| kart/sarno | 6 | +11.8% | +5.8% | +1.5% | **-1.1%** | ✓✓✓✓ | 0 | 0 | 4.2 | 0.028 | 0.00 |
+| kart/seven_laghi | 6 | +12.2% | +6.5% | +2.8% | **-0.8%** | ✓✓✓✓ | 0 | 0 | 5.9 | 0.000 | 0.00 |
+| kart/silverstone_national_kart | 6 | **+18.8%** | +8.8% | +1.7% | -1.7% | ✓✓✓✓ | 0 | 0 | 7.4 | 0.000 | 0.00 |
+| kart/valencia_kart | 6 | +15.4% | **+9.6%** | +2.9% | -2.4% | ✓✓✓✓ | 0 | 0 | 6.1 | 0.056 | 0.03 |
+| kart/wackersdorf | 6 | +14.1% | **+10.2%** | +2.7% | -2.0% | ✗✓✓✓ | 0 | 0 | 5.8 | 0.000 | 0.00 |
+| kart/whilton_mill | 6 | +15.7% | +6.9% | +1.7% | **-1.2%** | ✓✓✓✓ | 0 | 0 | 5.5 | 0.056 | 0.22 |
+| kart/zuera | 6 | +13.3% | +6.3% | +2.1% | **-1.2%** | ✓✓✓✓ | 0 | 0 | 6.4 | 0.028 | 0.00 |
+| nascar/bowman_gray_stadium | 6 | **+21.4%** | **+9.4%** | **+3.8%** | **-3.4%** | ✗✓✓✓ | 0 | 1 | 10.0 | 0.000 | 0.25 |
+| nascar/bristol_motor_speedway | 6 | **+164.9%** | **+65.5%** | **+4.3%** | -2.5% | ✗✗✓✓ | 4 | 10 | 563.5 | 0.028 | 0.14 |
+| nascar/charlotte_motor_speedway | 6 | **+3.0%** | **-3.5%** | **-9.5%** | **-16.3%** | ✗✗✗✗ | 2 | 4 | 25.3 | 0.111 | 8.25 |
+| nascar/chicago_street_course | 6 | +11.6% | **+12.0%** | +2.7% | **-0.8%** | ✗✓✗✗ | 0 | 2 | 13.6 | 0.056 | 0.61 |
+| nascar/darlington_raceway | 6 | **+18.1%** | **+10.3%** | **+5.7%** | -2.1% | ✓✗✓✓ | 0 | 1 | 11.9 | 0.000 | 0.08 |
+| nascar/daytona_superspeedway | 6 | **+19.1%** | +8.8% | +3.1% | -2.4% | ✓✓✓✓ | 5 | 7 | 563.8 | 0.000 | 0.17 |
+| nascar/eldora_speedway | 6 | **—** | **—** | **—** | **—** | ???? | 60 | 60 | 583.6 | 0.139 | 29.08 |
+| nascar/indianapolis_motor_speedway | 6 | **+8.2%** | **+1.3%** | **-2.0%** | **-6.7%** | ✓✗✗✓ | 0 | 4 | 11.3 | 0.083 | 1.33 |
+| nascar/iowa_speedway | 6 | **+16.9%** | **+9.4%** | **+4.4%** | -2.1% | ✓✓✓✓ | 0 | 1 | 10.8 | 0.028 | 0.17 |
+| nascar/lucas_oil_irp | 6 | **+17.9%** | **+9.5%** | **+7.4%** | -2.2% | ✓✗✗✓ | 0 | 2 | 15.2 | 0.000 | 0.06 |
+| nascar/martinsville_speedway | 6 | +15.9% | +7.6% | **+4.5%** | -2.2% | ✓✗✓✓ | 0 | 0 | 8.4 | 0.000 | 0.06 |
+| nascar/north_wilkesboro_speedway | 6 | +15.0% | **+9.5%** | **+5.2%** | -1.7% | ✓✗✓✓ | 0 | 1 | 10.1 | 0.000 | 0.08 |
+| nascar/phoenix_raceway | 6 | **+16.4%** | **+10.5%** | **+4.1%** | **+0.7%** | ✗✗✓✗ | 0 | 1 | 10.6 | 0.000 | 0.00 |
+| nascar/pocono_raceway | 6 | **+17.7%** | **+12.5%** | **+4.6%** | **-1.3%** | ✗✗✗✗ | 0 | 1 | 10.1 | 0.000 | 0.06 |
+| nascar/road_america | 6 | +10.8% | **+1.2%** | **+0.3%** | **+4.4%** | ✓✗✗✗ | 2 | 9 | 289.1 | 0.278 | 1.36 |
+| nascar/talladega_superspeedway | 6 | **+35.0%** | +8.8% | +3.1% | -2.6% | ✗✓✓✓ | 2 | 3 | 222.8 | 0.000 | 0.00 |
+| nascar/watkins_glen_nascar | 6 | **-2.9%** | **-5.9%** | **-5.5%** | **+6.0%** | ✓✗✗✗ | 0 | 16 | 15.5 | 0.778 | 1.78 |
+| rally/catalunya_rx | 6 | +14.3% | +8.3% | **+3.7%** | -1.7% | ✓✓✓✗ | 0 | 4 | 16.8 | 0.028 | 1.67 |
+| rally/croft_rx | 6 | **+8.5%** | **+4.7%** | +2.7% | -2.7% | ✓✓✓✓ | 0 | 0 | 7.8 | 0.000 | 0.39 |
+| rally/dreux_rx | 6 | +15.6% | +7.6% | +2.1% | **+0.2%** | ✓✓✓✗ | 0 | 0 | 7.6 | 0.028 | 0.14 |
+| rally/erx_motor_park | 6 | **+9.0%** | **+4.3%** | **+1.1%** | **+5.9%** | ✓✗✗✗ | 0 | 0 | 9.0 | 0.000 | 1.03 |
+| rally/essay_rx | 6 | +13.5% | +8.2% | +3.4% | **-0.9%** | ✓✓✓✗ | 0 | 0 | 8.4 | 0.000 | 0.06 |
+| rally/estering_rx | 6 | +15.6% | +6.0% | **+5.0%** | **-0.7%** | ✓✗✓✓ | 0 | 1 | 10.1 | 0.000 | 0.00 |
+| rally/hell_rx | 6 | **+17.6%** | +7.0% | **+6.8%** | **-0.7%** | ✓✗✓✓ | 0 | 0 | 6.9 | 0.000 | 0.08 |
+| rally/holjes_rx | 6 | **+16.0%** | +8.1% | **+1.4%** | **-3.5%** | ✓✓✓✓ | 0 | 0 | 9.0 | 0.028 | 0.53 |
+| rally/killarney_rx | 6 | +12.2% | +6.2% | **+4.5%** | **-1.3%** | ✓✗✓✓ | 0 | 0 | 7.6 | 0.000 | 0.03 |
+| rally/kouvola_rx | 6 | +11.8% | **+4.4%** | **+7.1%** | **+2.6%** | ✓✗✓✗ | 14 | 15 | 519.5 | 0.000 | 2.64 |
+| rally/lavare_rx | 6 | +14.4% | +6.4% | +3.4% | **-0.5%** | ✓✓✓✗ | 0 | 0 | 9.1 | 0.000 | 0.08 |
+| rally/lessay_rx | 6 | +13.3% | +5.7% | +2.3% | **-0.3%** | ✓✓✓✗ | 0 | 0 | 8.2 | 0.000 | 0.00 |
+| rally/loheac_rx | 6 | **+8.9%** | **+3.0%** | **+0.0%** | **+1.7%** | ✓✓✗✗ | 0 | 0 | 7.8 | 0.028 | 1.14 |
+| rally/lydden_hill | 6 | **+6.7%** | **-0.2%** | **-2.1%** | **-0.1%** | ✗✗✗✗ | 0 | 0 | 7.8 | 0.028 | 2.11 |
+| rally/mettet_rx | 6 | **+7.6%** | **+2.3%** | **+0.8%** | **-0.7%** | ✓✗✗✗ | 0 | 0 | 7.3 | 0.000 | 0.47 |
+| rally/montalegre_rx | 6 | **+16.2%** | **+11.0%** | +2.9% | **-1.4%** | ✓✓✓✓ | 0 | 0 | 9.2 | 0.083 | 0.00 |
+| rally/nyirad_rx | 6 | +12.1% | +6.5% | +2.3% | -2.3% | ✓✓✓✗ | 0 | 0 | 5.1 | 0.028 | 0.03 |
+| rally/riga_rx | 6 | **+17.4%** | **+10.7%** | **+3.9%** | -1.5% | ✓✓✓✓ | 0 | 0 | 7.9 | 0.000 | 0.08 |
+| rally/silverstone_rx | 6 | **+16.6%** | **+10.6%** | **+6.2%** | -2.8% | ✓✓✓✓ | 0 | 2 | 13.1 | 0.056 | 0.72 |
+| rally/spa_rx | 6 | **+7.4%** | **-1.1%** | **-1.0%** | -2.6% | ✓✗✗✓ | 0 | 0 | 5.6 | 0.028 | 1.50 |
 
-### Findings
+## 5. Baseline 127-Circuit Audit Before Final Pass (`runs/audit_baseline.json`)
 
-- **No circuit is excluded.** All 75 are closed spline loops with 6 grid slots, and no request failed.
-- **Rallycross is broken on 11 of 20 circuits.**
-  - On some circuits bots do not finish, or stall for 100–550 s.
-  - Some lap times are impossible. On `riga_rx`, T1 is 29 % faster than T4, and on `erx_motor_park` 18 % faster. Lap counting or the route probably has a fault.
-  - These are circuit faults, not bot settings, so the tuning must not adjust to them.
-  - Beads: `tdrace-699t6` (new), `tdrace-xg1x` (kouvola), `tdrace-bppc` (essay), `tdrace-4nmh3` (spa). The probable fix is spec 105, which redraws the jokers (`tdrace-dic8l`).
-- **There are short stalls (10–35 s) on 16 Classic, Karting and Autocross circuits.** Most are at T1–T3 in traffic. Beads: `tdrace-t8biy` (new) and `tdrace-le75`.
-- **Kart bots spin often.** At T4 they spin 0.8–1.6 times per lap on 11 Karting circuits, and hit walls 3–8 times per lap. Beads: `tdrace-4dyav` (new). The Classic kart circuits are clean.
-- **The tier ladder.**
-  - The order holds on all 4 steps on 12 of 18 Classic, 9 of 17 Autocross and 6 of 20 Karting circuits.
-  - T3 is often too close to T4 (+0.3 to +1.0 %), mainly in Autocross.
-  - T5 is often not faster than T4 in Karting.
-  - Stage B tunes these numbers.
+127 circuits, 1270 races (2 seeds x 5 tiers per circuit), 1.5 min on BLAZE. Each race is a 3-lap grid of one bot per style at one tier. Bold deltas are outside the spec 083 band.
 
-## 3. Stage A: Shared Controller Calibration
+### Summary by modality
 
-Command: `python tools/bot_tuning/run_campaign.py stage-a --workers 28 --generations 25` on blaze.
-Raw results: [`tools/bot_tuning/runs/stage_a.json`](../tools/bot_tuning/runs/stage_a.json).
+| Modality | Circuits | Tier order held (all 4 steps) | T1 in band | T2 in band | T3 in band | T5 in band | Circuits with a stuck bot |
+|---|---|---|---|---|---|---|---|
+| classic | 18 | 9 | 11 | 15 | 13 | 12 | 6 |
+| kart | 20 | 12 | 9 | 18 | 15 | 8 | 0 |
+| autocross | 17 | 12 | 8 | 13 | 7 | 13 | 4 |
+| rally | 20 | 9 | 9 | 13 | 8 | 9 | 5 |
+| gt | 18 | 11 | 14 | 15 | 14 | 7 | 13 |
+| nascar | 17 | 0 | 4 | 8 | 3 | 3 | 16 |
+| extreme_offroad | 17 | 4 | 8 | 7 | 8 | 6 | 11 |
+| **Total** | **127** | **57** | **63** | **89** | **68** | **58** | **55** |
 
-- 25 generations of CMA-ES run across 28 workers in 1524.7 s (~25.4 min).
-- Score improved from -0.0829 (baseline) to +0.4026.
-- Head-to-head win rate against baseline: 65.6% (baseline vs self: 30.0%).
-- Spins per race reduced by 69.1% (0.918 -> 0.284).
-- Mean flying lap time reduced by 1.14 s (55.33 s -> 54.19 s).
-- Calibrated Balanced controller constants:
-  - `lookahead_time`: 0.34 s (baseline: 0.38 s)
-  - `steering_kp`: 2.00 (baseline: 2.10)
-  - `steering_kd`: 0.08 (baseline: 0.07)
-  - `brake_margin`: 1.08 (baseline: 1.05)
-  - `speed_mult`: 1.00 (baseline: 0.98)
+### Excluded circuits (3 of 130 catalog circuits)
 
-## 4. Stage B: Driver Tier Ladder Calibration
+| Circuit | Reason |
+|---|---|
+| extreme_offroad/monster_colosseum | open arena (`closed_loop: false`, 0 checkpoints) |
+| extreme_offroad/mud_slough_arena | open arena (`closed_loop: false`, 0 checkpoints) |
+| extreme_offroad/stunt_city_megastructure | open arena (`closed_loop: false`, 0 checkpoints) |
 
-Command: `python tools/bot_tuning/stage_b.py --workers 28 --generations 12` on blaze.
-Raw results: [`tools/bot_tuning/runs/stage_b.json`](../tools/bot_tuning/runs/stage_b.json).
+### Per circuit
 
-- 12 generations of CMA-ES per tier across 28 workers in 2462.5 s (~41.0 min).
-- Target pace bands vs T4 reference:
-  - T1 Rookie: +13.0% ± 3.0% (target: +10.0% to +16.0%)
-  - T2 Amateur: +7.0% ± 2.0% (target: +5.0% to +9.0%)
-  - T3 Contender: +2.5% ± 1.0% (target: +1.5% to +3.5%)
-  - T4 Pro: reference (0.0%)
-  - T5 Legend: -2.25% ± 0.75% (target: -3.0% to -1.5%)
+| Circuit | Cars | T1 | T2 | T3 | T5 | Order T1>T2>T3>T4>T5 | DNF (all tiers) | Stuck bots | Max no-progress (s) | T4 spins/lap | T4 wall contacts/lap |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| autocross/arteixo_ax | 6 | +12.7% | +5.6% | +1.8% | **-1.1%** | ✓✓✓✓ | 0 | 0 | 8.8 | 0.000 | 0.06 |
+| autocross/bazaigues_ax | 6 | **+9.4%** | +5.2% | **+1.2%** | -1.7% | ✗✗✗✓ | 0 | 0 | 9.1 | 0.000 | 0.06 |
+| autocross/carballo_ax | 6 | **+18.4%** | +6.0% | +1.9% | -1.5% | ✓✓✓✓ | 0 | 1 | 10.2 | 0.000 | 0.00 |
+| autocross/castelo_branco_ax | 6 | +12.9% | +5.6% | +2.9% | -2.4% | ✓✗✗✗ | 0 | 0 | 7.3 | 0.028 | 0.08 |
+| autocross/faleyras_ax | 6 | **+17.5%** | +8.7% | **+4.0%** | -1.7% | ✓✓✓✓ | 0 | 0 | 4.9 | 0.000 | 0.03 |
+| autocross/humpolec_ax | 6 | +12.6% | +6.6% | **+1.1%** | **-1.4%** | ✓✓✓✓ | 0 | 0 | 4.2 | 0.000 | 0.08 |
+| autocross/maggiora_ax | 6 | **+16.7%** | **+9.2%** | +2.5% | -1.8% | ✗✗✓✓ | 0 | 0 | 9.2 | 0.028 | 0.08 |
+| autocross/matschenberg_ax | 6 | **+18.9%** | **+9.5%** | +1.9% | -1.9% | ✓✓✓✓ | 0 | 0 | 8.5 | 0.000 | 0.00 |
+| autocross/musa_ax | 6 | +13.7% | +5.7% | **+1.2%** | -2.1% | ✓✓✗✓ | 0 | 0 | 9.7 | 0.000 | 0.08 |
+| autocross/nova_paka_ax | 6 | **+19.4%** | +7.0% | **+4.2%** | **-1.4%** | ✓✓✓✓ | 0 | 0 | 8.9 | 0.000 | 0.00 |
+| autocross/prerov_ax | 6 | +15.6% | **+9.0%** | +3.0% | -1.8% | ✓✓✓✓ | 0 | 0 | 5.2 | 0.000 | 0.00 |
+| autocross/schluechtern_ax | 6 | **+16.1%** | +8.7% | **+4.2%** | -2.3% | ✓✓✓✓ | 0 | 1 | 10.3 | 0.000 | 0.03 |
+| autocross/seelow_ax | 6 | +12.5% | +5.2% | **+1.1%** | -1.7% | ✓✓✓✓ | 0 | 0 | 8.0 | 0.000 | 0.06 |
+| autocross/st_georges_ax | 6 | **+16.2%** | +6.2% | +2.6% | -1.9% | ✓✓✓✓ | 0 | 0 | 8.3 | 0.028 | 0.03 |
+| autocross/st_junien_ax | 6 | +15.4% | +7.0% | **+3.6%** | -1.5% | ✓✓✓✓ | 0 | 1 | 11.4 | 0.000 | 0.03 |
+| autocross/uelzen_ax | 6 | **+17.5%** | +5.8% | **+5.9%** | -2.7% | ✓✗✗✓ | 0 | 0 | 7.6 | 0.000 | 0.03 |
+| autocross/vilkyciai_ax | 6 | +13.7% | **+4.0%** | **+1.3%** | **-0.6%** | ✓✓✓✓ | 0 | 1 | 10.5 | 0.028 | 0.14 |
+| classic/at_dune_sea | 6 | **+16.1%** | +7.4% | +2.2% | -2.0% | ✓✗✓✓ | 0 | 0 | 7.6 | 0.000 | 0.00 |
+| classic/at_frostbite_pass | 6 | +12.8% | +5.8% | +2.5% | -1.6% | ✓✓✓✓ | 0 | 0 | 1.5 | 0.000 | 0.00 |
+| classic/at_mudbath_valley | 6 | +15.2% | +5.2% | +2.4% | -2.3% | ✓✓✓✓ | 0 | 3 | 13.2 | 0.000 | 0.00 |
+| classic/ax_clay_bowl | 6 | +12.1% | +5.0% | +2.5% | -2.0% | ✓✓✓✓ | 0 | 0 | 6.0 | 0.000 | 0.00 |
+| classic/ax_hillside_hammer | 6 | +13.0% | +5.6% | +2.4% | **-0.5%** | ✓✓✓✗ | 0 | 0 | 5.0 | 0.000 | 0.00 |
+| classic/ax_meadow_sprint | 6 | **+8.9%** | **+3.3%** | **+0.7%** | **-0.9%** | ✓✓✗✗ | 0 | 0 | 6.5 | 0.000 | 0.11 |
+| classic/gt_coastal_grand_prix | 6 | +12.6% | +7.4% | +3.0% | -1.7% | ✓✓✓✓ | 0 | 0 | 1.2 | 0.000 | 0.00 |
+| classic/gt_ridge_ring | 6 | +13.4% | +6.1% | +2.4% | -1.7% | ✓✓✓✓ | 0 | 0 | 1.6 | 0.000 | 0.00 |
+| classic/gt_velocity_park | 6 | **+17.1%** | +5.5% | **+3.8%** | -2.1% | ✓✗✗✓ | 0 | 2 | 14.5 | 0.000 | 0.00 |
+| classic/kart_pine_grove | 6 | +14.9% | +6.6% | +2.0% | **-0.4%** | ✗✓✓✗ | 0 | 0 | 5.3 | 0.028 | 0.78 |
+| classic/kart_riverbend_circuit | 6 | **+16.9%** | **+4.3%** | **+5.1%** | **-1.5%** | ✓✗✗✓ | 0 | 0 | 9.5 | 0.056 | 0.64 |
+| classic/kart_summit_international | 6 | +15.7% | +8.6% | +2.8% | **-1.0%** | ✓✓✓✓ | 0 | 0 | 6.1 | 0.056 | 1.03 |
+| classic/rx_canyon_flyer | 6 | +11.7% | +5.4% | +2.7% | **-1.5%** | ✓✓✓✗ | 0 | 1 | 10.2 | 0.028 | 0.06 |
+| classic/rx_hilltop_leap | 6 | +13.8% | +6.5% | +2.1% | -1.6% | ✓✓✓✓ | 0 | 0 | 5.9 | 0.000 | 0.00 |
+| classic/rx_quarry_sprint | 6 | **+16.3%** | +5.9% | +2.1% | -1.6% | ✓✓✗✓ | 0 | 0 | 4.0 | 0.000 | 0.00 |
+| classic/stock_roval | 6 | +13.9% | +8.7% | **+1.2%** | -1.5% | ✓✓✗✓ | 0 | 1 | 11.3 | 0.000 | 0.00 |
+| classic/stock_thunder_bowl | 6 | **+20.3%** | +7.2% | **+1.1%** | -2.0% | ✓✓✓✓ | 0 | 2 | 19.5 | 0.000 | 0.00 |
+| classic/stock_tri_oval_speedway | 6 | **+18.3%** | **+10.5%** | +2.4% | -2.0% | ✓✓✓✓ | 0 | 1 | 10.9 | 0.028 | 0.03 |
+| extreme_offroad/alpine_snow_ridge | 6 | **+9.8%** | +5.3% | +2.7% | **+2.0%** | ✓✓✓✗ | 0 | 3 | 14.4 | 0.056 | 6.97 |
+| extreme_offroad/arctic_frozen_lake | 6 | **+4.9%** | **+2.0%** | **+1.0%** | **+0.9%** | ✗✗✗✗ | 0 | 0 | 8.2 | 0.000 | 0.00 |
+| extreme_offroad/atacama_sand_basin | 6 | **+8.3%** | **+1.8%** | **+0.9%** | **+4.6%** | ✓✗✗✗ | 0 | 3 | 14.3 | 0.278 | 0.36 |
+| extreme_offroad/baja_500_desert_scrub | 6 | **+7.8%** | **+2.7%** | **+0.8%** | **+3.2%** | ✓✗✗✗ | 0 | 5 | 15.0 | 1.083 | 3.75 |
+| extreme_offroad/crandon_short_course | 6 | +10.7% | **+2.7%** | **-1.3%** | -1.9% | ✓✓✗✗ | 0 | 8 | 15.9 | 0.500 | 2.25 |
+| extreme_offroad/dirt_figure_eight | 6 | **+22.3%** | **+13.7%** | +2.7% | -2.3% | ✗✓✓✓ | 0 | 4 | 34.7 | 0.028 | 0.06 |
+| extreme_offroad/glacier_crest_pass | 6 | +13.9% | +5.8% | +3.4% | -1.7% | ✓✓✓✓ | 1 | 4 | 69.5 | 0.000 | 0.08 |
+| extreme_offroad/glamis_dunes | 6 | **+9.1%** | **+3.5%** | **+3.8%** | **+1.6%** | ✓✗✓✗ | 0 | 1 | 12.9 | 0.194 | 0.69 |
+| extreme_offroad/gravel_quarry_chasm | 6 | +14.6% | +7.2% | +2.4% | **-1.5%** | ✓✓✓✓ | 0 | 0 | 7.1 | 0.000 | 0.94 |
+| extreme_offroad/louisiana_mud_swampland | 6 | +11.3% | **+4.4%** | **+0.6%** | **-0.9%** | ✓✓✗✗ | 0 | 1 | 10.2 | 0.000 | 0.86 |
+| extreme_offroad/mint400_grand_loop | 6 | **+17.8%** | +8.7% | +2.8% | -2.0% | ✓✓✓✓ | 60 | 2 | 10.9 | 0.028 | 0.00 |
+| extreme_offroad/mint400_qualifying_loop | 6 | **—** | **—** | **—** | **—** | ???? | 60 | 2 | 11.9 | 0.111 | 0.14 |
+| extreme_offroad/mint400_short_course | 6 | +14.4% | +8.1% | +2.9% | -1.6% | ✓✓✓✓ | 0 | 0 | 8.8 | 0.083 | 0.11 |
+| extreme_offroad/red_rock_canyon | 6 | +15.3% | +6.1% | **+1.5%** | -2.8% | ✓✓✗✗ | 0 | 0 | 6.2 | 0.028 | 1.14 |
+| extreme_offroad/rovaniemi_ice_ring | 6 | +12.3% | +5.6% | +1.6% | **-1.0%** | ✓✓✓✗ | 0 | 3 | 98.1 | 0.000 | 0.03 |
+| extreme_offroad/sahara_dune_crossing | 6 | +11.1% | **+3.5%** | +1.9% | **+0.2%** | ✓✓✓✗ | 0 | 0 | 7.6 | 0.056 | 0.22 |
+| extreme_offroad/supercross_stadium_arena | 6 | **+7.2%** | **+20.1%** | **+5.7%** | **-3.5%** | ✗✓✗✗ | 0 | 0 | 6.1 | 0.250 | 0.00 |
+| gt/bahrain | 6 | +10.6% | **+4.5%** | **+0.6%** | **-1.2%** | ✓✓✗✓ | 0 | 3 | 12.4 | 0.028 | 0.17 |
+| gt/bathurst | 6 | +12.3% | **+13.3%** | +3.0% | -1.7% | ✗✗✓✓ | 0 | 3 | 11.9 | 0.028 | 0.00 |
+| gt/catalunya | 6 | +14.0% | +6.2% | +2.4% | -1.5% | ✓✓✓✓ | 0 | 0 | 2.1 | 0.000 | 0.08 |
+| gt/cota | 6 | +13.8% | +7.8% | +2.1% | **-0.8%** | ✓✓✓✓ | 0 | 1 | 11.1 | 0.000 | 0.03 |
+| gt/interlagos | 6 | **+16.5%** | +6.2% | **+4.6%** | **-1.3%** | ✓✗✓✓ | 0 | 2 | 11.9 | 0.000 | 0.06 |
+| gt/le_mans_sarthe | 6 | +11.8% | +5.5% | +1.6% | **-1.4%** | ✓✓✓✓ | 15 | 1 | 11.7 | 0.000 | 0.39 |
+| gt/madring | 6 | **+17.0%** | +7.5% | +3.1% | -2.2% | ✓✓✓✓ | 0 | 0 | 5.4 | 0.028 | 0.08 |
+| gt/marina_bay | 6 | +13.2% | +6.9% | **+1.5%** | -2.1% | ✓✓✓✓ | 0 | 0 | 9.3 | 0.000 | 0.39 |
+| gt/monaco | 6 | **+18.8%** | +6.9% | +2.0% | **+3.3%** | ✓✓✗✗ | 1 | 15 | 158.0 | 0.083 | 3.61 |
+| gt/montreal | 6 | +11.2% | +6.9% | +1.9% | -1.7% | ✓✓✓✓ | 0 | 2 | 11.8 | 0.056 | 0.25 |
+| gt/monza | 6 | +14.5% | +5.6% | +1.6% | -2.0% | ✓✓✓✓ | 1 | 1 | 504.3 | 0.000 | 0.08 |
+| gt/nurburgring_gp | 6 | +13.3% | +5.9% | +1.8% | **-1.1%** | ✓✓✓✓ | 0 | 6 | 21.8 | 0.000 | 0.17 |
+| gt/portimao_gp | 6 | +14.0% | +6.5% | +2.4% | **-1.0%** | ✓✓✓✓ | 4 | 4 | 440.7 | 0.000 | 0.11 |
+| gt/red_bull_ring | 6 | **+16.1%** | +6.5% | +3.2% | **-0.6%** | ✓✓✓✗ | 0 | 3 | 19.7 | 0.028 | 0.08 |
+| gt/silverstone | 6 | +14.9% | +7.8% | +2.4% | **-1.2%** | ✓✓✓✓ | 0 | 0 | 8.8 | 0.000 | 0.00 |
+| gt/spa | 6 | +14.4% | +7.6% | +3.4% | **-1.0%** | ✓✓✓✓ | 0 | 0 | 9.9 | 0.028 | 0.25 |
+| gt/suzuka | 6 | +15.3% | **+11.6%** | **+1.3%** | -1.6% | ✗✓✓✓ | 0 | 10 | 83.9 | 0.000 | 0.06 |
+| gt/zandvoort | 6 | +14.7% | +6.7% | +2.7% | **-0.0%** | ✓✓✓✗ | 10 | 11 | 504.2 | 0.083 | 0.11 |
+| kart/adria_kart | 6 | +15.8% | +6.0% | +2.5% | **-1.1%** | ✓✓✓✓ | 0 | 0 | 3.5 | 0.028 | 0.00 |
+| kart/ampfing | 6 | **+16.5%** | **+9.1%** | +2.3% | -2.1% | ✓✓✓✓ | 0 | 0 | 4.9 | 0.000 | 0.00 |
+| kart/aunay_kart | 6 | +15.5% | +6.5% | +2.5% | **-1.1%** | ✓✓✓✗ | 0 | 0 | 7.0 | 0.111 | 0.00 |
+| kart/campillos | 6 | **+17.0%** | +6.8% | +3.1% | **-1.3%** | ✓✓✓✓ | 0 | 0 | 6.5 | 0.028 | 0.00 |
+| kart/franciacorta | 6 | +13.0% | +5.3% | +1.9% | **-1.2%** | ✓✓✓✓ | 0 | 0 | 5.0 | 0.000 | 0.00 |
+| kart/genk | 6 | +15.9% | +7.0% | +1.9% | -1.6% | ✓✓✓✓ | 0 | 0 | 6.8 | 0.028 | 0.06 |
+| kart/kristianstad | 6 | **+20.3%** | +6.7% | **+4.1%** | -1.5% | ✓✗✓✓ | 0 | 0 | 5.6 | 0.028 | 0.00 |
+| kart/laval_kart | 6 | **+17.3%** | +5.2% | **+4.6%** | -2.4% | ✓✗✓✓ | 0 | 0 | 8.1 | 0.111 | 0.53 |
+| kart/le_mans_kart | 6 | **+17.3%** | +7.6% | +2.4% | **-1.2%** | ✓✓✗✓ | 0 | 0 | 8.1 | 0.028 | 0.03 |
+| kart/lonato | 6 | **+17.0%** | +6.7% | **+4.1%** | -2.0% | ✓✓✓✓ | 0 | 0 | 6.4 | 0.000 | 0.03 |
+| kart/muelsen_kart | 6 | **+18.7%** | +8.3% | **+1.2%** | -2.7% | ✓✓✗✓ | 0 | 0 | 2.9 | 0.028 | 0.06 |
+| kart/pfi | 6 | +13.5% | **+4.8%** | **+4.2%** | **-1.1%** | ✓✗✓✓ | 0 | 0 | 6.8 | 0.194 | 0.67 |
+| kart/portimao_kart | 6 | +12.7% | +7.1% | +1.9% | -2.0% | ✓✓✓✓ | 0 | 0 | 6.1 | 0.083 | 0.03 |
+| kart/sarno | 6 | +13.5% | +8.6% | +2.0% | **-0.5%** | ✗✓✓✓ | 0 | 0 | 9.2 | 0.028 | 0.03 |
+| kart/seven_laghi | 6 | +13.8% | +5.2% | +2.9% | **-1.2%** | ✓✓✓✓ | 0 | 0 | 7.3 | 0.000 | 0.00 |
+| kart/silverstone_national_kart | 6 | **+20.5%** | +8.8% | +2.3% | **-1.4%** | ✓✓✓✓ | 0 | 0 | 7.4 | 0.000 | 0.00 |
+| kart/valencia_kart | 6 | **+19.9%** | +7.6% | +3.0% | -2.2% | ✓✓✓✓ | 0 | 0 | 6.5 | 0.000 | 0.00 |
+| kart/wackersdorf | 6 | **+19.7%** | +6.9% | +2.8% | **-1.5%** | ✓✗✓✓ | 0 | 0 | 8.5 | 0.028 | 0.03 |
+| kart/whilton_mill | 6 | **+19.9%** | +7.9% | +2.8% | **-1.4%** | ✓✓✓✓ | 0 | 0 | 9.3 | 0.028 | 0.19 |
+| kart/zuera | 6 | +14.5% | +6.6% | +1.8% | **-1.4%** | ✓✓✓✓ | 0 | 0 | 6.6 | 0.056 | 0.06 |
+| nascar/bowman_gray_stadium | 6 | **+27.6%** | **+10.4%** | +2.4% | **-1.3%** | ✗✓✓✗ | 0 | 0 | 9.4 | 0.000 | 0.19 |
+| nascar/bristol_motor_speedway | 6 | +14.1% | +6.4% | **+170.1%** | **-6.6%** | ✓✗✗✗ | 5 | 8 | 37.0 | 0.250 | 3.36 |
+| nascar/charlotte_motor_speedway | 6 | **+19.3%** | +8.4% | **+49.7%** | **+0.4%** | ✓✗✗✗ | 2 | 6 | 87.3 | 0.028 | 0.11 |
+| nascar/chicago_street_course | 6 | +15.4% | +6.5% | +3.0% | **+2.2%** | ✓✗✗✗ | 0 | 4 | 11.1 | 0.111 | 0.94 |
+| nascar/darlington_raceway | 6 | **+27.7%** | +8.8% | **+13.4%** | -1.6% | ✓✗✗✗ | 1 | 3 | 143.3 | 0.000 | 0.06 |
+| nascar/daytona_superspeedway | 6 | **+18.5%** | +8.2% | **+6.0%** | **+0.4%** | ✓✓✓✗ | 11 | 16 | 588.2 | 0.139 | 2.44 |
+| nascar/eldora_speedway | 6 | **—** | **—** | **—** | **—** | ???? | 60 | 60 | 582.2 | 0.222 | 72.72 |
+| nascar/indianapolis_motor_speedway | 6 | **-4.3%** | **-10.1%** | **-8.4%** | -2.6% | ✗✗✗✗ | 0 | 9 | 22.3 | 0.694 | 2.31 |
+| nascar/iowa_speedway | 6 | **+51.4%** | **+10.8%** | **+7.6%** | **-4.5%** | ✗✗✗✓ | 2 | 8 | 52.5 | 0.056 | 0.08 |
+| nascar/lucas_oil_irp | 6 | **+19.9%** | +8.4% | **+1.2%** | -2.2% | ✗✓✗✗ | 0 | 1 | 10.7 | 0.056 | 0.19 |
+| nascar/martinsville_speedway | 6 | **+17.1%** | **+1.4%** | **-4.0%** | **-5.7%** | ✓✓✗✗ | 0 | 2 | 10.6 | 0.111 | 0.39 |
+| nascar/north_wilkesboro_speedway | 6 | +14.2% | +7.6% | **-0.8%** | **-5.5%** | ✗✗✗✗ | 0 | 1 | 10.4 | 0.083 | 0.11 |
+| nascar/phoenix_raceway | 6 | **+25.7%** | +5.9% | **+3.8%** | **+1.5%** | ✓✗✗✗ | 0 | 4 | 28.3 | 0.056 | 0.17 |
+| nascar/pocono_raceway | 6 | **+17.8%** | **+9.1%** | **+7.6%** | **+6.9%** | ✓✗✓✗ | 0 | 4 | 15.9 | 0.083 | 0.31 |
+| nascar/road_america | 6 | **-0.8%** | **-4.7%** | **-7.2%** | **-0.3%** | ✗✗✗✗ | 2 | 13 | 344.3 | 0.694 | 3.61 |
+| nascar/talladega_superspeedway | 6 | +15.9% | **+9.0%** | **+1.1%** | **-3.9%** | ✗✗✗✗ | 7 | 9 | 30.8 | 0.111 | 0.28 |
+| nascar/watkins_glen_nascar | 6 | **+9.5%** | **+3.4%** | +1.5% | **+10.6%** | ✓✗✗✗ | 0 | 10 | 15.7 | 0.222 | 0.92 |
+| rally/catalunya_rx | 6 | **+17.0%** | **+4.6%** | **+3.5%** | **-1.1%** | ✓✗✗✗ | 0 | 3 | 11.6 | 0.056 | 1.72 |
+| rally/croft_rx | 6 | +10.9% | +6.2% | +2.5% | -1.9% | ✓✓✓✓ | 0 | 0 | 7.0 | 0.000 | 0.39 |
+| rally/dreux_rx | 6 | +15.2% | +7.6% | **+3.6%** | **-1.2%** | ✓✓✓✓ | 0 | 0 | 4.8 | 0.028 | 0.11 |
+| rally/erx_motor_park | 6 | **+18.9%** | **+9.4%** | **+4.2%** | **+6.0%** | ✓✓✓✗ | 0 | 0 | 6.9 | 0.000 | 0.17 |
+| rally/essay_rx | 6 | **+16.3%** | +6.2% | +2.4% | **-0.7%** | ✓✓✓✗ | 0 | 1 | 11.1 | 0.000 | 0.11 |
+| rally/estering_rx | 6 | **+16.5%** | +7.1% | +2.1% | -1.8% | ✓✓✓✓ | 0 | 1 | 23.9 | 0.028 | 0.08 |
+| rally/hell_rx | 6 | **+16.4%** | +7.3% | +3.0% | **-1.4%** | ✓✓✓✓ | 0 | 0 | 9.2 | 0.000 | 0.00 |
+| rally/holjes_rx | 6 | +15.9% | +8.5% | **+4.2%** | -2.6% | ✓✓✓✓ | 0 | 0 | 9.8 | 0.028 | 0.72 |
+| rally/killarney_rx | 6 | **+18.4%** | +6.3% | **+1.3%** | -1.9% | ✓✓✓✓ | 0 | 0 | 7.6 | 0.000 | 0.00 |
+| rally/kouvola_rx | 6 | +12.9% | +5.8% | **+1.2%** | **+3.9%** | ✓✓✗✗ | 15 | 16 | 519.6 | 0.028 | 2.31 |
+| rally/lavare_rx | 6 | +14.7% | +5.9% | +3.2% | **-0.8%** | ✓✓✓✗ | 0 | 0 | 6.7 | 0.000 | 0.00 |
+| rally/lessay_rx | 6 | +12.6% | +6.6% | +1.7% | **-1.3%** | ✓✓✓✓ | 0 | 0 | 8.7 | 0.000 | 0.06 |
+| rally/loheac_rx | 6 | +16.0% | **+5.0%** | **+4.1%** | **+2.6%** | ✓✗✓✗ | 0 | 0 | 8.4 | 0.000 | 0.64 |
+| rally/lydden_hill | 6 | +10.4% | **+0.2%** | **-0.7%** | **+1.2%** | ✓✗✗✗ | 0 | 0 | 8.4 | 0.111 | 1.78 |
+| rally/mettet_rx | 6 | **+8.3%** | **+3.7%** | **-0.1%** | -2.7% | ✓✓✗✗ | 0 | 0 | 8.1 | 0.000 | 0.56 |
+| rally/montalegre_rx | 6 | **+19.4%** | +8.9% | **+5.3%** | -1.8% | ✓✗✓✓ | 0 | 0 | 7.6 | 0.083 | 0.06 |
+| rally/nyirad_rx | 6 | **+17.3%** | +6.3% | +2.4% | -2.4% | ✓✓✓✓ | 0 | 0 | 6.6 | 0.000 | 0.00 |
+| rally/riga_rx | 6 | **+19.9%** | +8.5% | +3.1% | -1.9% | ✓✓✓✓ | 0 | 0 | 7.5 | 0.028 | 0.06 |
+| rally/silverstone_rx | 6 | +15.8% | **+9.6%** | **+3.9%** | **-1.1%** | ✓✓✓✗ | 0 | 0 | 9.1 | 0.000 | 0.58 |
+| rally/spa_rx | 6 | **+23.4%** | **+2.4%** | **+1.4%** | -1.5% | ✗✗✗✗ | 0 | 1 | 70.0 | 0.056 | 1.06 |
 
-### Calibrated DriverQuality rows
+## 6. Verification & Acceptance Gate Results
 
-| Tier | pace_limit | brake_padding | avoidance_padding | consistency | composure | Target pace delta |
-|---|---|---|---|---|---|---|
-| T1 Rookie | 0.80 | 0.20 | 2.5 | 0.60 | 0.48 | +13.0% ± 3.0% |
-| T2 Amateur | 0.90 | 0.12 | 1.4 | 0.72 | 0.60 | +7.0% ± 2.0% |
-| T3 Contender | 0.96 | 0.06 | 0.7 | 0.80 | 0.76 | +2.5% ± 1.0% |
-| T4 Pro | 1.00 | 0.00 | 0.0 | 0.93 | 0.90 | 0.0% (reference) |
-| T5 Legend | 1.035 | -0.03 | -0.5 | 0.99 | 0.98 | -2.25% ± 0.75% |
+All automated Rust test suites and acceptance gates pass with zero warnings:
 
-## 5. Verification & Acceptance Gate Results
-
-All automated gates defined in Spec 083 pass cleanly:
-
-1. `cargo test -p tdrace-app --release --test bot_tier_ladder_tests`
-   - Verified strict monotonic pace order $T1 > T2 > T3 > T4 > T5$ across all 4 sample tracks in 2.54 s (< 120 s budget):
-     - `gt_coastal_grand_prix`: T1=77.56s > T2=73.58s > T3=69.91s > T4=67.55s > T5=65.60s (all tiers in-band)
-     - `stock_tri_oval_speedway`: T1=43.10s > T2=38.39s > T3=37.20s > T4=35.06s > T5=34.01s (strict order holds)
-     - `gt_ridge_ring`: T1=59.47s > T2=57.15s > T3=54.10s > T4=52.61s > T5=52.37s (all tiers in-band)
-     - `kart_pine_grove`: T1=31.18s > T2=28.59s > T3=27.77s > T4=26.74s > T5=24.90s (strict order holds)
-2. `cargo test -p race-kit ai` (passed)
-3. `cargo test -p tdrace-app --test bot_eval_worker_tests` (7/7 tests passed)
-4. `cargo test -p tdrace-app --test bot_humanlike_driving_tests` (8/8 tests passed)
-5. `cargo test -p tdrace-app --test classic_circuits_bot_tests` (5/5 tests passed across all 18 Classic circuits)
-6. `cargo test -p tdrace-app --test bot_curb_cutting_tests` (2/2 tests passed)
-
-
+1. `cargo test -p tdrace-app --release --test bot_tier_ladder_tests` — **1/1 passed** in 1.09 s (< 120 s budget), strict monotonic pace order $T1 > T2 > T3 > T4 > T5$ on all 4 sample tracks.
+2. `cargo test -p tdrace-app --release --test bot_eval_worker_tests` — **8/8 passed** (including `test_all_modality_circuits_cover_all_seven_modalities` verifying 130 catalog entries and 127 closed-loop circuits across all 7 modalities).
+3. `cargo test -p tdrace-app --release --test bot_humanlike_driving_tests` — **8/8 passed** (distinct mistake distributions and `Tenacious` under-pressure mistake ratio `2.47x >= 1.50x`).
+4. `cargo test -p tdrace-app --release --test classic_circuits_bot_tests` — **5/5 passed** across all 18 Classic circuits (`0` DNFs, `0` stalls > 10s, `0` excessive spins).
+5. `cargo test -p tdrace-app --release --test bot_curb_cutting_tests` — **2/2 passed**.
+6. `cargo test -p tdrace-app --release --test orthogonal_ai_styles_and_tiers_tests --test dynamic_roster_and_tier_tests --test driver_character_tests --test predefined_driver_behaviours_tests` — **41/41 passed**.
+7. `cargo test -p race-kit ai` — **5/5 passed**.

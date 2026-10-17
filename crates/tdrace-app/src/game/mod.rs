@@ -4886,7 +4886,7 @@ impl RaceSession {
             } else {
                 self.opponent_tiers.get(bot_idx).copied().unwrap_or(self.casual_ai_difficulty)
             };
-            let bot_profile = character.resolve_profile(bot_tier);
+            let bot_profile = character.resolve_profile_for_module(&self.active_module_id, bot_tier);
             let bot_seed = bot_participant.map(|p| p.random_seed).unwrap_or(bot_idx as u64);
             let mut bot_ai = BotAiDriver::with_seed(bot_profile, bot_seed).with_pit_stall(bot_idx + 1);
             if bot_ai.profile.aggression > 0.8 {

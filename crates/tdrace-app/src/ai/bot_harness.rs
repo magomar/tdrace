@@ -17,7 +17,10 @@ use super::{BotAiDriver, BotProfile, DriverQuality, DriverTier, DrivingStyle, St
 use crate::catalog::CLASSIC_ARCADE_CARS;
 use crate::module::autocross::AutocrossGameModule;
 use crate::module::classic::ClassicGameModule;
+use crate::module::extreme_offroad::ExtremeOffRoadModule;
+use crate::module::gt::GtWorldChallengeModule;
 use crate::module::kart::KartGameModule;
+use crate::module::nascar::NascarGameModule;
 use crate::module::rally::RallyGameModule;
 use crate::module::GameModule;
 
@@ -395,14 +398,15 @@ pub struct LaunchCircuit {
     pub car: CarConfig,
 }
 
+fn module_default_car(module: &dyn GameModule) -> CarConfig {
+    let id = module.default_vehicle_id();
+    module.vehicles().into_iter().find(|v| v.id == id).expect("module default vehicle must exist").config
+}
+
 /// Every official circuit of the launch modules (Classic, Karting, Autocross, Rallycross).
 /// Classic circuits use the car of their group (`CLASSIC_CIRCUIT_CARS`); the other modules use
 /// their default vehicle.
 pub fn launch_circuit_cars() -> Vec<LaunchCircuit> {
-    fn default_car(module: &dyn GameModule) -> CarConfig {
-        let id = module.default_vehicle_id();
-        module.vehicles().into_iter().find(|v| v.id == id).expect("module default vehicle must exist").config
-    }
     let mut out: Vec<LaunchCircuit> = tdrace_core::catalog::module_circuits("classic")
         .map(|c| {
             let car = CLASSIC_CIRCUIT_CARS.iter().find(|(id, _)| *id == c.id).unwrap_or_else(|| panic!("classic circuit '{}' has no car", c.id)).1;
@@ -411,7 +415,23 @@ pub fn launch_circuit_cars() -> Vec<LaunchCircuit> {
         .collect();
     let modules: [(&'static str, &dyn GameModule); 3] = [("kart", &KartGameModule), ("autocross", &AutocrossGameModule), ("rally", &RallyGameModule)];
     for (module, game_module) in modules {
-        let car = default_car(game_module);
+        let car = module_default_car(game_module);
+        out.extend(tdrace_core::catalog::module_circuits(module).map(|c| LaunchCircuit { module, id: c.id, car }));
+    }
+    out
+}
+
+/// Every official circuit across all 7 game modalities (Classic, Karting, Autocross, Rallycross,
+/// GT World Challenge, NASCAR, Extreme Off-Road) with its modality default car.
+pub fn all_modality_circuit_cars() -> Vec<LaunchCircuit> {
+    let mut out = launch_circuit_cars();
+    let extra_modules: [(&'static str, &dyn GameModule); 3] = [
+        ("gt", &GtWorldChallengeModule),
+        ("nascar", &NascarGameModule),
+        ("extreme_offroad", &ExtremeOffRoadModule),
+    ];
+    for (module, game_module) in extra_modules {
+        let car = module_default_car(game_module);
         out.extend(tdrace_core::catalog::module_circuits(module).map(|c| LaunchCircuit { module, id: c.id, car }));
     }
     out
@@ -421,7 +441,7 @@ pub fn launch_circuit_cars() -> Vec<LaunchCircuit> {
 #[derive(Debug, Clone, Copy, Default, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct BotGenome {
-    /// Stage A: the Balanced style tuning. Other styles keep their offsets from Balanced.
+    /// Stage A: the Balanced style tuning (or direct style tuning in `profile_for_modality`).
     pub lookahead_time: Option<f32>,
     pub steering_kp: Option<f32>,
     pub steering_kd: Option<f32>,
@@ -462,8 +482,7 @@ impl BotGenome {
         ]
     }
 
-    /// The bot profile of `style` at `tier` with this genome applied. Fails on a non-finite value.
-    pub fn profile(&self, style: DrivingStyle, tier: DriverTier) -> Result<BotProfile, String> {
+    fn clamped_values(&self) -> Result<[Option<f32>; 9], String> {
         let mut v = self.values();
         for (x, (name, lo, hi)) in v.iter_mut().zip(GENOME_BOUNDS) {
             if let Some(x) = x {
@@ -473,7 +492,12 @@ impl BotGenome {
                 *x = x.clamp(lo, hi);
             }
         }
-        let [lookahead, kp, kd, brake, speed_mult, pace_limit, brake_padding, consistency, composure] = v;
+        Ok(v)
+    }
+
+    /// The bot profile of `style` at `tier` with this genome applied. Fails on a non-finite value.
+    pub fn profile(&self, style: DrivingStyle, tier: DriverTier) -> Result<BotProfile, String> {
+        let [lookahead, kp, kd, brake, speed_mult, pace_limit, brake_padding, consistency, composure] = self.clamped_values()?;
         // A Stage A value moves every style by its change from the Balanced constant.
         let base = StyleTuning::for_style(DrivingStyle::Balanced);
         let mut tuning = StyleTuning::for_style(style);
@@ -487,6 +511,24 @@ impl BotGenome {
         shift(&mut tuning.steering_kd, kd, base.steering_kd);
         shift(&mut tuning.brake_margin, brake, base.brake_margin);
         shift(&mut tuning.speed_mult, speed_mult, base.speed_mult);
+        let mut quality = DriverQuality::for_tier(tier);
+        quality.pace_limit = pace_limit.unwrap_or(quality.pace_limit);
+        quality.brake_padding = brake_padding.unwrap_or(quality.brake_padding);
+        quality.consistency = consistency.unwrap_or(quality.consistency);
+        quality.composure = composure.unwrap_or(quality.composure);
+        Ok(BotProfile::from_tuning_and_quality(style, &tuning, &quality))
+    }
+
+    /// The bot profile of `(modality, style)` at `tier` with this genome applied directly to that
+    /// modality's `StyleTuning` and the tier's `DriverQuality`.
+    pub fn profile_for_modality(&self, modality: &str, style: DrivingStyle, tier: DriverTier) -> Result<BotProfile, String> {
+        let [lookahead, kp, kd, brake, speed_mult, pace_limit, brake_padding, consistency, composure] = self.clamped_values()?;
+        let mut tuning = StyleTuning::for_modality_and_style(modality, style);
+        tuning.lookahead_time = lookahead.unwrap_or(tuning.lookahead_time);
+        tuning.steering_kp = kp.unwrap_or(tuning.steering_kp);
+        tuning.steering_kd = kd.unwrap_or(tuning.steering_kd);
+        tuning.brake_margin = brake.unwrap_or(tuning.brake_margin);
+        tuning.speed_mult = speed_mult.unwrap_or(tuning.speed_mult);
         let mut quality = DriverQuality::for_tier(tier);
         quality.pace_limit = pace_limit.unwrap_or(quality.pace_limit);
         quality.brake_padding = brake_padding.unwrap_or(quality.brake_padding);
@@ -580,9 +622,17 @@ impl EvalResult {
     }
 }
 
-/// A car by id: a launch module vehicle or a Classic arcade car.
+/// A car by id: any game module vehicle or a Classic arcade car.
 pub fn launch_car_by_id(id: &str) -> Option<CarConfig> {
-    let modules: [&dyn GameModule; 4] = [&ClassicGameModule, &KartGameModule, &AutocrossGameModule, &RallyGameModule];
+    let modules: [&dyn GameModule; 7] = [
+        &ClassicGameModule,
+        &KartGameModule,
+        &AutocrossGameModule,
+        &RallyGameModule,
+        &GtWorldChallengeModule,
+        &NascarGameModule,
+        &ExtremeOffRoadModule,
+    ];
     modules
         .iter()
         .flat_map(|m| m.vehicles())
@@ -633,7 +683,7 @@ fn try_eval_race(req: &EvalRequest) -> Result<EvalResult, String> {
         .ok_or_else(|| format!("unknown circuit '{}'", req.circuit))?;
     let car = match &req.car {
         Some(car_id) => launch_car_by_id(car_id).ok_or_else(|| format!("unknown car '{car_id}'"))?,
-        None => launch_circuit_cars()
+        None => all_modality_circuit_cars()
             .into_iter()
             .find(|c| c.module == module && c.id == circuit.id)
             .ok_or_else(|| format!("circuit '{}' has no launch car; pass 'car'", req.circuit))?
@@ -646,6 +696,10 @@ fn try_eval_race(req: &EvalRequest) -> Result<EvalResult, String> {
         return Err(format!("subject_slot {} is past the grid of {}", req.subject_slot, req.opponents.len() + 1));
     }
     let track = circuit.load().map_err(|e| format!("circuit '{}': {e}", req.circuit))?;
+    let closed_loop = track.spline.closed && track.spline.total_length() > 0.0 && track.checkpoints.len() >= 2;
+    if !closed_loop {
+        return Err(format!("circuit '{}' is not a closed-loop lap circuit", req.circuit));
+    }
     let n = req.opponents.len() + 1;
     if n > track.grid_positions.len() {
         return Err(format!("{n} cars but the circuit has {} grid positions", track.grid_positions.len()));
@@ -655,7 +709,7 @@ fn try_eval_race(req: &EvalRequest) -> Result<EvalResult, String> {
     let mut drivers = Vec::with_capacity(n);
     for (index, d) in std::iter::once(&req.subject).chain(&req.opponents).enumerate() {
         let (style, tier) = parse_driver(d)?;
-        let profile = d.genome.profile(style, tier)?;
+        let profile = d.genome.profile_for_modality(module, style, tier)?;
         drivers.push(BotAiDriver::with_seed(profile, eval_driver_seed(req.seed, index)));
     }
     let subject = drivers.remove(0);
@@ -682,7 +736,7 @@ fn try_eval_race(req: &EvalRequest) -> Result<EvalResult, String> {
         controls_hash: s.controls_hash,
         steps: s.race_ticks,
         car_steps: s.race_ticks as u64 * n as u64,
-        closed_loop: matches!(track.kind, tdrace_core::track::TrackKind::Circuit) && track.spline.closed,
+        closed_loop,
         wall_time_ms: 0.0,
         opponents: (0..n)
             .filter(|&i| i != req.subject_slot)

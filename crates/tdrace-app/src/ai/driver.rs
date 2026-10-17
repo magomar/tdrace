@@ -513,8 +513,13 @@ pub struct DriverCharacter {
 impl DriverCharacter {
     /// Dynamically constructs the physics BotProfile for this character at the specified tier.
     pub fn resolve_profile(&self, tier: DriverTier) -> BotProfile {
+        self.resolve_profile_for_module("classic", tier)
+    }
+
+    /// Dynamically constructs the physics BotProfile for this character in a specific game module at the specified tier.
+    pub fn resolve_profile_for_module(&self, module_id: &str, tier: DriverTier) -> BotProfile {
         let quality = DriverQuality::for_tier(tier);
-        let mut profile = BotProfile::from_style_and_quality(self.style, &quality);
+        let mut profile = BotProfile::from_modality_style_and_quality(module_id, self.style, &quality);
         profile.name = self.name;
         profile.lookahead_time = (profile.lookahead_time + self.offsets.delta_lookahead).clamp(0.20, 0.55);
         profile.steering_kp = (profile.steering_kp + self.offsets.delta_steering_kp).clamp(1.5, 3.5);

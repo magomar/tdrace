@@ -5,7 +5,7 @@
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Child, ChildStdin, ChildStdout, Command, Stdio};
 
-use tdrace_app::ai::bot_harness::{eval_driver_seed, launch_circuit_cars, run_harness_race, BotGenome, HarnessEntry};
+use tdrace_app::ai::bot_harness::{all_modality_circuit_cars, eval_driver_seed, launch_circuit_cars, run_harness_race, BotGenome, HarnessEntry};
 use tdrace_app::ai::{BotAiDriver, BotProfile, DriverQuality, DriverTier, DrivingStyle, StyleTuning};
 use tdrace_app::module::classic::ClassicGameModule;
 
@@ -20,6 +20,33 @@ fn test_launch_circuits_cover_the_four_launch_modules() {
         assert_eq!(n, tdrace_core::catalog::module_circuits(module).count(), "{module} matches the catalog");
     }
     assert_eq!(circuits.len(), 75);
+}
+
+#[test]
+fn test_all_modality_circuits_cover_all_seven_modalities() {
+    let circuits = all_modality_circuit_cars();
+    for (module, expected) in [
+        ("classic", 18),
+        ("kart", 20),
+        ("autocross", 17),
+        ("rally", 20),
+        ("gt", 18),
+        ("nascar", 17),
+        ("extreme_offroad", 20),
+    ] {
+        let n = circuits.iter().filter(|c| c.module == module).count();
+        assert_eq!(n, expected, "{module} circuits");
+        assert_eq!(n, tdrace_core::catalog::module_circuits(module).count(), "{module} matches the catalog");
+    }
+    assert_eq!(circuits.len(), 130);
+
+    let out = Command::new(env!("CARGO_BIN_EXE_bot_eval_worker"))
+        .arg("--list-all-circuits")
+        .output()
+        .expect("run --list-all-circuits");
+    assert!(out.status.success());
+    let closed_list: Vec<serde_json::Value> = serde_json::from_slice(&out.stdout).expect("valid JSON");
+    assert_eq!(closed_list.len(), 127, "127 closed-loop circuits across all 7 modalities (excluding 3 open arenas)");
 }
 
 #[test]

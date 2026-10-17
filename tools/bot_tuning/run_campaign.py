@@ -1,10 +1,10 @@
-"""Spec 083 calibration runs: throughput, EvoRL smoke run, baseline audit (more stages follow).
+"""Spec 083 calibration runs: throughput, EvoRL smoke run, full all-modality audit.
 
 See specs/083_evorl_bot_driving_style_and_performance_optimization.md.
 
-    python tools/bot_tuning/run_campaign.py throughput --workers 28 --out results/throughput.json
-    python tools/bot_tuning/run_campaign.py evorl-smoke --workers 28 --db results/smoke.sqlite
-    python tools/bot_tuning/run_campaign.py audit --workers 28 --out results/audit_baseline.json
+    python tools/bot_tuning/run_campaign.py throughput --workers 28 --out tools/bot_tuning/runs/throughput.json
+    python tools/bot_tuning/run_campaign.py evorl-smoke --workers 28 --db tools/bot_tuning/runs/smoke.sqlite
+    python tools/bot_tuning/run_campaign.py audit --workers 28 --out tools/bot_tuning/runs/audit_baseline.json
 """
 
 from __future__ import annotations
@@ -44,11 +44,12 @@ def _race(request: dict[str, Any]) -> dict[str, Any]:
 
 
 def throughput(workers: int, rounds: int) -> dict[str, Any]:
-    """Runs `rounds` 3-lap 2-car races on every training circuit with `workers` processes."""
+    """Runs `rounds` 3-lap 2-car races on every closed-loop circuit across all 7 modalities."""
+    circuits = worker.all_circuits()
     requests = [
         pair_request(m, c, seed)
         for seed in range(rounds)
-        for m, c in worker.TRAINING_CIRCUITS
+        for m, c in circuits
     ]
     with ProcessPoolExecutor(max_workers=workers) as pool:
         list(
@@ -61,13 +62,14 @@ def throughput(workers: int, rounds: int) -> dict[str, Any]:
     car_steps = sum(r["car_steps"] for r in results)
     per_circuit: dict[str, list[float]] = {}
     for (m, c), r in zip(
-        [(m, c) for _ in range(rounds) for m, c in worker.TRAINING_CIRCUITS], results
+        [(m, c) for _ in range(rounds) for m, c in circuits], results
     ):
         per_circuit.setdefault(f"{m}/{c}", []).append(r["wall_time_ms"])
     return {
         "host": platform.node(),
         "cpus": os.cpu_count(),
         "workers": workers,
+        "circuits": len(circuits),
         "races": len(results),
         "errors": errors,
         "elapsed_s": elapsed,
@@ -78,10 +80,7 @@ def throughput(workers: int, rounds: int) -> dict[str, Any]:
 
 
 def evorl_smoke(workers: int, db: Path) -> dict[str, Any]:
-    """The default genome against the baseline through EvoRL's Evaluator and ledger, on 2 circuits.
-
-    Both drivers are the same bot, so the outcome mix shows only grid and seat effects.
-    """
+    """The default genome against the baseline through EvoRL's Evaluator and ledger, on 2 circuits."""
     import harness
     from evorl.core.genome import Genome
     from evorl.core.ledger import MatchLedger
@@ -95,7 +94,7 @@ def evorl_smoke(workers: int, db: Path) -> dict[str, Any]:
         max_workers=workers,
         timeout_per_match=120.0,
     )
-    circuits = [f"{m}/{c}" for m, c in worker.TRAINING_CIRCUITS[:2]]
+    circuits = [f"balanced@{m}/{c}" for m, c in worker.TRAINING_CIRCUITS[:2]]
     started = time.perf_counter()
     genome = Genome({})
     evaluator.evaluate_candidates("smoke", [genome], circuits, [1, 2])
@@ -233,8 +232,8 @@ def summarize_circuit(races: list[dict[str, Any]]) -> dict[str, Any]:
 def audit(
     workers: int, seeds: int, circuits: list[tuple[str, str]] | None
 ) -> dict[str, Any]:
-    """Every tier on every launch circuit, `seeds` 3-lap grid races each."""
-    circuits = circuits or worker.launch_circuits()
+    """Every tier on every closed-loop circuit across all 7 modalities, `seeds` 3-lap grid races each."""
+    circuits = circuits or worker.all_circuits()
     jobs = [
         (m, c, tier, 1000 + seed)
         for m, c in circuits
@@ -249,49 +248,69 @@ def audit(
         by_circuit.setdefault(f"{r['module']}/{r['circuit']}", []).append(r)
     return {
         "host": platform.node(),
-        "elapsed_s": time.perf_counter() - started,
-        "races": len(races),
+        "cpus": os.cpu_count(),
+        "workers": workers,
         "seeds": seeds,
+        "races": len(races),
+        "car_steps": sum(r["car_steps"] for r in races),
+        "elapsed_s": time.perf_counter() - started,
         "circuits": {k: summarize_circuit(v) for k, v in by_circuit.items()},
     }
+
+
+def write_json(path: Path | None, data: Any) -> None:
+    text = json.dumps(data, indent=2)
+    if path:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text + "\n")
+    else:
+        print(text)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    sub = parser.add_subparsers(dest="command", required=True)
-    tp = sub.add_parser("throughput", help="measure races/s and car-steps/s")
-    tp.add_argument("--workers", type=int, default=1)
-    tp.add_argument("--rounds", type=int, default=2, help="races per training circuit")
-    tp.add_argument("--out", type=Path)
-    smoke = sub.add_parser("evorl-smoke", help="run the play function through EvoRL")
-    smoke.add_argument("--workers", type=int, default=8)
-    smoke.add_argument("--db", type=Path, default=Path("results/smoke.sqlite"))
-    smoke.add_argument("--out", type=Path)
-    au = sub.add_parser("audit", help="every tier on every launch circuit")
-    au.add_argument("--workers", type=int, default=8)
-    au.add_argument("--seeds", type=int, default=8)
-    au.add_argument(
-        "--circuit", action="append", help="module/id; default: all launch circuits"
-    )
-    au.add_argument("--out", type=Path)
-    args = parser.parse_args()
+    sub = parser.add_subparsers(dest="cmd", required=True)
 
-    if args.command == "throughput":
-        report = throughput(args.workers, args.rounds)
-    elif args.command == "evorl-smoke":
-        report = evorl_smoke(args.workers, args.db)
-    elif args.command == "audit":
-        chosen = (
-            [tuple(c.split("/", 1)) for c in args.circuit] if args.circuit else None
-        )
-        report = audit(args.workers, args.seeds, chosen)
-    out = json.dumps(report, indent=2)
-    print(out)
-    if args.out:
-        args.out.parent.mkdir(parents=True, exist_ok=True)
-        args.out.write_text(out + "\n")
+    p = sub.add_parser("throughput")
+    p.add_argument("--workers", type=int, default=28)
+    p.add_argument("--rounds", type=int, default=2)
+    p.add_argument("--out", type=Path)
+
+    p = sub.add_parser("evorl-smoke")
+    p.add_argument("--workers", type=int, default=28)
+    p.add_argument("--db", type=Path, required=True)
+    p.add_argument("--out", type=Path)
+
+    p = sub.add_parser("audit")
+    p.add_argument("--workers", type=int, default=28)
+    p.add_argument("--seeds", type=int, default=4)
+    p.add_argument(
+        "--training-only",
+        action="store_true",
+        help="run only the 13 legacy training circuits",
+    )
+    p.add_argument(
+        "--launch-only",
+        action="store_true",
+        help="run only the 75 launch module circuits",
+    )
+    p.add_argument("--out", type=Path)
+
+    args = parser.parse_args()
+    if args.cmd == "throughput":
+        write_json(args.out, throughput(args.workers, args.rounds))
+    elif args.cmd == "evorl-smoke":
+        write_json(args.out, evorl_smoke(args.workers, args.db))
+    elif args.cmd == "audit":
+        if args.training_only:
+            circuits = worker.TRAINING_CIRCUITS
+        elif args.launch_only:
+            circuits = worker.launch_circuits()
+        else:
+            circuits = worker.all_circuits()
+        write_json(args.out, audit(args.workers, args.seeds, circuits))
 
 
 if __name__ == "__main__":

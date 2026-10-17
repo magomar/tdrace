@@ -8,14 +8,28 @@
 //!
 //! `bot_eval_worker --list-launch-circuits` prints the launch circuits as a JSON array of
 //! `{"module", "id"}` and exits.
+//! `bot_eval_worker --list-all-circuits` prints all closed-loop circuits across all 7 modalities.
 
 use std::io::{BufRead, Write};
 
-use tdrace_app::ai::bot_harness::{eval_race, launch_circuit_cars, EvalRequest, EvalResult};
+use tdrace_app::ai::bot_harness::{all_modality_circuit_cars, eval_race, launch_circuit_cars, EvalRequest, EvalResult};
 
 fn main() {
     if std::env::args().any(|a| a == "--list-launch-circuits") {
         let list: Vec<_> = launch_circuit_cars().iter().map(|c| serde_json::json!({"module": c.module, "id": c.id})).collect();
+        println!("{}", serde_json::Value::Array(list));
+        return;
+    }
+    if std::env::args().any(|a| a == "--list-all-circuits") {
+        let list: Vec<_> = all_modality_circuit_cars()
+            .into_iter()
+            .filter(|c| {
+                tdrace_core::catalog::find(c.id, Some(c.module))
+                    .and_then(|entry| entry.load().ok())
+                    .is_some_and(|t| t.spline.closed && t.spline.total_length() > 0.0 && t.checkpoints.len() >= 2)
+            })
+            .map(|c| serde_json::json!({"module": c.module, "id": c.id}))
+            .collect();
         println!("{}", serde_json::Value::Array(list));
         return;
     }
