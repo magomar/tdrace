@@ -72,3 +72,79 @@ fn test_seventeen_autocross_circuits_embedded_in_catalog() {
         assert!(errors.is_empty(), "Circuit {} has validation errors: {:?}", c.id, errors);
     }
 }
+
+#[test]
+fn test_autocross_circuits_width_jump_and_whoop_moguls() {
+    use tdrace_core::collision::wall::resolve_all_wall_collisions;
+    use tdrace_core::physics::car::{Car, CarControls};
+    use tdrace_core::physics::config::CarConfig;
+    use tdrace_core::track::geometry::{JumpRampCarExt, RampKind};
+
+    for c in catalog::module_circuits("autocross") {
+        let track = c.load().expect("Embedded circuit must deserialize cleanly");
+
+        // 1. Minimum spline width >= 10.0m
+        for (idx, wp) in track.spline.waypoints.iter().enumerate() {
+            assert!(
+                wp.width >= 10.0,
+                "Circuit {} waypoint {} width {:.1}m < 10.0m",
+                c.id,
+                idx,
+                wp.width
+            );
+        }
+
+        // 2. Exactly 1 Jump (RampKind::Ramp) and 1 Whoop Moguls (RampKind::Whoops)
+        assert_eq!(
+            track.geometry.jump_ramps.len(),
+            2,
+            "Circuit {} must have 1 jump and 1 whoop moguls segment",
+            c.id
+        );
+        let jumps: Vec<_> = track
+            .geometry
+            .jump_ramps
+            .iter()
+            .filter(|r| r.kind == RampKind::Ramp)
+            .collect();
+        let whoops: Vec<_> = track
+            .geometry
+            .jump_ramps
+            .iter()
+            .filter(|r| r.kind == RampKind::Whoops)
+            .collect();
+        assert_eq!(jumps.len(), 1, "Circuit {} must have 1 RampKind::Ramp", c.id);
+        assert_eq!(whoops.len(), 1, "Circuit {} must have 1 RampKind::Whoops", c.id);
+
+        let jump = jumps[0];
+        let whoop = whoops[0];
+        assert_eq!(jump.surface, SurfaceType::Dirt);
+        assert_eq!(whoop.surface, SurfaceType::Dirt);
+        assert!(whoop.whoop_count() >= 4, "Circuit {} whoops should have >= 4 moguls", c.id);
+
+        // 3. Verify jump is on a straight segment and passes physical landing containment
+        for &approach_speed in &[30.0f32, 42.0f32] {
+            let mut car = Car::new(CarConfig::rally_car()).with_pose(jump.shape.center(), jump.angle());
+            car.state.velocity = jump.direction * approach_speed;
+
+            assert!(car.try_trigger_jump_ramp(jump));
+            let ctrl = CarControls::accelerate();
+            for _ in 0..120 {
+                car.step(&ctrl, SurfaceType::Dirt, 1.0 / 60.0);
+                if car.state.just_landed {
+                    break;
+                }
+            }
+            assert!(car.state.just_landed, "Car at {:.1} m/s did not land on {}", approach_speed, c.id);
+            let hit_inner = resolve_all_wall_collisions(&mut car, &track.geometry.inner_walls, &[]);
+            let hit_outer = resolve_all_wall_collisions(&mut car, &track.geometry.outer_walls, &[]);
+            assert!(
+                hit_inner.is_empty() && hit_outer.is_empty(),
+                "Circuit {} jump landed into walls at {:.1} m/s",
+                c.id,
+                approach_speed
+            );
+        }
+    }
+}
+

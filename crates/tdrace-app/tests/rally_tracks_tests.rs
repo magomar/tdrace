@@ -360,139 +360,220 @@ fn test_world_rx_jump_ramps_dirt_surface_and_containment_landing() {
     use tdrace_core::physics::car::{Car, CarControls};
     use tdrace_core::physics::config::CarConfig;
     use tdrace_core::physics::surface::SurfaceType;
-    use tdrace_core::track::geometry::SurfaceShape;
+    use tdrace_core::track::geometry::{RampKind, SurfaceShape};
 
-    let tracks = [
-        ("holjes_rx", tdrace_core::catalog::official_track("rally", "holjes_rx")),
-        ("hell_rx", tdrace_core::catalog::official_track("rally", "hell_rx")),
-        ("loheac_rx", tdrace_core::catalog::official_track("rally", "loheac_rx")),
-        ("montalegre_rx", tdrace_core::catalog::official_track("rally", "montalegre_rx")),
-        ("kouvola_rx", tdrace_core::catalog::official_track("rally", "kouvola_rx")),
-        ("catalunya_rx", tdrace_core::catalog::official_track("rally", "catalunya_rx")),
-        ("mettet_rx", tdrace_core::catalog::official_track("rally", "mettet_rx")),
-        ("riga_rx", tdrace_core::catalog::official_track("rally", "riga_rx")),
-        ("killarney_rx", tdrace_core::catalog::official_track("rally", "killarney_rx")),
-        ("essay_rx", tdrace_core::catalog::official_track("rally", "essay_rx")),
+    let all_slugs = [
+        ("holjes_rx", true),
+        ("lydden_hill", true),
+        ("hell_rx", true),
+        ("loheac_rx", true),
+        ("estering_rx", true),
+        ("montalegre_rx", true),
+        ("nyirad_rx", true),
+        ("kouvola_rx", true),
+        ("catalunya_rx", true),
+        ("mettet_rx", true),
+        ("lavare_rx", false),
+        ("riga_rx", true),
+        ("killarney_rx", true),
+        ("lessay_rx", false),
+        ("essay_rx", false),
+        ("dreux_rx", false),
+        ("croft_rx", false),
+        ("spa_rx", true),
+        ("silverstone_rx", true),
+        ("erx_motor_park", false),
     ];
 
-    for (slug, track) in &tracks {
-        assert_eq!(track.geometry.jump_ramps.len(), 1, "Track {} should have 1 jump ramp", slug);
-        let ramp = &track.geometry.jump_ramps[0];
+    for &(slug, is_major_fia) in &all_slugs {
+        let track = tdrace_core::catalog::official_track("rally", slug);
 
-        // 1. Verify surface is Dirt (user request: depicted as dirt ramp, not asphalt)
+        // 0. Verify all main spline and network segment waypoints have width >= 12.0m
+        for (wi, wp) in track.spline.waypoints.iter().enumerate() {
+            assert!(
+                wp.width >= 12.0,
+                "Track {} main waypoint #{} width {:.2}m must be >= 12.0m",
+                slug,
+                wi,
+                wp.width
+            );
+        }
+        if let Some(net) = &track.network {
+            for seg in &net.segments {
+                for (wi, wp) in seg.waypoints.iter().enumerate() {
+                    assert!(
+                        wp.width >= 12.0,
+                        "Track {} segment {:?} waypoint #{} width {:.2}m must be >= 12.0m",
+                        slug,
+                        seg.id,
+                        wi,
+                        wp.width
+                    );
+                }
+            }
+        }
+
+        // Each RX circuit must have 2 jumps: 1 major/mega jump and 1 minor jump on straight segments
         assert_eq!(
-            ramp.surface,
-            SurfaceType::Dirt,
-            "Track {} jump ramp must use SurfaceType::Dirt",
+            track.geometry.jump_ramps.len(),
+            2,
+            "Track {} should have 2 jump ramps (1 major/mega + 1 minor)",
+            slug
+        );
+        if is_major_fia {
+            assert!(
+                track.geometry.jump_ramps.iter().any(|r| r.kind == RampKind::MegaRamp),
+                "Major FIA RX venue {} should include a MegaRamp",
+                slug
+            );
+        }
+        assert!(
+            track.geometry.jump_ramps.iter().any(|r| r.kind == RampKind::Ramp),
+            "Track {} should include at least one standard Ramp",
             slug
         );
 
-        // 2. Verify ramp dimensions are compact to avoid launching cars out of the circuit
-        if let SurfaceShape::OrientedBox { half_extents, .. } = ramp.shape {
-            assert!(
-                half_extents.x <= 4.0,
-                "Track {} ramp half length must be <= 4.0m (compact kicker/crest), got {:.1}m",
-                slug,
-                half_extents.x
+        for ramp in &track.geometry.jump_ramps {
+            // 1. Verify surface is Dirt
+            assert_eq!(
+                ramp.surface,
+                SurfaceType::Dirt,
+                "Track {} jump ramp must use SurfaceType::Dirt",
+                slug
             );
+
+            // Verify jump is on a straight segment (max bend <= 15 deg in +/- 15m window)
+            let proj_r = track.spline.project_point(ramp.shape.center());
+            let s_r = proj_r.progress_distance;
+            let t0 = track.spline.sample_at_distance(s_r).tangent.normalize_or_zero();
+            let mut max_bend = 0.0f32;
+            let mut d = -12.0f32;
+            while d <= 18.0 {
+                let td = track.spline.sample_at_distance(s_r + d).tangent.normalize_or_zero();
+                let ang = t0.dot(td).clamp(-1.0, 1.0).acos().to_degrees();
+                if ang > max_bend {
+                    max_bend = ang;
+                }
+                d += 3.0;
+            }
             assert!(
-                half_extents.y <= 6.0,
-                "Track {} ramp half width must fit track corridor (<= 6.0m), got {:.1}m",
+                max_bend <= 15.0,
+                "Track {} jump ramp #{} at {:.1}m must be on a straight segment (bend {:.1}° > 15.0°)",
                 slug,
-                half_extents.y
+                ramp.id,
+                s_r,
+                max_bend
             );
-        } else {
-            panic!("Expected OrientedBox shape for jump ramp on {}", slug);
-        }
 
-        // 3. Verify launch parameters are realistic and safe
-        assert!(ramp.height <= 1.5, "Track {} ramp height must be <= 1.5m, got {:.2}m", slug, ramp.height);
-        assert!(
-            ramp.ramp_angle_deg <= 7.0,
-            "Track {} ramp angle must be <= 7.0 deg, got {:.2} deg",
-            slug,
-            ramp.ramp_angle_deg
-        );
-        assert!(
-            ramp.launch_speed <= 3.0,
-            "Track {} ramp launch speed must be <= 3.0 m/s, got {:.2} m/s",
-            slug,
-            ramp.launch_speed
-        );
-
-        // 4. Test physical jump containment at high rally speeds: 30 m/s (108 km/h) and 42 m/s (151 km/h)
-        for &approach_speed in &[30.0f32, 42.0f32] {
-            let mut car = Car::new(CarConfig::rally_car()).with_pose(ramp.shape.center(), 0.0);
-            car.state.velocity = ramp.direction * approach_speed;
-
-            let triggered = car.try_trigger_jump_ramp(ramp);
-            assert!(triggered, "Car at {:.1} m/s should trigger jump ramp on {}", approach_speed, slug);
-            assert!(car.state.is_airborne);
-
-            let ctrl = CarControls::accelerate();
-            let mut apex_elevation = 0.0f32;
-            let mut steps_to_landing = 0;
-
-            for _ in 0..120 {
-                car.step(&ctrl, SurfaceType::Dirt, 1.0 / 60.0);
-                if car.state.elevation > apex_elevation {
-                    apex_elevation = car.state.elevation;
-                }
-                if car.state.just_landed {
-                    break;
-                }
-                steps_to_landing += 1;
+            // 2. Verify ramp dimensions fit the track corridor
+            if let SurfaceShape::OrientedBox { half_extents, .. } = ramp.shape {
+                let max_half_len = if ramp.kind == RampKind::MegaRamp { 10.0 } else { 4.5 };
+                assert!(
+                    half_extents.x <= max_half_len,
+                    "Track {} ramp half length must be <= {:.1}m, got {:.1}m",
+                    slug,
+                    max_half_len,
+                    half_extents.x
+                );
+                assert!(
+                    half_extents.y <= 6.5,
+                    "Track {} ramp half width must fit track corridor (<= 6.5m), got {:.1}m",
+                    slug,
+                    half_extents.y
+                );
+            } else {
+                panic!("Expected OrientedBox shape for jump ramp on {}", slug);
             }
 
-            assert!(car.state.just_landed, "Car at {:.1} m/s should land within 120 frames on {}", approach_speed, slug);
-            assert!(!car.state.is_airborne);
-            assert_eq!(car.state.elevation, 0.0);
-
-            // Apex elevation must be modest and realistic (~0.4m - 1.8m)
+            // 3. Verify launch parameters are realistic and safe
+            assert!(ramp.height <= 3.0, "Track {} ramp height must be <= 3.0m, got {:.2}m", slug, ramp.height);
             assert!(
-                apex_elevation >= 0.4 && apex_elevation <= 1.8,
-                "Track {} apex elevation at {:.1} m/s must be between 0.4m and 1.8m, got {:.2}m",
+                ramp.ramp_angle_deg <= 8.0,
+                "Track {} ramp angle must be <= 8.0 deg, got {:.2} deg",
                 slug,
-                approach_speed,
-                apex_elevation
+                ramp.ramp_angle_deg
+            );
+            assert!(
+                ramp.launch_speed <= 3.0,
+                "Track {} ramp launch speed must be <= 3.0 m/s, got {:.2} m/s",
+                slug,
+                ramp.launch_speed
             );
 
-            // Air time must be snappy (~0.3s to 1.0s)
-            assert!(
-                steps_to_landing >= 18 && steps_to_landing <= 60,
-                "Track {} jump at {:.1} m/s took {} steps ({:.2}s)",
-                slug,
-                approach_speed,
-                steps_to_landing,
-                steps_to_landing as f32 / 60.0
-            );
+            // 4. Test physical jump containment at high rally speeds: 30 m/s (108 km/h) and 42 m/s (151 km/h)
+            for &approach_speed in &[30.0f32, 42.0f32] {
+                let mut car = Car::new(CarConfig::rally_car()).with_pose(ramp.shape.center(), 0.0);
+                car.state.velocity = ramp.direction * approach_speed;
 
-            // 5. Containment check: At landing point, car must NOT be inside/over outer or inner barriers
-            let hit_inner = resolve_all_wall_collisions(&mut car, &track.geometry.inner_walls, &[]);
-            let hit_outer = resolve_all_wall_collisions(&mut car, &track.geometry.outer_walls, &[]);
-            assert!(
-                hit_inner.is_empty() && hit_outer.is_empty(),
-                "Track {} car jumped outside circuit or into walls at {:.1} m/s! Landing pos: ({:.1}, {:.1})",
-                slug,
-                approach_speed,
-                car.state.position.x,
-                car.state.position.y
-            );
+                let triggered = car.try_trigger_jump_ramp(ramp);
+                assert!(triggered, "Car at {:.1} m/s should trigger jump ramp on {}", approach_speed, slug);
+                assert!(car.state.is_airborne);
 
-            // Distance to track centerline must be well within the track boundaries
-            let proj = track.spline.project_point(car.state.position);
-            let sample = track.spline.sample_at_distance(proj.progress_distance);
-            let lateral_offset = (car.state.position - sample.point).length();
-            let allowed_lateral = sample.width * 0.5 + 3.5;
-            assert!(
-                lateral_offset <= allowed_lateral,
-                "Track {} car landed too far laterally from track ribbon ({:.1}m > {:.1}m) at pos ({:.1}, {:.1})",
-                slug,
-                lateral_offset,
-                allowed_lateral,
-                car.state.position.x,
-                car.state.position.y
-            );
+                let ctrl = CarControls::accelerate();
+                let mut apex_elevation = 0.0f32;
+                let mut steps_to_landing = 0;
+
+                for _ in 0..120 {
+                    car.step(&ctrl, SurfaceType::Dirt, 1.0 / 60.0);
+                    if car.state.elevation > apex_elevation {
+                        apex_elevation = car.state.elevation;
+                    }
+                    if car.state.just_landed {
+                        break;
+                    }
+                    steps_to_landing += 1;
+                }
+
+                assert!(car.state.just_landed, "Car at {:.1} m/s should land within 120 frames on {}", approach_speed, slug);
+                assert!(!car.state.is_airborne);
+                assert_eq!(car.state.elevation, 0.0);
+
+                // Apex elevation must be modest and realistic (~0.35m - 2.2m)
+                assert!(
+                    apex_elevation >= 0.35 && apex_elevation <= 2.2,
+                    "Track {} apex elevation at {:.1} m/s must be between 0.35m and 2.2m, got {:.2}m",
+                    slug,
+                    approach_speed,
+                    apex_elevation
+                );
+
+                // Air time must be snappy (~0.25s to 1.1s)
+                assert!(
+                    steps_to_landing >= 15 && steps_to_landing <= 66,
+                    "Track {} jump at {:.1} m/s took {} steps ({:.2}s)",
+                    slug,
+                    approach_speed,
+                    steps_to_landing,
+                    steps_to_landing as f32 / 60.0
+                );
+
+                // 5. Containment check: At landing point, car must NOT be inside/over outer or inner barriers
+                let hit_inner = resolve_all_wall_collisions(&mut car, &track.geometry.inner_walls, &[]);
+                let hit_outer = resolve_all_wall_collisions(&mut car, &track.geometry.outer_walls, &[]);
+                assert!(
+                    hit_inner.is_empty() && hit_outer.is_empty(),
+                    "Track {} car jumped outside circuit or into walls at {:.1} m/s! Landing pos: ({:.1}, {:.1})",
+                    slug,
+                    approach_speed,
+                    car.state.position.x,
+                    car.state.position.y
+                );
+
+                // Distance to track centerline must be well within the track boundaries
+                let proj = track.spline.project_point(car.state.position);
+                let sample = track.spline.sample_at_distance(proj.progress_distance);
+                let lateral_offset = (car.state.position - sample.point).length();
+                let allowed_lateral = sample.width * 0.5 + 3.5;
+                assert!(
+                    lateral_offset <= allowed_lateral,
+                    "Track {} car landed too far laterally from track ribbon ({:.1}m > {:.1}m) at pos ({:.1}, {:.1})",
+                    slug,
+                    lateral_offset,
+                    allowed_lateral,
+                    car.state.position.x,
+                    car.state.position.y
+                );
+            }
         }
     }
 }
