@@ -365,7 +365,7 @@ fn landing_limit_clears_the_reference_landings_with_a_margin() {
 }
 
 /// Tyre discipline: a clean run barely wears the tyres under the Tier 3 scale, a run that slides a lot ends over the
-/// wear cap. About 8 s of full slide at the Tier 3 scale does it.
+/// wear cap. About 12 s of full slide at the Tier 3 scale does it.
 #[test]
 fn wear_cap_is_passed_by_clean_driving_and_broken_by_sliding() {
     use tdrace_core::physics::surface::SurfaceType;
@@ -382,12 +382,12 @@ fn wear_cap_is_passed_by_clean_driving_and_broken_by_sliding() {
         config.wear_rate_scale = def.rules.wear_rate_scale;
         let mut car = Car::new(config);
         car.state.velocity = glam::Vec2::new(30.0, 0.0);
-        for step in 0..(8.0 / DT) as usize {
+        for step in 0..(12.0 / DT) as usize {
             let c = CarControls { throttle: 1.0, steer: 0.5, handbrake: step as f32 * DT < 0.5, ..Default::default() };
             car.step(&c, SurfaceType::Asphalt, DT);
         }
         let slid = car.state.wheel_assemblies.iter().map(|w| w.wear).fold(0.0, f32::max);
-        assert!(slid > max_wear, "{}: 8 s of slide wear {:.3}, cap {:.2}", def.id.slug(), slid, max_wear);
+        assert!(slid > max_wear, "{}: 12 s of slide wear {:.3}, cap {:.2}", def.id.slug(), slid, max_wear);
     }
 }
 

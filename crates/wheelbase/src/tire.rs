@@ -18,10 +18,10 @@ pub const SLIP_REFERENCE_SPEED: f32 = 4.0;
 
 /// Scales the compound wear rate for slide power past the grip peak (tdrace-6dl0): sprint races are
 /// driven on one set of tyres, and only drift abuse should wear them enough to need a pit stop.
-const DRIFT_WEAR_GAIN: f32 = 6.0;
+const DRIFT_WEAR_GAIN: f32 = 4.0;
 
 /// Share of the pavement tread wear that a slide on loose ground (dirt, gravel, sand, mud, snow) causes.
-const LOOSE_GROUND_WEAR: f32 = 0.25;
+const LOOSE_GROUND_WEAR: f32 = 0.15;
 
 /// Default baseline tire temperature (nominal warm tire in °C).
 pub fn default_tire_temperature() -> f32 {
@@ -640,7 +640,7 @@ impl TireCompoundConfig {
                 peak_slip_angle_deg: 13.0,
                 peak_slip_ratio: 0.13,
                 slide_grip: 0.88,
-                wear_rate: 0.00000020,
+                wear_rate: 0.00000010,
                 optimal_temp_range: (65.0, 95.0),
                 overheat_temp: 115.0,
                 surface_affinity,

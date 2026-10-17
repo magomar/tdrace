@@ -683,3 +683,39 @@ fn test_wear_rate_scale_defaults_to_one() {
     let cfg: CarConfig = serde_json::from_value(json).unwrap();
     assert_eq!(cfg.wear_rate_scale, 1.0);
 }
+
+#[test]
+fn test_all_terrain_compound_and_loose_ground_durability() {
+    use wheelbase::CompoundId;
+
+    let wear_on_asphalt = |compound| {
+        sustained_slide_worst_wear(CarConfig::sports_car().with_compound(compound))
+    };
+    let at_wear = wear_on_asphalt(CompoundId::AllTerrain);
+    let hard_wear = wear_on_asphalt(CompoundId::HardSlick);
+    let medium_wear = wear_on_asphalt(CompoundId::MediumSlick);
+
+    assert!(at_wear > 0.0, "AllTerrain must still accumulate wear under sustained sliding");
+    assert!(
+        at_wear < hard_wear,
+        "AllTerrain ({at_wear:.4}) must wear slower than HardSlick ({hard_wear:.4})"
+    );
+    assert!(
+        at_wear < medium_wear * 0.5,
+        "AllTerrain ({at_wear:.4}) must wear at less than half the rate of MediumSlick ({medium_wear:.4})"
+    );
+
+    // Loose ground wears at 15% of pavement for the same slide work
+    let step_wear = |surface: SurfaceType| {
+        let mut wheel = WheelAssembly::new(CarConfig::rally_car().wheels[2]);
+        wheel.step_thermal_and_wear(2500.0, 3200.0, 0.25, 0.45, 20.0, surface, 1.0, 1.0 / 60.0);
+        wheel.wear
+    };
+    let asphalt_step = step_wear(SurfaceType::Asphalt);
+    let dirt_step = step_wear(SurfaceType::Dirt);
+    let gravel_step = step_wear(SurfaceType::PackedGravel);
+
+    assert!((dirt_step / asphalt_step - 0.15).abs() < 1e-4, "dirt/asphalt wear ratio = {}", dirt_step / asphalt_step);
+    assert!((gravel_step / asphalt_step - 0.15).abs() < 1e-4, "gravel/asphalt wear ratio = {}", gravel_step / asphalt_step);
+}
+
