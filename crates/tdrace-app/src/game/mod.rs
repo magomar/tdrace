@@ -3455,11 +3455,16 @@ impl RaceSession {
 
         let selected_model = prev_selected
             .and_then(crate::catalog::find_model_by_id)
-            .filter(|m| m.module_id == "kart" && m.tier == tier as u8 && (self.is_dev_mode() || self.active_profile.is_car_owned(m.id) || self.active_career_progress.is_car_unlocked(m.id, false)))
+            .filter(|m| m.module_id == "kart" && m.tier == tier as u8 && self.active_profile.is_car_owned(m.id))
             .or_else(|| {
                 self.active_profile.owned_cars.iter()
                     .filter_map(|id| crate::catalog::find_model_by_id(id))
                     .find(|m| m.module_id == "kart" && m.tier == tier as u8)
+            })
+            .or_else(|| {
+                prev_selected
+                    .and_then(crate::catalog::find_model_by_id)
+                    .filter(|m| m.module_id == "kart" && m.tier == tier as u8 && (self.is_dev_mode() || self.active_career_progress.is_car_unlocked(m.id, false)))
             })
             .or_else(|| {
                 crate::catalog::get_models_for_module_and_tier("kart", tier as u8)
@@ -10956,19 +10961,14 @@ impl RaceSession {
 
         if buy_pressed || confirm_pressed {
             if let Some(active_car) = models.get(self.garage_car_idx) {
-                let is_car_heritage = (self.active_module_id == "rallycross" || self.active_module_id == "rally" || self.active_module_id == "rx") && active_car.tier == 7;
                 let is_non_career_race_setup = matches!(
                     origin,
                     GarageOrigin::StartingGrid | GarageOrigin::Menu | GarageOrigin::LanLobby
-                ) && self.game_mode != GameMode::Career;
+                ) && self.game_mode != GameMode::Career
+                    && self.active_academy_lesson.is_none();
                 let is_unlocked = self.active_module_id == "classic"
-                    || is_car_heritage
-                    || self.is_dev_mode()
                     || self.active_profile.is_car_owned(active_car.id)
-                    || (is_non_career_race_setup
-                        && (self.game_mode.allows_car_change()
-                            || origin == GarageOrigin::LanLobby
-                            || self.active_career_progress.is_car_unlocked(active_car.id, self.is_dev_mode())));
+                    || is_non_career_race_setup;
 
                 if is_unlocked {
                     if confirm_pressed {
@@ -14345,7 +14345,18 @@ impl RaceSession {
                 }
             }
             GameState::Garage(_) => {
-                let unlocked_tier = if self.is_dev_mode() {
+                let is_lan = self.state == GameState::Garage(GarageOrigin::LanLobby);
+                let car_change_allowed = if self.state == GameState::Garage(GarageOrigin::StartingGrid) {
+                    self.game_mode.allows_car_change()
+                } else {
+                    true
+                };
+                let free_garage_selection = matches!(
+                    self.state,
+                    GameState::Garage(GarageOrigin::StartingGrid | GarageOrigin::Menu | GarageOrigin::LanLobby)
+                ) && self.game_mode != GameMode::Career
+                    && self.active_academy_lesson.is_none();
+                let unlocked_tier = if free_garage_selection {
                     5
                 } else {
                     let wins = self.active_profile_stats.wins;
@@ -14361,17 +14372,6 @@ impl RaceSession {
                         1
                     }
                 };
-                let is_lan = self.state == GameState::Garage(GarageOrigin::LanLobby);
-                let car_change_allowed = if self.state == GameState::Garage(GarageOrigin::StartingGrid) {
-                    self.game_mode.allows_car_change()
-                } else {
-                    true
-                };
-                let free_garage_selection = matches!(
-                    self.state,
-                    GameState::Garage(GarageOrigin::StartingGrid | GarageOrigin::Menu | GarageOrigin::LanLobby)
-                ) && self.game_mode != GameMode::Career
-                    && (self.game_mode.allows_car_change() || is_lan);
                 let module_locked = is_lan || !car_change_allowed;
                 crate::ui::render_garage_screen(
                     &self.fonts,
@@ -14386,8 +14386,8 @@ impl RaceSession {
                     self.garage_gallery_mode,
                     self.garage_gallery_filter,
                     self.garage_gallery_sel,
-                    self.is_dev_mode() || free_garage_selection,
-                    if free_garage_selection { 5 } else { unlocked_tier as u32 },
+                    free_garage_selection,
+                    unlocked_tier as u32,
                     Some(&self.active_career_progress),
                     self.active_profile.credits,
                     module_locked,
@@ -15047,11 +15047,16 @@ impl RaceSession {
         let tier = def.series.tier as u8;
         let chosen_model = prev_selected
             .and_then(crate::catalog::find_model_by_id)
-            .filter(|m| m.module_id == def.series.module_id && m.tier == tier && (self.is_dev_mode() || self.active_profile.is_car_owned(m.id) || self.active_career_progress.is_car_unlocked(m.id, false)))
+            .filter(|m| m.module_id == def.series.module_id && m.tier == tier && self.active_profile.is_car_owned(m.id))
             .or_else(|| {
                 self.active_profile.owned_cars.iter()
                     .filter_map(|id| crate::catalog::find_model_by_id(id))
                     .find(|m| m.module_id == def.series.module_id && m.tier == tier)
+            })
+            .or_else(|| {
+                prev_selected
+                    .and_then(crate::catalog::find_model_by_id)
+                    .filter(|m| m.module_id == def.series.module_id && m.tier == tier && (self.is_dev_mode() || self.active_career_progress.is_car_unlocked(m.id, false)))
             })
             .or_else(|| {
                 player_car_model_id

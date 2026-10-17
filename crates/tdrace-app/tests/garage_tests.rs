@@ -755,3 +755,86 @@ fn custom_race_allows_selecting_any_car_in_garage_and_starting_grid() {
     assert!(session.is_active_player_car_unlocked());
 }
 
+#[test]
+fn test_career_and_license_showroom_require_credit_purchase_even_in_dev_mode() {
+    let mut session = RaceSession::new();
+    session.config.gameplay.dev_mode = true;
+    session.active_profile.owned_cars.clear();
+    session.active_profile.academy_progress.license_granted = true;
+    session.active_profile.license_grade = tdrace_app::profile::LicenseGrade::ClassD;
+    session.active_profile.credits = 7_000;
+    session.game_mode = GameMode::Career;
+
+    // 1. After getting a license (ModalitySelect -> Showroom), non-classic cars are NOT owned
+    // even in dev mode; pressing Enter on an affordable Tier 1 Kart buys it with credits.
+    session.switch_to_kart();
+    session.garage_tier = 1;
+    let kart_models = get_models_for_module_and_tier("kart", 1);
+    let affordable_idx = kart_models
+        .iter()
+        .position(|m| {
+            tdrace_app::profile::ModuleCareerProgress::car_credit_cost_for_car(m.id, "kart", 1) <= 7_000
+        })
+        .expect("At least one Tier 1 kart should cost <= 7,000 Cr");
+    let chosen_kart = kart_models[affordable_idx];
+    let kart_cost = tdrace_app::profile::ModuleCareerProgress::car_credit_cost_for_car(chosen_kart.id, "kart", 1);
+
+    assert!(!session.active_profile.is_car_owned(chosen_kart.id));
+    session.garage_car_idx = affordable_idx;
+    garage_press(&mut session, GarageOrigin::ModalitySelect, &[KeyCode::Enter]);
+
+    assert!(
+        session.active_profile.is_car_owned(chosen_kart.id),
+        "Pressing Enter in ModalitySelect showroom in dev mode must purchase the unowned car with credits"
+    );
+    assert_eq!(session.active_profile.credits, 7_000 - kart_cost);
+
+    // 2. An unaffordable GT car in CareerHub / ModalitySelect is NOT treated as owned in dev mode
+    session.switch_to_gt();
+    session.state = GameState::Garage(GarageOrigin::CareerHub);
+    session.garage_tier = 1;
+    session.garage_car_idx = 0;
+    let gt_car = get_models_for_module_and_tier("gt", 1)[0];
+    assert!(!session.active_profile.is_car_owned(gt_car.id));
+
+    let credits_before = session.active_profile.credits;
+    garage_press(&mut session, GarageOrigin::CareerHub, &[KeyCode::Enter]);
+    assert!(
+        !session.active_profile.is_car_owned(gt_car.id),
+        "Unowned GT car must not be selectable or marked owned without credits in CareerHub even in dev mode"
+    );
+    assert_eq!(session.active_profile.credits, credits_before);
+    assert_eq!(
+        session.state,
+        GameState::Garage(GarageOrigin::CareerHub),
+        "Should remain in Garage when attempting to select an unowned, unaffordable car in CareerHub"
+    );
+}
+
+#[test]
+fn test_quick_custom_and_time_trial_allow_free_unlimited_car_access() {
+    for mode in [GameMode::StandardRace, GameMode::ExperimentalRace, GameMode::TimeTrial] {
+        let mut session = RaceSession::new();
+        session.config.gameplay.dev_mode = false;
+        session.active_profile.owned_cars.clear();
+        session.active_profile.credits = 0;
+        session.active_career_progress.unlocked_cars.clear();
+        session.active_academy_lesson = None;
+        session.game_mode = mode;
+
+        session.switch_to_gt();
+        session.garage_tier = 4;
+        session.garage_car_idx = 0;
+        let gt_t4_car = get_models_for_module_and_tier("gt", 4)[0];
+
+        garage_press(&mut session, GarageOrigin::Menu, &[KeyCode::Enter]);
+        assert_eq!(session.state, GameState::Menu);
+        assert_eq!(session.selected_car_model_id, Some(gt_t4_car.id));
+        assert!(
+            session.active_profile.owned_cars.is_empty(),
+            "Free selection in {:?} must not require or mutate profile car ownership",
+            mode
+        );
+    }
+}
+

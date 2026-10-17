@@ -414,7 +414,6 @@ pub fn render_garage_screen(
         let is_rx_tier7 = (active_module_id == "rallycross" || active_module_id == "rally" || active_module_id == "rx") && model.tier == 7;
         let is_owned = active_module_id == "classic"
             || is_dev_mode
-            || is_rx_tier7
             || owned_cars.iter().any(|c| c == model.id);
 
         if is_owned {
@@ -498,7 +497,6 @@ pub fn render_garage_screen(
         let model_cost = ModuleCareerProgress::car_credit_cost_for_car(model.id, active_module_id, model.tier);
         let is_owned_active = active_module_id == "classic"
             || is_dev_mode
-            || is_heritage_tier
             || owned_cars.iter().any(|c| c == model.id);
         if !is_owned_active {
             let price_str = format!("${} CR", model_cost);
@@ -744,7 +742,6 @@ pub fn render_garage_screen(
     let is_car_heritage = (active_module_id == "rallycross" || active_module_id == "rally" || active_module_id == "rx") && active_car_tier == 7;
     let is_car_owned = active_module_id == "classic"
         || is_dev_mode
-        || is_car_heritage
         || owned_cars.iter().any(|c| c == active_car_id);
 
     let cost = ModuleCareerProgress::car_credit_cost_for_car(active_car_id, active_module_id, active_car_tier);

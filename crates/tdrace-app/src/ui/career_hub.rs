@@ -430,7 +430,8 @@ pub fn render_career_hub_screen(
     ly += scaler.s(22.0);
 
     let tier_models = get_models_for_module_and_tier(&career.module_id, selected_tier as u8);
-    let unlocked_count = tier_models.iter().filter(|m| career.is_car_unlocked(m.id, false)).count();
+    let is_car_owned = |car_id: &str| career.module_id == "classic" || profile.is_car_owned(car_id);
+    let unlocked_count = tier_models.iter().filter(|m| is_car_owned(m.id)).count();
     let total_cars = tier_models.len();
 
     let car_summary = format!("{}/{} Tier {} Models Unlocked", unlocked_count, total_cars, selected_tier);
@@ -441,11 +442,11 @@ pub fn render_career_hub_screen(
     let active_model = active_car_model_id
         .and_then(crate::catalog::find_model_by_id)
         .filter(|m| m.tier == selected_tier as u8)
-        .or_else(|| tier_models.iter().find(|m| career.is_car_unlocked(m.id, false)).copied())
+        .or_else(|| tier_models.iter().find(|m| is_car_owned(m.id)).copied())
         .or_else(|| tier_models.first().copied());
 
     if let Some(m) = active_model {
-        let is_unlocked = career.is_car_unlocked(m.id, false);
+        let is_unlocked = is_car_owned(m.id);
         let car_card_h = scaler.s(72.0);
         scaler.draw_glass_card(left_inner_x, ly, left_inner_w, car_card_h, Color::new(0.08, 0.11, 0.16, 0.90), Palette::UI_CARD_BORDER, 1.0);
 
