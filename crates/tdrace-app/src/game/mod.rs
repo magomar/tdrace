@@ -212,11 +212,11 @@ use crate::ui::hall_of_fame::{render_hall_of_fame_screen, PlayerCongrats};
 use crate::ui::race_stats::render_race_stats_screen;
 use crate::ui::hud::{format_lap_time, render_hud, render_split_hud, PersonalBestNotification, VisibilityToast};
 use crate::ui::menu::{
-    category_pill_rect, render_championship_standings_screen, render_controls_screen, render_exit_confirm_modal,
-    render_modality_select_screen, render_module_select_menu, render_pause_menu,
-    render_results_screen, render_track_select_menu, resolve_predefined_car_for_track,
-    resolve_track_for_menu, CarChoice, GameMode, MenuPanelFocus,
-    RaceResultEntry, TrackCatalogFilter, TrackChoice,
+    category_pill_rect, championship_standings_page_rects, render_championship_standings_screen,
+    render_controls_screen, render_exit_confirm_modal, render_modality_select_screen,
+    render_module_select_menu, render_pause_menu, render_results_screen, render_track_select_menu,
+    resolve_predefined_car_for_track, resolve_track_for_menu, CarChoice, GameMode, MenuPanelFocus,
+    RaceResultEntry, TrackCatalogFilter, TrackChoice, STANDINGS_PAGE_SIZE,
 };
 pub use crate::ui::menu::{MenuCategoryFilter, ModalityCategory, ModalityItem, ModalityModal};
 use crate::ui::profile_ui::{
@@ -614,6 +614,7 @@ pub struct RaceSession {
     pub prev_casual_ai_difficulty: DriverTier,
     pub grid_participants: Vec<GridParticipant>,
     pub driver_cards_idx: usize,
+    pub championship_standings_page: usize,
 
     // Interactive Garage Showroom state
     pub garage_origin: GarageOrigin,
@@ -904,6 +905,7 @@ impl RaceSession {
             prev_casual_ai_difficulty: default_bot_difficulty,
             grid_participants: Vec::new(),
             driver_cards_idx: 0,
+            championship_standings_page: 0,
 
             garage_origin: GarageOrigin::ModalitySelect,
             garage_tier: 1,
@@ -7344,6 +7346,7 @@ impl RaceSession {
                                 showing_standings: true,
                             };
                         } else {
+                            self.championship_standings_page = 0;
                             self.state = GameState::ChampionshipStandings;
                         }
                         return;
@@ -7520,6 +7523,57 @@ impl RaceSession {
 
     /// Updates input and state progression when viewing the Championship Standings screen.
     pub fn update_championship_standings(&mut self) {
+        let total_drivers = self.championship_session.as_ref().map(|c| c.standings.len()).unwrap_or(0);
+        let total_pages = if total_drivers == 0 {
+            1
+        } else {
+            (total_drivers + STANDINGS_PAGE_SIZE - 1) / STANDINGS_PAGE_SIZE
+        };
+
+        if total_pages > 1 {
+            // Page back: Left / A / PageUp / Gamepad Dpad Left / LB
+            if is_key_pressed(KeyCode::Left)
+                || is_key_pressed(KeyCode::A)
+                || is_key_pressed(KeyCode::PageUp)
+                || self.input.gamepad.snapshot.dpad_left_pressed
+                || self.input.gamepad.snapshot.btn_lb_pressed
+            {
+                self.audio.play_sfx(SfxType::UiMove);
+                if self.championship_standings_page == 0 {
+                    self.championship_standings_page = total_pages - 1;
+                } else {
+                    self.championship_standings_page -= 1;
+                }
+                return;
+            }
+
+            // Page forward: Right / D / Tab / PageDown / Gamepad Dpad Right / RB
+            if is_key_pressed(KeyCode::Right)
+                || is_key_pressed(KeyCode::D)
+                || is_key_pressed(KeyCode::Tab)
+                || is_key_pressed(KeyCode::PageDown)
+                || self.input.gamepad.snapshot.dpad_right_pressed
+                || self.input.gamepad.snapshot.btn_rb_pressed
+            {
+                self.audio.play_sfx(SfxType::UiMove);
+                self.championship_standings_page = (self.championship_standings_page + 1) % total_pages;
+                return;
+            }
+
+            // Mouse click on page buttons
+            if is_mouse_button_pressed(macroquad::input::MouseButton::Left) {
+                let (mx, my) = mouse_position_safe();
+                let rects = championship_standings_page_rects(screen_width(), screen_height(), total_pages);
+                for (p, rect) in rects.iter().enumerate() {
+                    if rect.contains(mx, my) && p != self.championship_standings_page {
+                        self.audio.play_sfx(SfxType::UiMove);
+                        self.championship_standings_page = p;
+                        return;
+                    }
+                }
+            }
+        }
+
         if is_key_pressed(KeyCode::Enter)
             || is_key_pressed(KeyCode::Space)
             || is_key_pressed(KeyCode::KpEnter)
@@ -14586,7 +14640,7 @@ impl RaceSession {
             }
             GameState::ChampionshipStandings => {
                 if let Some(champ) = &self.championship_session {
-                    render_championship_standings_screen(&self.fonts, champ);
+                    render_championship_standings_screen(&self.fonts, champ, self.championship_standings_page);
                 } else {
                     self.state = GameState::Menu;
                 }

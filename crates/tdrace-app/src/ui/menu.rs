@@ -4006,13 +4006,88 @@ pub fn render_module_select_menu(
     );
 }
 
-/// Renders the Championship Standings table and round victory screen.
-pub fn render_championship_standings_screen(fonts: &Fonts, champ: &ChampionshipSession) {
+pub const STANDINGS_PAGE_SIZE: usize = 16;
+
+/// Calculates the layout rectangles for the championship standings page navigation buttons.
+pub fn championship_standings_page_rects(sw: f32, sh: f32, total_pages: usize) -> Vec<LayoutRect> {
+    if total_pages <= 1 {
+        return Vec::new();
+    }
+    let scaler = UiScaler::new(sw, sh);
+    let table_w = (sw * 0.80).clamp(scaler.s(520.0), scaler.s(850.0));
+    let table_y = scaler.s(90.0);
+    let table_h = scaler.s(420.0);
+    let btn_y = table_y + table_h + scaler.s(12.0);
+    let btn_h = scaler.s(32.0);
+    let gap = scaler.s(12.0);
+
+    let btn_w = ((table_w - gap * (total_pages as f32 - 1.0)) / total_pages as f32).min(scaler.s(220.0));
+    let total_btns_w = btn_w * total_pages as f32 + gap * (total_pages as f32 - 1.0);
+    let start_x = (sw - total_btns_w) * 0.5;
+
+    (0..total_pages)
+        .map(|i| LayoutRect::new(start_x + i as f32 * (btn_w + gap), btn_y, btn_w, btn_h))
+        .collect()
+}
+
+/// Builds a display-only championship standings table for the requested page (16 drivers per page).
+pub fn championship_standings_table(
+    champ: &ChampionshipSession,
+    page: usize,
+) -> DataTable<(usize, crate::series::SeriesStandingEntry)> {
+    let total_drivers = champ.standings.len();
+    let total_pages = if total_drivers == 0 {
+        1
+    } else {
+        (total_drivers + STANDINGS_PAGE_SIZE - 1) / STANDINGS_PAGE_SIZE
+    };
+    let current_page = page.min(total_pages.saturating_sub(1));
+    let start_idx = current_page * STANDINGS_PAGE_SIZE;
+    let end_idx = (start_idx + STANDINGS_PAGE_SIZE).min(total_drivers);
+    let visible_standings = if start_idx < total_drivers {
+        &champ.standings[start_idx..end_idx]
+    } else {
+        &[]
+    };
+
+    let mut table = DataTable::new(0.0, 0.0, 1.0, 28.0, 28.0);
+    type Standing = (usize, crate::series::SeriesStandingEntry);
+    table.add_column(DataColumn::new("pos", "POS", 7.0, ColumnAlign::Left, |r: &Standing| format!("#{}", r.0)));
+    table.add_column(DataColumn::new("driver", "DRIVER", 30.0, ColumnAlign::Left, |r| r.1.driver_name.clone()));
+    table.add_column(DataColumn::new("team", "TEAM / CAR", 35.0, ColumnAlign::Left, |r| r.1.team_name.clone()));
+    table.add_column(DataColumn::new("wins", "WINS", 10.0, ColumnAlign::Right, |r| r.1.wins.to_string()));
+    table.add_column(DataColumn::new("points", "POINTS", 18.0, ColumnAlign::Right, |r| format!("{} PTS", r.1.points)));
+    table.set_rows(
+        visible_standings
+            .iter()
+            .enumerate()
+            .map(|(i, entry)| {
+                let global_rank = start_idx + i + 1;
+                let is_player = entry.driver_id == "player";
+                DataRow::new(entry.driver_id.clone(), (global_rank, entry.clone()))
+                    .with_rank(global_rank)
+                    .with_player(is_player)
+            })
+            .collect(),
+    );
+    table
+}
+
+/// Renders the Championship Standings table and round victory screen with page-based presentation.
+pub fn render_championship_standings_screen(fonts: &Fonts, champ: &ChampionshipSession, page: usize) {
     let sw = screen_width();
     let sh = screen_height();
     let scaler = UiScaler::new(sw, sh);
 
     draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.04, 0.05, 0.08, 0.98));
+
+    let total_drivers = champ.standings.len();
+    let total_pages = if total_drivers == 0 {
+        1
+    } else {
+        (total_drivers + STANDINGS_PAGE_SIZE - 1) / STANDINGS_PAGE_SIZE
+    };
+    let current_page = page.min(total_pages.saturating_sub(1));
 
     // Header
     let title = champ.name.to_uppercase();
@@ -4027,7 +4102,23 @@ pub fn render_championship_standings_screen(fonts: &Fonts, champ: &ChampionshipS
     );
 
     let subtitle = if champ.is_completed {
-        "SEASON FINALE — CHAMPIONSHIP DECIDED!".to_string()
+        if total_pages > 1 {
+            format!(
+                "SEASON FINALE — CHAMPIONSHIP DECIDED! (PAGE {}/{})",
+                current_page + 1,
+                total_pages
+            )
+        } else {
+            "SEASON FINALE — CHAMPIONSHIP DECIDED!".to_string()
+        }
+    } else if total_pages > 1 {
+        format!(
+            "ROUND {} OF {} COMPLETED — DRIVER STANDINGS (PAGE {}/{})",
+            champ.current_round,
+            champ.total_rounds(),
+            current_page + 1,
+            total_pages
+        )
     } else {
         format!(
             "ROUND {} OF {} COMPLETED — DRIVER STANDINGS",
@@ -4063,22 +4154,86 @@ pub fn render_championship_standings_screen(fonts: &Fonts, champ: &ChampionshipS
         1.5,
     );
 
-    let mut table = DataTable::new(table_x, table_y, table_w, scaler.s(28.0), scaler.s(28.0));
-    type Standing = (usize, crate::series::SeriesStandingEntry);
-    table.add_column(DataColumn::new("pos", "POS", 7.0, ColumnAlign::Left, |r: &Standing| format!("#{}", r.0)));
-    table.add_column(DataColumn::new("driver", "DRIVER", 30.0, ColumnAlign::Left, |r| r.1.driver_name.clone()));
-    table.add_column(DataColumn::new("team", "TEAM / CAR", 35.0, ColumnAlign::Left, |r| r.1.team_name.clone()));
-    table.add_column(DataColumn::new("wins", "WINS", 10.0, ColumnAlign::Right, |r| r.1.wins.to_string()));
-    table.add_column(DataColumn::new("points", "POINTS", 18.0, ColumnAlign::Right, |r| format!("{} PTS", r.1.points)));
-    table.set_rows(champ.standings.iter().enumerate().map(|(i, entry)| {
-        DataRow::new(entry.driver_id.clone(), (i + 1, entry.clone())).with_rank(i + 1)
-    }).collect());
-    table.draw(&scaler, fonts, LayoutRect::new(table_x + scaler.s(15.0), table_y + scaler.s(12.0), table_w - scaler.s(30.0), table_h - scaler.s(24.0)));
+    let mut table = championship_standings_table(champ, current_page);
+    table.base_x = table_x;
+    table.base_y = table_y;
+    table.total_width = table_w;
+    table.row_height = scaler.s(28.0);
+    table.header_height = scaler.s(28.0);
+    table.draw(
+        &scaler,
+        fonts,
+        LayoutRect::new(
+            table_x + scaler.s(15.0),
+            table_y + scaler.s(12.0),
+            table_w - scaler.s(30.0),
+            table_h - scaler.s(24.0),
+        ),
+    );
 
-    draw_menu_footer(fonts, &scaler, LayoutRect::new(0.0, sh - scaler.s(40.0), sw, scaler.s(40.0)), &[
+    // Page selector pills if multi-page (e.g. 32 drivers in autocross/rallycross)
+    let page_rects = championship_standings_page_rects(sw, sh, total_pages);
+    for (i, rect) in page_rects.iter().enumerate() {
+        let is_active = i == current_page;
+        let (bg, border, border_thick, text_color) = if is_active {
+            (
+                Color::new(0.20, 0.16, 0.05, 0.95),
+                Palette::NEON_GOLD,
+                2.0,
+                Palette::NEON_GOLD,
+            )
+        } else {
+            (
+                Palette::UI_CARD_BG,
+                Palette::UI_CARD_BORDER,
+                1.0,
+                Palette::UI_TEXT_MUTED,
+            )
+        };
+        scaler.draw_glass_card(rect.x, rect.y, rect.w, rect.h, bg, border, border_thick);
+
+        let p_start = i * STANDINGS_PAGE_SIZE + 1;
+        let p_end = ((i + 1) * STANDINGS_PAGE_SIZE).min(total_drivers);
+        let btn_label = if is_active {
+            format!("PAGE {} • POS #{}-#{}", i + 1, p_start, p_end)
+        } else {
+            format!("Page {} • Pos #{}-#{}", i + 1, p_start, p_end)
+        };
+        fonts.draw_ui_bold_centered(
+            &btn_label,
+            rect.x + rect.w * 0.5,
+            rect.y + rect.h * 0.65,
+            scaler.font_s(12.0),
+            text_color,
+        );
+    }
+
+    if total_pages > 1 {
+        let hint_y = table_y + table_h + scaler.s(58.0);
+        fonts.draw_ui_regular_centered(
+            "[Left / Right / Tab / LB / RB] Switch Page",
+            sw * 0.5,
+            hint_y,
+            scaler.font_s(11.5),
+            Palette::UI_TEXT_MUTED,
+        );
+    }
+
+    let mut footer_items = vec![
         ("Enter / A", if champ.is_completed { "Menu" } else { "Next Round" }),
-        ("R", "Re-run Round"), ("Esc / B", "Exit"),
-    ]);
+    ];
+    if total_pages > 1 {
+        footer_items.push(("◀ / ▶ / Tab", "Page"));
+    }
+    footer_items.push(("R", "Re-run Round"));
+    footer_items.push(("Esc / B", "Exit"));
+
+    draw_menu_footer(
+        fonts,
+        &scaler,
+        LayoutRect::new(0.0, sh - scaler.s(40.0), sw, scaler.s(40.0)),
+        &footer_items,
+    );
 }
 
 /// Renders the exit confirmation modal overlay when pressing Escape or Gamepad B on the Main Menu.
