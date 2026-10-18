@@ -868,6 +868,8 @@ fn default_whoop_spacing() -> f32 {
     4.0
 }
 
+pub const MIN_MEGA_RAMP_GAP_METERS: f32 = 6.0;
+
 fn default_mega_gap_length() -> f32 {
     12.0
 }
@@ -933,7 +935,7 @@ impl JumpRamp {
     }
 
     pub fn with_gap_length(mut self, gap_length: f32) -> Self {
-        self.gap_length = gap_length.clamp(2.0, 80.0);
+        self.gap_length = gap_length.clamp(MIN_MEGA_RAMP_GAP_METERS, 80.0);
         self
     }
 
@@ -946,11 +948,12 @@ impl JumpRamp {
     pub fn effective_gap_length(&self) -> f32 {
         let len = self.length().max(4.0);
         let raw = if self.gap_length > 0.1 {
-            self.gap_length
+            self.gap_length.max(MIN_MEGA_RAMP_GAP_METERS)
         } else {
-            len * 0.34
+            (len * 0.34).max(MIN_MEGA_RAMP_GAP_METERS)
         };
-        raw.clamp(len * 0.15, len * 0.60)
+        let min_gap = (len * 0.15).max(MIN_MEGA_RAMP_GAP_METERS).min(len * 0.60);
+        raw.clamp(min_gap, len * 0.60)
     }
 
     /// Returns `(s_takeoff_end, s_landing_start)` in normalized `[0.0, 1.0]` progress for `RampKind::MegaRamp`.
