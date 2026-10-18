@@ -63,6 +63,18 @@ fn test_seventeen_autocross_circuits_embedded_in_catalog() {
             assert_eq!(s.left_runoff_surface, Some(SurfaceType::DeepGravel), "Circuit {} sample {} left runoff", c.id, idx);
             assert_eq!(s.right_runoff_surface, Some(SurfaceType::DeepGravel), "Circuit {} sample {} right runoff", c.id, idx);
         }
+        if let Some(net) = &track.network {
+            for seg in &net.segments {
+                for (idx, wp) in seg.waypoints.iter().enumerate() {
+                    assert_eq!(wp.left_runoff_surface, Some(SurfaceType::DeepGravel), "Circuit {} seg {} wp {} left runoff", c.id, seg.id.0, idx);
+                    assert_eq!(wp.right_runoff_surface, Some(SurfaceType::DeepGravel), "Circuit {} seg {} wp {} right runoff", c.id, seg.id.0, idx);
+                }
+                for (idx, s) in seg.samples.iter().enumerate() {
+                    assert_eq!(s.left_runoff_surface, Some(SurfaceType::DeepGravel), "Circuit {} seg {} sample {} left runoff", c.id, seg.id.0, idx);
+                    assert_eq!(s.right_runoff_surface, Some(SurfaceType::DeepGravel), "Circuit {} seg {} sample {} right runoff", c.id, seg.id.0, idx);
+                }
+            }
+        }
 
         // Verify OSM provenance URL
         assert!(

@@ -495,6 +495,18 @@ fn test_autocross_circuits_are_unpaved_without_ramps() {
             assert_eq!(s.left_runoff_surface, Some(SurfaceType::DeepGravel), "{}: sample left runoff", id);
             assert_eq!(s.right_runoff_surface, Some(SurfaceType::DeepGravel), "{}: sample right runoff", id);
         }
+        if let Some(net) = &t.network {
+            for seg in &net.segments {
+                for w in &seg.waypoints {
+                    assert_eq!(w.left_runoff_surface, Some(SurfaceType::DeepGravel), "{}: seg {} left runoff", id, seg.id.0);
+                    assert_eq!(w.right_runoff_surface, Some(SurfaceType::DeepGravel), "{}: seg {} right runoff", id, seg.id.0);
+                }
+                for s in &seg.samples {
+                    assert_eq!(s.left_runoff_surface, Some(SurfaceType::DeepGravel), "{}: seg {} sample left runoff", id, seg.id.0);
+                    assert_eq!(s.right_runoff_surface, Some(SurfaceType::DeepGravel), "{}: seg {} sample right runoff", id, seg.id.0);
+                }
+            }
+        }
         let max_bank = t.spline.samples.iter().map(|s| s.bank_angle.abs()).fold(0.0f32, f32::max);
         assert!(max_bank >= min_berm, "{}: max bank {:.1} deg, expected >= {:.1}", id, max_bank, min_berm);
         let min_elev = t.spline.samples.iter().map(|s| s.elevation).fold(f32::MAX, f32::min);

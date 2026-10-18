@@ -337,6 +337,7 @@ impl Track {
         let total = RAMP_LENGTH_M + spec.pad_length;
         let steps = (total / WAYPOINT_STEP_M).ceil() as usize;
         let mut waypoints = Vec::with_capacity(steps + 1);
+        let default_runoff = self.default_runoff_surface();
         for j in 0..=steps {
             let u = total * (1.0 - j as f32 / steps as f32); // metres upstream of the merge
             let loop_sample = self.spline.sample_at_distance(merge_dist - u);
@@ -356,6 +357,8 @@ impl Track {
             waypoint.right_wall_distance = Some(chute_wall_gap);
             waypoint.surface = Some(if blend >= 0.5 { spec.surface } else { loop_sample.surface });
             waypoint.elevation = loop_sample.elevation;
+            waypoint.left_runoff_surface = loop_sample.left_runoff_surface.or(default_runoff);
+            waypoint.right_runoff_surface = loop_sample.right_runoff_surface.or(default_runoff);
             waypoints.push(waypoint);
         }
 

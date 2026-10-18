@@ -2086,6 +2086,27 @@ impl Track {
                 }
             }
         }
+
+        if let Some(ref mut net) = self.network {
+            for seg in &mut net.segments {
+                for wp in &mut seg.waypoints {
+                    if wp.left_runoff_surface.is_none() {
+                        wp.left_runoff_surface = default_runoff;
+                    }
+                    if wp.right_runoff_surface.is_none() {
+                        wp.right_runoff_surface = default_runoff;
+                    }
+                }
+                for s in &mut seg.samples {
+                    if s.left_runoff_surface.is_none() {
+                        s.left_runoff_surface = default_runoff;
+                    }
+                    if s.right_runoff_surface.is_none() {
+                        s.right_runoff_surface = default_runoff;
+                    }
+                }
+            }
+        }
     }
 
     /// Chainable helper applying default runoff surfaces.
