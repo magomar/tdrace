@@ -16013,24 +16013,52 @@ impl RaceSession {
             while get_char_pressed().is_some() {}
         }
 
-        // Arrow Keys (and WASD / Gamepad) Camera Navigation
+        // Arrow Keys (Selection Nudge or Unselected Pan) & WASD / Gamepad Camera Navigation
         if self.editor_modal == EditorModal::None {
             let ctrl_down = is_key_down(KeyCode::LeftControl)
                 || is_key_down(KeyCode::RightControl)
                 || is_key_down(KeyCode::LeftSuper)
                 || is_key_down(KeyCode::RightSuper);
+            let shift_down = is_key_down(KeyCode::LeftShift) || is_key_down(KeyCode::RightShift);
+
+            let arrow_pressed = [
+                is_key_pressed(KeyCode::Up),
+                is_key_pressed(KeyCode::Down),
+                is_key_pressed(KeyCode::Left),
+                is_key_pressed(KeyCode::Right),
+            ];
+            let arrow_down = [
+                is_key_down(KeyCode::Up),
+                is_key_down(KeyCode::Down),
+                is_key_down(KeyCode::Left),
+                is_key_down(KeyCode::Right),
+            ];
+
+            let mut has_selection = false;
+            if let Some(state) = &mut self.editor_state {
+                has_selection = !state.selection.is_none();
+                if self.editor_tools.step_arrow_nudge(
+                    state,
+                    arrow_pressed,
+                    arrow_down,
+                    shift_down,
+                    macroquad::time::get_time(),
+                ) {
+                    self.audio.play_sfx(SfxType::UiMove);
+                }
+            }
 
             let mut pan_dir = Vec2::ZERO;
-            if is_key_down(KeyCode::Up) || (!ctrl_down && is_key_down(KeyCode::W)) {
+            if (!has_selection && arrow_down[0]) || (!ctrl_down && is_key_down(KeyCode::W)) {
                 pan_dir.y += 1.0;
             }
-            if is_key_down(KeyCode::Down) || (!ctrl_down && is_key_down(KeyCode::S)) {
+            if (!has_selection && arrow_down[1]) || (!ctrl_down && is_key_down(KeyCode::S)) {
                 pan_dir.y -= 1.0;
             }
-            if is_key_down(KeyCode::Left) || (!ctrl_down && is_key_down(KeyCode::A)) {
+            if (!has_selection && arrow_down[2]) || (!ctrl_down && is_key_down(KeyCode::A)) {
                 pan_dir.x -= 1.0;
             }
-            if is_key_down(KeyCode::Right) || (!ctrl_down && is_key_down(KeyCode::D)) {
+            if (!has_selection && arrow_down[3]) || (!ctrl_down && is_key_down(KeyCode::D)) {
                 pan_dir.x += 1.0;
             }
 
@@ -16047,11 +16075,7 @@ impl RaceSession {
             }
 
             if pan_dir.length_squared() > 0.0 {
-                let speed_mult = if is_key_down(KeyCode::LeftShift) || is_key_down(KeyCode::RightShift) {
-                    2.5
-                } else {
-                    1.0
-                };
+                let speed_mult = if shift_down { 2.5 } else { 1.0 };
                 self.editor_camera.pan_direction(pan_dir, speed_mult, dt);
             }
 

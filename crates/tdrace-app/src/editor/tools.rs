@@ -13,8 +13,9 @@ use tdrace_core::track::{CarCategory, ChuteSide, LaunchChuteSpec, PackedGridPatt
 
 use super::camera::EditorCamera;
 use super::inspector::{
-    InspectorView, BANKING_RANGE, GLOBAL_WALL_OFFSET_RANGE, RAMP_HEIGHT_RANGE, RAMP_LENGTH_RANGE, RAMP_PITCH_RANGE, RAMP_WIDTH_RANGE,
-    WALL_DISTANCE_RANGE, WIDTH_RANGE,
+    InspectorView, BANKING_RANGE, GLOBAL_WALL_OFFSET_RANGE, HOLD_REPEAT_DELAY, HOLD_REPEAT_INTERVAL,
+    RAMP_HEIGHT_RANGE, RAMP_LENGTH_RANGE, RAMP_PITCH_RANGE, RAMP_WIDTH_RANGE, WALL_DISTANCE_RANGE,
+    WIDTH_RANGE,
 };
 use super::state::{EditorState, Selection};
 use crate::render::color::Palette;
@@ -186,6 +187,11 @@ pub struct ToolSettings {
     /// Set when this frame's Escape already cancelled an unfinished polygon, so the
     /// editor UI does not also treat it as "exit the editor".
     pub escape_consumed: bool,
+
+    /// Next repeat timestamp (seconds) for held arrow keys `[Up, Down, Left, Right]`.
+    pub arrow_nudge_next_at: [f64; 4],
+    /// True while an arrow-key nudge gesture is active.
+    pub arrow_nudge_active: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -265,6 +271,8 @@ impl Default for ToolSettings {
             chute_surface: SurfaceType::Concrete,
             chute_status: None,
             escape_consumed: false,
+            arrow_nudge_next_at: [0.0; 4],
+            arrow_nudge_active: false,
         }
     }
 }
@@ -1729,6 +1737,221 @@ impl ToolSettings {
         self.drag_initial_grid_slots.clear();
 
         state.revalidate();
+    }
+
+    /// Translates all currently selected entities by `delta` in world coordinates.
+    pub fn translate_selected(&mut self, state: &mut EditorState, delta: Vec2) -> bool {
+        if delta == Vec2::ZERO || state.selection.is_none() {
+            return false;
+        }
+
+        let wp_indices = state.selection.selected_waypoint_indices();
+        let branch_wps = state.selection.selected_branch_waypoints();
+        let zone_indices = state.selection.selected_surface_zone_indices();
+        let obs_indices = state.selection.selected_obstacle_indices();
+        let ramp_indices = state.selection.selected_jump_ramp_indices();
+        let cp_indices = state.selection.selected_checkpoint_indices();
+        let grid_indices = state.selection.selected_grid_slot_indices();
+        let move_pit_box = state.selection.is_pit_box_selected();
+
+        let mut any_moved = false;
+        let mut geometry_dirty = false;
+        let mut checkpoints_moved = false;
+        let mut affected_branch_segs = Vec::new();
+
+        for idx in wp_indices {
+            if idx < state.track.spline.waypoints.len() {
+                if !any_moved {
+                    state.record_undo();
+                    any_moved = true;
+                }
+                state.track.spline.waypoints[idx].point += delta;
+                geometry_dirty = true;
+            }
+        }
+
+        for (seg_id, idx) in branch_wps {
+            let valid = state
+                .track
+                .network
+                .as_ref()
+                .and_then(|net| net.segments.iter().find(|s| s.id == seg_id))
+                .is_some_and(|seg| idx < seg.waypoints.len());
+            if valid {
+                if !any_moved {
+                    state.record_undo();
+                    any_moved = true;
+                }
+                if let Some(net) = state.track.network.as_mut() {
+                    if let Some(seg) = net.segments.iter_mut().find(|s| s.id == seg_id) {
+                        seg.waypoints[idx].point += delta;
+                        if !affected_branch_segs.contains(&seg_id) {
+                            affected_branch_segs.push(seg_id);
+                        }
+                    }
+                }
+            }
+        }
+
+        for idx in zone_indices {
+            if idx < state.track.geometry.surface_zones.len() {
+                if !any_moved {
+                    state.record_undo();
+                    any_moved = true;
+                }
+                let old_center = get_surface_shape_center(&state.track.geometry.surface_zones[idx].shape);
+                set_surface_zone_position(&mut state.track.geometry.surface_zones[idx], old_center + delta);
+            }
+        }
+
+        for idx in obs_indices {
+            if idx < state.track.geometry.obstacles.len() {
+                if !any_moved {
+                    state.record_undo();
+                    any_moved = true;
+                }
+                let old_center = state.track.geometry.obstacles[idx].center();
+                set_obstacle_position(&mut state.track.geometry.obstacles[idx], old_center + delta);
+            }
+        }
+
+        for idx in ramp_indices {
+            if idx < state.track.geometry.jump_ramps.len() {
+                if !any_moved {
+                    state.record_undo();
+                    any_moved = true;
+                }
+                let old_center = get_surface_shape_center(&state.track.geometry.jump_ramps[idx].shape);
+                set_jump_ramp_position(&mut state.track.geometry.jump_ramps[idx], old_center + delta);
+            }
+        }
+
+        for idx in cp_indices {
+            if idx < state.track.checkpoints.len() {
+                if !any_moved {
+                    state.record_undo();
+                    any_moved = true;
+                }
+                state.track.checkpoints[idx].gate.start += delta;
+                state.track.checkpoints[idx].gate.end += delta;
+                checkpoints_moved = true;
+            }
+        }
+
+        for idx in grid_indices {
+            if idx < state.track.grid_positions.len() {
+                if !any_moved {
+                    state.record_undo();
+                    any_moved = true;
+                }
+                state.track.grid_positions[idx].position += delta;
+            }
+        }
+
+        if move_pit_box && matches!(state.track.pit_box_area, Some(SurfaceShape::Aabb { .. })) {
+            if !any_moved {
+                state.record_undo();
+                any_moved = true;
+            }
+            if let Some(SurfaceShape::Aabb { min, max }) = &mut state.track.pit_box_area {
+                *min += delta;
+                *max += delta;
+            }
+        }
+
+        if !affected_branch_segs.is_empty() {
+            state.rebuild_branch_segments(&affected_branch_segs);
+        } else if geometry_dirty {
+            state.rebuild_geometry();
+        } else if any_moved {
+            if checkpoints_moved {
+                state.auto_generate_grid();
+            }
+            crate::render::track::clear_track_render_cache();
+            state.revalidate();
+        }
+
+        any_moved
+    }
+
+    /// Nudges the active selection using arrow keys (`[Up, Down, Left, Right]`), with hold-to-repeat
+    /// and a 5x coarse multiplier when `shift_down` is active.
+    pub fn step_arrow_nudge(
+        &mut self,
+        state: &mut EditorState,
+        pressed: [bool; 4],
+        down: [bool; 4],
+        shift_down: bool,
+        now: f64,
+    ) -> bool {
+        if state.selection.is_none() || self.is_dragging || self.is_placing {
+            if self.arrow_nudge_active {
+                self.arrow_nudge_active = false;
+                self.arrow_nudge_next_at = [0.0; 4];
+                state.end_undo_gesture();
+            }
+            return false;
+        }
+
+        let any_pressed = pressed.iter().any(|&p| p);
+        let any_down = down.iter().any(|&d| d);
+
+        if !any_down && !any_pressed {
+            if self.arrow_nudge_active {
+                self.arrow_nudge_active = false;
+                self.arrow_nudge_next_at = [0.0; 4];
+                state.end_undo_gesture();
+            }
+            return false;
+        }
+
+        if !self.arrow_nudge_active {
+            if !any_pressed {
+                return false;
+            }
+            self.arrow_nudge_active = true;
+            state.begin_undo_gesture();
+        }
+
+        let dirs = [
+            Vec2::new(0.0, 1.0),  // Up
+            Vec2::new(0.0, -1.0), // Down
+            Vec2::new(-1.0, 0.0), // Left
+            Vec2::new(1.0, 0.0),  // Right
+        ];
+        let mut step_dir = Vec2::ZERO;
+        for i in 0..4 {
+            if !down[i] && !pressed[i] {
+                self.arrow_nudge_next_at[i] = 0.0;
+                continue;
+            }
+            if pressed[i] {
+                step_dir += dirs[i];
+                self.arrow_nudge_next_at[i] = now + HOLD_REPEAT_DELAY;
+            } else if self.arrow_nudge_next_at[i] > 0.0 && now >= self.arrow_nudge_next_at[i] {
+                step_dir += dirs[i];
+                self.arrow_nudge_next_at[i] += HOLD_REPEAT_INTERVAL;
+                if self.arrow_nudge_next_at[i] <= now {
+                    self.arrow_nudge_next_at[i] = now + HOLD_REPEAT_INTERVAL;
+                }
+            }
+        }
+
+        let moved = if step_dir != Vec2::ZERO {
+            let base_step = state.grid_snap.step().unwrap_or(1.0);
+            let mult = if shift_down { 5.0 } else { 1.0 };
+            self.translate_selected(state, step_dir * (base_step * mult))
+        } else {
+            false
+        };
+
+        if !any_down {
+            self.arrow_nudge_active = false;
+            self.arrow_nudge_next_at = [0.0; 4];
+            state.end_undo_gesture();
+        }
+
+        moved
     }
 
     /// Handles secondary button (Right Click) down event to place/create elements based on active tool.
@@ -4812,6 +5035,87 @@ mod tests {
         tools.handle_secondary_up(&mut state, Vec2::new(920.0, 900.0));
         assert!(!tools.is_placing);
         assert_eq!(state.track.geometry.jump_ramps.len(), initial_ramps + 1);
+    }
+
+    #[test]
+    fn test_arrow_nudge_selection_and_shift_and_hold_repeat() {
+        let track = tdrace_core::catalog::official_track("classic", "gt_coastal_grand_prix");
+        let mut state = EditorState::new(track);
+        let mut tools = ToolSettings::default();
+
+        // With no selection, arrow keys do not nudge anything
+        assert!(!tools.step_arrow_nudge(
+            &mut state,
+            [true, false, false, false],
+            [true, false, false, false],
+            false,
+            1.0,
+        ));
+        assert_eq!(state.history.undo_count(), 0);
+
+        // Select waypoint 0; default snap is 2.5m
+        state.select(Selection::Waypoint(0));
+        let wp0_start = state.track.spline.waypoints[0].point;
+
+        // Single tap Right (+X by 2.5m)
+        assert!(tools.step_arrow_nudge(
+            &mut state,
+            [false, false, false, true],
+            [false, false, false, false],
+            false,
+            1.0,
+        ));
+        assert_eq!(state.track.spline.waypoints[0].point, wp0_start + Vec2::new(2.5, 0.0));
+        assert_eq!(state.history.undo_count(), 1);
+
+        // Shift + tap Up (+Y by 5 * 2.5m = 12.5m)
+        assert!(tools.step_arrow_nudge(
+            &mut state,
+            [true, false, false, false],
+            [false, false, false, false],
+            true,
+            2.0,
+        ));
+        assert_eq!(state.track.spline.waypoints[0].point, wp0_start + Vec2::new(2.5, 12.5));
+        assert_eq!(state.history.undo_count(), 2);
+
+        // Hold Left: press at t=10.0, hold before delay (t=10.2 -> no step), hold past delay (t=10.45 -> step), release at t=10.5
+        state.grid_snap = crate::editor::GridSnapSetting::Off; // 1.0m base step when snap is Off
+        let before_hold = state.track.spline.waypoints[0].point;
+        assert!(tools.step_arrow_nudge(
+            &mut state,
+            [false, false, true, false],
+            [false, false, true, false],
+            false,
+            10.0,
+        ));
+        assert_eq!(state.track.spline.waypoints[0].point, before_hold + Vec2::new(-1.0, 0.0));
+        assert!(!tools.step_arrow_nudge(
+            &mut state,
+            [false, false, false, false],
+            [false, false, true, false],
+            false,
+            10.2,
+        ));
+        assert!(tools.step_arrow_nudge(
+            &mut state,
+            [false, false, false, false],
+            [false, false, true, false],
+            false,
+            10.45,
+        ));
+        assert_eq!(state.track.spline.waypoints[0].point, before_hold + Vec2::new(-2.0, 0.0));
+        // Release ends the undo gesture; the entire hold was 1 undo step
+        assert!(!tools.step_arrow_nudge(
+            &mut state,
+            [false, false, false, false],
+            [false, false, false, false],
+            false,
+            10.5,
+        ));
+        assert_eq!(state.history.undo_count(), 3);
+        assert!(state.undo());
+        assert_eq!(state.track.spline.waypoints[0].point, before_hold);
     }
 }
 
