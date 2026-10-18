@@ -452,8 +452,10 @@ pub fn resolve_all_wall_collisions_into<B: Body2D>(
     }
 }
 
-/// Resolves collisions between a vehicle and the vertical front face of the landing segment
-/// on any [`RampKind::MegaRamp`] when the vehicle fails to clear the gap onto the landing deck.
+/// Resolves collisions between a vehicle and the vertical walls bounding the gap of any
+/// [`RampKind::MegaRamp`] (both the vertical front face of the landing segment at `s = s_landing`
+/// and the vertical drop-off face of the take-off segment at `s = s_takeoff`) when the vehicle
+/// fails to clear the gap, trapping it longitudinally between the two ramp walls.
 pub fn resolve_mega_ramp_wall_collisions_into<B: Body2D>(
     car: &mut B,
     jump_ramps: &[JumpRamp],
@@ -491,28 +493,56 @@ pub fn resolve_mega_ramp_wall_collisions_into<B: Body2D>(
         let local_x = rel.dot(fwd);
         let local_y = rel.dot(right);
 
-        // Only collide when approaching the landing wall from the gap (or if center slightly tunneled past it at ground level)
-        if local_x <= x_takeoff_end || local_x > x_landing_start + 2.0 {
-            continue;
-        }
         if local_y.abs() > half_wid + car_reach {
             continue;
         }
 
-        // If the vehicle center already crossed x_landing_start without clearing the deck,
-        // shift it back onto the gap side of the wall so the collision normal points into the gap (-fwd).
-        if local_x >= x_landing_start - 0.05 && local_y.abs() <= half_wid + 0.5 {
-            let pullback = (local_x - (x_landing_start - 0.10)).max(0.0);
-            if pullback > 0.0 {
-                car.translate(-fwd * pullback);
+        // 1. Vertical front face of the landing segment (s = s_landing, normal -fwd into gap)
+        if local_x > x_takeoff_end && local_x <= x_landing_start + 2.0 {
+            if local_x >= x_landing_start - 0.05 && local_y.abs() <= half_wid + 0.5 {
+                let pullback = (local_x - (x_landing_start - 0.10)).max(0.0);
+                if pullback > 0.0 {
+                    car.translate(-fwd * pullback);
+                }
+            }
+
+            if let Some(wall) = ramp.mega_landing_wall_at_elevation(road_elevation) {
+                for iter in 0..2 {
+                    if let Some(ev) = resolve_car_wall_collision(car, &wall) {
+                        if iter == 0 {
+                            events_out.push(ev);
+                        }
+                    }
+                }
             }
         }
 
-        if let Some(wall) = ramp.mega_landing_wall_at_elevation(road_elevation) {
-            for iter in 0..2 {
-                if let Some(ev) = resolve_car_wall_collision(car, &wall) {
-                    if iter == 0 {
-                        events_out.push(ev);
+        // Recompute local_x after potential landing wall pushout
+        let rel_after = car.position() - center;
+        let local_x_after = rel_after.dot(fwd);
+        let local_y_after = rel_after.dot(right);
+
+        // 2. Vertical drop-off face of the take-off segment (s = s_takeoff, normal +fwd into gap)
+        let active_takeoff_wall = (car.jump_height() <= 0.05 || car.velocity().dot(fwd) <= 0.0)
+            && ((local_x_after > x_takeoff_end && local_x_after < x_landing_start)
+                || (local_x_after > x_takeoff_end - 2.0
+                    && local_x_after <= x_takeoff_end
+                    && car.dynamic_elevation() < 0.15));
+
+        if active_takeoff_wall {
+            if local_x_after <= x_takeoff_end + 0.05 && local_y_after.abs() <= half_wid + 0.5 {
+                let pushforward = (x_takeoff_end + 0.10 - local_x_after).max(0.0);
+                if pushforward > 0.0 {
+                    car.translate(fwd * pushforward);
+                }
+            }
+
+            if let Some(wall) = ramp.mega_takeoff_wall_at_elevation(road_elevation) {
+                for iter in 0..2 {
+                    if let Some(ev) = resolve_car_wall_collision(car, &wall) {
+                        if iter == 0 {
+                            events_out.push(ev);
+                        }
                     }
                 }
             }

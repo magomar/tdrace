@@ -1255,6 +1255,37 @@ impl JumpRamp {
         (catch_h - 1.15).max(0.05)
     }
 
+    /// Returns the physical concrete wall barrier along the vertical drop-off face of the
+    /// take-off segment (`s = s_takeoff`) for a `MegaRamp` at the given base road elevation,
+    /// or `None` for other ramp kinds.
+    pub fn mega_takeoff_wall_at_elevation(&self, elevation: f32) -> Option<WallBarrier> {
+        if self.kind != RampKind::MegaRamp {
+            return None;
+        }
+        let (s_takeoff, _) = self.mega_segment_bounds();
+        let center = self.shape.center();
+        let half = self.half_extents();
+        let half_len = half.x.max(0.5);
+        let half_wid = half.y.max(0.5);
+        let fwd = self.direction.normalize_or_zero();
+        let right = Vec2::new(fwd.y, -fwd.x);
+        let x_takeoff_end = -half_len + s_takeoff * (2.0 * half_len);
+        let t1 = center + fwd * x_takeoff_end - right * half_wid;
+        let t2 = center + fwd * x_takeoff_end + right * half_wid;
+        Some(WallBarrier::with_elevation(
+            t1,
+            t2,
+            BarrierType::Concrete,
+            elevation,
+        ))
+    }
+
+    /// Returns the physical concrete wall barrier along the vertical drop-off face of the
+    /// take-off segment (`s = s_takeoff`) at base elevation `0.0` for a `MegaRamp`.
+    pub fn mega_takeoff_wall(&self) -> Option<WallBarrier> {
+        self.mega_takeoff_wall_at_elevation(0.0)
+    }
+
     /// Returns the physical concrete wall barrier along the vertical front face of the landing
     /// segment (`s = s_landing`) for a `MegaRamp` at the given base road elevation, or `None`
     /// for other ramp kinds.
@@ -1450,6 +1481,17 @@ impl JumpRampCarExt for wheelbase::Car {
                     self.state.is_airborne = true;
                     self.state.vertical_velocity = 0.0;
                     return false;
+                } else if s <= s_takeoff {
+                    let surf_elev = ramp.surface_elevation_at(self.state.position);
+                    let min_takeoff_h = (surf_elev - 1.15).max(0.05);
+                    if surf_elev > (ramp.height * 0.50).max(0.25)
+                        && self.state.ramp_elevation < min_takeoff_h
+                        && speed_along <= 3.5
+                    {
+                        // Grounded in the gap and reversing/bouncing against the vertical take-off wall
+                        self.state.ramp_elevation = 0.0;
+                        return false;
+                    }
                 } else if s >= s_landing {
                     let surf_elev = ramp.surface_elevation_at(self.state.position);
                     let min_landing_h = (surf_elev - 1.15).max(0.05);
@@ -2493,7 +2535,8 @@ mod tests {
         .with_kind(RampKind::MegaRamp)
         .with_gap_length(12.0);
 
-        let (_, s_landing) = mega.mega_segment_bounds();
+        let (s_takeoff, s_landing) = mega.mega_segment_bounds();
+        let x_takeoff_end = s_takeoff * 40.0;
         let x_landing_start = s_landing * 40.0;
 
         let mut geom = TrackGeometry::default();
@@ -2533,6 +2576,42 @@ mod tests {
             car_short.state.position.x < x_landing_start - 2.0,
             "Car must be pushed out before the landing ramp start, got x = {}",
             car_short.state.position.x
+        );
+
+        // Case 1b: Car in the gap reversing/bouncing into the vertical side of the take-off ramp is trapped
+        let mut car_reverse = Car::new(CarConfig::sports_car())
+            .with_pose(Vec2::new(x_takeoff_end + 1.5, 0.0), 0.0);
+        car_reverse.state.velocity = Vec2::new(-12.0, 0.0);
+        car_reverse.state.speed = 12.0;
+
+        car_reverse.step_ramp_interaction(&mega, 1.0 / 60.0);
+        assert_eq!(
+            car_reverse.state.ramp_elevation, 0.0,
+            "Car in gap reversing into take-off lip must not snap onto elevated take-off ramp"
+        );
+
+        events.clear();
+        resolve_track_wall_collisions_into(&mut car_reverse, &geom, &mut events);
+        assert_eq!(
+            events.len(),
+            1,
+            "Car reversing into take-off ramp vertical side must trigger a WallCollisionEvent"
+        );
+        assert_eq!(events[0].barrier_type, BarrierType::Concrete);
+        assert!(
+            events[0].normal.x > 0.95,
+            "Take-off wall normal must point into the gap (+X), got {:?}",
+            events[0].normal
+        );
+        assert!(
+            car_reverse.state.velocity.x > 0.0,
+            "Car must bounce forward into the gap off the take-off wall, got vx = {}",
+            car_reverse.state.velocity.x
+        );
+        assert!(
+            car_reverse.state.position.x > x_takeoff_end + 2.0,
+            "Car must remain trapped inside the gap after hitting take-off wall, got x = {}",
+            car_reverse.state.position.x
         );
 
         // Case 2: Car launches off the take-off lip with insufficient speed (10 m/s) to cross the 12m gap
