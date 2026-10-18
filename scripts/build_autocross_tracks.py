@@ -360,8 +360,8 @@ def main():
                 "right_wall": True,
                 "left_wall_distance": None,
                 "right_wall_distance": None,
-                "left_runoff_surface": "Grass",
-                "right_runoff_surface": "Grass",
+                "left_runoff_surface": "DeepGravel",
+                "right_runoff_surface": "DeepGravel",
             })
 
         # Spec 097 Pillar V: Multi-waypoint hairpin arc fans for acute corners

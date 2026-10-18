@@ -45,7 +45,7 @@ fn test_seventeen_autocross_circuits_embedded_in_catalog() {
         assert_eq!(track.grid_positions.len(), 8, "Autocross launch chutes seat 8 vehicles (spec 103)");
         assert!(track.checkpoints.len() >= 4, "Must have valid checkpoints");
 
-        // Verify dominant surface is Dirt
+        // Verify dominant surface is Dirt and runoff is DeepGravel
         let total_samples = track.spline.samples.len();
         let dirt_samples = track.spline.samples.iter().filter(|s| s.surface == SurfaceType::Dirt).count();
         assert!(
@@ -55,6 +55,14 @@ fn test_seventeen_autocross_circuits_embedded_in_catalog() {
             dirt_samples,
             total_samples
         );
+        for (idx, wp) in track.spline.waypoints.iter().enumerate() {
+            assert_eq!(wp.left_runoff_surface, Some(SurfaceType::DeepGravel), "Circuit {} wp {} left runoff", c.id, idx);
+            assert_eq!(wp.right_runoff_surface, Some(SurfaceType::DeepGravel), "Circuit {} wp {} right runoff", c.id, idx);
+        }
+        for (idx, s) in track.spline.samples.iter().enumerate() {
+            assert_eq!(s.left_runoff_surface, Some(SurfaceType::DeepGravel), "Circuit {} sample {} left runoff", c.id, idx);
+            assert_eq!(s.right_runoff_surface, Some(SurfaceType::DeepGravel), "Circuit {} sample {} right runoff", c.id, idx);
+        }
 
         // Verify OSM provenance URL
         assert!(

@@ -1500,6 +1500,7 @@ impl Track {
     /// Resolves the default runoff corridor surface type for the track based on discipline and environment:
     /// - Snow or icy circuits -> `SurfaceType::DeepSnow`
     /// - Sandy circuits -> `SurfaceType::DeepSand`
+    /// - Autocross circuits -> `SurfaceType::DeepGravel`
     /// - Pure dirt or mud circuits -> `SurfaceType::Dirt`
     /// - Kart circuits -> `SurfaceType::Concrete`
     /// - GT and Rallycross circuits -> `SurfaceType::DeepGravel` (gravel traps, Spec 099)
@@ -1534,7 +1535,15 @@ impl Track {
             return Some(SurfaceType::DeepSand);
         }
 
-        // 3. Pure dirt or mud circuits
+        // 3. Autocross circuits
+        if self.car_category == CarCategory::Autocross
+            || self.belongs_to_module("autocross")
+            || name_lower.contains("autocross")
+        {
+            return Some(SurfaceType::DeepGravel);
+        }
+
+        // 4. Pure dirt or mud circuits
         if self.default_surface == SurfaceType::Dirt
             || self.default_surface.is_mud()
             || (!self.spline.waypoints.is_empty()
@@ -1548,7 +1557,7 @@ impl Track {
             return Some(SurfaceType::Dirt);
         }
 
-        // 4. Kart circuits
+        // 5. Kart circuits
         if self.car_category == CarCategory::Kart
             || self.belongs_to_module("kart")
             || name_lower.contains("kart")
@@ -1556,7 +1565,7 @@ impl Track {
             return Some(SurfaceType::Concrete);
         }
 
-        // 5. GT and Rallycross circuits
+        // 6. GT and Rallycross circuits
         if self.car_category == CarCategory::Gt
             || self.car_category == CarCategory::Rally
             || self.belongs_to_module("gt")
@@ -2784,6 +2793,12 @@ mod tests {
         assert_eq!(rx_track.default_runoff_surface(), Some(SurfaceType::DeepGravel));
         rx_track.apply_default_runoff_surfaces();
         assert_eq!(rx_track.spline.samples[0].left_runoff_surface, Some(SurfaceType::DeepGravel));
+
+        // 2b. Autocross Circuit -> DeepGravel
+        let mut ax_track = make_track("Nova Paka AX", CarCategory::Autocross, SurfaceType::Grass, "autocross");
+        assert_eq!(ax_track.default_runoff_surface(), Some(SurfaceType::DeepGravel));
+        ax_track.apply_default_runoff_surfaces();
+        assert_eq!(ax_track.spline.samples[0].left_runoff_surface, Some(SurfaceType::DeepGravel));
 
         // 3. Kart Circuit -> Concrete
         let mut kart_track = make_track("Lonato Karting", CarCategory::Kart, SurfaceType::Grass, "kart");

@@ -1802,7 +1802,7 @@ MEADOW_SPRINT = Circuit(
     car_model_id="classic_ax_mudlark",
     default_laps=6,
     default_surface="Grass",
-    road=Road(width=13.0, left_wall_distance=3.5, right_wall_distance=3.5, surface="Dirt"),
+    road=Road(width=13.0, left_wall_distance=3.5, right_wall_distance=3.5, surface="Dirt", left_runoff="DeepGravel", right_runoff="DeepGravel"),
     segments=[
         S(130, surface="Dirt", wall_type="TireWall"),               # 0: Start straight (East, 0 deg)
         A(35, 90, surface="Dirt", bank=8.0, wall_type="TireWall"),  # 1: Banked berm turn! (to +90 deg / North)
@@ -1857,7 +1857,7 @@ CLAY_BOWL = Circuit(
     car_model_id="classic_ax_brawler",
     default_laps=5,
     default_surface="Grass",
-    road=Road(width=13.0, left_wall_distance=3.5, right_wall_distance=3.5, surface="Dirt"),
+    road=Road(width=13.0, left_wall_distance=3.5, right_wall_distance=3.5, surface="Dirt", left_runoff="DeepGravel", right_runoff="DeepGravel"),
     segments=[
         S(45, surface="Concrete", wall_type="Steel"),               # 0: Launch pad (East, 0 deg)
         S(90, surface="Dirt", wall_type="TireWall"),                # 1: Start straight (East, 0 deg)
@@ -1920,7 +1920,7 @@ HILLSIDE_HAMMER = Circuit(
     car_model_id="classic_ax_mudlark",
     default_laps=4,
     default_surface="Grass",
-    road=Road(width=13.0, left_wall_distance=3.5, right_wall_distance=3.5, surface="Dirt"),
+    road=Road(width=13.0, left_wall_distance=3.5, right_wall_distance=3.5, surface="Dirt", left_runoff="DeepGravel", right_runoff="DeepGravel"),
     segments=[
         S(160, surface="Dirt", wall_type="TireWall"),               # 0: Start straight (East, 0 deg)
         A(35, -90, surface="PackedGravel", wall_type="TireWall"),         # 1: Turn 1 (to -90 deg / South)

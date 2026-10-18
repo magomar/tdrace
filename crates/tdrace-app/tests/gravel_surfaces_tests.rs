@@ -154,6 +154,7 @@ fn test_official_circuits_use_packed_and_deep_gravel() {
             surface_strings(&json, "", &mut strings);
             let asphalt_circuit = matches!(module_id.as_str(), "gt" | "rally" | "kart")
                 || (module_id == "classic" && ["gt_", "rx_", "kart_"].iter().any(|p| id.starts_with(p)));
+            let autocross_circuit = module_id == "autocross" || (module_id == "classic" && id.starts_with("ax_"));
             for (key, value) in strings {
                 assert_ne!(value, "Gravel", "{}/{}: '{}' still uses the old name Gravel", module_id, id, key);
                 if asphalt_circuit {
@@ -161,6 +162,8 @@ fn test_official_circuits_use_packed_and_deep_gravel() {
                     if key.ends_with("_runoff_surface") {
                         assert_ne!(value, "PackedGravel", "{}/{}: gravel run-off must be DeepGravel", module_id, id);
                     }
+                } else if autocross_circuit && key.ends_with("_runoff_surface") {
+                    assert_eq!(value, "DeepGravel", "{}/{}: autocross run-off must be DeepGravel", module_id, id);
                 } else if value == "DeepSand" && (module_id == "extreme_offroad" || id.starts_with("at_")) {
                     offroad_deep_sand += 1;
                 }
