@@ -172,6 +172,7 @@ pub fn bake(track: &mut Track, opts: &BakeOptions) -> Result<BakeReport, String>
         }
     }
     if track.network.is_some() {
+        track.sync_network_main_segments();
         track.trim_walls_for_network();
         // The joker walls are built around the main walls (and drop pieces that cross them), so when the main
         // walls are regenerated the joker walls must be too, as in Track::rebuild_geometry.

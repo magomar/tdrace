@@ -2153,6 +2153,7 @@ impl Track {
         }
         self.apply_default_runoff_surfaces();
         if self.network.is_some() {
+            self.sync_network_main_segments();
             self.trim_walls_for_network();
             self.generate_network_walls();
             if let Some(ref mut net) = self.network {
@@ -2160,6 +2161,193 @@ impl Track {
             }
         }
         self.geometry.recompute_scenery_obstacles();
+    }
+
+    /// Synchronizes the default layout's main-circuit `RoadSegment`s inside `self.network`
+    /// with `self.spline.waypoints` when `self.branch_layout.is_none()`.
+    ///
+    /// Legacy multi-segment `TrackNetwork` circuits (such as Lydden Hill) store the main loop
+    /// split across `default_layout.segment_sequence` (e.g. `[Seg 0, Seg 1, Seg 3, Seg 4]`),
+    /// while Track Studio edits `self.spline.waypoints` directly. Reslicing the main segments
+    /// from `self.spline.waypoints` prevents stale main-segment ribbons from cutting across the
+    /// infield and causing `trim_walls_for_network()` to punch spurious wall holes.
+    pub fn sync_network_main_segments(&mut self) {
+        if self.branch_layout.is_some() || !self.spline.closed || self.spline.waypoints.len() < 3 {
+            return;
+        }
+        let Some(ref mut net) = self.network else {
+            return;
+        };
+        let default_seq: Vec<SegmentId> = net
+            .active_or_default_layout(None)
+            .map(|l| l.segment_sequence.clone())
+            .unwrap_or_default();
+        if default_seq.is_empty() {
+            return;
+        }
+
+        let wps = &self.spline.waypoints;
+        let n = wps.len();
+
+        if default_seq.len() == 1 {
+            let sid = default_seq[0];
+            if let Some(seg) = net.get_segment_mut(sid) {
+                if seg.waypoints != *wps || seg.samples.is_empty() {
+                    seg.waypoints = wps.clone();
+                    seg.samples = self.spline.samples.clone();
+                    seg.length = self.spline.total_length;
+                }
+            }
+            for layout in &mut net.layouts {
+                let len: f32 = layout
+                    .segment_sequence
+                    .iter()
+                    .filter_map(|&id| net.segments.iter().find(|s| s.id == id))
+                    .map(|s| s.length)
+                    .sum();
+                layout.total_lap_length = len;
+            }
+            return;
+        }
+
+        let m = default_seq.len();
+        let mut interior_wp_indices = Vec::with_capacity(m - 1);
+        for k in 0..(m - 1) {
+            let exit_sock_id = net.get_segment(default_seq[k]).and_then(|s| s.exit_junction);
+            let entry_sock_id = net.get_segment(default_seq[k + 1]).and_then(|s| s.entry_junction);
+            let sock_id = entry_sock_id.or(exit_sock_id);
+            let anchor_pt = sock_id
+                .and_then(|sid| {
+                    let j = net.get_junction(sid.junction_id)?;
+                    j.egress_socket(sid.socket_index)
+                        .or_else(|| j.ingress_socket(sid.socket_index))
+                        .map(|s| s.point)
+                })
+                .or_else(|| {
+                    net.get_segment(default_seq[k])
+                        .and_then(|s| s.waypoints.last())
+                        .map(|w| w.point)
+                });
+            let Some(pt) = anchor_pt else {
+                return;
+            };
+            let Some((best_idx, _)) = wps.iter().enumerate().min_by(|(_, a), (_, b)| {
+                a.point
+                    .distance_squared(pt)
+                    .total_cmp(&b.point.distance_squared(pt))
+            }) else {
+                return;
+            };
+            interior_wp_indices.push(best_idx);
+        }
+
+        let non_wrapping = interior_wp_indices.first().copied().unwrap_or(0) > 0
+            && interior_wp_indices.windows(2).all(|w| w[0] < w[1])
+            && interior_wp_indices.last().copied().unwrap_or(n) < n;
+
+        let seam_w0 = if non_wrapping {
+            0usize
+        } else {
+            let entry_sock_id = net.get_segment(default_seq[0]).and_then(|s| s.entry_junction);
+            let anchor_pt = entry_sock_id
+                .and_then(|sid| {
+                    let j = net.get_junction(sid.junction_id)?;
+                    j.egress_socket(sid.socket_index)
+                        .or_else(|| j.ingress_socket(sid.socket_index))
+                        .map(|s| s.point)
+                })
+                .or_else(|| {
+                    net.get_segment(default_seq[0])
+                        .and_then(|s| s.waypoints.first())
+                        .map(|w| w.point)
+                })
+                .unwrap_or(wps[0].point);
+            wps.iter()
+                .enumerate()
+                .min_by(|(_, a), (_, b)| {
+                    a.point
+                        .distance_squared(anchor_pt)
+                        .total_cmp(&b.point.distance_squared(anchor_pt))
+                })
+                .map(|(i, _)| i)
+                .unwrap_or(0)
+        };
+
+        let mut any_changed = false;
+        for k in 0..m {
+            let start_w = if k == 0 {
+                seam_w0
+            } else {
+                interior_wp_indices[k - 1]
+            };
+            let end_w = if k + 1 == m {
+                seam_w0
+            } else {
+                interior_wp_indices[k]
+            };
+            if start_w == end_w {
+                continue;
+            }
+            let expected_wps: Vec<TrackWaypoint> = if start_w < end_w {
+                wps[start_w..=end_w].to_vec()
+            } else {
+                let mut v = wps[start_w..n].to_vec();
+                v.extend_from_slice(&wps[0..=end_w]);
+                v
+            };
+
+            let sid = default_seq[k];
+            let needs_update = net
+                .get_segment(sid)
+                .map_or(false, |s| s.waypoints != expected_wps || s.samples.is_empty());
+            if !needs_update {
+                continue;
+            }
+            any_changed = true;
+
+            let (entry_sock_id, exit_sock_id) = net
+                .get_segment(sid)
+                .map(|s| (s.entry_junction, s.exit_junction))
+                .unwrap_or((None, None));
+
+            let entry_sock = if non_wrapping && k == 0 {
+                None
+            } else {
+                entry_sock_id
+                    .and_then(|s| {
+                        net.get_junction(s.junction_id)
+                            .and_then(|j| j.egress_socket(s.socket_index))
+                    })
+                    .copied()
+            };
+            let exit_sock = if non_wrapping && k + 1 == m {
+                None
+            } else {
+                exit_sock_id
+                    .and_then(|s| {
+                        net.get_junction(s.junction_id)
+                            .and_then(|j| j.ingress_socket(s.socket_index))
+                    })
+                    .copied()
+            };
+
+            if let Some(seg) = net.get_segment_mut(sid) {
+                seg.waypoints = expected_wps;
+                seg.recompute_samples(entry_sock.as_ref(), exit_sock.as_ref());
+            }
+        }
+
+        if any_changed {
+            for layout in &mut net.layouts {
+                let len: f32 = layout
+                    .segment_sequence
+                    .iter()
+                    .filter_map(|&id| net.segments.iter().find(|s| s.id == id))
+                    .map(|s| s.length)
+                    .sum();
+                layout.total_lap_length = len;
+            }
+        }
     }
 
     /// Deserializes a `Track` from a JSON string and builds all runtime geometry.
@@ -2234,6 +2422,7 @@ impl Track {
                 self.generate_pit_lane_walls();
             }
             if self.network.is_some() {
+                self.sync_network_main_segments();
                 self.trim_walls_for_network();
                 self.generate_network_walls();
                 if let Some(ref mut net) = self.network {
@@ -3013,4 +3202,43 @@ mod tests {
             }
         }
     }
+
+    #[test]
+    fn test_lydden_hill_sync_network_main_segments_eliminates_spurious_wall_holes() {
+        let mut track = test_circuit("rally", "lydden_hill");
+        let net = track.network.as_ref().expect("lydden_hill has TrackNetwork");
+        let main_seq: Vec<SegmentId> = net
+            .active_or_default_layout(None)
+            .map(|l| l.segment_sequence.clone())
+            .unwrap_or_default();
+        assert_eq!(main_seq, vec![SegmentId(0), SegmentId(1), SegmentId(3), SegmentId(4)]);
+
+        // Main segments in network must match the edited spline waypoints at WP 0.
+        let seg0 = net.get_segment(SegmentId(0)).expect("Seg 0");
+        assert_eq!(seg0.waypoints.first().unwrap().point, track.spline.waypoints[0].point);
+        let seg4 = net.get_segment(SegmentId(4)).expect("Seg 4");
+        assert_eq!(seg4.waypoints.last().unwrap().point, track.spline.waypoints[0].point);
+
+        // None of the wall suppressions may be caused by a main-loop segment (Seg 0, 1, 3, 4).
+        // Only branch segments (Seg 2 Joker Lap, Seg 5 Launch Chute) should suppress main walls.
+        for sup in &track.geometry.wall_suppressions {
+            assert!(
+                !main_seq.contains(&sup.conflicting_segment),
+                "Spurious wall suppression on {:?} at s={:.1}..{:.1}m against main segment {:?}",
+                sup.side,
+                sup.start_station,
+                sup.end_station,
+                sup.conflicting_segment
+            );
+        }
+
+        // Rebuilding geometry after load must remain idempotent with zero main-segment wall suppressions.
+        let bo = track.effective_barrier_offset();
+        let bt = track.dominant_barrier_type().unwrap_or(BarrierType::Steel);
+        track.rebuild_geometry(bo, bt);
+        for sup in &track.geometry.wall_suppressions {
+            assert!(!main_seq.contains(&sup.conflicting_segment));
+        }
+    }
 }
+
