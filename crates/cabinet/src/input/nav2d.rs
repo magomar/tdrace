@@ -201,6 +201,30 @@ impl NavGrid2D {
         changed
     }
 
+    /// Checks if a standard navigation "left" input occurred (Left Arrow, 'A', or gamepad left).
+    #[inline]
+    pub fn is_nav_left(gamepad_nav_left: bool) -> bool {
+        safe_key_pressed(KeyCode::Left) || safe_key_pressed(KeyCode::A) || gamepad_nav_left
+    }
+
+    /// Checks if a standard navigation "right" input occurred (Right Arrow, 'D', or gamepad right).
+    #[inline]
+    pub fn is_nav_right(gamepad_nav_right: bool) -> bool {
+        safe_key_pressed(KeyCode::Right) || safe_key_pressed(KeyCode::D) || gamepad_nav_right
+    }
+
+    /// Checks if a standard navigation "up" input occurred (Up Arrow, 'W', or gamepad up).
+    #[inline]
+    pub fn is_nav_up(gamepad_nav_up: bool) -> bool {
+        safe_key_pressed(KeyCode::Up) || safe_key_pressed(KeyCode::W) || gamepad_nav_up
+    }
+
+    /// Checks if a standard navigation "down" input occurred (Down Arrow, 'S', or gamepad down).
+    #[inline]
+    pub fn is_nav_down(gamepad_nav_down: bool) -> bool {
+        safe_key_pressed(KeyCode::Down) || safe_key_pressed(KeyCode::S) || gamepad_nav_down
+    }
+
     /// Checks if universal confirm / selection input was triggered this frame.
     pub fn is_confirmed(&self, gamepad_confirm: bool) -> bool {
         safe_key_pressed(KeyCode::Enter)

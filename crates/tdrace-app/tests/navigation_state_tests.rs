@@ -268,3 +268,64 @@ fn leaving_a_lan_race_closes_the_network_session() {
     assert_eq!(target, GameState::LanHub { selected_idx: 0 });
     assert!(!session.is_lan_multiplayer);
 }
+
+#[test]
+fn wasd_navigates_modality_select_tabs_and_cards() {
+    let mut session = RaceSession::new();
+    session.state = GameState::ModalitySelect { category: ModalityCategory::SinglePlayer, selected_idx: 0, modal: None };
+
+    // S moves down to next card
+    press(&mut session, &[KeyCode::S]);
+    assert_eq!(
+        session.state,
+        GameState::ModalitySelect { category: ModalityCategory::SinglePlayer, selected_idx: 1, modal: None }
+    );
+
+    // W moves up to previous card
+    press(&mut session, &[KeyCode::W]);
+    assert_eq!(
+        session.state,
+        GameState::ModalitySelect { category: ModalityCategory::SinglePlayer, selected_idx: 0, modal: None }
+    );
+
+    // D moves right to next category tab
+    press(&mut session, &[KeyCode::D]);
+    assert_eq!(
+        session.state,
+        GameState::ModalitySelect { category: ModalityCategory::Multiplayer, selected_idx: 0, modal: None }
+    );
+
+    // A moves left to previous category tab
+    press(&mut session, &[KeyCode::A]);
+    assert_eq!(
+        session.state,
+        GameState::ModalitySelect { category: ModalityCategory::SinglePlayer, selected_idx: 0, modal: None }
+    );
+}
+
+#[test]
+fn wasd_navigates_lan_hub_and_pause_menu() {
+    let mut session = RaceSession::new();
+    session.state = GameState::LanHub { selected_idx: 0 };
+
+    // S moves down / switches option in LAN hub
+    press(&mut session, &[KeyCode::S]);
+    assert_eq!(session.state, GameState::LanHub { selected_idx: 1 });
+
+    // W moves up / switches back
+    press(&mut session, &[KeyCode::W]);
+    assert_eq!(session.state, GameState::LanHub { selected_idx: 0 });
+
+    // Pause menu vertical navigation with W and S
+    session.init_race();
+    session.state = GameState::Racing;
+    session.pause_race();
+    assert_eq!(session.pause_nav.active_row(), 0);
+
+    press(&mut session, &[KeyCode::S]);
+    assert_eq!(session.pause_nav.active_row(), 1);
+
+    press(&mut session, &[KeyCode::W]);
+    assert_eq!(session.pause_nav.active_row(), 0);
+}
+

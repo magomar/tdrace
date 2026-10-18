@@ -4129,7 +4129,7 @@ impl ModalityCategory {
             Self::Options => &[
                 ModalityItem::PlayerProfile,
                 ModalityItem::Garage,
-                ModalityItem::TrackEditor,
+                ModalityItem::TrackManager,
                 ModalityItem::SeriesEditor,
                 ModalityItem::Settings,
             ],
@@ -4151,6 +4151,7 @@ pub enum ModalityItem {
     CloudPlay,
     PlayerProfile,
     Garage,
+    TrackManager,
     TrackEditor,
     SeriesEditor,
     Settings,
@@ -4170,6 +4171,7 @@ impl ModalityItem {
             Self::CloudPlay => "Cloud Online",
             Self::PlayerProfile => "Player Profile",
             Self::Garage => "Garage Showroom",
+            Self::TrackManager => "Track Manager",
             Self::TrackEditor => "Track Editor",
             Self::SeriesEditor => "Series Editor",
             Self::Settings => "Settings",
@@ -4189,6 +4191,7 @@ impl ModalityItem {
             Self::CloudPlay => "WORLDWIDE LOBBIES [COMING SOON]",
             Self::PlayerProfile => "DRIVER RECORDS • CAREER STATS & SLOTS",
             Self::Garage => "360° VEHICLE TURNTABLE & TECHNICAL DOSSIER",
+            Self::TrackManager => "CIRCUITS • WORKSHOP DRAFTS & CAD STUDIO",
             Self::TrackEditor => "INTERACTIVE CAD STUDIO • CUSTOM CIRCUITS",
             Self::SeriesEditor => "CUSTOM SERIES & CUPS • TOML WORKBENCH",
             Self::Settings => "AUDIO • CONTROLS • ASSISTS • DISPLAY CONFIG",
@@ -4208,6 +4211,7 @@ impl ModalityItem {
             Self::CloudPlay => "Compete globally in ranked matchmaking, custom public lobbies, and online events.",
             Self::PlayerProfile => "Inspect career statistics, manage driver slots, change nationality and custom car liveries.",
             Self::Garage => "Inspect active motorsport machines in fullscreen 360° turntable, check BHP and weight, and rev engine.",
+            Self::TrackManager => "Browse official circuits, manage custom drafts, import community tracks, and launch the CAD Studio editor.",
             Self::TrackEditor => "Design custom circuits, shape splines, place surface zones, and test drive your tracks.",
             Self::SeriesEditor => "Author declarative multi-race series and cups, configure calendars and driver grids, and launch test runs.",
             Self::Settings => "Configure sound levels, gamepad and keyboard mappings, steering assists, and display settings.",
@@ -4231,6 +4235,7 @@ impl ModalityItem {
             Self::CloudPlay => Color::new(0.60, 0.65, 0.75, 1.0),
             Self::PlayerProfile => Palette::NEON_CYAN,
             Self::Garage => Palette::NEON_GOLD,
+            Self::TrackManager => Palette::NEON_GREEN,
             Self::TrackEditor => Palette::NEON_GREEN,
             Self::SeriesEditor => Palette::NEON_GOLD,
             Self::Settings => Palette::NEON_MAGENTA,
@@ -4280,6 +4285,7 @@ pub fn get_modality_icon_texture(item: ModalityItem) -> Texture2D {
         ModalityItem::CloudPlay => 7,
         ModalityItem::PlayerProfile => 8,
         ModalityItem::Garage => 9,
+        ModalityItem::TrackManager => 10,
         ModalityItem::TrackEditor => 10,
         ModalityItem::SeriesEditor => 11,
         ModalityItem::Settings => 12,
@@ -4302,6 +4308,7 @@ pub fn get_modality_icon_texture(item: ModalityItem) -> Texture2D {
         ModalityItem::CloudPlay => MODALITY_CLOUD_PLAY_PNG,
         ModalityItem::PlayerProfile => MODALITY_PLAYER_PROFILE_PNG,
         ModalityItem::Garage => MODALITY_GARAGE_PNG,
+        ModalityItem::TrackManager => MODALITY_TRACK_EDITOR_PNG,
         ModalityItem::TrackEditor => MODALITY_TRACK_EDITOR_PNG,
         ModalityItem::SeriesEditor => MODALITY_CAREER_MODE_PNG,
         ModalityItem::Settings => MODALITY_SETTINGS_PNG,
@@ -4824,6 +4831,15 @@ pub fn render_modality_select_screen(
                             Palette::NEON_GOLD,
                         );
                     }
+                    ModalityItem::TrackManager => {
+                        fonts.draw_ui_bold(
+                            "🏁 CIRCUIT HUB",
+                            col_x + col_w - scaler.s(160.0),
+                            curr_y + opt_card_h * 0.25,
+                            scaler.font_s(10.0),
+                            Palette::NEON_GREEN,
+                        );
+                    }
                     ModalityItem::TrackEditor => {
                         fonts.draw_ui_bold(
                             "📐 CAD STUDIO",
@@ -4887,7 +4903,8 @@ pub fn render_modality_select_screen(
                     let prompt_str = match item {
                         ModalityItem::PlayerProfile => "PRESS [ENTER] OR [P] TO OPEN ▶",
                         ModalityItem::Garage => "PRESS [ENTER] OR [G] TO ENTER ▶",
-                        ModalityItem::TrackEditor => "PRESS [ENTER] OR [E] TO EDIT ▶",
+                        ModalityItem::TrackManager => "PRESS [ENTER] TO MANAGE ▶",
+                        ModalityItem::TrackEditor => "PRESS [ENTER] TO EDIT ▶",
                         ModalityItem::SeriesEditor => "PRESS [ENTER] OR [C] TO CREATE ▶",
                         ModalityItem::Settings => "PRESS [ENTER] OR [X] TO CONFIGURE ▶",
                         _ => "PRESS [ENTER] TO SELECT ▶",
@@ -4907,7 +4924,7 @@ pub fn render_modality_select_screen(
 
     // Bottom Action Prompt / Controller Hints
     fonts.draw_ui_regular_centered(
-        "[W/S or UP/DOWN] Navigate Card  •  [A/D or LEFT/RIGHT or TAB / 1/2/3] Switch Menu  •  [G] Garage  •  [P] Profile  •  [E] Track Editor  •  [X] Settings  •  [ENTER/SPACE] Select  •  [ESC] Quit Game",
+        "[W/S or UP/DOWN] Navigate Card  •  [A/D or Q/E or LEFT/RIGHT or TAB / 1/2/3] Switch Menu  •  [G] Garage  •  [P] Profile  •  [X] Settings  •  [ENTER/SPACE] Select  •  [ESC] Quit Game",
         sw * 0.5,
         sh - scaler.s(14.0),
         scaler.font_s(11.5),

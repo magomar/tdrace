@@ -587,7 +587,7 @@ fn test_modality_single_selected_menu_isolation() {
     );
     assert_eq!(ModalityCategory::Options.items().len(), 5);
 
-    // 4. Wrapping within Options menu (5 items: 0=Profile, 1=Garage, 2=TrackEditor, 3=ChampionshipEditor, 4=Settings)
+    // 4. Wrapping within Options menu (5 items: 0=Profile, 1=Garage, 2=TrackManager, 3=ChampionshipEditor, 4=Settings)
     session.input.gamepad.snapshot.dpad_up_pressed = true;
     session.update_modality_select();
     session.input.gamepad.snapshot.dpad_up_pressed = false;
@@ -642,47 +642,29 @@ fn test_modality_select_options_player_profile_flow() {
 }
 
 #[test]
-fn test_modality_select_options_track_editor_flow() {
+fn test_modality_select_options_track_manager_flow() {
     let mut session = RaceSession::new();
     session.state = GameState::ModalitySelect {
         category: ModalityCategory::Options,
-        selected_idx: 2, // Track Editor
+        selected_idx: 2, // Track Manager
         modal: None,
     };
 
-    // 1. Confirm on Track Editor card (idx 2) opens Track Editor
+    // 1. Confirm on Track Manager card (idx 2) opens Track Manager
     session.input.gamepad.snapshot.btn_confirm_pressed = true;
     session.update_modality_select();
     session.input.gamepad.snapshot.btn_confirm_pressed = false;
 
-    assert_eq!(session.state, GameState::TrackEditor);
+    assert!(matches!(session.state, GameState::TrackManager { .. }));
     assert_eq!(
-        session.editor_origin,
-        tdrace_app::game::EditorOrigin::ModalitySelect
-    );
-    assert!(session.editor_state.is_some());
-
-    // 2. Exit editor via ExitToTrackManager / return_to_track_manager returns to ModalitySelect under Options (idx 2)
-    session.handle_editor_action(tdrace_app::editor::EditorAction::ExitToTrackManager);
-
-    assert_eq!(
-        session.state,
-        GameState::ModalitySelect {
-            category: ModalityCategory::Options,
-            selected_idx: 2,
-            modal: None,
-        }
+        session.track_manager_origin,
+        tdrace_app::game::TrackManagerOrigin::ModalitySelect
     );
 
-    // 3. Test direct shortcut [E] from ModalitySelect
-    session.enter_track_editor_from_modality_select();
-    assert_eq!(session.state, GameState::TrackEditor);
-    assert_eq!(
-        session.editor_origin,
-        tdrace_app::game::EditorOrigin::ModalitySelect
-    );
+    // 2. Escape from Track Manager returns to ModalitySelect under Options (idx 2)
+    tdrace_app::game::inject_key_presses_for_tests(&[macroquad::input::KeyCode::Escape]);
+    session.update();
 
-    session.return_to_track_manager();
     assert_eq!(
         session.state,
         GameState::ModalitySelect {
@@ -691,6 +673,95 @@ fn test_modality_select_options_track_editor_flow() {
             modal: None,
         }
     );
+}
+
+#[test]
+fn test_modality_select_qe_tab_navigation() {
+    let mut session = RaceSession::new();
+    session.state = GameState::ModalitySelect {
+        category: ModalityCategory::SinglePlayer,
+        selected_idx: 0,
+        modal: None,
+    };
+
+    // E cycles category next: SinglePlayer -> Multiplayer
+    tdrace_app::game::inject_key_presses_for_tests(&[macroquad::input::KeyCode::E]);
+    session.update_modality_select();
+    assert_eq!(
+        session.state,
+        GameState::ModalitySelect {
+            category: ModalityCategory::Multiplayer,
+            selected_idx: 0,
+            modal: None,
+        }
+    );
+
+    // E cycles category next: Multiplayer -> Options
+    tdrace_app::game::inject_key_presses_for_tests(&[macroquad::input::KeyCode::E]);
+    session.update_modality_select();
+    assert_eq!(
+        session.state,
+        GameState::ModalitySelect {
+            category: ModalityCategory::Options,
+            selected_idx: 0,
+            modal: None,
+        }
+    );
+
+    // E cycles category next: Options -> SinglePlayer
+    tdrace_app::game::inject_key_presses_for_tests(&[macroquad::input::KeyCode::E]);
+    session.update_modality_select();
+    assert_eq!(
+        session.state,
+        GameState::ModalitySelect {
+            category: ModalityCategory::SinglePlayer,
+            selected_idx: 0,
+            modal: None,
+        }
+    );
+
+    // Q cycles category prev: SinglePlayer -> Options
+    tdrace_app::game::inject_key_presses_for_tests(&[macroquad::input::KeyCode::Q]);
+    session.update_modality_select();
+    assert_eq!(
+        session.state,
+        GameState::ModalitySelect {
+            category: ModalityCategory::Options,
+            selected_idx: 0,
+            modal: None,
+        }
+    );
+}
+
+#[test]
+fn test_track_manager_qe_tab_navigation() {
+    let mut session = RaceSession::new();
+    session.enter_track_manager_from_modality_select();
+
+    let initial_filter = match session.state {
+        GameState::TrackManager { module_filter, .. } => module_filter,
+        _ => panic!("Expected TrackManager state"),
+    };
+
+    // Press E to cycle to next module filter
+    tdrace_app::game::inject_key_presses_for_tests(&[macroquad::input::KeyCode::E]);
+    session.update();
+
+    let next_filter = match session.state {
+        GameState::TrackManager { module_filter, .. } => module_filter,
+        _ => panic!("Expected TrackManager state"),
+    };
+    assert_eq!(next_filter, initial_filter.next());
+
+    // Press Q to cycle back
+    tdrace_app::game::inject_key_presses_for_tests(&[macroquad::input::KeyCode::Q]);
+    session.update();
+
+    let prev_filter = match session.state {
+        GameState::TrackManager { module_filter, .. } => module_filter,
+        _ => panic!("Expected TrackManager state"),
+    };
+    assert_eq!(prev_filter, initial_filter);
 }
 
 #[test]

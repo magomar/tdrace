@@ -1734,6 +1734,21 @@ pub struct FieldDropdownInput {
     pub cancel: bool,
 }
 
+impl FieldDropdownInput {
+    /// Constructs dropdown input using standard keyboard and mouse inputs (supporting Up/Down and W/S by default).
+    pub fn from_standard(mouse: (f32, f32), clicked: bool, wheel: f32) -> Self {
+        Self {
+            mouse,
+            clicked,
+            wheel,
+            up: safe_key_pressed(KeyCode::Up) || safe_key_pressed(KeyCode::W),
+            down: safe_key_pressed(KeyCode::Down) || safe_key_pressed(KeyCode::S),
+            confirm: safe_key_pressed(KeyCode::Enter) || safe_key_pressed(KeyCode::KpEnter) || safe_key_pressed(KeyCode::Space),
+            cancel: safe_key_pressed(KeyCode::Escape),
+        }
+    }
+}
+
 /// What a [`FieldDropdown`] did this frame. Any event other than `None` consumed the click or key.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FieldDropdownEvent {

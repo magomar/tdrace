@@ -966,10 +966,10 @@ pub fn handle_championship_editor_input(
                 state.modal = ChampionshipEditorModal::None;
                 return ChampionshipEditorAction::None;
             }
-            if is_key_pressed(KeyCode::Up) {
+            if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) {
                 *selected_idx = selected_idx.saturating_sub(1);
             }
-            if is_key_pressed(KeyCode::Down) && !available_championships.is_empty() {
+            if (is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S)) && !available_championships.is_empty() {
                 *selected_idx = (*selected_idx + 1).min(available_championships.len() - 1);
             }
             if is_key_pressed(KeyCode::Enter) || is_key_pressed(KeyCode::KpEnter) {
@@ -1014,10 +1014,10 @@ pub fn handle_championship_editor_input(
                 state.modal = ChampionshipEditorModal::None;
                 return ChampionshipEditorAction::None;
             }
-            if is_key_pressed(KeyCode::Up) {
+            if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) {
                 *selected_idx = selected_idx.saturating_sub(1);
             }
-            if is_key_pressed(KeyCode::Down) && !all_tracks.is_empty() {
+            if (is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S)) && !all_tracks.is_empty() {
                 *selected_idx = (*selected_idx + 1).min(all_tracks.len() - 1);
             }
             if is_key_pressed(KeyCode::Enter) || is_key_pressed(KeyCode::KpEnter) {
@@ -1042,10 +1042,10 @@ pub fn handle_championship_editor_input(
                 state.modal = ChampionshipEditorModal::None;
                 return ChampionshipEditorAction::None;
             }
-            if is_key_pressed(KeyCode::Up) {
+            if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) {
                 *selected_idx = selected_idx.saturating_sub(1);
             }
-            if is_key_pressed(KeyCode::Down) && !models.is_empty() {
+            if (is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S)) && !models.is_empty() {
                 *selected_idx = (*selected_idx + 1).min(models.len() - 1);
             }
             if is_key_pressed(KeyCode::Enter) || is_key_pressed(KeyCode::KpEnter) {
@@ -1139,18 +1139,20 @@ pub fn handle_championship_editor_input(
     // Tab-specific interactions
     match state.active_tab {
         ChampionshipEditorTab::Rules => {
-            if is_key_pressed(KeyCode::Up) {
+            if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) {
                 state.rules_field_idx = state.rules_field_idx.saturating_sub(1);
             }
-            if is_key_pressed(KeyCode::Down) {
+            if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) {
                 state.rules_field_idx = (state.rules_field_idx + 1).min(8);
             }
-            if is_key_pressed(KeyCode::Left) || is_key_pressed(KeyCode::Right) {
+            let is_left = is_key_pressed(KeyCode::Left) || is_key_pressed(KeyCode::A);
+            let is_right = is_key_pressed(KeyCode::Right) || is_key_pressed(KeyCode::D);
+            if is_left || is_right {
                 match state.rules_field_idx {
                     3 => { // Module cycle
                         let modules = ["gt", "nascar", "rally", "kart", "extreme_offroad", "classic"];
                         let curr_pos = modules.iter().position(|&m| m == state.def.series.module_id).unwrap_or(0);
-                        let next_pos = if is_key_pressed(KeyCode::Right) {
+                        let next_pos = if is_right {
                             (curr_pos + 1) % modules.len()
                         } else {
                             (curr_pos + modules.len() - 1) % modules.len()
@@ -1160,7 +1162,7 @@ pub fn handle_championship_editor_input(
                     }
                     4 => { // Tier cycle (1..=5)
                         let mut counter = Counter::new(1, 5, 1, state.def.series.tier as i64).with_wrap(true);
-                        if is_key_pressed(KeyCode::Right) {
+                        if is_right {
                             counter.increment();
                         } else {
                             counter.decrement();
@@ -1170,7 +1172,7 @@ pub fn handle_championship_editor_input(
                     }
                     5 => { // Default laps
                         let mut counter = Counter::new(1, 50, 1, state.def.series.laps_per_round as i64);
-                        if is_key_pressed(KeyCode::Right) {
+                        if is_right {
                             counter.increment();
                         } else {
                             counter.decrement();
@@ -1186,7 +1188,7 @@ pub fn handle_championship_editor_input(
                             "motogp" => 3,
                             _ => 0,
                         };
-                        let next = if is_key_pressed(KeyCode::Right) { (curr + 1) % systems.len() } else { (curr + systems.len() - 1) % systems.len() };
+                        let next = if is_right { (curr + 1) % systems.len() } else { (curr + systems.len() - 1) % systems.len() };
                         state.def.scoring.system = systems[next].to_string();
                     }
                     _ => {}
@@ -1226,10 +1228,10 @@ pub fn handle_championship_editor_input(
             }
         }
         ChampionshipEditorTab::Calendar => {
-            if is_key_pressed(KeyCode::Up) {
+            if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) {
                 state.selected_round_idx = state.selected_round_idx.saturating_sub(1);
             }
-            if is_key_pressed(KeyCode::Down) && !state.def.rounds.is_empty() {
+            if (is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S)) && !state.def.rounds.is_empty() {
                 state.selected_round_idx = (state.selected_round_idx + 1).min(state.def.rounds.len() - 1);
             }
             // Add Round
@@ -1257,10 +1259,10 @@ pub fn handle_championship_editor_input(
             }
         }
         ChampionshipEditorTab::Grid => {
-            if is_key_pressed(KeyCode::Up) {
+            if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) {
                 state.selected_driver_idx = state.selected_driver_idx.saturating_sub(1);
             }
-            if is_key_pressed(KeyCode::Down) && !state.def.drivers.is_empty() {
+            if (is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S)) && !state.def.drivers.is_empty() {
                 state.selected_driver_idx = (state.selected_driver_idx + 1).min(state.def.drivers.len() - 1);
             }
             // Autofill Grid

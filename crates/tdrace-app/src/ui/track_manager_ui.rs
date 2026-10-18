@@ -692,29 +692,29 @@ pub fn render_track_manager_screen(
     let bar_y = sh - scaler.s(32.0);
     let action_str = if is_dev_workbench {
         if tracks_list.is_empty() {
-            "[Left/Right / 1-5,9] MODULE | [Ctrl+D] CIRCUIT MANAGER | [Esc] BACK".to_string()
+            "[Q/E or 1-5, 9 / Left/Right] MODULE | [Ctrl+D] CIRCUIT MANAGER | [Esc] BACK".to_string()
         } else {
-            "[Enter] RACE | [Shift+Up/Down] REORDER | [E] STUDIO | [C] CLONE | [P] DEMOTE | [Ctrl+P] CATEGORIES | [I] EDIT INFO | [Ctrl+D] CIRCUIT MANAGER | [Esc] BACK".to_string()
+            "[Enter] RACE | [Shift+Up/Down] REORDER | [C] CLONE | [P] DEMOTE | [Ctrl+P] CATEGORIES | [I] EDIT INFO | [Ctrl+D] CIRCUIT MANAGER | [Esc] BACK".to_string()
         }
     } else {
         let dev_suffix = if is_dev { " | [Ctrl+D] DEV WORKBENCH" } else { "" };
         let is_sel_preset = tracks_list.get(selected_idx).map(|t| t.is_official_preset()).unwrap_or(false);
         if tracks_list.is_empty() {
             if is_drafts {
-                format!("[1-5, 9 / Left/Right] MODULE | [N] NEW DRAFT | [Esc] BACK{}", dev_suffix)
+                format!("[Q/E or 1-5, 9 / Left/Right] MODULE | [N] NEW DRAFT | [Esc] BACK{}", dev_suffix)
             } else {
-                format!("[1-5, 9 / Left/Right] MODULE | [N] NEW CIRCUIT | [Esc] BACK{}", dev_suffix)
+                format!("[Q/E or 1-5, 9 / Left/Right] MODULE | [N] NEW CIRCUIT | [Esc] BACK{}", dev_suffix)
             }
         } else if is_sel_preset {
             if is_dev {
-                format!("[Enter / E] STUDIO | [C] CLONE TO DRAFTS | [Shift+Up/Down] REORDER | [P] DEMOTE | [1-5, 9] MODULE | [Esc] BACK{}", dev_suffix)
+                format!("[Enter] STUDIO | [C] CLONE TO DRAFTS | [Shift+Up/Down] REORDER | [P] DEMOTE | [Q/E or 1-5, 9] MODULE | [Esc] BACK{}", dev_suffix)
             } else {
-                format!("[C] CLONE TO DRAFTS | [Enter / E] CLONE & EDIT | [1-5, 9 / Left/Right] MODULE | [Esc] BACK{}", dev_suffix)
+                format!("[C] CLONE TO DRAFTS | [Enter] CLONE & EDIT | [Q/E or 1-5, 9 / Left/Right] MODULE | [Esc] BACK{}", dev_suffix)
             }
         } else if is_drafts {
-            format!("[Enter / E] STUDIO | [C] CLONE | [P] ASSIGN MODULES | [I] RENAME | [N] NEW DRAFT | [Delete] DELETE | [1-5, 9] MODULE | [Esc] BACK{}", dev_suffix)
+            format!("[Enter] STUDIO | [C] CLONE | [P] ASSIGN MODULES | [I] RENAME | [N] NEW DRAFT | [Delete] DELETE | [Q/E or 1-5, 9] MODULE | [Esc] BACK{}", dev_suffix)
         } else {
-            format!("[Enter / E] STUDIO | [C] CLONE TO DRAFTS | [P] ASSIGN MODULES | [I] RENAME | [N] NEW CIRCUIT | [Delete] DELETE | [1-5, 9] MODULE | [Esc] BACK{}", dev_suffix)
+            format!("[Enter] STUDIO | [C] CLONE TO DRAFTS | [P] ASSIGN MODULES | [I] RENAME | [N] NEW CIRCUIT | [Delete] DELETE | [Q/E or 1-5, 9] MODULE | [Esc] BACK{}", dev_suffix)
         }
     };
 

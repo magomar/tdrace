@@ -306,10 +306,10 @@ impl TextInputWidget {
                 }
                 return TextInputAction::None;
             }
-            if safe_key_pressed(KeyCode::Up) {
+            if safe_key_pressed(KeyCode::Up) || safe_key_pressed(KeyCode::W) {
                 return TextInputAction::ExitUp;
             }
-            if safe_key_pressed(KeyCode::Down) {
+            if safe_key_pressed(KeyCode::Down) || safe_key_pressed(KeyCode::S) {
                 return TextInputAction::ExitDown;
             }
             return TextInputAction::None;

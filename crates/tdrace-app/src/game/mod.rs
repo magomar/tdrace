@@ -282,6 +282,14 @@ pub enum EditorOrigin {
     Menu,
 }
 
+/// Source screen that launched the Track Manager screen.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum TrackManagerOrigin {
+    #[default]
+    Menu,
+    ModalitySelect,
+}
+
 /// Source screen that launched the Track Selection Menu / Circuit Explorer.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum MenuOrigin {
@@ -728,6 +736,7 @@ pub struct RaceSession {
     pub return_to_editor_on_exit: bool,
     pub editor_return_track_manager: Option<(TrackManagerTab, ModuleFilter, usize)>,
     pub editor_origin: EditorOrigin,
+    pub track_manager_origin: TrackManagerOrigin,
 
     // Audio System
     pub audio: AudioManager,
@@ -1001,6 +1010,7 @@ impl RaceSession {
             return_to_editor_on_exit: false,
             editor_return_track_manager: None,
             editor_origin: EditorOrigin::TrackManager,
+            track_manager_origin: TrackManagerOrigin::Menu,
             audio,
             engine_rpm: EngineRpmModel::default(),
             engine_rpm_p2: EngineRpmModel::default(),
@@ -4953,8 +4963,17 @@ impl RaceSession {
         }
         self.track.ensure_optimal_line();
 
-        // If starting a brand new championship, synchronize the starting roster size to the circuit grid slots
-        let is_new_championship = self.championship_session.as_ref().map(|c| c.is_new()).unwrap_or(false);
+        // If starting a brand new championship (or a tournament whose 32-driver field is not yet populated), synchronize the starting roster size to the circuit grid slots
+        let is_new_championship = self
+            .championship_session
+            .as_ref()
+            .map(|c| {
+                c.is_new()
+                    || c.tournament_config
+                        .filter(|_| c.is_tournament())
+                        .is_some_and(|cfg| c.standings.len() < cfg.total_drivers)
+            })
+            .unwrap_or(false);
         if is_new_championship {
             // A tournament weekend enters its whole field (32 drivers); each race of it takes 8.
             let circuit_slots = self
@@ -5502,7 +5521,8 @@ impl RaceSession {
         let is_wasd_racing = matches!(self.state, GameState::Racing | GameState::Countdown(_))
             && self.input.input_map == cabinet::input::InputMap::wasd_racing();
         let sound_keys = self.state.allows_global_hotkey(GlobalHotkey::SoundKeys);
-        if sound_keys && !is_wasd_racing && is_key_pressed(KeyCode::S) {
+        let is_menu_like = matches!(self.state, GameState::Paused);
+        if sound_keys && !is_wasd_racing && !is_menu_like && is_key_pressed(KeyCode::S) {
             self.audio.toggle_sfx();
         }
 
@@ -6281,7 +6301,7 @@ impl RaceSession {
                 if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || self.input.gamepad.snapshot.nav_up || self.input.gamepad.snapshot.dpad_up_pressed {
                     self.audio.play_sfx(SfxType::UiMove);
                     self.pause_nav.move_up();
-                } else if is_key_pressed(KeyCode::Down) || self.input.gamepad.snapshot.nav_down || self.input.gamepad.snapshot.dpad_down_pressed {
+                } else if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) || self.input.gamepad.snapshot.nav_down || self.input.gamepad.snapshot.dpad_down_pressed {
                     self.audio.play_sfx(SfxType::UiMove);
                     self.pause_nav.move_down();
                 }
@@ -6319,8 +6339,8 @@ impl RaceSession {
                             || self.input.gamepad.snapshot.btn_a_pressed,
                     );
 
-                let left = is_key_pressed(KeyCode::Left) || self.input.gamepad.snapshot.nav_left || self.input.gamepad.snapshot.dpad_left_pressed;
-                let right = is_key_pressed(KeyCode::Right) || self.input.gamepad.snapshot.nav_right || self.input.gamepad.snapshot.dpad_right_pressed;
+                let left = is_key_pressed(KeyCode::Left) || is_key_pressed(KeyCode::A) || self.input.gamepad.snapshot.nav_left || self.input.gamepad.snapshot.dpad_left_pressed;
+                let right = is_key_pressed(KeyCode::Right) || is_key_pressed(KeyCode::D) || self.input.gamepad.snapshot.nav_right || self.input.gamepad.snapshot.dpad_right_pressed;
                 if pause_row > 0 && (is_confirmed || left || right) {
                     self.audio.play_sfx(SfxType::UiSelect);
                     self.adjust_pause_setting(pause_row, left);
@@ -7603,8 +7623,8 @@ impl RaceSession {
                 }
 
                 // Inline driver cycling while focused on card
-                let cycle_prev = is_key_pressed(KeyCode::Left) || is_key_pressed(KeyCode::Q);
-                let cycle_next = is_key_pressed(KeyCode::Right);
+                let cycle_prev = is_key_pressed(KeyCode::Left) || is_key_pressed(KeyCode::A) || is_key_pressed(KeyCode::Q);
+                let cycle_next = is_key_pressed(KeyCode::Right) || is_key_pressed(KeyCode::D) || is_key_pressed(KeyCode::E);
 
                 if cycle_prev {
                     self.audio.play_sfx(SfxType::UiMove);
@@ -7656,8 +7676,13 @@ impl RaceSession {
                 }
 
                 // Tab Switching (Left/Right Arrow Keys, Tab, Numbers 1-5)
-                let tab_prev = is_key_pressed(KeyCode::Left) || self.input.gamepad.snapshot.nav_left;
+                let tab_prev = is_key_pressed(KeyCode::Left)
+                    || is_key_pressed(KeyCode::A)
+                    || is_key_pressed(KeyCode::Q)
+                    || self.input.gamepad.snapshot.nav_left;
                 let tab_next = is_key_pressed(KeyCode::Right)
+                    || is_key_pressed(KeyCode::D)
+                    || is_key_pressed(KeyCode::E)
                     || is_key_pressed(KeyCode::Tab)
                     || self.input.gamepad.snapshot.nav_right;
 
@@ -8323,7 +8348,7 @@ impl RaceSession {
             self.audio.play_sfx(SfxType::UiMove);
             active_column = 1 - active_column;
             while get_char_pressed().is_some() {}
-        } else if active_column == 0 && (is_key_pressed(KeyCode::Right) || self.input.gamepad.snapshot.nav_right) {
+        } else if active_column == 0 && (is_key_pressed(KeyCode::Right) || is_key_pressed(KeyCode::D) || self.input.gamepad.snapshot.nav_right) {
             self.audio.play_sfx(SfxType::UiMove);
             active_column = 1;
             while get_char_pressed().is_some() {}
@@ -8589,12 +8614,12 @@ impl RaceSession {
     ) {
         cursor_timer += frame_dt;
 
-        // Field switching (Tab, Up, Down)
-        if is_key_pressed(KeyCode::Tab) || is_key_pressed(KeyCode::Down) {
+        // Field switching (Tab, Up, Down, W, S)
+        if is_key_pressed(KeyCode::Tab) || is_key_pressed(KeyCode::Down) || (field_idx > 1 && is_key_pressed(KeyCode::S)) {
             self.audio.play_sfx(SfxType::UiMove);
             field_idx = (field_idx + 1) % 5;
         }
-        if is_key_pressed(KeyCode::Up) {
+        if is_key_pressed(KeyCode::Up) || (field_idx > 1 && is_key_pressed(KeyCode::W)) {
             self.audio.play_sfx(SfxType::UiMove);
             if field_idx == 0 {
                 field_idx = 4;
@@ -9067,12 +9092,6 @@ impl RaceSession {
             return;
         }
 
-        // Direct Track Editor shortcut (E key)
-        if is_key_pressed(KeyCode::E) {
-            self.enter_track_editor_from_modality_select();
-            return;
-        }
-
         // Direct Championship Editor shortcut (C key)
         if is_key_pressed(KeyCode::C) {
             self.enter_championship_editor(None);
@@ -9086,7 +9105,7 @@ impl RaceSession {
             return;
         }
 
-        // Category Column/Menu Switching (Left / Right / Tab / 1 / 2 / 3 / Gamepad D-pad / Bumpers / Mouse Tab Click)
+        // Category Column/Menu Switching (Left / Right / Tab / Q / E / 1 / 2 / 3 / Gamepad D-pad / Bumpers / Mouse Tab Click)
         let (sw, sh) = (screen_width_safe(), screen_height_safe());
         let scaler = UiScaler::new(sw, sh);
         let tab_w = (sw * 0.28).clamp(scaler.s(160.0), scaler.s(260.0));
@@ -9133,6 +9152,7 @@ impl RaceSession {
         } else if is_key_pressed(KeyCode::Tab)
             || is_key_pressed(KeyCode::Right)
             || is_key_pressed(KeyCode::D)
+            || is_key_pressed(KeyCode::E)
             || self.input.gamepad.snapshot.dpad_right_pressed
             || self.input.gamepad.snapshot.btn_rb_pressed
         {
@@ -9145,6 +9165,7 @@ impl RaceSession {
             self.audio.play_sfx(SfxType::UiMove);
         } else if is_key_pressed(KeyCode::Left)
             || is_key_pressed(KeyCode::A)
+            || is_key_pressed(KeyCode::Q)
             || self.input.gamepad.snapshot.dpad_left_pressed
             || self.input.gamepad.snapshot.btn_lb_pressed
         {
@@ -9173,6 +9194,7 @@ impl RaceSession {
             }
         }
         if is_key_pressed(KeyCode::Down)
+            || is_key_pressed(KeyCode::S)
             || self.input.gamepad.snapshot.dpad_down_pressed
             || self.input.gamepad.snapshot.nav_down
         {
@@ -9224,6 +9246,10 @@ impl RaceSession {
                         self.audio.play_sfx(SfxType::UiSelect);
                         self.garage_origin = GarageOrigin::ModalitySelect;
                         self.state = GameState::Garage(GarageOrigin::ModalitySelect);
+                        return;
+                    }
+                    ModalityItem::TrackManager => {
+                        self.enter_track_manager_from_modality_select();
                         return;
                     }
                     ModalityItem::TrackEditor => {
@@ -9506,19 +9532,27 @@ impl RaceSession {
 
     /// Handles navigation and selection in the LAN Hub screen.
     pub fn update_lan_hub(&mut self, mut selected_idx: usize) {
-        // Navigation: Left/Right or Up/Down
+        // Navigation: Left/Right or Up/Down (WASD & Arrows)
         if is_key_pressed(KeyCode::Left)
+            || is_key_pressed(KeyCode::A)
             || is_key_pressed(KeyCode::Up)
+            || is_key_pressed(KeyCode::W)
             || self.input.gamepad.snapshot.dpad_left_pressed
             || self.input.gamepad.snapshot.dpad_up_pressed
+            || self.input.gamepad.snapshot.nav_left
+            || self.input.gamepad.snapshot.nav_up
         {
             selected_idx = (selected_idx + 1) % 2;
             self.audio.play_sfx(SfxType::UiMove);
         }
         if is_key_pressed(KeyCode::Right)
+            || is_key_pressed(KeyCode::D)
             || is_key_pressed(KeyCode::Down)
+            || is_key_pressed(KeyCode::S)
             || self.input.gamepad.snapshot.dpad_right_pressed
             || self.input.gamepad.snapshot.dpad_down_pressed
+            || self.input.gamepad.snapshot.nav_right
+            || self.input.gamepad.snapshot.nav_down
         {
             selected_idx = (selected_idx + 1) % 2;
             self.audio.play_sfx(SfxType::UiMove);
@@ -9879,7 +9913,7 @@ impl RaceSession {
             self.audio.play_sfx(SfxType::UiMove);
             self.menu_track_idx = (self.menu_track_idx + n - 1) % n;
         }
-        if is_key_pressed(KeyCode::Down) || self.input.gamepad.snapshot.nav_down {
+        if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) || self.input.gamepad.snapshot.nav_down {
             self.audio.play_sfx(SfxType::UiMove);
             self.menu_track_idx = (self.menu_track_idx + 1) % n;
         }
@@ -10810,7 +10844,7 @@ impl RaceSession {
                         self.audio.play_sfx(SfxType::UiMove);
                     }
                 }
-                if is_key_pressed(KeyCode::Down) {
+                if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) {
                     if self.garage_gallery_sel + 4 < n {
                         self.garage_gallery_sel += 4;
                         self.audio.play_sfx(SfxType::UiMove);
@@ -10873,6 +10907,7 @@ impl RaceSession {
             }
         } else if is_key_pressed(KeyCode::E)
             || is_key_pressed(KeyCode::Down)
+            || is_key_pressed(KeyCode::S)
             || self.input.gamepad.snapshot.dpad_down_pressed
             || self.input.gamepad.snapshot.btn_rb_pressed
         {
@@ -11367,7 +11402,11 @@ impl RaceSession {
         // Quick Championship trigger for FIA Autocross (F key)
         if self.active_module_id == "autocross" && is_key_pressed(KeyCode::F) {
             self.audio.play_sfx(SfxType::UiSelect);
-            self.start_autocross_career_tier(1);
+            if let Some(def) = self.championship_manager.get_by_module_and_tier("autocross", 1).cloned() {
+                self.launch_or_resume_championship(&def);
+            } else {
+                self.start_autocross_career_tier(1);
+            }
             return;
         }
 
@@ -11696,7 +11735,11 @@ impl RaceSession {
                     return;
                 }
                 "autocross" => {
-                    self.start_autocross_career_tier(1);
+                    if let Some(def) = self.championship_manager.get_by_module_and_tier("autocross", 1).cloned() {
+                        self.launch_or_resume_championship(&def);
+                    } else {
+                        self.start_autocross_career_tier(1);
+                    }
                     return;
                 }
                 _ => {}
@@ -11904,7 +11947,7 @@ impl RaceSession {
     }
 
     /// Handles input and actions for the dedicated Track Manager screen.
-    fn update_track_manager(
+    pub fn update_track_manager(
         &mut self,
         mut active_tab: TrackManagerTab,
         mut module_filter: ModuleFilter,
@@ -12140,6 +12183,7 @@ impl RaceSession {
                 } else if is_key_pressed(KeyCode::Up)
                     || is_key_pressed(KeyCode::W)
                     || is_key_pressed(KeyCode::Left)
+                    || is_key_pressed(KeyCode::A)
                     || self.input.gamepad.snapshot.nav_up
                     || self.input.gamepad.snapshot.nav_left
                 {
@@ -12148,6 +12192,7 @@ impl RaceSession {
                 } else if is_key_pressed(KeyCode::Down)
                     || is_key_pressed(KeyCode::S)
                     || is_key_pressed(KeyCode::Right)
+                    || is_key_pressed(KeyCode::D)
                     || self.input.gamepad.snapshot.nav_down
                     || self.input.gamepad.snapshot.nav_right
                 {
@@ -12227,11 +12272,11 @@ impl RaceSession {
                 ref mut dev_choice,
             } => {
                 if is_dev_mode {
-                    if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::Key1) {
+                    if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) || is_key_pressed(KeyCode::Key1) {
                         *dev_choice = 0;
                         self.audio.play_sfx(SfxType::UiMove);
                     }
-                    if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::Key2) {
+                    if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) || is_key_pressed(KeyCode::Key2) {
                         *dev_choice = 1;
                         self.audio.play_sfx(SfxType::UiMove);
                     }
@@ -12433,10 +12478,12 @@ impl RaceSession {
         }
 
         // --- NON-MODAL NAVIGATION AND ACTIONS ---
-        // 1. Switch Motorsport Module (Left/Right arrows, A/D, LeftBracket/RightBracket, Gamepad Nav Left/Right)
+        // 1. Switch Motorsport Module (Left/Right arrows, A/D, Q/E, LeftBracket/RightBracket, Gamepad Bumpers / Nav Left/Right)
         if is_key_pressed(KeyCode::Left)
             || is_key_pressed(KeyCode::A)
+            || is_key_pressed(KeyCode::Q)
             || is_key_pressed(KeyCode::LeftBracket)
+            || self.input.gamepad.snapshot.btn_lb_pressed
             || self.input.gamepad.snapshot.nav_left
         {
             self.audio.play_sfx(SfxType::UiMove);
@@ -12452,7 +12499,9 @@ impl RaceSession {
         }
         if is_key_pressed(KeyCode::Right)
             || is_key_pressed(KeyCode::D)
+            || is_key_pressed(KeyCode::E)
             || is_key_pressed(KeyCode::RightBracket)
+            || self.input.gamepad.snapshot.btn_rb_pressed
             || self.input.gamepad.snapshot.nav_right
         {
             self.audio.play_sfx(SfxType::UiMove);
@@ -12652,7 +12701,7 @@ impl RaceSession {
             || self.input.gamepad.snapshot.btn_confirm_pressed
             || self.input.gamepad.snapshot.btn_a_pressed;
 
-        let is_edit_pressed = is_key_pressed(KeyCode::E) || self.input.gamepad.snapshot.btn_x_pressed;
+        let is_edit_pressed = self.input.gamepad.snapshot.btn_x_pressed;
 
         // 4. In Dev Workbench, Enter races track
         if is_dev_workbench && is_confirm_pressed {
@@ -12949,13 +12998,20 @@ impl RaceSession {
             }
         }
 
-        // 11. Back to Main Menu (Escape / Gamepad B / Back)
+        // 11. Back to Menu / ModalitySelect (Escape / Gamepad B / Back)
         if is_key_pressed(KeyCode::Escape)
             || self.input.gamepad.snapshot.btn_back_pressed
             || self.input.gamepad.snapshot.btn_b_pressed
         {
             self.audio.play_sfx(SfxType::UiMove);
-            self.state = GameState::Menu;
+            match self.track_manager_origin {
+                TrackManagerOrigin::ModalitySelect => {
+                    self.state = self.modality_return_state();
+                }
+                TrackManagerOrigin::Menu => {
+                    self.state = GameState::Menu;
+                }
+            }
             return;
         }
 
@@ -14849,6 +14905,25 @@ impl RaceSession {
         self.state = GameState::TrackEditor;
     }
 
+    /// Transitions from Race Modality Hub into Track Manager, setting origin to ModalitySelect.
+    pub fn enter_track_manager_from_modality_select(&mut self) {
+        self.audio.play_sfx(SfxType::UiSelect);
+        self.track_manager_origin = TrackManagerOrigin::ModalitySelect;
+        let has_module_customs = !self.track_manager.module_custom_tracks(self.active_module_id).is_empty();
+        let has_drafts = !self.track_manager.draft_track_choices().is_empty();
+        let (target_tab, target_filter) = if !has_module_customs && has_drafts {
+            (TrackManagerTab::Drafts, ModuleFilter::Drafts)
+        } else {
+            (TrackManagerTab::Main, ModuleFilter::for_module(self.active_module_id))
+        };
+        self.state = GameState::TrackManager {
+            active_tab: target_tab,
+            module_filter: target_filter,
+            selected_idx: 0,
+            modal: TrackManagerModal::None,
+        };
+    }
+
     /// Transitions from Race Modality Hub into Track Studio editor, setting origin to ModalitySelect.
     pub fn enter_track_editor_from_modality_select(&mut self) {
         self.audio.play_sfx(SfxType::UiSelect);
@@ -15014,15 +15089,28 @@ impl RaceSession {
 
         self.switch_to_module(&def.series.module_id);
 
-        let champ = if let Some(existing) = existing_session {
+        let champ = if let Some(mut existing) = existing_session {
+            if let Some(cfg) = def.series.tournament_config() {
+                existing.weekend_format = crate::series::WeekendFormat::TournamentSprint;
+                existing.tournament_config = Some(cfg);
+                if let Some(t) = &mut existing.tournament {
+                    t.config = cfg;
+                    for race in &mut t.active_races {
+                        race.laps = cfg.laps_for(race.stage);
+                    }
+                }
+            }
             existing
         } else {
             let mut c = def.to_session();
             let history_rounds = self.profile_history.iter().filter(|h| {
                 h.category == def.series.module_id
-                    && (!h.track_id.is_empty() || h.championship_name.as_deref() == Some(&def.series.name))
+                    && h.championship_name.as_deref().is_some_and(|name| {
+                        name.eq_ignore_ascii_case(&def.series.name)
+                            || name.eq_ignore_ascii_case(&def.series.id)
+                    })
             }).count();
-            if history_rounds > 0 && history_rounds < c.track_ids.len() {
+            if !c.is_tournament() && history_rounds > 0 && history_rounds < c.track_ids.len() {
                 c.current_round = history_rounds;
             }
             c
@@ -15664,11 +15752,7 @@ impl RaceSession {
         {
             if self.editor_modal == EditorModal::None {
                 let _ = self.track_manager.scan_custom_tracks();
-                self.editor_modal = EditorModal::OpenTrack {
-                    selected_tab: 0,
-                    page: 0,
-                    selected_idx: 0,
-                };
+                self.editor_modal = EditorModal::open_track_default();
             }
         }
 
