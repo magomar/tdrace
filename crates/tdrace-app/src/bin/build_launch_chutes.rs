@@ -45,6 +45,10 @@ fn template(track: &Track) -> LaunchChuteSpec {
         spec.pattern = PackedGridPattern::RallycrossThreeTwoThreeTwo;
         spec.surface = SurfaceType::Asphalt;
     }
+    if track.name.contains("Vilkyčiai") {
+        spec.surface = SurfaceType::Concrete;
+        spec.pad_width = 14.5;
+    }
     spec
 }
 
@@ -57,22 +61,29 @@ fn stamp(path: &Path, verbose: bool) -> Result<String, String> {
         return Err(format!("{:?} circuit: launch chutes are for Autocross and Rallycross", track.car_category));
     }
     let template = template(&track);
-    let spec = match track.place_launch_chute(&template) {
-        Ok(spec) => spec,
-        Err(e) => {
-            if verbose {
-                for k in (0..track.spline.waypoints.len()).filter(|&k| track.can_merge_launch_chute_at(k)) {
-                    for side in [ChuteSide::Right, ChuteSide::Left] {
-                        let attempt = LaunchChuteSpec { merge_waypoint: k, side, ..template };
-                        if let Err(why) = track.clone().stamp_launch_chute(&attempt) {
-                            eprintln!("    waypoint {k} {side:?}: {why}");
+    let spec = if track.name.contains("Vilkyčiai") {
+        let spec = LaunchChuteSpec { merge_waypoint: 35, side: ChuteSide::Right, ..template };
+        track.stamp_launch_chute(&spec).map_err(|e| e.to_string())?;
+        spec
+    } else {
+        match track.place_launch_chute(&template) {
+            Ok(spec) => spec,
+            Err(e) => {
+                if verbose {
+                    for k in (0..track.spline.waypoints.len()).filter(|&k| track.can_merge_launch_chute_at(k)) {
+                        for side in [ChuteSide::Right, ChuteSide::Left] {
+                            let attempt = LaunchChuteSpec { merge_waypoint: k, side, ..template };
+                            if let Err(why) = track.clone().stamp_launch_chute(&attempt) {
+                                eprintln!("    waypoint {k} {side:?}: {why}");
+                            }
                         }
                     }
                 }
+                return Err(e.to_string());
             }
-            return Err(e.to_string());
         }
     };
+
     let errors: Vec<String> = validate_track(&track)
         .into_iter()
         .filter(|d| d.severity == ValidationSeverity::Error)

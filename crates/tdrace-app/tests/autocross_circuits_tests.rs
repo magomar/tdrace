@@ -47,12 +47,17 @@ fn test_seventeen_autocross_circuits_embedded_in_catalog() {
 
         // Verify dominant surface is Dirt and runoff is DeepGravel
         let total_samples = track.spline.samples.len();
-        let dirt_samples = track.spline.samples.iter().filter(|s| s.surface == SurfaceType::Dirt).count();
+        let loose_samples = track
+            .spline
+            .samples
+            .iter()
+            .filter(|s| s.surface == SurfaceType::Dirt)
+            .count();
         assert!(
-            dirt_samples as f32 / total_samples as f32 >= 0.90,
-            "Circuit {} dominant surface must be pure Dirt (got {}/{} dirt samples)",
+            loose_samples as f32 / total_samples as f32 >= 0.90,
+            "Circuit {} dominant surface must be pure Dirt (got {}/{} samples)",
             c.id,
-            dirt_samples,
+            loose_samples,
             total_samples
         );
         for (idx, wp) in track.spline.waypoints.iter().enumerate() {
