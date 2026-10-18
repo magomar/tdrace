@@ -3033,3 +3033,129 @@ fn test_wall_suppression_diagnostics_on_road_conflict() {
         "Synthetic track compilation must record left wall suppression with SegmentId(1)"
     );
 }
+
+#[test]
+fn test_spec_123_elevation_overlay_mode_toggling_and_cycling() {
+    use macroquad::input::KeyCode;
+    use tdrace_app::editor::ElevationOverlayMode;
+    use tdrace_app::game::inject_key_presses_for_tests;
+
+    let mut mode = ElevationOverlayMode::default();
+    assert_eq!(mode, ElevationOverlayMode::Off);
+    assert!(!mode.shows_color_map());
+    assert!(!mode.shows_contours());
+
+    mode = mode.toggle();
+    assert_eq!(mode, ElevationOverlayMode::ColorAndContours);
+    assert!(mode.shows_color_map());
+    assert!(mode.shows_contours());
+
+    assert_eq!(mode.toggle(), ElevationOverlayMode::Off);
+
+    assert_eq!(mode.cycle_submode(), ElevationOverlayMode::ColorMapOnly);
+    assert_eq!(
+        ElevationOverlayMode::ColorMapOnly.cycle_submode(),
+        ElevationOverlayMode::ContoursOnly
+    );
+    assert_eq!(
+        ElevationOverlayMode::ContoursOnly.cycle_submode(),
+        ElevationOverlayMode::ColorAndContours
+    );
+
+    // Verify E key toggles elevation_overlay inside RaceSession::update_track_editor
+    let mut session = RaceSession::new();
+    let track = tdrace_core::catalog::official_track("rally", "lydden_hill");
+    session.enter_track_editor_with_path(track, None);
+    assert_eq!(
+        session.editor_tools.elevation_overlay,
+        ElevationOverlayMode::Off
+    );
+
+    inject_key_presses_for_tests(&[KeyCode::E]);
+    session.update_track_editor(1.0 / 60.0);
+    assert_eq!(
+        session.editor_tools.elevation_overlay,
+        ElevationOverlayMode::ColorAndContours
+    );
+
+    inject_key_presses_for_tests(&[KeyCode::E]);
+    session.update_track_editor(1.0 / 60.0);
+    assert_eq!(
+        session.editor_tools.elevation_overlay,
+        ElevationOverlayMode::Off
+    );
+    inject_key_presses_for_tests(&[]);
+}
+
+#[test]
+fn test_spec_123_flat_vs_elevated_bounds_and_hypsometric_color_stops() {
+    use tdrace_app::editor::{
+        compute_track_elevation_bounds, effective_elevation_scale_bounds, hypsometric_color,
+    };
+
+    // 1. Flat circuit baseline (all waypoints at 0.0m, no jump ramps)
+    let mut flat_track = tdrace_core::catalog::official_track("rally", "lydden_hill");
+    flat_track.geometry.jump_ramps.clear();
+    let (min_e, max_e, max_grade) = compute_track_elevation_bounds(&flat_track);
+    assert!(
+        min_e.abs() < 1e-4 && max_e.abs() < 1e-4,
+        "Expected 0.0m flat bounds when jump ramps are cleared, got ({min_e}, {max_e})"
+    );
+    assert!(max_grade < 0.1);
+    assert_eq!(effective_elevation_scale_bounds(min_e, max_e), (0.0, 10.0));
+
+    let ground_col = hypsometric_color(0.0, min_e, max_e, 0.58);
+    assert!((ground_col.r - 0.00).abs() < 1e-3);
+    assert!((ground_col.g - 0.72).abs() < 1e-3);
+    assert!((ground_col.b - 0.58).abs() < 1e-3);
+
+    // 2. Elevated circuit rising from 0.0m to 6.0m
+    let mut elevated = flat_track.clone();
+    elevated.spline.waypoints[5].elevation = 6.0;
+    elevated.rebuild_geometry(4.0, tdrace_core::track::BarrierType::Steel);
+    let (e_min, e_max, e_grade) = compute_track_elevation_bounds(&elevated);
+    assert!(e_min <= 0.01);
+    assert!((e_max - 6.0).abs() < 0.25, "Expected peak ~6.0m, got {e_max}");
+    assert!(e_grade > 2.0, "Expected non-trivial longitudinal grade %, got {e_grade}");
+
+    let c_low = hypsometric_color(0.0, 0.0, 6.0, 1.0);
+    let c_mid = hypsometric_color(3.0, 0.0, 6.0, 1.0);
+    let c_high = hypsometric_color(6.0, 0.0, 6.0, 1.0);
+    assert_ne!(c_low, c_mid);
+    assert_ne!(c_mid, c_high);
+    assert!((c_high.r - 1.00).abs() < 1e-3 && (c_high.b - 0.52).abs() < 1e-3);
+}
+
+#[test]
+fn test_spec_123_banked_and_unbanked_iso_contour_extraction() {
+    use tdrace_app::editor::{quad_iso_contour_segment, sample_edge_elevations};
+
+    // 1. Unbanked longitudinal slope rising from z=0.0m (x=0) to z=2.0m (x=20), road width 14m (y in -7..+7)
+    let p0_l = Vec2::new(0.0, 7.0);
+    let p0_r = Vec2::new(0.0, -7.0);
+    let p1_r = Vec2::new(20.0, -7.0);
+    let p1_l = Vec2::new(20.0, 7.0);
+    let seg = quad_iso_contour_segment(p0_l, 0.0, p0_r, 0.0, p1_r, 2.0, p1_l, 2.0, 0.5)
+        .expect("0.5m contour must intersect 0..2m quad");
+    assert!((seg.0.x - 5.0).abs() < 1e-3 && (seg.1.x - 5.0).abs() < 1e-3);
+    assert!(((seg.0.y - seg.1.y).abs() - 14.0).abs() < 1e-3);
+
+    // 2. Banked turn (bank_angle = 15 deg, width = 14m) tilts left/right edge elevations
+    let (zl, zr) = sample_edge_elevations(2.0, 14.0, 15.0);
+    let expected_delta = 7.0 * 15.0_f32.to_radians().sin();
+    assert!((zl - (2.0 - expected_delta)).abs() < 1e-4);
+    assert!((zr - (2.0 + expected_delta)).abs() < 1e-4);
+
+    // On a banked quad rising longitudinally from 1.0m to 3.0m, the 2.0m contour crosses diagonally (x_a != x_b)
+    let (z0_l, z0_r) = sample_edge_elevations(1.0, 14.0, 15.0);
+    let (z1_l, z1_r) = sample_edge_elevations(3.0, 14.0, 15.0);
+    let banked_seg = quad_iso_contour_segment(p0_l, z0_l, p0_r, z0_r, p1_r, z1_r, p1_l, z1_l, 2.0)
+        .expect("2.0m contour must intersect banked quad");
+    assert!(
+        (banked_seg.0.x - banked_seg.1.x).abs() > 1.0,
+        "Banked contour must cross diagonally across the road width: {:?}",
+        banked_seg
+    );
+}
+
+

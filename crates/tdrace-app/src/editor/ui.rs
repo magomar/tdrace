@@ -18,7 +18,10 @@ use crate::editor::inspector::{
     TITLE_H,
 };
 use crate::editor::state::{EditorState, GridSnapSetting};
-use crate::editor::tools::{EditorToolType, SurfaceShapeType, ToolSettings};
+use crate::editor::tools::{
+    compute_track_elevation_bounds, effective_elevation_scale_bounds, hypsometric_color,
+    EditorToolType, ElevationOverlayMode, SurfaceShapeType, ToolSettings,
+};
 use crate::render::color::Palette;
 use crate::track_manager::TrackManager;
 use cabinet::input::GamepadSnapshot;
@@ -349,6 +352,31 @@ pub fn render_editor_ui(
     }
     tb_x += scaler.s(72.0);
 
+    let elev_active = tools.elevation_overlay != ElevationOverlayMode::Off;
+    let elev_label = format!("ELEV [E]: {}", tools.elevation_overlay.status_label());
+    let elev_w = scaler.s(96.0);
+    if draw_ui_btn(
+        fonts,
+        &scaler,
+        tb_x,
+        scaler.s(8.0),
+        elev_w,
+        scaler.s(30.0),
+        &elev_label,
+        if elev_active { Palette::UI_CARD_BG_HOVER } else { Palette::UI_CARD_BG },
+        if elev_active { Palette::NEON_GOLD } else { Palette::UI_CARD_BORDER },
+        mouse_pos,
+        bg_mouse_clicked,
+    ) {
+        let shift_down = is_key_down(KeyCode::LeftShift) || is_key_down(KeyCode::RightShift);
+        tools.elevation_overlay = if shift_down {
+            tools.elevation_overlay.cycle_submode()
+        } else {
+            tools.elevation_overlay.toggle()
+        };
+    }
+    tb_x += elev_w + scaler.s(8.0);
+
     if draw_ui_btn(fonts, &scaler, tb_x, scaler.s(8.0), scaler.s(55.0), scaler.s(30.0), "HELP [?]", Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, mouse_pos, bg_mouse_clicked) {
         *active_modal = EditorModal::Help;
     }
@@ -656,9 +684,97 @@ pub fn render_editor_ui(
 
     render_inspector(fonts, &scaler, insp_x, insp_y, insp_w, insp_h, state, tools, mouse_pos, bg_mouse_clicked);
 
-    // 4. BOTTOM STATUS BAR
+    // 4. BOTTOM STATUS BAR & ELEVATION OVERLAY LEGEND CARD (Spec 123)
     let bot_h = scaler.s(32.0);
     let bot_y = sh - bot_h;
+
+    if tools.elevation_overlay != ElevationOverlayMode::Off {
+        let card_w = scaler.s(268.0);
+        let card_h = scaler.s(94.0);
+        let card_x = scaler.s(188.0);
+        let card_y = bot_y - card_h - scaler.s(10.0);
+
+        scaler.draw_glass_card(
+            card_x,
+            card_y,
+            card_w,
+            card_h,
+            Palette::UI_CARD_BG,
+            Palette::NEON_CYAN,
+            1.2,
+        );
+
+        let (min_e, max_e, max_grade_pct) = compute_track_elevation_bounds(&state.track);
+        let (scale_lo, scale_hi) = effective_elevation_scale_bounds(min_e, max_e);
+        let is_flat = (max_e - min_e).abs() < 0.1;
+
+        fonts.draw_ui_bold(
+            &format!("ELEVATION [E]: {}", tools.elevation_overlay.mode_title()),
+            card_x + scaler.s(10.0),
+            card_y + scaler.s(17.0),
+            scaler.font_s(11.0),
+            Palette::NEON_GOLD,
+        );
+        if is_flat {
+            fonts.draw_ui_bold(
+                "FLAT CIRCUIT (0.0m)",
+                card_x + card_w - scaler.s(106.0),
+                card_y + scaler.s(17.0),
+                scaler.font_s(9.5),
+                Palette::NEON_GREEN,
+            );
+        }
+
+        // 5-stop hypsometric color gradient bar
+        let bar_x = card_x + scaler.s(10.0);
+        let bar_y = card_y + scaler.s(24.0);
+        let bar_w = card_w - scaler.s(20.0);
+        let bar_h = scaler.s(14.0);
+        let steps = 40usize;
+        let step_w = bar_w / steps as f32;
+        for s in 0..steps {
+            let frac = (s as f32 + 0.5) / steps as f32;
+            let elev = scale_lo + frac * (scale_hi - scale_lo);
+            let col = hypsometric_color(elev, min_e, max_e, 0.95);
+            draw_rectangle(bar_x + s as f32 * step_w, bar_y, step_w + 0.5, bar_h, col);
+        }
+        draw_rectangle_lines(bar_x, bar_y, bar_w, bar_h, 1.0, Palette::UI_CARD_BORDER);
+
+        // 5 metric elevation scale ticks
+        for t_idx in 0..=4 {
+            let frac = t_idx as f32 * 0.25;
+            let tick_elev = scale_lo + frac * (scale_hi - scale_lo);
+            let tx = bar_x + frac * (bar_w - scaler.s(26.0));
+            fonts.draw_ui_regular(
+                &format!("{:.1}m", tick_elev),
+                tx,
+                bar_y + bar_h + scaler.s(12.0),
+                scaler.font_s(9.5),
+                Palette::WHITE,
+            );
+        }
+
+        // Circuit elevation & contour summary line
+        let stats_str = format!(
+            "Min: {:.1}m · Max: {:.1}m · Max Grade: {:.1}%",
+            min_e, max_e, max_grade_pct
+        );
+        fonts.draw_ui_regular(
+            &stats_str,
+            card_x + scaler.s(10.0),
+            card_y + scaler.s(66.0),
+            scaler.font_s(10.0),
+            Palette::WHITE,
+        );
+        fonts.draw_ui_regular(
+            "Contours: 2.0m major (ticks) · 0.5m minor · [Shift+E] Mode",
+            card_x + scaler.s(10.0),
+            card_y + scaler.s(82.0),
+            scaler.font_s(9.5),
+            Palette::UI_TEXT_MUTED,
+        );
+    }
+
     scaler.draw_glass_card(0.0, bot_y, sw, bot_h, Palette::UI_CARD_BG, Palette::UI_CARD_BORDER, 1.0);
 
     let world_mouse = camera.screen_to_world(mouse_pos, sw, sh);
@@ -681,7 +797,7 @@ pub fn render_editor_ui(
     );
 
     let info_str = format!(
-        "Length: {:.0}m | Waypoints: {} | Checkpoints: {} | Pos: ({:.1}m, {:.1}m) | Zoom: {} ({:.1}x) | Undo: {} / Redo: {}",
+        "Length: {:.0}m | Waypoints: {} | Checkpoints: {} | Pos: ({:.1}m, {:.1}m) | Zoom: {} ({:.1}x) | [E] Elev: {} | Undo: {} / Redo: {}",
         total_len,
         state.track.spline.waypoints.len(),
         state.track.checkpoints.len(),
@@ -689,6 +805,7 @@ pub fn render_editor_ui(
         world_mouse.y,
         camera.current_zoom_level().name,
         camera.zoom,
+        tools.elevation_overlay.status_label(),
         state.history.undo_count(),
         state.history.redo_count(),
     );
@@ -2731,9 +2848,9 @@ fn render_help_modal(
         ("Ctrl + D", "Duplicate selected entity (obstacle, zone, ramp, waypoint, etc.)"),
         ("Ctrl + Z / Ctrl + Y", "Undo / Redo state modifications"),
         ("Delete / Backspace", "Delete selected waypoint, surface zone, ramp, or prop"),
-        ("F Key", "Focus and frame the entire circuit bounds within viewport"),
-        ("G Key", "Cycle CAD metric grid snap (Off, 1m, 2.5m, 5m, 10m)"),
-        ("Esc / E", "Exit track editor / Cancel vertex drawing (prompts to save if unsaved)"),
+        ("F / G Keys", "Focus full circuit bounds [F] / Cycle CAD metric grid snap [G]"),
+        ("E / Shift + E", "Toggle Elevation Overlay (Color Map + Contours) / Cycle overlay sub-modes"),
+        ("Esc Key", "Exit track editor / Cancel vertex drawing (prompts to save if unsaved)"),
     ];
 
     let mut sy = my + scaler.s(64.0);

@@ -6,7 +6,13 @@ pub mod ui;
 
 pub use camera::EditorCamera;
 pub use state::{EditorState, GridSnapSetting, HistoryStack, Selection};
-pub use tools::{branch_socket_label, render_editor_gizmos, render_editor_junction_labels, EditorToolType, ObstacleShapeType, SurfaceShapeType, ToolSettings};
+pub use tools::{
+    branch_socket_label, compute_track_elevation_bounds, effective_elevation_scale_bounds,
+    hypsometric_color, quad_iso_contour_segment, render_editor_elevation_labels,
+    render_editor_elevation_world_pass, render_editor_gizmos, render_editor_junction_labels,
+    sample_edge_elevations, EditorToolType, ElevationOverlayMode, ObstacleShapeType,
+    SurfaceShapeType, ToolSettings,
+};
 pub use ui::{is_mouse_over_editor_ui, render_editor_ui, EditorAction, EditorModal};
 
 use glam::Vec2;

@@ -273,6 +273,7 @@ impl Default for ToolSettings {
             escape_consumed: false,
             arrow_nudge_next_at: [0.0; 4],
             arrow_nudge_active: false,
+            elevation_overlay: ElevationOverlayMode::Off,
         }
     }
 }
@@ -3777,6 +3778,417 @@ pub fn render_editor_junction_labels(fonts: &Fonts, state: &EditorState, camera:
     if let (Some(lane), Some(junctions)) = (&state.track.pit_lane, &state.track.pit_lane_junctions) {
         let gate_mid = (lane.entry_gate.start + lane.entry_gate.end) * 0.5;
         draw_tag("[Pit]", gate_mid + (gate_mid - junctions.p_apex).normalize_or_zero() * 2.5, Palette::NEON_CYAN);
+    }
+}
+
+/// Resolves the effective `[lo, hi]` elevation scale bounds for color mapping and legend ticks (Spec 123).
+///
+/// Flat circuits (`max_elev - min_elev < 0.1 m`) anchor to `[0.0 m, 10.0 m]` so `0.0 m` renders
+/// uniformly in the ground-baseline color without amplifying numerical noise.
+pub fn effective_elevation_scale_bounds(min_elev: f32, max_elev: f32) -> (f32, f32) {
+    if (max_elev - min_elev).abs() < 0.1 {
+        (0.0, 10.0)
+    } else {
+        (min_elev, max_elev.max(min_elev + 2.0))
+    }
+}
+
+/// Computes `(min_elev, max_elev, max_grade_pct)` across `track.spline`, `track.network` branches,
+/// `track.pit_lane`, and `track.geometry.jump_ramps` (Spec 123).
+pub fn compute_track_elevation_bounds(track: &Track) -> (f32, f32, f32) {
+    let mut min_e = f32::INFINITY;
+    let mut max_e = f32::NEG_INFINITY;
+    let mut max_grade_pct = 0.0f32;
+
+    fn visit_samples(
+        samples: &[tdrace_core::track::SplineSample],
+        min_e: &mut f32,
+        max_e: &mut f32,
+        max_grade_pct: &mut f32,
+    ) {
+        for s in samples {
+            *min_e = min_e.min(s.elevation);
+            *max_e = max_e.max(s.elevation);
+            *max_grade_pct = max_grade_pct.max(s.grade_slope.abs() * 100.0);
+        }
+        for w in samples.windows(2) {
+            let ds = (w[1].distance - w[0].distance).abs();
+            if ds > 0.25 {
+                let grade = ((w[1].elevation - w[0].elevation) / ds).abs() * 100.0;
+                *max_grade_pct = max_grade_pct.max(grade);
+            }
+        }
+    }
+
+    visit_samples(&track.spline.samples, &mut min_e, &mut max_e, &mut max_grade_pct);
+    for wp in &track.spline.waypoints {
+        min_e = min_e.min(wp.elevation);
+        max_e = max_e.max(wp.elevation);
+    }
+    if let Some(net) = &track.network {
+        for seg in net.branch_segments() {
+            visit_samples(&seg.samples, &mut min_e, &mut max_e, &mut max_grade_pct);
+            for wp in &seg.waypoints {
+                min_e = min_e.min(wp.elevation);
+                max_e = max_e.max(wp.elevation);
+            }
+        }
+    }
+    if let Some(lane) = &track.pit_lane {
+        visit_samples(&lane.spline.samples, &mut min_e, &mut max_e, &mut max_grade_pct);
+    }
+    for ramp in &track.geometry.jump_ramps {
+        let base_e = track.spline.project_point(ramp.shape.center()).elevation;
+        min_e = min_e.min(base_e);
+        max_e = max_e.max(base_e + ramp.height.max(0.0));
+    }
+
+    if !min_e.is_finite() || !max_e.is_finite() {
+        (0.0, 0.0, 0.0)
+    } else {
+        (min_e, max_e, max_grade_pct)
+    }
+}
+
+#[inline]
+fn draw_tri_glam(a: Vec2, b: Vec2, c: Vec2, col: Color) {
+    macroquad::shapes::draw_triangle(
+        macroquad::math::Vec2::new(a.x, a.y),
+        macroquad::math::Vec2::new(b.x, b.y),
+        macroquad::math::Vec2::new(c.x, c.y),
+        col,
+    );
+}
+
+/// Evaluates left and right road edge elevations for a sample with centerline height `center_elev`,
+/// width `width`, and banking angle `bank_angle_deg` in degrees (Spec 123).
+#[inline]
+pub fn sample_edge_elevations(center_elev: f32, width: f32, bank_angle_deg: f32) -> (f32, f32) {
+    let delta = (width * 0.5) * bank_angle_deg.to_radians().sin();
+    (center_elev - delta, center_elev + delta)
+}
+
+/// Maps a metric elevation `elevation` into the 5-stop perceptual hypsometric palette (Spec 123).
+pub fn hypsometric_color(elevation: f32, min_elev: f32, max_elev: f32, alpha: f32) -> Color {
+    const STOPS: [(f32, (f32, f32, f32)); 5] = [
+        (0.00, (0.00, 0.72, 0.58)), // #00B894 Deep Emerald-Teal (ground baseline)
+        (0.25, (0.53, 0.88, 0.25)), // #88E040 Chartreuse Green
+        (0.50, (1.00, 0.70, 0.00)), // #FFB300 Neon Amber-Gold
+        (0.75, (1.00, 0.34, 0.13)), // #FF5722 Velocity Coral-Orange
+        (1.00, (1.00, 0.16, 0.52)), // #FF2A85 Electric Magenta-Rose
+    ];
+    let (lo, hi) = effective_elevation_scale_bounds(min_elev, max_elev);
+    let span = (hi - lo).max(1e-5);
+    let t = ((elevation - lo) / span).clamp(0.0, 1.0);
+
+    for pair in STOPS.windows(2) {
+        let (t0, c0) = pair[0];
+        let (t1, c1) = pair[1];
+        if t <= t1 {
+            let u = ((t - t0) / (t1 - t0).max(1e-5)).clamp(0.0, 1.0);
+            return Color::new(
+                c0.0 + (c1.0 - c0.0) * u,
+                c0.1 + (c1.1 - c0.1) * u,
+                c0.2 + (c1.2 - c0.2) * u,
+                alpha,
+            );
+        }
+    }
+    let last = STOPS[STOPS.len() - 1].1;
+    Color::new(last.0, last.1, last.2, alpha)
+}
+
+/// Extracts the 2D iso-elevation contour segment where a 4-corner road quad
+/// `[(p00, z00), (p10, z10), (p11, z11), (p01, z01)]` intersects height `level` (Spec 123).
+pub fn quad_iso_contour_segment(
+    p00: Vec2,
+    z00: f32,
+    p10: Vec2,
+    z10: f32,
+    p11: Vec2,
+    z11: f32,
+    p01: Vec2,
+    z01: f32,
+    level: f32,
+) -> Option<(Vec2, Vec2)> {
+    let corners = [(p00, z00), (p10, z10), (p11, z11), (p01, z01)];
+    let mut hits: Vec<Vec2> = Vec::with_capacity(4);
+
+    for i in 0..4 {
+        let (pa, za) = corners[i];
+        let (pb, zb) = corners[(i + 1) % 4];
+        let dz = zb - za;
+        if dz.abs() < 1e-5 {
+            continue;
+        }
+        let min_z = za.min(zb);
+        let max_z = za.max(zb);
+        if level >= min_z && level <= max_z {
+            let t = ((level - za) / dz).clamp(0.0, 1.0);
+            let pt = pa.lerp(pb, t);
+            if !hits.iter().any(|existing| (*existing - pt).length_squared() < 1e-4) {
+                hits.push(pt);
+            }
+        }
+    }
+
+    if hits.len() >= 2 {
+        Some((hits[0], hits[1]))
+    } else {
+        None
+    }
+}
+
+fn render_samples_elevation_overlay(
+    samples: &[tdrace_core::track::SplineSample],
+    closed: bool,
+    mode: ElevationOverlayMode,
+    min_elev: f32,
+    max_elev: f32,
+    view_bounds: Option<(Vec2, Vec2)>,
+) {
+    if samples.len() < 2 {
+        return;
+    }
+    let n = samples.len();
+    let seg_count = if closed { n } else { n - 1 };
+
+    for i in 0..seg_count {
+        let s0 = &samples[i];
+        let s1 = &samples[(i + 1) % n];
+
+        let hw0 = s0.width * 0.5;
+        let hw1 = s1.width * 0.5;
+        let p0_l = s0.point + s0.normal * hw0;
+        let p0_r = s0.point - s0.normal * hw0;
+        let p1_l = s1.point + s1.normal * hw1;
+        let p1_r = s1.point - s1.normal * hw1;
+
+        if let Some((vmin, vmax)) = view_bounds {
+            let pad = 25.0;
+            let qmin = p0_l.min(p0_r).min(p1_l).min(p1_r) - Vec2::splat(pad);
+            let qmax = p0_l.max(p0_r).max(p1_l).max(p1_r) + Vec2::splat(pad);
+            if qmax.x < vmin.x || qmin.x > vmax.x || qmax.y < vmin.y || qmin.y > vmax.y {
+                continue;
+            }
+        }
+
+        let (z0_l, z0_r) = sample_edge_elevations(s0.elevation, s0.width, s0.bank_angle);
+        let (z1_l, z1_r) = sample_edge_elevations(s1.elevation, s1.width, s1.bank_angle);
+
+        if mode.shows_color_map() {
+            let z_mid = (s0.elevation + s1.elevation + z0_l + z0_r + z1_l + z1_r) / 6.0;
+            let col = hypsometric_color(z_mid, min_elev, max_elev, 0.56);
+            if (s0.bank_angle.abs() > 0.5 || s1.bank_angle.abs() > 0.5)
+                && ((z0_l - z0_r).abs() > 0.05 || (z1_l - z1_r).abs() > 0.05)
+            {
+                let col_l = hypsometric_color((z0_l + z1_l) * 0.5, min_elev, max_elev, 0.58);
+                let col_r = hypsometric_color((z0_r + z1_r) * 0.5, min_elev, max_elev, 0.58);
+                draw_tri_glam(p0_l, s0.point, s1.point, col_l);
+                draw_tri_glam(p0_l, s1.point, p1_l, col_l);
+                draw_tri_glam(s0.point, p0_r, p1_r, col_r);
+                draw_tri_glam(s0.point, p1_r, s1.point, col_r);
+            } else {
+                draw_tri_glam(p0_l, p0_r, p1_r, col);
+                draw_tri_glam(p0_l, p1_r, p1_l, col);
+            }
+        }
+
+        if mode.shows_contours() {
+            let q_min_z = z0_l.min(z0_r).min(z1_l).min(z1_r);
+            let q_max_z = z0_l.max(z0_r).max(z1_l).max(z1_r);
+            if q_max_z - q_min_z >= 1e-3 {
+                let k_start = (q_min_z / 0.5).ceil() as i32;
+                let k_end = (q_max_z / 0.5).floor() as i32;
+                for k in k_start..=k_end {
+                    let level = k as f32 * 0.5;
+                    if let Some((a, b)) =
+                        quad_iso_contour_segment(p0_l, z0_l, p0_r, z0_r, p1_r, z1_r, p1_l, z1_l, level)
+                    {
+                        let is_major = k % 4 == 0;
+                        let thickness = if is_major { 0.42 } else { 0.22 };
+                        let col = if is_major {
+                            Color::new(1.0, 0.98, 0.86, 0.94)
+                        } else {
+                            Color::new(0.88, 0.96, 1.0, 0.68)
+                        };
+                        draw_line(a.x, a.y, b.x, b.y, thickness, col);
+
+                        if is_major {
+                            let mid = (a + b) * 0.5;
+                            let grad_s = (s1.elevation - s0.elevation) * s0.tangent;
+                            let grad_n = ((z0_l - z0_r) * 0.5) * s0.normal;
+                            let downhill = -(grad_s + grad_n).normalize_or_zero();
+                            if downhill.length_squared() > 0.1 {
+                                let tick_end = mid + downhill * 0.95;
+                                draw_line(mid.x, mid.y, tick_end.x, tick_end.y, 0.30, col);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Embankment topographic skirts along elevated road edges (z > 0.5m, 1.5:1 slope)
+            let z_edge_l = (z0_l + z1_l) * 0.5;
+            if z_edge_l > 0.5 {
+                let max_k = (z_edge_l / 0.5).floor() as i32;
+                for k in 1..=max_k {
+                    let level = k as f32 * 0.5;
+                    if z0_l >= level && z1_l >= level {
+                        let d0 = (z0_l - level) * 1.5;
+                        let d1 = (z1_l - level) * 1.5;
+                        let sk0 = p0_l + s0.normal * d0;
+                        let sk1 = p1_l + s1.normal * d1;
+                        let is_major = k % 4 == 0;
+                        let col = hypsometric_color(level, min_elev, max_elev, if is_major { 0.72 } else { 0.42 });
+                        draw_line(sk0.x, sk0.y, sk1.x, sk1.y, if is_major { 0.30 } else { 0.16 }, col);
+                    }
+                }
+            }
+            let z_edge_r = (z0_r + z1_r) * 0.5;
+            if z_edge_r > 0.5 {
+                let max_k = (z_edge_r / 0.5).floor() as i32;
+                for k in 1..=max_k {
+                    let level = k as f32 * 0.5;
+                    if z0_r >= level && z1_r >= level {
+                        let d0 = (z0_r - level) * 1.5;
+                        let d1 = (z1_r - level) * 1.5;
+                        let sk0 = p0_r - s0.normal * d0;
+                        let sk1 = p1_r - s1.normal * d1;
+                        let is_major = k % 4 == 0;
+                        let col = hypsometric_color(level, min_elev, max_elev, if is_major { 0.72 } else { 0.42 });
+                        draw_line(sk0.x, sk0.y, sk1.x, sk1.y, if is_major { 0.30 } else { 0.16 }, col);
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Renders the world-space hypsometric color-map ribbon and topographic iso-elevation contours
+/// across the circuit spline, branch segments, pit lane, and jump ramps (Spec 123).
+pub fn render_editor_elevation_world_pass(
+    state: &EditorState,
+    tools: &ToolSettings,
+    view_bounds: Option<(Vec2, Vec2)>,
+) {
+    let mode = tools.elevation_overlay;
+    if mode == ElevationOverlayMode::Off {
+        return;
+    }
+
+    let (min_elev, max_elev, _) = compute_track_elevation_bounds(&state.track);
+
+    render_samples_elevation_overlay(
+        &state.track.spline.samples,
+        state.track.spline.closed,
+        mode,
+        min_elev,
+        max_elev,
+        view_bounds,
+    );
+
+    if let Some(net) = &state.track.network {
+        for seg in net.branch_segments() {
+            render_samples_elevation_overlay(&seg.samples, false, mode, min_elev, max_elev, view_bounds);
+        }
+    }
+
+    if let Some(lane) = &state.track.pit_lane {
+        render_samples_elevation_overlay(&lane.spline.samples, false, mode, min_elev, max_elev, view_bounds);
+    }
+
+    for ramp in &state.track.geometry.jump_ramps {
+        if let SurfaceShape::OrientedBox { center, half_extents, angle } = &ramp.shape {
+            let base_e = state.track.spline.project_point(*center).elevation;
+            let fwd = Vec2::new(angle.cos(), angle.sin());
+            let right = Vec2::new(-angle.sin(), angle.cos());
+            let slices = 16usize;
+            for s in 0..slices {
+                let u0 = s as f32 / slices as f32;
+                let u1 = (s + 1) as f32 / slices as f32;
+                let x0 = -half_extents.x + u0 * (half_extents.x * 2.0);
+                let x1 = -half_extents.x + u1 * (half_extents.x * 2.0);
+                let p0_c = *center + fwd * x0;
+                let p1_c = *center + fwd * x1;
+                let z0 = base_e + ramp.surface_elevation_at(p0_c);
+                let z1 = base_e + ramp.surface_elevation_at(p1_c);
+                let p0_l = p0_c - right * half_extents.y;
+                let p0_r = p0_c + right * half_extents.y;
+                let p1_l = p1_c - right * half_extents.y;
+                let p1_r = p1_c + right * half_extents.y;
+
+                if mode.shows_color_map() {
+                    let col = hypsometric_color((z0 + z1) * 0.5, min_elev, max_elev, 0.62);
+                    draw_tri_glam(p0_l, p0_r, p1_r, col);
+                    draw_tri_glam(p0_l, p1_r, p1_l, col);
+                }
+                if mode.shows_contours() {
+                    let q_min = z0.min(z1);
+                    let q_max = z0.max(z1);
+                    let k_start = (q_min / 0.5).ceil() as i32;
+                    let k_end = (q_max / 0.5).floor() as i32;
+                    for k in k_start..=k_end {
+                        let level = k as f32 * 0.5;
+                        if let Some((a, b)) =
+                            quad_iso_contour_segment(p0_l, z0, p0_r, z0, p1_r, z1, p1_l, z1, level)
+                        {
+                            let is_major = k % 4 == 0;
+                            draw_line(
+                                a.x,
+                                a.y,
+                                b.x,
+                                b.y,
+                                if is_major { 0.42 } else { 0.22 },
+                                Color::new(1.0, 0.98, 0.86, if is_major { 0.95 } else { 0.72 }),
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Renders screen-space waypoint height and longitudinal grade badges when the elevation overlay is active (Spec 123).
+pub fn render_editor_elevation_labels(
+    fonts: &Fonts,
+    state: &EditorState,
+    tools: &ToolSettings,
+    camera: &EditorCamera,
+) {
+    if tools.elevation_overlay == ElevationOverlayMode::Off {
+        return;
+    }
+    let (sw, sh) = (screen_width(), screen_height());
+    let scaler = UiScaler::new(sw, sh);
+    let (min_elev, max_elev, _) = compute_track_elevation_bounds(&state.track);
+    let font_sz = scaler.font_s(10.5);
+
+    for (i, wp) in state.track.spline.waypoints.iter().enumerate() {
+        let scr = camera.world_to_screen(wp.point, sw, sh);
+        if scr.x < scaler.s(180.0) || scr.x > sw - scaler.s(250.0) || scr.y < scaler.s(50.0) || scr.y > sh - scaler.s(36.0) {
+            continue;
+        }
+        let sample = state
+            .track
+            .spline
+            .waypoint_sample_index(i)
+            .and_then(|idx| state.track.spline.samples.get(idx));
+        let grade_pct = sample.map_or(0.0, |s| s.grade_slope * 100.0);
+        let label = if grade_pct.abs() >= 1.0 {
+            format!("{:.1}m ({:+.1}%)", wp.elevation, grade_pct)
+        } else {
+            format!("{:.1}m", wp.elevation)
+        };
+        let badge_col = hypsometric_color(wp.elevation, min_elev, max_elev, 1.0);
+        let bx = scr.x + scaler.s(8.0);
+        let by = scr.y - scaler.s(14.0);
+        let bw = scaler.s(if grade_pct.abs() >= 1.0 { 72.0 } else { 38.0 });
+        let bh = scaler.s(15.0);
+        macroquad::shapes::draw_rectangle(bx, by, bw, bh, Color::new(0.04, 0.06, 0.10, 0.84));
+        macroquad::shapes::draw_rectangle_lines(bx, by, bw, bh, 1.0, badge_col);
+        fonts.draw_ui_bold(&label, bx + scaler.s(4.0), by + scaler.s(11.5), font_sz, badge_col);
     }
 }
 

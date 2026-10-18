@@ -175,7 +175,8 @@ use crate::profile::{
 use crate::render::car::{render_car_numbers, render_car_with_visual_type_model_and_shadows};
 use crate::render::color::{CarColorScheme, Palette};
 use crate::editor::{
-    is_mouse_over_editor_ui, render_editor_grid, render_editor_gizmos, render_editor_junction_labels, render_editor_ui,
+    is_mouse_over_editor_ui, render_editor_elevation_labels, render_editor_elevation_world_pass,
+    render_editor_gizmos, render_editor_grid, render_editor_junction_labels, render_editor_ui,
     EditorAction, EditorCamera, EditorModal, EditorState, EditorToolType, SurfaceShapeType,
     ToolSettings,
 };
@@ -16008,6 +16009,21 @@ impl RaceSession {
             }
         }
 
+        if !self.editor_tools.is_editing_text()
+            && self.editor_modal == EditorModal::None
+            && !is_key_down(KeyCode::LeftControl)
+            && !is_key_down(KeyCode::RightControl)
+            && is_key_pressed(KeyCode::E)
+        {
+            let shift_down = is_key_down(KeyCode::LeftShift) || is_key_down(KeyCode::RightShift);
+            self.editor_tools.elevation_overlay = if shift_down {
+                self.editor_tools.elevation_overlay.cycle_submode()
+            } else {
+                self.editor_tools.elevation_overlay.toggle()
+            };
+            self.audio.play_sfx(SfxType::UiSelect);
+        }
+
         // Drain unconsumed characters when no text modal or inline bar editing is open in the editor
         if !self.editor_tools.is_editing_text() && !matches!(self.editor_modal, EditorModal::SaveAs { .. } | EditorModal::SetRampProperty { .. }) {
             while get_char_pressed().is_some() {}
@@ -16037,12 +16053,17 @@ impl RaceSession {
             let mut has_selection = false;
             if let Some(state) = &mut self.editor_state {
                 has_selection = !state.selection.is_none();
+                let now_s = if is_window_active() {
+                    macroquad::time::get_time()
+                } else {
+                    0.0
+                };
                 if self.editor_tools.step_arrow_nudge(
                     state,
                     arrow_pressed,
                     arrow_down,
                     shift_down,
-                    macroquad::time::get_time(),
+                    now_s,
                 ) {
                     self.audio.play_sfx(SfxType::UiMove);
                 }
@@ -16293,13 +16314,19 @@ impl RaceSession {
             // Render tree canopies above track
             render_tree_canopies_culled(&state.track, &[], None);
 
+            // Render elevation color map & topographic contour overlay (Spec 123)
+            let half_ext = Vec2::new(sw * 0.5, sh * 0.5) / self.editor_camera.zoom.max(0.1) + Vec2::splat(60.0);
+            let view_bounds = Some((self.editor_camera.center - half_ext, self.editor_camera.center + half_ext));
+            render_editor_elevation_world_pass(state, &self.editor_tools, view_bounds);
+
             // Render interactive gizmos, selection handles, and previews
             render_editor_gizmos(state, &self.editor_tools, &self.editor_camera);
 
             self.editor_camera.reset_to_screen();
 
-            // Junction branch tags need screen-space text, so they come after the world gizmos.
+            // Junction branch tags and elevation waypoint badges need screen-space text, so they come after the world gizmos.
             render_editor_junction_labels(&self.fonts, state, &self.editor_camera);
+            render_editor_elevation_labels(&self.fonts, state, &self.editor_tools, &self.editor_camera);
 
             // 2. Screen Pass: Render Editor UI (toolbars, palettes, inspector, status bar, and modals) ON TOP of the track!
             let dispatched = render_editor_ui(
