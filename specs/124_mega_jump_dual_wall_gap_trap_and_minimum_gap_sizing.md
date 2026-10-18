@@ -3,7 +3,9 @@ type: Feature Spec
 template: feature
 title: "Mega Jump Dual-Wall Gap Trap and 6.0m Minimum Gap Sizing"
 description: "Establishes a dual-wall physical gap trap between the vertical take-off drop-off face and the vertical landing face of a MegaRamp, and enforces a 6.0m minimum longitudinal gap length (MIN_MEGA_RAMP_GAP_METERS = 6.0)."
-status: draft
+status: implemented
+receipt: "docs/receipts/spec-124-receipt.md"
+verified: { by: "human:mario", at: "2026-10-18T18:43:15Z", hash: "75ac5ecc43dc" }
 created: 2026-10-18
 generated: { by: agent/antigravity, at: 2026-10-18T18:10:44Z }
 epic: "tdrace-sp124-oc0mh"
