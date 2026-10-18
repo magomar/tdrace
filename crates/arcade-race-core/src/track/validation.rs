@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use super::launch_chute::RAMP_LENGTH_M;
 use super::network::JunctionKind;
 use super::{Track, TrackKind};
-use crate::track::geometry::{point_in_polygon, LineSegment, ObstacleShape, SurfaceShape};
+use crate::track::geometry::{point_in_polygon, LineSegment, ObstacleShape, RampKind, SurfaceShape, MIN_MEGA_RAMP_GAP_METERS};
 
 /// Severity level of a track validation diagnostic finding.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
@@ -1237,6 +1237,29 @@ pub fn validate_track(track: &Track) -> Vec<TrackValidationError> {
                 .with_index(i),
             );
         }
+        if ramp.kind == RampKind::MegaRamp {
+            let (s_takeoff, s_landing) = ramp.mega_segment_bounds();
+            let physical_gap = (s_landing - s_takeoff) * ramp.length();
+            if physical_gap < MIN_MEGA_RAMP_GAP_METERS - 1e-3 {
+                diagnostics.push(
+                    TrackValidationError::error(
+                        "ERR_MEGA_RAMP_GAP_TOO_SMALL",
+                        format!(
+                            "Mega ramp #{} '{}' physical gap ({:.2}m) is below minimum {:.1}m.",
+                            i + 1,
+                            ramp.name,
+                            physical_gap,
+                            MIN_MEGA_RAMP_GAP_METERS
+                        ),
+                    )
+                    .with_index(i)
+                    .with_details(format!(
+                        "Increase ramp length or gap_length to ensure at least {:.1}m clearance.",
+                        MIN_MEGA_RAMP_GAP_METERS
+                    )),
+                );
+            }
+        }
     }
 
     // 10. Arena Boundary Hull Checks
@@ -2021,7 +2044,38 @@ mod tests {
             diags
         );
     }
+
+    #[test]
+    fn test_mega_ramp_gap_validation() {
+        use crate::track::geometry::{JumpRamp, RampKind, SurfaceShape};
+        let mut track = crate::track::test_circuit("classic", "gt_coastal_grand_prix");
+
+        // 18m ramp with valid 6.0m gap passes cleanly
+        let valid_mega = JumpRamp::new(
+            1,
+            SurfaceShape::OrientedBox {
+                center: glam::Vec2::new(10.0, 10.0),
+                half_extents: glam::Vec2::new(9.0, 5.0),
+                angle: 0.0,
+            },
+            glam::Vec2::X,
+            10.0,
+            6.0,
+            1.5,
+            "Valid Mega Ramp",
+        )
+        .with_kind(RampKind::MegaRamp)
+        .with_gap_length(6.0);
+        track.geometry.jump_ramps = vec![valid_mega];
+        let diags = validate_track(&track);
+        assert!(
+            !diags.iter().any(|d| d.code == "ERR_MEGA_RAMP_GAP_TOO_SMALL"),
+            "Valid 6m MegaRamp should not emit ERR_MEGA_RAMP_GAP_TOO_SMALL: {:?}",
+            diags
+        );
+    }
 }
+
 
 
 

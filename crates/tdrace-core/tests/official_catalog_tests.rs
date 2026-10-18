@@ -155,3 +155,48 @@ fn test_catalog_rallycross_synonym() {
     assert!(catalog::find("hell", Some("rallycross")).is_some());
     assert!(catalog::find("hell", Some("rally")).is_some());
 }
+
+#[test]
+fn test_all_catalog_mega_ramps_have_at_least_6m_gap() {
+    use tdrace_core::track::geometry::{RampKind, MIN_MEGA_RAMP_GAP_METERS};
+
+    let mut mega_ramp_count = 0;
+    for c in catalog::circuits() {
+        let track = c.load().unwrap();
+        for (i, ramp) in track.geometry.jump_ramps.iter().enumerate() {
+            if ramp.kind == RampKind::MegaRamp {
+                mega_ramp_count += 1;
+                assert!(
+                    ramp.effective_gap_length() >= MIN_MEGA_RAMP_GAP_METERS,
+                    "Circuit {}/{} MegaRamp #{} '{}' effective gap length {:.2}m is below minimum {:.1}m",
+                    c.module,
+                    c.id,
+                    i,
+                    ramp.name,
+                    ramp.effective_gap_length(),
+                    MIN_MEGA_RAMP_GAP_METERS
+                );
+
+                let (s_takeoff, s_landing) = ramp.mega_segment_bounds();
+                let physical_gap = (s_landing - s_takeoff) * ramp.length();
+                assert!(
+                    physical_gap >= MIN_MEGA_RAMP_GAP_METERS - 1e-3,
+                    "Circuit {}/{} MegaRamp #{} '{}' physical gap {:.2}m is below minimum {:.1}m",
+                    c.module,
+                    c.id,
+                    i,
+                    ramp.name,
+                    physical_gap,
+                    MIN_MEGA_RAMP_GAP_METERS
+                );
+            }
+        }
+    }
+
+    assert!(
+        mega_ramp_count >= 14,
+        "Expected at least 14 MegaRamps across official circuits, found {}",
+        mega_ramp_count
+    );
+}
+

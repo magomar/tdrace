@@ -4,7 +4,7 @@ use macroquad::shapes::{draw_circle, draw_circle_lines, draw_line, draw_rectangl
 use macroquad::window::{screen_height, screen_width};
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::checkpoint::Checkpoint;
-use tdrace_core::track::geometry::{BarrierType, JumpRamp, LineSegment, Obstacle, PitBox, PitLane, RampKind, SurfaceLayer, SurfaceShape, SurfaceZone, WallBarrier};
+use tdrace_core::track::geometry::{BarrierType, JumpRamp, LineSegment, Obstacle, PitBox, PitLane, RampKind, SurfaceLayer, SurfaceShape, SurfaceZone, WallBarrier, MIN_MEGA_RAMP_GAP_METERS};
 use tdrace_core::track::network::{GoreConfig, JunctionId, JunctionKind, MergeConfig, RoadJunction, RoadSegment, SegmentId, SocketId, SplineSocket, TrackLayout};
 use tdrace_core::track::junction_kit::{JunctionComponent, JunctionShape, Side};
 use tdrace_core::track::pit_kit::{self, PitBoxRow, PitLaneLayout};
@@ -2612,7 +2612,7 @@ impl ToolSettings {
                     RampKind::MegaRamp => {
                         let length = v.length().max(24.0);
                         let center = (self.drag_start_world + snapped_mouse) * 0.5;
-                        let gap_len = self.mega_gap_length.clamp(length * 0.15, length * 0.55);
+                        let gap_len = self.mega_gap_length.clamp((length * 0.15).max(MIN_MEGA_RAMP_GAP_METERS), length * 0.55);
                         state.record_undo();
                         let shape = SurfaceShape::OrientedBox {
                             center,
@@ -4694,7 +4694,7 @@ pub fn render_editor_gizmos(state: &EditorState, tools: &ToolSettings, _camera: 
                         let center = (start + current) * 0.5;
                         let half_wid = 6.0;
                         let half_len = length * 0.5;
-                        let gap_len = tools.mega_gap_length.clamp(length * 0.15, length * 0.55);
+                        let gap_len = tools.mega_gap_length.clamp((length * 0.15).max(MIN_MEGA_RAMP_GAP_METERS), length * 0.55);
                         let takeoff_len = (length - gap_len) * 0.46;
                         let landing_len = length - gap_len - takeoff_len;
 

@@ -5,7 +5,7 @@ use std::collections::HashSet;
 
 use cabinet::ui::FieldDropdown;
 use tdrace_core::physics::surface::SurfaceType;
-use tdrace_core::track::geometry::{BarrierType, JumpRamp, ObstacleShape, RampKind, SurfaceLayer, SurfaceShape};
+use tdrace_core::track::geometry::{BarrierType, JumpRamp, ObstacleShape, RampKind, SurfaceLayer, SurfaceShape, MIN_MEGA_RAMP_GAP_METERS};
 use tdrace_core::track::junction_kit::{JunctionComponent, JunctionShape, Side};
 use tdrace_core::track::launch_chute::PAD_WIDTH_RANGE;
 use tdrace_core::track::network::SegmentId;
@@ -203,7 +203,7 @@ pub const RAMP_WIDTH_RANGE: (f32, f32) = (1.0, 30.0);
 pub const RAMP_HEIGHT_RANGE: (f32, f32) = (0.2, 10.0);
 pub const RAMP_PITCH_RANGE: (f32, f32) = (1.0, 60.0);
 pub const RAMP_WHOOP_SPACING_RANGE: (f32, f32) = (2.0, 15.0);
-pub const RAMP_MEGA_GAP_RANGE: (f32, f32) = (3.0, 40.0);
+pub const RAMP_MEGA_GAP_RANGE: (f32, f32) = (MIN_MEGA_RAMP_GAP_METERS, 40.0);
 pub const RAMP_MEGA_BOOST_RANGE: (f32, f32) = (0.5, 3.0);
 pub const RAMP_KIND_LABELS: [&str; 3] = ["Ramp", "Whoops", "Mega"];
 pub const GRID_SLOTS_RANGE: (f32, f32) = (1.0, 24.0);
