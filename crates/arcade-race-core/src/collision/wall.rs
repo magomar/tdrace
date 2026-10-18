@@ -59,7 +59,8 @@ pub fn resolve_car_wall_collision<B: Body2D>(
         return None;
     }
 
-    if (car.total_elevation() - wall.elevation).abs() > 1.8 || car.jump_height() > 1.2 {
+    let road_elevation = car.total_elevation() - car.dynamic_elevation();
+    if (road_elevation - wall.elevation).abs() > 1.8 {
         return None;
     }
 
@@ -394,9 +395,6 @@ pub fn resolve_all_wall_collisions_into<B: Body2D>(
     if walls.is_empty() && obstacles.is_empty() {
         return;
     }
-    if car.jump_height() > 1.2 {
-        return;
-    }
 
     let car_reach = car.hull().reach().max(3.6f32);
     let reach_pad = car_reach + 0.5;
@@ -460,9 +458,6 @@ pub fn resolve_track_wall_collisions_into<B: Body2D>(
     geometry: &TrackGeometry,
     events_out: &mut Vec<WallCollisionEvent>,
 ) {
-    if car.jump_height() > 1.2 {
-        return;
-    }
     let obstacles = geometry.all_obstacles_with_scenery();
     let Some(grid) = geometry.spatial_grid() else {
         resolve_all_wall_collisions_into(car, &geometry.inner_walls, obstacles, events_out);

@@ -1,5 +1,5 @@
 use glam::Vec2;
-use tdrace_core::collision::wall::resolve_car_wall_collision;
+use tdrace_core::collision::wall::{resolve_all_wall_collisions, resolve_car_wall_collision};
 use tdrace_core::physics::car::{Car, CarControls};
 use tdrace_core::physics::config::CarConfig;
 use tdrace_core::physics::surface::SurfaceType;
@@ -173,14 +173,31 @@ fn test_airborne_grip_attenuation() {
 }
 
 #[test]
-fn test_jump_over_low_wall_no_collision() {
-    let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(10.0, 0.0), 0.0);
-    car.state.velocity = Vec2::new(20.0, 0.0);
-    car.state.elevation = 2.0; // Airborne above wall
-
+fn test_jump_cannot_clear_wall_infinite_height() {
     let wall = WallBarrier::new(Vec2::new(10.0, -5.0), Vec2::new(10.0, 5.0), BarrierType::Steel);
-    let hit = resolve_car_wall_collision(&mut car, &wall);
-    assert!(hit.is_none(), "Airborne car above 1.2m should clear ground barriers");
+    for jump_z in [0.0, 1.5, 2.0, 10.0, 1000.0] {
+        let mut car = Car::new(CarConfig::sports_car()).with_pose(Vec2::new(8.5, 0.0), 0.0);
+        car.state.velocity = Vec2::new(20.0, 0.0);
+        car.state.elevation = jump_z;
+        car.state.is_airborne = jump_z > 0.0;
+
+        let hit = resolve_car_wall_collision(&mut car.clone(), &wall);
+        assert!(
+            hit.is_some(),
+            "resolve_car_wall_collision at jump height {jump_z}m must collide with wall"
+        );
+
+        let hits = resolve_all_wall_collisions(&mut car, &[wall], &[]);
+        assert!(
+            !hits.is_empty(),
+            "resolve_all_wall_collisions at jump height {jump_z}m must collide with wall"
+        );
+        assert!(
+            car.state.velocity.x < 0.0,
+            "Car at jump height {jump_z}m must bounce back off wall, got vx={}",
+            car.state.velocity.x
+        );
+    }
 }
 
 #[test]

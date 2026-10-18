@@ -198,6 +198,7 @@ impl LidarScanner {
         let max_range = self.config.max_range;
         let max_r_sq = (max_range + 6.0) * (max_range + 6.0);
         let car_elev = car.total_elevation();
+        let car_road_elev = car_elev - car.dynamic_elevation();
         let max_range_padded = max_range + 6.0;
         let min_x = sensor_pos.x - max_range_padded;
         let max_x = sensor_pos.x + max_range_padded;
@@ -212,7 +213,7 @@ impl LidarScanner {
             Vec2::new(max_x, max_y),
             |w| {
                 if w.is_physical()
-                    && (car_elev - w.elevation).abs() <= 2.0
+                    && (car_road_elev - w.elevation).abs() <= 2.0
                     && w.segment.distance_sq_to_point(sensor_pos) < max_r_sq
                 {
                     candidate_walls.push(*w);
