@@ -15,9 +15,9 @@ ai_difficulty = "standard"
 icon = "dirt"
 weekend_format = "tournament_sprint"
 total_drivers = 32
-heat_laps = 4
-semi_laps = 5
-final_laps = 6
+heat_laps = 3
+semi_laps = 4
+final_laps = 5
 
 [scoring]
 system = "tournament"

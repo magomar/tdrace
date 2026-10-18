@@ -80,7 +80,7 @@ impl Default for SeriesMeta {
 
 impl SeriesMeta {
     /// The weekend of a `tournament_sprint` series; unset sizes take the defaults of 32 drivers and
-    /// 4, 5 and 6 laps. `None` for a series that runs a single race per round.
+    /// 3, 4 and 5 laps. `None` for a series that runs a single race per round.
     pub fn tournament_config(&self) -> Option<TournamentConfig> {
         if self.weekend_format != WeekendFormat::TournamentSprint {
             return None;

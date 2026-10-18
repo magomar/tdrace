@@ -56,7 +56,7 @@ fn the_bracket_shows_32_drivers_and_the_players_slot() {
     let heats = &view.columns[0];
     assert!(heats.is_active && !view.columns[1].is_active);
     assert_eq!(heats.groups.len(), 4);
-    assert!(heats.groups.iter().all(|g| g.cards.len() == 8 && g.laps == 4));
+    assert!(heats.groups.iter().all(|g| g.cards.len() == 8 && g.laps == 3));
     assert_eq!(heats.groups.iter().map(|g| g.label.as_str()).collect::<Vec<_>>(), vec!["HEAT 1", "HEAT 2", "HEAT 3", "HEAT 4"]);
     assert!(heats.groups.iter().flat_map(|g| &g.cards).all(|c| !c.name.is_empty() && !c.team.is_empty()));
 
@@ -65,7 +65,7 @@ fn the_bracket_shows_32_drivers_and_the_players_slot() {
     assert!(heats.groups[group].is_player_race, "the player's heat gets the amber border");
     assert!(heats.groups[group].cards.iter().any(|c| c.is_player));
     assert_eq!(heats.groups.iter().filter(|g| g.is_player_race).count(), 1);
-    assert!(view.launch_label.contains(&format!("HEAT {}/4", group + 1)) && view.launch_label.contains("4 LAPS"), "{}", view.launch_label);
+    assert!(view.launch_label.contains(&format!("HEAT {}/4", group + 1)) && view.launch_label.contains("3 LAPS"), "{}", view.launch_label);
 
     assert_eq!(view.columns[1].groups.len(), 2);
     assert!(view.columns[1].groups.iter().all(|g| g.cards.is_empty()), "semifinals are not drawn yet");
@@ -90,7 +90,7 @@ fn the_bracket_after_the_heats_shows_positions_and_who_advanced() {
     assert_eq!(view.columns[1].groups.len(), 2);
     assert!(view.columns[1].groups.iter().all(|g| g.cards.len() == 8 && g.cards.iter().all(|c| c.position.is_none())));
     assert_eq!(view.player_slot.map(|(c, _)| c), Some(1));
-    assert!(view.launch_label.contains("SEMIFINAL") && view.launch_label.contains("5 LAPS"), "{}", view.launch_label);
+    assert!(view.launch_label.contains("SEMIFINAL") && view.launch_label.contains("4 LAPS"), "{}", view.launch_label);
 }
 
 /// A player out of the heat is shown in a consolation race of the next stage.
@@ -117,22 +117,22 @@ fn the_hud_badge_names_the_stage_and_the_laps_follow_it() {
     let mut session = weekend_session(TournamentConfig::default());
     let badge = stage_badge(&session).unwrap();
     assert!(badge.starts_with("HEAT ") && badge.ends_with("/4"), "{}", badge);
-    assert_eq!(session.current_round_laps(), Some(4));
+    assert_eq!(session.current_round_laps(), Some(3));
 
     play(&mut session, 1);
     let badge = stage_badge(&session).unwrap();
     assert!(badge.starts_with("SEMIFINAL ") && badge.ends_with("/2"), "{}", badge);
-    assert_eq!(session.current_round_laps(), Some(5));
+    assert_eq!(session.current_round_laps(), Some(4));
 
     play(&mut session, 6);
     assert_eq!(stage_badge(&session).as_deref(), Some("B-FINAL"));
-    assert_eq!(session.current_round_laps(), Some(5), "the B-Final runs the semifinal distance");
+    assert_eq!(session.current_round_laps(), Some(4), "the B-Final runs the semifinal distance");
 
     let mut session = weekend_session(TournamentConfig::default());
     play(&mut session, 1);
     play(&mut session, 1);
     assert_eq!(stage_badge(&session).as_deref(), Some("GRAND FINAL"));
-    assert_eq!(session.current_round_laps(), Some(6));
+    assert_eq!(session.current_round_laps(), Some(5));
     play(&mut session, 1);
     assert_eq!(stage_badge(&session), None, "no badge once the weekend is scored");
 }

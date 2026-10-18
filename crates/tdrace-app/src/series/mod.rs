@@ -466,7 +466,8 @@ impl SeriesSession {
         circuit_slots: usize,
         fallback_drivers: &[DriverCharacter],
     ) {
-        if circuit_slots == 0 || !self.is_new() {
+        let needs_tournament_fill = self.is_tournament() && self.standings.len() < circuit_slots;
+        if circuit_slots == 0 || (!self.is_new() && !needs_tournament_fill) {
             return;
         }
 

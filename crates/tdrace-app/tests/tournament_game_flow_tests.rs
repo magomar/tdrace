@@ -73,10 +73,10 @@ fn a_weekend_runs_through_the_game_session() {
     let champ = session.championship_session.as_ref().unwrap();
     assert_eq!(champ.standings.len(), 32);
     let heat = next_race(&session);
-    assert_eq!((heat.stage, heat.laps), (TournamentStage::QualifyingHeat, 4));
+    assert_eq!((heat.stage, heat.laps), (TournamentStage::QualifyingHeat, 3));
 
     // Heat.
-    assert_eq!((session.total_laps, session.world.vehicles.len()), (4, 8));
+    assert_eq!((session.total_laps, session.world.vehicles.len()), (3, 8));
     assert_eq!(grid_driver_ids(&session).into_iter().collect::<HashSet<_>>(), heat.driver_ids.iter().cloned().collect::<HashSet<_>>());
     finish_race(&mut session, 1);
     assert_eq!(session.state, GameState::Finished);
@@ -87,22 +87,22 @@ fn a_weekend_runs_through_the_game_session() {
     assert_eq!(champ.current_round, 0, "the round is scored after the finals");
     assert!(champ.standings.iter().all(|s| s.points == 0));
 
-    // Semifinal: 5 laps, the grid is the semifinal field in heat-time order. [LAUNCH RACE] starts the 3D race.
+    // Semifinal: 4 laps, the grid is the semifinal field in heat-time order. [LAUNCH RACE] starts the 3D race.
     let semi = next_race(&session);
-    assert_eq!((semi.stage, semi.laps), (TournamentStage::Semifinal, 5));
+    assert_eq!((semi.stage, semi.laps), (TournamentStage::Semifinal, 4));
     press_confirm(&mut session);
     assert_eq!(session.state, GameState::StartingGrid);
-    assert_eq!((session.total_laps, session.world.vehicles.len()), (5, 8));
+    assert_eq!((session.total_laps, session.world.vehicles.len()), (4, 8));
     assert_eq!(grid_driver_ids(&session), semi.driver_ids, "the grid follows the seeding");
     finish_race(&mut session, 3);
     press_confirm(&mut session);
     assert_eq!(session.state, GameState::TournamentBracket);
 
-    // Grand Final: 6 laps.
+    // Grand Final: 5 laps.
     let grand = next_race(&session);
-    assert_eq!((grand.stage, grand.laps), (TournamentStage::GrandFinal, 6));
+    assert_eq!((grand.stage, grand.laps), (TournamentStage::GrandFinal, 5));
     press_confirm(&mut session);
-    assert_eq!(session.total_laps, 6);
+    assert_eq!(session.total_laps, 5);
     assert_eq!(grid_driver_ids(&session), grand.driver_ids);
     finish_race(&mut session, 1);
     press_confirm(&mut session);
@@ -128,7 +128,7 @@ fn a_player_eliminated_in_the_heat_races_on_in_the_game() {
 
     press_confirm(&mut session);
     assert_eq!(session.state, GameState::StartingGrid);
-    assert_eq!((session.total_laps, session.world.vehicles.len()), (5, 8));
+    assert_eq!((session.total_laps, session.world.vehicles.len()), (4, 8));
     assert!(grid_driver_ids(&session).contains(&"player".to_string()));
     finish_race(&mut session, 2);
     press_confirm(&mut session);
@@ -143,6 +143,42 @@ fn a_player_eliminated_in_the_heat_races_on_in_the_game() {
     let champ = session.championship_session.as_ref().unwrap();
     let player = champ.standings.iter().find(|s| s.driver_id == "player").unwrap();
     assert_eq!(player.points, TOURNAMENT_POINTS_32[8], "the player won the B-Final: 9th overall");
+}
+
+/// Launching an Autocross championship when the profile already has casual race history in Autocross
+/// still starts at Round 0 with a 32-driver tournament weekend (3, 4, 5 laps).
+#[test]
+fn autocross_tournament_launches_at_round_0_with_32_drivers_after_casual_race_history() {
+    let junior = include_str!("../../../series/autocross/autocross_crosscar_junior_trophy.toml");
+    let def = SeriesDefinition::from_toml(junior).unwrap();
+    let mut session = RaceSession::new();
+    let db = tdrace_app::db::HallOfFameDb::open_in_memory().unwrap();
+    let profile = db.seed_default_profile_if_empty().unwrap();
+    let pid = profile.id.unwrap();
+    db.insert_race_history(&tdrace_app::profile::RaceHistoryEntry {
+        profile_id: pid,
+        track_id: "nova_paka_ax".to_string(),
+        car_name: "Kamikaz 3 Junior".to_string(),
+        position: 2,
+        total_cars: 8,
+        total_time: 120.0,
+        best_lap: Some(38.0),
+        laps: 3,
+        category: "autocross".to_string(),
+        championship_name: None,
+        ..Default::default()
+    })
+    .unwrap();
+    session.hof_db = Some(db);
+    session.refresh_profiles_and_stats();
+
+    session.launch_or_resume_championship(&def);
+    let champ = session.championship_session.as_ref().unwrap();
+    assert_eq!(champ.current_round, 0);
+    assert_eq!(champ.standings.len(), 32);
+    assert!(champ.tournament_in_progress());
+    let heat = next_race(&session);
+    assert_eq!((heat.stage, heat.laps, session.total_laps), (TournamentStage::QualifyingHeat, 3, 3));
 }
 
 /// A wrecked car is last in its heat whatever its wreck time, in the game as in the engine.

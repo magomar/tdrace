@@ -21,9 +21,9 @@ Unlike circuit racing (GT World Challenge, NASCAR, Karting) where an entire fiel
 
 A championship event unfolds as a multi-stage weekend:
 - **32 competitors** (Player + 31 AI competitors) enter the weekend.
-- **Stage 1 (Qualifying Heats)**: 4 heats of 8 cars contest 4-lap sprints. The top 4 from each heat (16 drivers total) advance to the Semifinals.
-- **Stage 2 (Semifinals)**: 2 semifinals of 8 cars contest 5-lap sprints. The top 4 from each semi (8 drivers total) advance to the Grand Final.
-- **Stage 3 (Finals)**: The top 8 drivers battle in the 6-lap **Grand Final** for the podium and maximum championship points. Drivers ranked 5th–8th from the semifinals battle in the 5-lap **Consolation B-Final** for 9th–16th position points.
+- **Stage 1 (Qualifying Heats)**: 4 heats of 8 cars contest 3-lap sprints. The top 4 from each heat (16 drivers total) advance to the Semifinals.
+- **Stage 2 (Semifinals)**: 2 semifinals of 8 cars contest 4-lap sprints. The top 4 from each semi (8 drivers total) advance to the Grand Final.
+- **Stage 3 (Finals)**: The top 8 drivers battle in the 5-lap **Grand Final** for the podium and maximum championship points. Drivers ranked 5th–8th from the semifinals battle in the 4-lap **Consolation B-Final** for 9th–16th position points.
 - **Option A Continuous Racing Guarantee**: The player is never prematurely eliminated or relegated to a spectator screen; players failing to make a top-4 cut transition directly into the corresponding consolation race, ensuring active participation across all 3 weekend stages.
 - **Scalability**: The binary bracket architecture ($2^N$) seamlessly expands to a **4-Stage, 64-driver format** (8 Heats $\to$ 4 Quarterfinals $\to$ 2 Semifinals $\to$ Final) for premier Tier 5 World Championships.
 
@@ -35,15 +35,15 @@ A championship event unfolds as a multi-stage weekend:
 
 ```mermaid
 flowchart TD
-    Roster["32-Driver Weekend Field\n(Player + 31 Homologated AI Rivals)"] --> Stage1["STAGE 1: 4 QUALIFYING HEATS (4 Laps)\n• Heat 1, 2, 3, 4 (8 cars each) = 32 drivers\n• Top 4 from each Heat advance to Main Semifinals (16 drivers)\n• Pos 5–8 enter Consolation Bracket"]
+    Roster["32-Driver Weekend Field\n(Player + 31 Homologated AI Rivals)"] --> Stage1["STAGE 1: 4 QUALIFYING HEATS (3 Laps)\n• Heat 1, 2, 3, 4 (8 cars each) = 32 drivers\n• Top 4 from each Heat advance to Main Semifinals (16 drivers)\n• Pos 5–8 enter Consolation Bracket"]
     
-    Stage1 -->|Top 4 from Each Heat (16 Drivers)| Stage2["STAGE 2: 2 SEMIFINALS (5 Laps)\n• Semi 1 (8 cars): Seeds from Heats 1 & 3\n• Semi 2 (8 cars): Seeds from Heats 2 & 4\n• Grid ordered by Heat lap times"]
+    Stage1 -->|Top 4 from Each Heat (16 Drivers)| Stage2["STAGE 2: 2 SEMIFINALS (4 Laps)\n• Semi 1 (8 cars): Seeds from Heats 1 & 3\n• Semi 2 (8 cars): Seeds from Heats 2 & 4\n• Grid ordered by Heat lap times"]
     
-    Stage2 -->|Top 4 from Semi 1 + Top 4 from Semi 2| FinalA["STAGE 3A: GRAND FINAL (6 Laps)\n• 8 Best Drivers Contest Overall Victory\n• Awarded Championship Points for Positions 1–8\n• Podium Ceremony (Gold, Silver, Bronze)"]
+    Stage2 -->|Top 4 from Semi 1 + Top 4 from Semi 2| FinalA["STAGE 3A: GRAND FINAL (5 Laps)\n• 8 Best Drivers Contest Overall Victory\n• Awarded Championship Points for Positions 1–8\n• Podium Ceremony (Gold, Silver, Bronze)"]
     
-    Stage2 -->|Pos 5–8 from Semi 1 + Pos 5–8 from Semi 2| FinalB["STAGE 3B: B-FINAL (5 Laps)\n• Contests Championship Points for Positions 9–16\n• Option A Guarantee: Continuous Racing for Player"]
+    Stage2 -->|Pos 5–8 from Semi 1 + Pos 5–8 from Semi 2| FinalB["STAGE 3B: B-FINAL (4 Laps)\n• Contests Championship Points for Positions 9–16\n• Option A Guarantee: Continuous Racing for Player"]
     
-    Stage1 -.->|Player in Pos 5–8 of Heat| ConsolationSemi["Stage 2B: Consolation Semifinal (5 Laps)\n• Keeps Player in Active Race Rotation"]
+    Stage1 -.->|Player in Pos 5–8 of Heat| ConsolationSemi["Stage 2B: Consolation Semifinal (4 Laps)\n• Keeps Player in Active Race Rotation"]
     ConsolationSemi -.-> FinalB
 
     FinalA --> Standings["Round Summary & Championship Standings Update (1st–32nd)"]
@@ -57,7 +57,7 @@ flowchart TD
   - Interactive `[ LAUNCH RACE ]` button proceeds into the 3D race session.
 - **HUD Stage Badge**:
   - The top HUD bar displays the active stage: `HEAT [X]/4`, `SEMIFINAL [X]/2`, `GRAND FINAL`, or `B-FINAL`.
-  - Dynamic lap counter reflects stage sprint distance (4 laps for Heats, 5 laps for Semis/B-Final, 6 laps for Grand Final).
+  - Dynamic lap counter reflects stage sprint distance (3 laps for Heats, 4 laps for Semis/B-Final, 5 laps for Grand Final).
 - **Continuous Racing Guarantee (Option A)**:
   - If the player finishes 5th or lower in their Qualifying Heat, they are seeded into a Consolation Semifinal.
   - If the player finishes 5th or lower in their Semifinal, they are seeded into the Consolation B-Final.
@@ -110,9 +110,9 @@ id = "autocross_superbuggy_world_series"
 name = "World SuperBuggy Series"
 weekend_format = "tournament_sprint"
 total_drivers = 32
-heat_laps = 4
-semi_laps = 5
-final_laps = 6
+heat_laps = 3
+semi_laps = 4
+final_laps = 5
 ```
 
 ---

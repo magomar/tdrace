@@ -71,7 +71,7 @@ fn the_32_driver_field_is_drawn_into_4_heats_of_8() {
     for toml in [SUPERBUGGY, WORLD_RX] {
         let def = SeriesDefinition::from_toml(toml).unwrap();
         assert_eq!(def.series.weekend_format, WeekendFormat::TournamentSprint);
-        assert_eq!(def.series.tournament_config(), Some(TournamentConfig { total_drivers: 32, heat_laps: 4, semi_laps: 5, final_laps: 6 }));
+        assert_eq!(def.series.tournament_config(), Some(TournamentConfig { total_drivers: 32, heat_laps: 3, semi_laps: 4, final_laps: 5 }));
         assert!(def.validate().is_ok());
 
         let mut session = def.to_session();
@@ -87,21 +87,21 @@ fn the_32_driver_field_is_drawn_into_4_heats_of_8() {
         assert_eq!(weekend.active_races.len(), 4);
         let mut seen = HashSet::new();
         for (h, heat) in weekend.active_races.iter().enumerate() {
-            assert_eq!((heat.stage, heat.group, heat.laps, heat.driver_ids.len()), (TournamentStage::QualifyingHeat, h, 4, 8));
+            assert_eq!((heat.stage, heat.group, heat.laps, heat.driver_ids.len()), (TournamentStage::QualifyingHeat, h, 3, 8));
             for id in &heat.driver_ids {
                 assert!(seen.insert(id.clone()), "{} is in one heat only", id);
             }
         }
         assert_eq!(seen.len(), 32);
         assert_eq!(session.tournament_race().unwrap().badge().split(' ').next(), Some("HEAT"));
-        assert_eq!(session.current_round_laps(), Some(4), "heats run 4 laps whatever the round says");
+        assert_eq!(session.current_round_laps(), Some(3), "heats run 3 laps whatever the round says");
     }
 }
 
 /// Scenario: Qualifying Heat Execution and Semifinal Seeding
 ///
 /// Given Stage 1 (Qualifying Heats) commences
-/// When all 4 heats conclude 4-lap sprint races
+/// When all 4 heats conclude 3-lap sprint races
 /// Then the top 4 drivers from each of the 4 heats (16 drivers total) should advance to the Semifinals
 /// And drivers should receive seeds for Semifinal 1 and Semifinal 2 based on elapsed heat finish times
 #[test]
@@ -122,7 +122,7 @@ fn the_top_4_of_each_heat_are_seeded_into_two_semifinals_by_elapsed_time() {
     assert_eq!((semi1.driver_ids.len(), semi2.driver_ids.len()), (8, 8));
     assert_eq!(ids(semi1), expect1, "semifinal 1 takes heats 1 and 3");
     assert_eq!(ids(semi2), expect2, "semifinal 2 takes heats 2 and 4");
-    assert!(semi1.laps == 5 && semi2.laps == 5);
+    assert!(semi1.laps == 4 && semi2.laps == 4);
 
     // The grid is the elapsed heat times, fastest first.
     let time_of = |id: &str| weekend.heat_results.iter().flatten().find(|r| r.driver_id == id).unwrap().total_time;
@@ -135,7 +135,7 @@ fn the_top_4_of_each_heat_are_seeded_into_two_semifinals_by_elapsed_time() {
 /// Scenario: Semifinal to Grand Final Progression (Top 4 Advance)
 ///
 /// Given the 16 advancing drivers split into Semifinal 1 (8 cars) and Semifinal 2 (8 cars)
-/// When Stage 2 concludes 5-lap sprint races
+/// When Stage 2 concludes 4-lap sprint races
 /// Then the top 4 drivers from Semifinal 1 and the top 4 drivers from Semifinal 2 (8 drivers total) should advance to the Grand Final
 /// And drivers finishing 5th through 8th in either semifinal should advance to the Consolation B-Final
 #[test]
@@ -155,7 +155,7 @@ fn the_top_4_of_each_semifinal_go_to_the_grand_final_and_the_rest_to_the_b_final
     assert_eq!(ids(grand), take(0..4));
     assert_eq!(ids(b_final), take(4..8));
     assert_eq!((grand.driver_ids.len(), b_final.driver_ids.len()), (8, 8));
-    assert_eq!((grand.laps, b_final.laps), (6, 5));
+    assert_eq!((grand.laps, b_final.laps), (5, 4));
     assert_eq!(weekend.active_stage, TournamentStage::GrandFinal, "the player finished 2nd in a semifinal");
 }
 

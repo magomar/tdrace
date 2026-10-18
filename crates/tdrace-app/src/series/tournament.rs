@@ -86,7 +86,7 @@ pub struct TournamentConfig {
 
 impl Default for TournamentConfig {
     fn default() -> Self {
-        Self { total_drivers: 32, heat_laps: 4, semi_laps: 5, final_laps: 6 }
+        Self { total_drivers: 32, heat_laps: 3, semi_laps: 4, final_laps: 5 }
     }
 }
 
