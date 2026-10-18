@@ -3035,6 +3035,55 @@ fn test_wall_suppression_diagnostics_on_road_conflict() {
 }
 
 #[test]
+fn test_waypoint_drag_interactive_responsiveness_and_noop_stationary_drag() {
+    use tdrace_app::editor::GridSnapSetting;
+    use tdrace_core::track::validation::ValidationSeverity;
+
+    let track = tdrace_core::catalog::official_track("classic", "classic_grand_prix");
+    let mut state = EditorState::new(track);
+    let mut tools = ToolSettings::default();
+    tools.active_tool = EditorToolType::Select;
+    state.grid_snap = GridSnapSetting::Snap5m;
+
+    let wp_idx = 3;
+    let initial_pt = state.track.spline.waypoints[wp_idx].point;
+
+    // 1. Begin drag on waypoint 3
+    tools.handle_primary_down(&mut state, initial_pt, false);
+    assert_eq!(state.selection, Selection::Waypoint(wp_idx));
+    assert!(tools.is_dragging);
+
+    // 2. Stationary drag or sub-snap movement within the same 5m cell must leave the waypoint untouched
+    let snapped_start = state.grid_snap.snap_point(initial_pt);
+    tools.handle_primary_drag(&mut state, snapped_start + Vec2::new(0.4, -0.3));
+    assert_eq!(state.track.spline.waypoints[wp_idx].point, initial_pt);
+
+    // 3. Drag across 10 distinct steps and verify geometry updates cleanly and quickly
+    state.grid_snap = GridSnapSetting::Off;
+    let start = std::time::Instant::now();
+    for step in 1..=10 {
+        let target = initial_pt + Vec2::new(step as f32 * 1.5, step as f32 * -1.0);
+        tools.handle_primary_drag(&mut state, target);
+        assert_eq!(state.track.spline.waypoints[wp_idx].point, target);
+    }
+    let final_pt = initial_pt + Vec2::new(15.0, -10.0);
+    tools.handle_primary_up(&mut state, final_pt);
+    let elapsed = start.elapsed();
+
+    assert!(!tools.is_dragging);
+    assert_eq!(state.track.spline.waypoints[wp_idx].point, final_pt);
+    assert!(
+        state.diagnostics.iter().all(|e| e.severity != ValidationSeverity::Error),
+        "Moved waypoint on classic_grand_prix should remain valid after drag release"
+    );
+    assert!(
+        elapsed.as_millis() < 2000,
+        "10 interactive waypoint drag steps + release took {:?} (expected well under 2000ms)",
+        elapsed
+    );
+}
+
+#[test]
 fn test_spec_123_elevation_overlay_mode_toggling_and_cycling() {
     use macroquad::input::KeyCode;
     use tdrace_app::editor::ElevationOverlayMode;

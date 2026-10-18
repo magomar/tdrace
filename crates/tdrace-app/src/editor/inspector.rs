@@ -774,39 +774,41 @@ fn build_waypoints(state: &EditorState) -> Option<InspectorModel> {
                     Row::Dropdown { prop: Prop::WpRunoffR, label: "Runoff R", options: Options::Surfaces, value: common_value(sel().map(|w| surface_index(w.right_runoff_surface.unwrap_or(default_ro)))) },
                 ];
 
-                let mut suppressed_warnings = Vec::new();
-                for &i in &indices {
-                    let wp = &wps[i];
-                    let s_dist = state.track.spline.project_point(wp.point).progress_distance;
-                    if wp.left_wall {
-                        if let Some(rec) = state.track.geometry.wall_suppressions.iter().find(|r| {
-                            r.side == Side::Left
-                                && (r.contains_station(s_dist, 2.0)
-                                    || r.distance_to_point(wp.point) <= wp.width * 0.5 + wp.left_wall_distance.unwrap_or(offset) + 2.0)
-                        }) {
-                            let text = format!("⚠️ Left wall suppressed (conflict with segment {})", rec.conflicting_segment.0);
-                            let tooltip = format!("Wall suppressed due to clearance conflict with segment {}", rec.conflicting_segment.0);
-                            if !suppressed_warnings.iter().any(|(t, _)| t == &text) {
-                                suppressed_warnings.push((text, tooltip));
+                if !state.track.geometry.wall_suppressions.is_empty() {
+                    let mut suppressed_warnings = Vec::new();
+                    for &i in &indices {
+                        let wp = &wps[i];
+                        let s_dist = state.track.spline.project_point(wp.point).progress_distance;
+                        if wp.left_wall {
+                            if let Some(rec) = state.track.geometry.wall_suppressions.iter().find(|r| {
+                                r.side == Side::Left
+                                    && (r.contains_station(s_dist, 2.0)
+                                        || r.distance_to_point(wp.point) <= wp.width * 0.5 + wp.left_wall_distance.unwrap_or(offset) + 2.0)
+                            }) {
+                                let text = format!("⚠️ Left wall suppressed (conflict with segment {})", rec.conflicting_segment.0);
+                                let tooltip = format!("Wall suppressed due to clearance conflict with segment {}", rec.conflicting_segment.0);
+                                if !suppressed_warnings.iter().any(|(t, _)| t == &text) {
+                                    suppressed_warnings.push((text, tooltip));
+                                }
+                            }
+                        }
+                        if wp.right_wall {
+                            if let Some(rec) = state.track.geometry.wall_suppressions.iter().find(|r| {
+                                r.side == Side::Right
+                                    && (r.contains_station(s_dist, 2.0)
+                                        || r.distance_to_point(wp.point) <= wp.width * 0.5 + wp.right_wall_distance.unwrap_or(offset) + 2.0)
+                            }) {
+                                let text = format!("⚠️ Right wall suppressed (conflict with segment {})", rec.conflicting_segment.0);
+                                let tooltip = format!("Wall suppressed due to clearance conflict with segment {}", rec.conflicting_segment.0);
+                                if !suppressed_warnings.iter().any(|(t, _)| t == &text) {
+                                    suppressed_warnings.push((text, tooltip));
+                                }
                             }
                         }
                     }
-                    if wp.right_wall {
-                        if let Some(rec) = state.track.geometry.wall_suppressions.iter().find(|r| {
-                            r.side == Side::Right
-                                && (r.contains_station(s_dist, 2.0)
-                                    || r.distance_to_point(wp.point) <= wp.width * 0.5 + wp.right_wall_distance.unwrap_or(offset) + 2.0)
-                        }) {
-                            let text = format!("⚠️ Right wall suppressed (conflict with segment {})", rec.conflicting_segment.0);
-                            let tooltip = format!("Wall suppressed due to clearance conflict with segment {}", rec.conflicting_segment.0);
-                            if !suppressed_warnings.iter().any(|(t, _)| t == &text) {
-                                suppressed_warnings.push((text, tooltip));
-                            }
-                        }
+                    for (text, tooltip) in suppressed_warnings {
+                        edge_rows.push(Row::Warning { text, tooltip: Some(tooltip) });
                     }
-                }
-                for (text, tooltip) in suppressed_warnings {
-                    edge_rows.push(Row::Warning { text, tooltip: Some(tooltip) });
                 }
 
                 Section::new("wp.edges", "EDGES", edge_rows).with_side_columns()

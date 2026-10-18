@@ -676,9 +676,7 @@ impl RoadSegment {
 
         let mut best_dist_sq = f32::INFINITY;
         let mut best_point = Vec2::ZERO;
-        let mut best_progress = 0.0f32;
         let mut best_sample_idx = 0;
-        let mut best_t = 0.0f32;
 
         for i in 0..self.samples.len() - 1 {
             let p0 = self.samples[i].point;
@@ -691,18 +689,18 @@ impl RoadSegment {
                 best_dist_sq = d_sq;
                 best_point = cp;
                 best_sample_idx = i;
-                let seg_len = seg.length();
-                best_t = if seg_len > 1e-4 {
-                    (cp - p0).length() / seg_len
-                } else {
-                    0.0
-                };
-                best_progress = self.samples[i].distance + best_t * seg_len;
             }
         }
 
         let s0 = &self.samples[best_sample_idx];
         let s1 = &self.samples[(best_sample_idx + 1).min(self.samples.len() - 1)];
+        let seg_len = (s1.point - s0.point).length();
+        let best_t = if seg_len > 1e-4 {
+            (best_point - s0.point).length() / seg_len
+        } else {
+            0.0
+        };
+        let best_progress = s0.distance + best_t * seg_len;
         let tangent = s0.tangent.lerp(s1.tangent, best_t).normalize_or_zero();
         let normal = Vec2::new(-tangent.y, tangent.x);
         let track_width = s0.width + (s1.width - s0.width) * best_t;

@@ -142,6 +142,26 @@ pub fn compute_segment_edge_suppressions(
         return Vec::new();
     }
     let seg_count = if closed { n } else { n - 1 };
+    if other_segments.is_empty() && other_spline.is_none() {
+        return vec![EdgeSuppression::default(); seg_count];
+    }
+
+    let other_seg_bounds: Vec<(Vec2, Vec2)> = other_segments
+        .iter()
+        .map(|o_seg| {
+            let mut lo = Vec2::splat(f32::INFINITY);
+            let mut hi = Vec2::splat(f32::NEG_INFINITY);
+            let mut max_hw = 0.0f32;
+            for s in &o_seg.samples {
+                lo = lo.min(s.point);
+                hi = hi.max(s.point);
+                max_hw = max_hw.max(s.width * 0.5);
+            }
+            let pad = Vec2::splat(max_hw + 0.5);
+            (lo - pad, hi + pad)
+        })
+        .collect();
+
     let mut suppressions = Vec::with_capacity(seg_count);
 
     for i in 0..seg_count {
@@ -172,8 +192,11 @@ pub fn compute_segment_edge_suppressions(
                     }
                 }
             }
-            for o_seg in other_segments {
+            for (o_seg, &(lo, hi)) in other_segments.iter().zip(&other_seg_bounds) {
                 if o_seg.samples.len() >= 2 {
+                    if pt.x < lo.x || pt.x > hi.x || pt.y < lo.y || pt.y > hi.y {
+                        continue;
+                    }
                     let proj = o_seg.project_point(pt);
                     if (elev - proj.elevation).abs() < 1.5 {
                         let half_w = proj.track_width * 0.5;

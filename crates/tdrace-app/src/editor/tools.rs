@@ -192,6 +192,61 @@ pub struct ToolSettings {
     pub arrow_nudge_next_at: [f64; 4],
     /// True while an arrow-key nudge gesture is active.
     pub arrow_nudge_active: bool,
+    /// Active Track Studio elevation visualization overlay mode (Spec 123).
+    pub elevation_overlay: ElevationOverlayMode,
+}
+
+/// Visualization mode for the Track Studio elevation overlay (Spec 123).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum ElevationOverlayMode {
+    #[default]
+    Off,
+    ColorAndContours,
+    ColorMapOnly,
+    ContoursOnly,
+}
+
+impl ElevationOverlayMode {
+    pub fn toggle(self) -> Self {
+        match self {
+            Self::Off => Self::ColorAndContours,
+            _ => Self::Off,
+        }
+    }
+
+    pub fn cycle_submode(self) -> Self {
+        match self {
+            Self::Off | Self::ContoursOnly => Self::ColorAndContours,
+            Self::ColorAndContours => Self::ColorMapOnly,
+            Self::ColorMapOnly => Self::ContoursOnly,
+        }
+    }
+
+    pub fn shows_color_map(self) -> bool {
+        matches!(self, Self::ColorAndContours | Self::ColorMapOnly)
+    }
+
+    pub fn shows_contours(self) -> bool {
+        matches!(self, Self::ColorAndContours | Self::ContoursOnly)
+    }
+
+    pub fn status_label(self) -> &'static str {
+        match self {
+            Self::Off => "OFF",
+            Self::ColorAndContours => "ALL",
+            Self::ColorMapOnly => "COLOR",
+            Self::ContoursOnly => "CONTOURS",
+        }
+    }
+
+    pub fn mode_title(self) -> &'static str {
+        match self {
+            Self::Off => "OFF",
+            Self::ColorAndContours => "COLOR + CONTOURS",
+            Self::ColorMapOnly => "COLOR MAP",
+            Self::ContoursOnly => "CONTOURS",
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -1631,8 +1686,11 @@ impl ToolSettings {
 
         for (idx, initial_pt) in &self.drag_initial_waypoints {
             if *idx < state.track.spline.waypoints.len() {
-                state.track.spline.waypoints[*idx].point = *initial_pt + delta;
-                geometry_dirty = true;
+                let target_pt = *initial_pt + delta;
+                if state.track.spline.waypoints[*idx].point != target_pt {
+                    state.track.spline.waypoints[*idx].point = target_pt;
+                    geometry_dirty = true;
+                }
             }
         }
 
@@ -1641,9 +1699,12 @@ impl ToolSettings {
             if let Some(net) = state.track.network.as_mut() {
                 if let Some(seg) = net.segments.iter_mut().find(|s| s.id == *seg_id) {
                     if *idx < seg.waypoints.len() {
-                        seg.waypoints[*idx].point = *initial_pt + delta;
-                        if !affected_branch_segs.contains(seg_id) {
-                            affected_branch_segs.push(*seg_id);
+                        let target_pt = *initial_pt + delta;
+                        if seg.waypoints[*idx].point != target_pt {
+                            seg.waypoints[*idx].point = target_pt;
+                            if !affected_branch_segs.contains(seg_id) {
+                                affected_branch_segs.push(*seg_id);
+                            }
                         }
                     }
                 }
@@ -1689,9 +1750,9 @@ impl ToolSettings {
         }
 
         if !affected_branch_segs.is_empty() {
-            state.rebuild_branch_segments(&affected_branch_segs);
+            state.rebuild_branch_segments_interactive(&affected_branch_segs);
         } else if geometry_dirty {
-            state.rebuild_geometry();
+            state.rebuild_geometry_interactive();
         }
     }
 
@@ -2755,11 +2816,14 @@ impl ToolSettings {
     pub fn handle_mouse_drag(&mut self, state: &mut EditorState, mouse_world: Vec2) {
         if let Some(i) = self.drag_pit_road_point {
             // Only road waypoints move; the guide points at the junction joints follow the junctions (locked).
+            let snapped = state.grid_snap.snap_point(mouse_world);
             if let Some(mut layout) = state.track.pit_lane_layout.clone() {
                 if let Some(p) = layout.road_waypoints.get_mut(i) {
-                    *p = state.grid_snap.snap_point(mouse_world);
+                    if *p != snapped {
+                        *p = snapped;
+                        self.install_pit_layout(state, layout);
+                    }
                 }
-                self.install_pit_layout(state, layout);
             }
             return;
         }
@@ -3753,25 +3817,26 @@ pub fn render_editor_junction_labels(fonts: &Fonts, state: &EditorState, camera:
         fonts.draw_ui_bold(tag, at.x, at.y, scaler.font_s(11.0), col);
     };
 
-    let network = state.track.active_network();
-    for junction in &network.junctions {
-        if let JunctionKind::Split { egress_sockets, .. } = &junction.kind {
-            // Branches that leave in parallel share one socket spot, so each tag goes to the side its road bends to.
-            let bend: Vec<f32> = egress_sockets
-                .iter()
-                .enumerate()
-                .map(|(i, socket)| {
-                    let seg = network.segments.iter().find(|s| s.entry_junction == Some(SocketId::new(junction.id, i)));
-                    seg.filter(|s| s.samples.len() >= 2)
-                        .map_or(-(i as f32), |s| socket.tangent.perp_dot(s.sample_at_distance(20.0_f32.min(s.length)).point - socket.point))
-                })
-                .collect();
-            let mean = bend.iter().sum::<f32>() / bend.len().max(1) as f32;
-            for (i, socket) in egress_sockets.iter().enumerate() {
-                let tag = branch_socket_label(&state.track, junction.id, i);
-                let col = if tag == "[Joker]" { Palette::NEON_GOLD } else { Palette::NEON_CYAN };
-                let side = if bend[i] >= mean { 1.0 } else { -1.0 };
-                draw_tag(tag, socket.point + socket.normal * (3.4 * side), col);
+    if let Some(network) = &state.track.network {
+        for junction in &network.junctions {
+            if let JunctionKind::Split { egress_sockets, .. } = &junction.kind {
+                // Branches that leave in parallel share one socket spot, so each tag goes to the side its road bends to.
+                let bend: Vec<f32> = egress_sockets
+                    .iter()
+                    .enumerate()
+                    .map(|(i, socket)| {
+                        let seg = network.segments.iter().find(|s| s.entry_junction == Some(SocketId::new(junction.id, i)));
+                        seg.filter(|s| s.samples.len() >= 2)
+                            .map_or(-(i as f32), |s| socket.tangent.perp_dot(s.sample_at_distance(20.0_f32.min(s.length)).point - socket.point))
+                    })
+                    .collect();
+                let mean = bend.iter().sum::<f32>() / bend.len().max(1) as f32;
+                for (i, socket) in egress_sockets.iter().enumerate() {
+                    let tag = branch_socket_label(&state.track, junction.id, i);
+                    let col = if tag == "[Joker]" { Palette::NEON_GOLD } else { Palette::NEON_CYAN };
+                    let side = if bend[i] >= mean { 1.0 } else { -1.0 };
+                    draw_tag(tag, socket.point + socket.normal * (3.4 * side), col);
+                }
             }
         }
     }
@@ -4210,7 +4275,12 @@ pub fn render_editor_gizmos(state: &EditorState, tools: &ToolSettings, _camera: 
 
         // Draw left/right curb indicator markers
         if wp.left_curb || wp.right_curb {
-            let sample = state.track.spline.samples.iter().find(|s| (s.point - wp.point).length() < 2.0);
+            let sample = state
+                .track
+                .spline
+                .waypoint_sample_index(i)
+                .and_then(|idx| state.track.spline.samples.get(idx))
+                .or_else(|| state.track.spline.samples.iter().find(|s| (s.point - wp.point).length() < 2.0));
             if let Some(s) = sample {
                 let hw = wp.width * 0.5;
                 if wp.left_curb {
@@ -4226,7 +4296,12 @@ pub fn render_editor_gizmos(state: &EditorState, tools: &ToolSettings, _camera: 
 
         // Draw banking cross-slope indicator arrow
         if wp.bank_angle.abs() > 0.5 {
-            let sample = state.track.spline.samples.iter().find(|s| (s.point - wp.point).length() < 2.0);
+            let sample = state
+                .track
+                .spline
+                .waypoint_sample_index(i)
+                .and_then(|idx| state.track.spline.samples.get(idx))
+                .or_else(|| state.track.spline.samples.iter().find(|s| (s.point - wp.point).length() < 2.0));
             if let Some(s) = sample {
                 let downhill = if wp.bank_angle > 0.0 { s.normal } else { -s.normal };
                 let arrow_start = wp.point;
@@ -4251,157 +4326,165 @@ pub fn render_editor_gizmos(state: &EditorState, tools: &ToolSettings, _camera: 
     }
 
     // 1b. Render Suppressed Wall Ghost Wireframes (Spec 112)
-    for record in &state.track.geometry.wall_suppressions {
-        let is_selected_conflict = state.selection.selected_waypoint_indices().into_iter().any(|idx| {
-            if idx < state.track.spline.waypoints.len() {
-                let wp = &state.track.spline.waypoints[idx];
+    if !state.track.geometry.wall_suppressions.is_empty() {
+        let selected_wp_stations: Vec<(Vec2, f32, f32)> = state
+            .selection
+            .selected_waypoint_indices()
+            .into_iter()
+            .filter_map(|idx| {
+                let wp = state.track.spline.waypoints.get(idx)?;
                 let s_dist = state.track.spline.project_point(wp.point).progress_distance;
+                Some((wp.point, wp.width, s_dist))
+            })
+            .collect();
+
+        for record in &state.track.geometry.wall_suppressions {
+            let is_selected_conflict = selected_wp_stations.iter().any(|&(pt, width, s_dist)| {
                 record.contains_station(s_dist, 2.0)
-                    || record.distance_to_point(wp.point) <= wp.width * 0.5 + 5.0
+                    || record.distance_to_point(pt) <= width * 0.5 + 5.0
+            });
+
+            let ghost_col = if is_selected_conflict {
+                Color::new(1.0, 0.80, 0.20, 0.90) // Vibrant amber-gold for selected suppressed wall
             } else {
-                false
-            }
-        });
+                Color::new(1.0, 0.60, 0.20, 0.50) // Translucent ghost amber for unselected
+            };
+            let thickness = if is_selected_conflict { 0.55 } else { 0.35 };
 
-        let ghost_col = if is_selected_conflict {
-            Color::new(1.0, 0.80, 0.20, 0.90) // Vibrant amber-gold for selected suppressed wall
-        } else {
-            Color::new(1.0, 0.60, 0.20, 0.50) // Translucent ghost amber for unselected
-        };
-        let thickness = if is_selected_conflict { 0.55 } else { 0.35 };
+            draw_dashed_line(record.span.start, record.span.end, thickness, ghost_col, 1.2, 0.6);
 
-        draw_dashed_line(record.span.start, record.span.end, thickness, ghost_col, 1.2, 0.6);
-
-        // Draw endpoint ticks
-        let normal = record.span.normal() * 0.6;
-        draw_line(
-            record.span.start.x - normal.x,
-            record.span.start.y - normal.y,
-            record.span.start.x + normal.x,
-            record.span.start.y + normal.y,
-            thickness,
-            ghost_col,
-        );
-        draw_line(
-            record.span.end.x - normal.x,
-            record.span.end.y - normal.y,
-            record.span.end.x + normal.x,
-            record.span.end.y + normal.y,
-            thickness,
-            ghost_col,
-        );
-    }
-
-    // 1c. Render Road Junctions (Split & Merge) & Branch Segments
-    let network = state.track.active_network();
-    for junction in &network.junctions {
-        match &junction.kind {
-            JunctionKind::Split { ingress_socket, egress_sockets, gore_config } => {
-                // Ingress directional indicator
-                let in_fwd = ingress_socket.tangent * 3.5;
-                draw_line(
-                    ingress_socket.point.x - in_fwd.x,
-                    ingress_socket.point.y - in_fwd.y,
-                    ingress_socket.point.x,
-                    ingress_socket.point.y,
-                    0.4,
-                    Palette::NEON_CYAN,
-                );
-
-                // Render egress branch sockets
-                for (sock_idx, socket) in egress_sockets.iter().enumerate() {
-                    let is_active = tools.active_branch_socket == Some(SocketId::new(junction.id, sock_idx));
-                    let sock_col = if is_active { Palette::NEON_GOLD } else { Palette::NEON_CYAN };
-
-                    // Socket ring
-                    draw_circle_lines(socket.point.x, socket.point.y, 2.0, 0.45, sock_col);
-                    if is_active {
-                        draw_circle_lines(socket.point.x, socket.point.y, 2.8, 0.35, Palette::NEON_GOLD);
-                        draw_circle(socket.point.x, socket.point.y, 1.0, Palette::NEON_GOLD);
-                    }
-
-                    // Direction arrow
-                    let arrow_end = socket.point + socket.tangent * 4.0;
-                    draw_line(socket.point.x, socket.point.y, arrow_end.x, arrow_end.y, 0.3, sock_col);
-
-                    // Barb lines
-                    let barb_l = arrow_end - socket.tangent * 1.2 + socket.normal * 0.8;
-                    let barb_r = arrow_end - socket.tangent * 1.2 - socket.normal * 0.8;
-                    draw_line(arrow_end.x, arrow_end.y, barb_l.x, barb_l.y, 0.3, sock_col);
-                    draw_line(arrow_end.x, arrow_end.y, barb_r.x, barb_r.y, 0.3, sock_col);
-                }
-
-                // Apex pivot, divergence rays and nose barrier as thin wireframe (no painted wedge or chevrons)
-                if let Some(gore) = gore_config {
-                    let any_active = (0..egress_sockets.len()).any(|i| tools.active_branch_socket == Some(SocketId::new(junction.id, i)));
-                    let apex_col = if any_active { Palette::NEON_GOLD } else { Palette::NEON_CYAN };
-                    let ray_len = gore.gore_length.max(6.0);
-                    for socket in egress_sockets {
-                        let tip = gore.apex_point + socket.tangent * ray_len;
-                        draw_line(gore.apex_point.x, gore.apex_point.y, tip.x, tip.y, 0.2, Color::new(apex_col.r, apex_col.g, apex_col.b, 0.7));
-                    }
-                    draw_line(
-                        gore.nose_barrier.segment.start.x,
-                        gore.nose_barrier.segment.start.y,
-                        gore.nose_barrier.segment.end.x,
-                        gore.nose_barrier.segment.end.y,
-                        0.25,
-                        apex_col,
-                    );
-                    draw_circle(gore.apex_point.x, gore.apex_point.y, EDITOR_APEX_DOT_RADIUS_M, apex_col);
-                }
-            }
-            JunctionKind::Merge { ingress_sockets, egress_socket, merge_config } => {
-                let conv_pt = merge_config.as_ref().map(|c| c.convergence_point).unwrap_or(egress_socket.point);
-                draw_circle_lines(conv_pt.x, conv_pt.y, 2.5, 0.5, Palette::NEON_GOLD);
-                draw_circle(conv_pt.x, conv_pt.y, 1.0, Palette::NEON_GOLD);
-
-                let arrow_end = egress_socket.point + egress_socket.tangent * 4.0;
-                draw_line(egress_socket.point.x, egress_socket.point.y, arrow_end.x, arrow_end.y, 0.5, Palette::NEON_GOLD);
-
-                for in_sock in ingress_sockets {
-                    draw_line(in_sock.point.x, in_sock.point.y, conv_pt.x, conv_pt.y, 0.35, Color::new(1.0, 0.85, 0.2, 0.6));
-                }
-            }
-            JunctionKind::Terminal { socket } => {
-                draw_circle_lines(socket.point.x, socket.point.y, 2.0, 0.4, Palette::RED);
-            }
+            // Draw endpoint ticks
+            let normal = record.span.normal() * 0.6;
+            draw_line(
+                record.span.start.x - normal.x,
+                record.span.start.y - normal.y,
+                record.span.start.x + normal.x,
+                record.span.start.y + normal.y,
+                thickness,
+                ghost_col,
+            );
+            draw_line(
+                record.span.end.x - normal.x,
+                record.span.end.y - normal.y,
+                record.span.end.x + normal.x,
+                record.span.end.y + normal.y,
+                thickness,
+                ghost_col,
+            );
         }
     }
 
-    // Render branch segments (e.g. Joker Lap detours, launch chutes, alternate routes)
-    for seg in &network.segments {
-        if network.is_branch_segment(seg.id) && !seg.waypoints.is_empty() {
-            let n_bwp = seg.waypoints.len();
-            for (w_i, wp) in seg.waypoints.iter().enumerate() {
-                let is_selected = state.selection.is_branch_waypoint_selected(seg.id, w_i);
-                let node_col = if is_selected {
-                    Palette::NEON_GOLD
-                } else {
-                    Palette::NEON_MAGENTA
-                };
+    // 1c. Render Road Junctions (Split & Merge) & Branch Segments
+    if let Some(network) = &state.track.network {
+        for junction in &network.junctions {
+            match &junction.kind {
+                JunctionKind::Split { ingress_socket, egress_sockets, gore_config } => {
+                    // Ingress directional indicator
+                    let in_fwd = ingress_socket.tangent * 3.5;
+                    draw_line(
+                        ingress_socket.point.x - in_fwd.x,
+                        ingress_socket.point.y - in_fwd.y,
+                        ingress_socket.point.x,
+                        ingress_socket.point.y,
+                        0.4,
+                        Palette::NEON_CYAN,
+                    );
 
-                draw_circle(wp.point.x, wp.point.y, 1.2, node_col);
-                draw_circle_lines(wp.point.x, wp.point.y, 1.2, 0.25, Color::new(0.05, 0.05, 0.08, 0.9));
+                    // Render egress branch sockets
+                    for (sock_idx, socket) in egress_sockets.iter().enumerate() {
+                        let is_active = tools.active_branch_socket == Some(SocketId::new(junction.id, sock_idx));
+                        let sock_col = if is_active { Palette::NEON_GOLD } else { Palette::NEON_CYAN };
 
-                if wp.left_curb || wp.right_curb {
-                    let sample = seg.samples.iter().find(|s| (s.point - wp.point).length() < 2.0);
-                    if let Some(s) = sample {
-                        let hw = wp.width * 0.5;
-                        if wp.left_curb {
-                            let curbl = wp.point + s.normal * hw;
-                            draw_circle(curbl.x, curbl.y, 0.8, Palette::CURB_RED);
+                        // Socket ring
+                        draw_circle_lines(socket.point.x, socket.point.y, 2.0, 0.45, sock_col);
+                        if is_active {
+                            draw_circle_lines(socket.point.x, socket.point.y, 2.8, 0.35, Palette::NEON_GOLD);
+                            draw_circle(socket.point.x, socket.point.y, 1.0, Palette::NEON_GOLD);
                         }
-                        if wp.right_curb {
-                            let curbr = wp.point - s.normal * hw;
-                            draw_circle(curbr.x, curbr.y, 0.8, Palette::CURB_RED);
+
+                        // Direction arrow
+                        let arrow_end = socket.point + socket.tangent * 4.0;
+                        draw_line(socket.point.x, socket.point.y, arrow_end.x, arrow_end.y, 0.3, sock_col);
+
+                        // Barb lines
+                        let barb_l = arrow_end - socket.tangent * 1.2 + socket.normal * 0.8;
+                        let barb_r = arrow_end - socket.tangent * 1.2 - socket.normal * 0.8;
+                        draw_line(arrow_end.x, arrow_end.y, barb_l.x, barb_l.y, 0.3, sock_col);
+                        draw_line(arrow_end.x, arrow_end.y, barb_r.x, barb_r.y, 0.3, sock_col);
+                    }
+
+                    // Apex pivot, divergence rays and nose barrier as thin wireframe (no painted wedge or chevrons)
+                    if let Some(gore) = gore_config {
+                        let any_active = (0..egress_sockets.len()).any(|i| tools.active_branch_socket == Some(SocketId::new(junction.id, i)));
+                        let apex_col = if any_active { Palette::NEON_GOLD } else { Palette::NEON_CYAN };
+                        let ray_len = gore.gore_length.max(6.0);
+                        for socket in egress_sockets {
+                            let tip = gore.apex_point + socket.tangent * ray_len;
+                            draw_line(gore.apex_point.x, gore.apex_point.y, tip.x, tip.y, 0.2, Color::new(apex_col.r, apex_col.g, apex_col.b, 0.7));
                         }
+                        draw_line(
+                            gore.nose_barrier.segment.start.x,
+                            gore.nose_barrier.segment.start.y,
+                            gore.nose_barrier.segment.end.x,
+                            gore.nose_barrier.segment.end.y,
+                            0.25,
+                            apex_col,
+                        );
+                        draw_circle(gore.apex_point.x, gore.apex_point.y, EDITOR_APEX_DOT_RADIUS_M, apex_col);
                     }
                 }
+                JunctionKind::Merge { ingress_sockets, egress_socket, merge_config } => {
+                    let conv_pt = merge_config.as_ref().map(|c| c.convergence_point).unwrap_or(egress_socket.point);
+                    draw_circle_lines(conv_pt.x, conv_pt.y, 2.5, 0.5, Palette::NEON_GOLD);
+                    draw_circle(conv_pt.x, conv_pt.y, 1.0, Palette::NEON_GOLD);
 
-                if w_i + 1 < n_bwp {
-                    let next_p = seg.waypoints[w_i + 1].point;
-                    draw_line(wp.point.x, wp.point.y, next_p.x, next_p.y, 0.4, Color::new(0.9, 0.2, 0.9, 0.5));
+                    let arrow_end = egress_socket.point + egress_socket.tangent * 4.0;
+                    draw_line(egress_socket.point.x, egress_socket.point.y, arrow_end.x, arrow_end.y, 0.5, Palette::NEON_GOLD);
+
+                    for in_sock in ingress_sockets {
+                        draw_line(in_sock.point.x, in_sock.point.y, conv_pt.x, conv_pt.y, 0.35, Color::new(1.0, 0.85, 0.2, 0.6));
+                    }
+                }
+                JunctionKind::Terminal { socket } => {
+                    draw_circle_lines(socket.point.x, socket.point.y, 2.0, 0.4, Palette::RED);
+                }
+            }
+        }
+
+        // Render branch segments (e.g. Joker Lap detours, launch chutes, alternate routes)
+        for seg in &network.segments {
+            if network.is_branch_segment(seg.id) && !seg.waypoints.is_empty() {
+                let n_bwp = seg.waypoints.len();
+                for (w_i, wp) in seg.waypoints.iter().enumerate() {
+                    let is_selected = state.selection.is_branch_waypoint_selected(seg.id, w_i);
+                    let node_col = if is_selected {
+                        Palette::NEON_GOLD
+                    } else {
+                        Palette::NEON_MAGENTA
+                    };
+
+                    draw_circle(wp.point.x, wp.point.y, 1.2, node_col);
+                    draw_circle_lines(wp.point.x, wp.point.y, 1.2, 0.25, Color::new(0.05, 0.05, 0.08, 0.9));
+
+                    if wp.left_curb || wp.right_curb {
+                        let sample = seg.samples.iter().find(|s| (s.point - wp.point).length() < 2.0);
+                        if let Some(s) = sample {
+                            let hw = wp.width * 0.5;
+                            if wp.left_curb {
+                                let curbl = wp.point + s.normal * hw;
+                                draw_circle(curbl.x, curbl.y, 0.8, Palette::CURB_RED);
+                            }
+                            if wp.right_curb {
+                                let curbr = wp.point - s.normal * hw;
+                                draw_circle(curbr.x, curbr.y, 0.8, Palette::CURB_RED);
+                            }
+                        }
+                    }
+
+                    if w_i + 1 < n_bwp {
+                        let next_p = seg.waypoints[w_i + 1].point;
+                        draw_line(wp.point.x, wp.point.y, next_p.x, next_p.y, 0.4, Color::new(0.9, 0.2, 0.9, 0.5));
+                    }
                 }
             }
         }
@@ -4826,7 +4909,7 @@ pub fn render_editor_gizmos(state: &EditorState, tools: &ToolSettings, _camera: 
 
     // 11. Render RoadSplit Snap-to-Merge Target
     if tools.active_tool == EditorToolType::RoadSplit {
-        if let Some(active_sock) = tools.active_branch_socket {
+        if let (Some(active_sock), Some(network)) = (tools.active_branch_socket, state.track.network.as_ref()) {
             let last_wp_point = network
                 .segments
                 .iter()

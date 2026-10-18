@@ -183,13 +183,12 @@ use crate::editor::{
 use crate::render::ghost::{render_ghost_car, GhostRecorder};
 use crate::render::{
     compute_adaptive_visibility, compute_traffic_crowding,
-    render_elevated_barriers_and_obstacles,
-    render_elevated_barriers_and_obstacles_culled, render_elevated_track,
+    render_elevated_barriers_and_obstacles_culled,
     render_elevated_track_culled, render_floating_bot_nameplates_ext,
     render_building_shadows_culled, render_buildings_culled,
     render_grandstand_shadows_culled, render_grandstands_culled,
-    render_ground_barriers_and_obstacles, render_ground_barriers_and_obstacles_culled,
-    render_ground_track, render_ground_track_culled, render_optimal_racing_line,
+    render_ground_barriers_and_obstacles_culled,
+    render_ground_track_culled, render_optimal_racing_line,
     render_player_frontal_chevron, render_player_ground_aura,
     render_player_sonar_ping, render_pit_box_chevron,
     render_rock_shadows_culled, render_rocks_culled,
@@ -16295,28 +16294,29 @@ impl RaceSession {
             // Metric grid in background
             render_editor_grid(&self.editor_camera, sw, sh, state.grid_snap);
 
-            // Render ground track & barriers
-            render_ground_track(&state.track);
-            render_grandstand_shadows_culled(&state.track, None);
-            render_building_shadows_culled(&state.track, None);
-            render_rock_shadows_culled(&state.track, None);
-            render_tree_shadows_culled(&state.track, None);
-            render_grandstands_culled(&state.track, None);
-            render_buildings_culled(&state.track, None);
-            render_rocks_culled(&state.track, None);
-            render_ground_barriers_and_obstacles(&state.track);
-            render_tree_trunks_culled(&state.track, None);
-
-            // Render elevated overpass bridges & barriers
-            render_elevated_track(&state.track);
-            render_elevated_barriers_and_obstacles(&state.track);
-
-            // Render tree canopies above track
-            render_tree_canopies_culled(&state.track, &[], None);
-
-            // Render elevation color map & topographic contour overlay (Spec 123)
             let half_ext = Vec2::new(sw * 0.5, sh * 0.5) / self.editor_camera.zoom.max(0.1) + Vec2::splat(60.0);
             let view_bounds = Some((self.editor_camera.center - half_ext, self.editor_camera.center + half_ext));
+
+            // Render ground track & barriers
+            render_ground_track_culled(&state.track, view_bounds);
+            render_grandstand_shadows_culled(&state.track, view_bounds);
+            render_building_shadows_culled(&state.track, view_bounds);
+            render_rock_shadows_culled(&state.track, view_bounds);
+            render_tree_shadows_culled(&state.track, view_bounds);
+            render_grandstands_culled(&state.track, view_bounds);
+            render_buildings_culled(&state.track, view_bounds);
+            render_rocks_culled(&state.track, view_bounds);
+            render_ground_barriers_and_obstacles_culled(&state.track, view_bounds);
+            render_tree_trunks_culled(&state.track, view_bounds);
+
+            // Render elevated overpass bridges & barriers
+            render_elevated_track_culled(&state.track, view_bounds);
+            render_elevated_barriers_and_obstacles_culled(&state.track, view_bounds);
+
+            // Render tree canopies above track
+            render_tree_canopies_culled(&state.track, &[], view_bounds);
+
+            // Render elevation color map & topographic contour overlay (Spec 123)
             render_editor_elevation_world_pass(state, &self.editor_tools, view_bounds);
 
             // Render interactive gizmos, selection handles, and previews

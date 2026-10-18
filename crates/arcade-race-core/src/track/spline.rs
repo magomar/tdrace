@@ -567,9 +567,20 @@ impl TrackSpline {
         let mut is_bridge_flags = vec![false; n_pts];
         let n_segs = if closed { n_pts - 1 } else { n_pts.saturating_sub(1) };
 
+        let (min_elev, max_elev) = raw_elevations
+            .iter()
+            .copied()
+            .fold((f32::INFINITY, f32::NEG_INFINITY), |(lo, hi), e| (lo.min(e), hi.max(e)));
+
+        if max_elev - min_elev >= 2.5 {
         for i in 0..n_segs {
             let p0 = raw_points[i];
             let p1 = raw_points[(i + 1) % n_pts];
+            let a_min_x = p0.x.min(p1.x);
+            let a_max_x = p0.x.max(p1.x);
+            let a_min_y = p0.y.min(p1.y);
+            let a_max_y = p0.y.max(p1.y);
+            let elev_i = (raw_elevations[i] + raw_elevations[(i + 1) % n_pts]) * 0.5;
             let seg_i = LineSegment::new(p0, p1);
 
             let j_start = i + 6;
@@ -582,14 +593,22 @@ impl TrackSpline {
             for j in j_start..j_end {
                 let q0 = raw_points[j];
                 let q1 = raw_points[(j + 1) % n_pts];
+                if q0.x.max(q1.x) < a_min_x
+                    || q0.x.min(q1.x) > a_max_x
+                    || q0.y.max(q1.y) < a_min_y
+                    || q0.y.min(q1.y) > a_max_y
+                {
+                    continue;
+                }
+                let elev_j = (raw_elevations[j] + raw_elevations[(j + 1) % n_pts]) * 0.5;
+                let clearance = (elev_i - elev_j).abs();
+                if clearance < 2.5 {
+                    continue;
+                }
                 let seg_j = LineSegment::new(q0, q1);
 
                 if seg_i.intersect_segment(&seg_j).is_some() {
-                    let elev_i = (raw_elevations[i] + raw_elevations[(i + 1) % n_pts]) * 0.5;
-                    let elev_j = (raw_elevations[j] + raw_elevations[(j + 1) % n_pts]) * 0.5;
-                    let clearance = (elev_i - elev_j).abs();
-
-                    if clearance >= 2.5 {
+                    {
                         let idx_bridge = if elev_i > elev_j { i } else { j };
                         is_bridge_flags[idx_bridge] = true;
 
@@ -638,6 +657,7 @@ impl TrackSpline {
                     }
                 }
             }
+        }
         }
 
         // 4. Compute continuous longitudinal grade slope and vertical curvature
@@ -1487,6 +1507,10 @@ pub fn untangle_offset_vertices(pts: &mut [Vec2], closed: bool) {
             if (p1 - p0).length_squared() < 1e-6 {
                 continue;
             }
+            let a_min_x = p0.x.min(p1.x);
+            let a_max_x = p0.x.max(p1.x);
+            let a_min_y = p0.y.min(p1.y);
+            let a_max_y = p0.y.max(p1.y);
             let seg_a = LineSegment::new(p0, p1);
 
             for span in 2..=max_loop_span {
@@ -1504,6 +1528,13 @@ pub fn untangle_offset_vertices(pts: &mut [Vec2], closed: bool) {
 
                 let p2 = pts[j];
                 let p3 = pts[next_j];
+                if p2.x.max(p3.x) < a_min_x
+                    || p2.x.min(p3.x) > a_max_x
+                    || p2.y.max(p3.y) < a_min_y
+                    || p2.y.min(p3.y) > a_max_y
+                {
+                    continue;
+                }
                 if (p3 - p2).length_squared() < 1e-6 {
                     continue;
                 }
@@ -1583,6 +1614,10 @@ pub fn untangle_road_and_curb(
             if (p1 - p0).length_squared() < 1e-6 {
                 continue;
             }
+            let a_min_x = p0.x.min(p1.x);
+            let a_max_x = p0.x.max(p1.x);
+            let a_min_y = p0.y.min(p1.y);
+            let a_max_y = p0.y.max(p1.y);
             let seg_a = LineSegment::new(p0, p1);
 
             for span in 2..=max_loop_span {
@@ -1600,6 +1635,13 @@ pub fn untangle_road_and_curb(
 
                 let p2 = road_pts[j];
                 let p3 = road_pts[next_j];
+                if p2.x.max(p3.x) < a_min_x
+                    || p2.x.min(p3.x) > a_max_x
+                    || p2.y.max(p3.y) < a_min_y
+                    || p2.y.min(p3.y) > a_max_y
+                {
+                    continue;
+                }
                 if (p3 - p2).length_squared() < 1e-6 {
                     continue;
                 }

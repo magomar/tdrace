@@ -9,7 +9,7 @@ use macroquad::window::{screen_height, screen_width};
 use tdrace_core::physics::surface::SurfaceType;
 use tdrace_core::track::geometry::{JumpRamp, RampKind, SurfaceLayer};
 use tdrace_core::track::presets::{RaceDirection, TrackShape};
-use tdrace_core::track::validation::{validate_track, ValidationSeverity};
+use tdrace_core::track::validation::ValidationSeverity;
 
 use crate::editor::camera::EditorCamera;
 use crate::editor::inspector::{
@@ -779,7 +779,7 @@ pub fn render_editor_ui(
 
     let world_mouse = camera.screen_to_world(mouse_pos, sw, sh);
     let total_len = state.track.spline.total_length();
-    let val = validate_track(&state.track);
+    let val = &state.diagnostics;
     let is_valid = val.iter().all(|e| e.severity != ValidationSeverity::Error);
     let val_str = if is_valid {
         "[OK] Circuit Valid"
@@ -2606,7 +2606,7 @@ fn render_diagnostics_modal(
 
     ModalContainer::new("CIRCUIT DIAGNOSTICS", LayoutRect::new(mx, my, mw, mh)).draw(scaler, fonts, sw, sh);
 
-    let val = validate_track(&state.track);
+    let val = &state.diagnostics;
     let is_valid = val.iter().all(|e| e.severity != ValidationSeverity::Error);
 
     let status_str = if is_valid {

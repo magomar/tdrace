@@ -1435,9 +1435,49 @@ pub(crate) fn wall_clear_of_roads<'a>(
     let p0 = wall.segment.start;
     let p1 = wall.segment.end;
     let p_mid = (p0 + p1) * 0.5;
+    let w_min = p0.min(p1);
+    let w_max = p0.max(p1);
 
     for seg in segments {
         if seg.samples.len() < 2 { continue; }
+
+        let mut any_near_ribbon = false;
+
+        // Check centerline intersections and whether any sample segment's ribbon AABB overlaps the wall
+        for i in 0..seg.samples.len() - 1 {
+            let s0 = &seg.samples[i];
+            let s1 = &seg.samples[i + 1];
+            let seg_elev = (s0.elevation + s1.elevation) * 0.5;
+            if (wall.elevation - seg_elev).abs() >= max_elevation_gap {
+                continue;
+            }
+            let s_min_x = s0.point.x.min(s1.point.x);
+            let s_max_x = s0.point.x.max(s1.point.x);
+            let s_min_y = s0.point.y.min(s1.point.y);
+            let s_max_y = s0.point.y.max(s1.point.y);
+
+            if !any_near_ribbon {
+                let r = (s0.width.max(s1.width) * 0.5 + edge_margin).max(0.0);
+                if s_max_x + r >= w_min.x
+                    && s_min_x - r <= w_max.x
+                    && s_max_y + r >= w_min.y
+                    && s_min_y - r <= w_max.y
+                {
+                    any_near_ribbon = true;
+                }
+            }
+
+            if s_max_x >= w_min.x && s_min_x <= w_max.x && s_max_y >= w_min.y && s_min_y <= w_max.y {
+                let center_seg = LineSegment::new(s0.point, s1.point);
+                if wall.segment.intersect_segment(&center_seg).is_some() {
+                    return false; // Intersects road centerline
+                }
+            }
+        }
+
+        if !any_near_ribbon {
+            continue;
+        }
 
         // Check endpoints and midpoint against this segment
         for pt in [p0, p1, p_mid] {
@@ -1446,19 +1486,6 @@ pub(crate) fn wall_clear_of_roads<'a>(
                 let half_w = proj.track_width * 0.5;
                 if proj.lateral_offset.abs() < (half_w + edge_margin) {
                     return false; // Point inside drivable road surface
-                }
-            }
-        }
-
-        // Check centerline intersections
-        for i in 0..seg.samples.len() - 1 {
-            let s0 = &seg.samples[i];
-            let s1 = &seg.samples[i + 1];
-            let seg_elev = (s0.elevation + s1.elevation) * 0.5;
-            if (wall.elevation - seg_elev).abs() < max_elevation_gap {
-                let center_seg = LineSegment::new(s0.point, s1.point);
-                if wall.segment.intersect_segment(&center_seg).is_some() {
-                    return false; // Intersects road centerline
                 }
             }
         }
@@ -1690,10 +1717,21 @@ impl Track {
             }
         }
         let Some(ref lane) = self.pit_lane else { return; };
+        let (pit_min, pit_max) = lane.spline.samples.iter().fold(
+            (Vec2::splat(f32::INFINITY), Vec2::splat(f32::NEG_INFINITY)),
+            |(lo, hi), s| (lo.min(s.point), hi.max(s.point)),
+        );
+        let pit_pad = Vec2::splat(lane.road_width + 25.0);
+        let (pit_lo, pit_hi) = (pit_min - pit_pad, pit_max + pit_pad);
 
         let should_keep_wall = |wall: &WallBarrier| -> bool {
             let p0 = wall.segment.start;
             let p1 = wall.segment.end;
+            let w_min = p0.min(p1);
+            let w_max = p0.max(p1);
+            if w_max.x < pit_lo.x || w_min.x > pit_hi.x || w_max.y < pit_lo.y || w_min.y > pit_hi.y {
+                return true;
+            }
             let p_mid = (p0 + p1) * 0.5;
             let p_q1 = (p0 * 3.0 + p1) * 0.25;
             let p_q3 = (p0 + p1 * 3.0) * 0.25;
@@ -1716,9 +1754,15 @@ impl Track {
                 let s1 = &lane.spline.samples[i + 1];
                 let seg_elev = (s0.elevation + s1.elevation) * 0.5;
                 if (wall.elevation - seg_elev).abs() < 2.0 {
-                    let center_seg = LineSegment::new(s0.point, s1.point);
-                    if wall.segment.intersect_segment(&center_seg).is_some() {
-                        return false;
+                    if s0.point.x.max(s1.point.x) >= w_min.x
+                        && s0.point.x.min(s1.point.x) <= w_max.x
+                        && s0.point.y.max(s1.point.y) >= w_min.y
+                        && s0.point.y.min(s1.point.y) <= w_max.y
+                    {
+                        let center_seg = LineSegment::new(s0.point, s1.point);
+                        if wall.segment.intersect_segment(&center_seg).is_some() {
+                            return false;
+                        }
                     }
                 }
             }
@@ -2063,7 +2107,20 @@ impl Track {
                         }
                     }
                 }
+                let (pit_min, pit_max) = lane.spline.samples.iter().fold(
+                    (Vec2::splat(f32::INFINITY), Vec2::splat(f32::NEG_INFINITY)),
+                    |(lo, hi), s| (lo.min(s.point), hi.max(s.point)),
+                );
+                let pit_pad = Vec2::splat(bo.max(20.0) + lane.road_width + 25.0);
+                let (pit_lo, pit_hi) = (pit_min - pit_pad, pit_max + pit_pad);
                 for s in &mut self.spline.samples {
+                    if s.point.x < pit_lo.x
+                        || s.point.x > pit_hi.x
+                        || s.point.y < pit_lo.y
+                        || s.point.y > pit_hi.y
+                    {
+                        continue;
+                    }
                     if pit_kit::beyond_lane_end(lane, s.point) {
                         continue;
                     }
@@ -2404,7 +2461,15 @@ impl Track {
     pub fn rebuild_geometry(&mut self, barrier_offset: f32, barrier_type: BarrierType) {
         if self.spline.waypoints.len() >= 3 {
             self.cached_barrier_offset = Some(barrier_offset);
-            self.apply_default_runoff_surfaces();
+            let default_runoff = self.default_runoff_surface();
+            for wp in &mut self.spline.waypoints {
+                if wp.left_runoff_surface.is_none() {
+                    wp.left_runoff_surface = default_runoff;
+                }
+                if wp.right_runoff_surface.is_none() {
+                    wp.right_runoff_surface = default_runoff;
+                }
+            }
             self.spline = TrackSpline::new(self.spline.waypoints.clone(), self.spline.closed);
             let (left_walls, right_walls, left_poly, right_poly) =
                 generate_walls_from_spline(&self.spline, barrier_offset, barrier_type);

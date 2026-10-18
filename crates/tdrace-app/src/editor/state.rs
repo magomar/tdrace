@@ -738,16 +738,21 @@ impl EditorState {
         self.diagnostics = validate_track(&self.track);
     }
 
-    /// Rebuilds spline, boundary walls, and polylines from current waypoints and updates grid.
-    pub fn rebuild_geometry(&mut self) {
+    /// Rebuilds spline, boundary walls, and polylines during an interactive drag without running full validation.
+    pub fn rebuild_geometry_interactive(&mut self) {
         self.track.rebuild_geometry(self.barrier_offset, self.barrier_type);
         self.auto_generate_grid();
         crate::render::track::clear_track_render_cache();
+    }
+
+    /// Rebuilds spline, boundary walls, and polylines from current waypoints, updates grid, and revalidates.
+    pub fn rebuild_geometry(&mut self) {
+        self.rebuild_geometry_interactive();
         self.revalidate();
     }
 
-    /// Recomputes edited network branch segments and rebuilds track geometry.
-    pub fn rebuild_branch_segments(&mut self, seg_ids: &[SegmentId]) {
+    /// Recomputes edited network branch segments and rebuilds track geometry during an interactive drag.
+    pub fn rebuild_branch_segments_interactive(&mut self, seg_ids: &[SegmentId]) {
         if seg_ids.is_empty() {
             return;
         }
@@ -767,7 +772,16 @@ impl EditorState {
                 net.rebuild_segment_samples(sid);
             }
         }
-        self.rebuild_geometry();
+        self.rebuild_geometry_interactive();
+    }
+
+    /// Recomputes edited network branch segments, rebuilds track geometry, and revalidates.
+    pub fn rebuild_branch_segments(&mut self, seg_ids: &[SegmentId]) {
+        if seg_ids.is_empty() {
+            return;
+        }
+        self.rebuild_branch_segments_interactive(seg_ids);
+        self.revalidate();
     }
 
     /// Returns the current number of starting grid positions configured for the circuit.

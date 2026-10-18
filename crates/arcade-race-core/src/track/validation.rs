@@ -194,7 +194,13 @@ pub fn validate_track(track: &Track) -> Vec<TrackValidationError> {
         // Check non-adjacent spline segments for 2D intersection
         for i in 0..n_segs {
             let next_i = (i + 1) % n_samples;
-            let seg_i = LineSegment::new(samples[i].point, samples[next_i].point);
+            let p0 = samples[i].point;
+            let p1 = samples[next_i].point;
+            let a_min_x = p0.x.min(p1.x);
+            let a_max_x = p0.x.max(p1.x);
+            let a_min_y = p0.y.min(p1.y);
+            let a_max_y = p0.y.max(p1.y);
+            let seg_i = LineSegment::new(p0, p1);
 
             // Start j at i + 6 to avoid false positives on adjacent spline samples on sharp curves
             let j_start = i + 6;
@@ -206,7 +212,16 @@ pub fn validate_track(track: &Track) -> Vec<TrackValidationError> {
 
             for j in j_start..j_end {
                 let next_j = (j + 1) % n_samples;
-                let seg_j = LineSegment::new(samples[j].point, samples[next_j].point);
+                let q0 = samples[j].point;
+                let q1 = samples[next_j].point;
+                if q0.x.max(q1.x) < a_min_x
+                    || q0.x.min(q1.x) > a_max_x
+                    || q0.y.max(q1.y) < a_min_y
+                    || q0.y.min(q1.y) > a_max_y
+                {
+                    continue;
+                }
+                let seg_j = LineSegment::new(q0, q1);
 
                 if let Some(hit) = seg_i.intersect_segment(&seg_j) {
                     let elev_i = (samples[i].elevation + samples[next_i].elevation) * 0.5;
@@ -299,6 +314,10 @@ pub fn validate_track(track: &Track) -> Vec<TrackValidationError> {
                 if (p1 - p0).length_squared() < 1e-4 {
                     continue;
                 }
+                let a_min_x = p0.x.min(p1.x);
+                let a_max_x = p0.x.max(p1.x);
+                let a_min_y = p0.y.min(p1.y);
+                let a_max_y = p0.y.max(p1.y);
                 let seg_i = LineSegment::new(p0, p1);
 
                 for span in 2..=max_span {
@@ -322,6 +341,13 @@ pub fn validate_track(track: &Track) -> Vec<TrackValidationError> {
 
                     let p2 = pts[j];
                     let p3 = pts[next_j];
+                    if p2.x.max(p3.x) < a_min_x
+                        || p2.x.min(p3.x) > a_max_x
+                        || p2.y.max(p3.y) < a_min_y
+                        || p2.y.min(p3.y) > a_max_y
+                    {
+                        continue;
+                    }
                     if (p3 - p2).length_squared() < 1e-4 {
                         continue;
                     }
@@ -394,14 +420,27 @@ pub fn validate_track(track: &Track) -> Vec<TrackValidationError> {
         for (w_idx, wall) in all_walls.iter().enumerate() {
             let w_seg = &wall.segment;
             let w_elev = wall.elevation;
+            let w_min_x = w_seg.start.x.min(w_seg.end.x);
+            let w_max_x = w_seg.start.x.max(w_seg.end.x);
+            let w_min_y = w_seg.start.y.min(w_seg.end.y);
+            let w_max_y = w_seg.start.y.max(w_seg.end.y);
 
             // 3a. Centerline Crossing Check against all spline segments
             for i in 0..n_segs {
                 let next_i = (i + 1) % n_samples;
                 let s_curr = &samples[i];
                 let s_next = &samples[next_i];
+                let q0 = s_curr.point;
+                let q1 = s_next.point;
+                if q0.x.max(q1.x) < w_min_x
+                    || q0.x.min(q1.x) > w_max_x
+                    || q0.y.max(q1.y) < w_min_y
+                    || q0.y.min(q1.y) > w_max_y
+                {
+                    continue;
+                }
 
-                let track_center_seg = LineSegment::new(s_curr.point, s_next.point);
+                let track_center_seg = LineSegment::new(q0, q1);
                 let track_elev = (s_curr.elevation + s_next.elevation) * 0.5;
                 let elev_diff = (w_elev - track_elev).abs();
 
@@ -474,9 +513,21 @@ pub fn validate_track(track: &Track) -> Vec<TrackValidationError> {
 
         // 4. Wall-Wall Self-Intersection Checks (Clashing / Pinching Barriers)
         for i in 0..n_walls {
+            let w_a = &all_walls[i];
+            let a_min_x = w_a.segment.start.x.min(w_a.segment.end.x);
+            let a_max_x = w_a.segment.start.x.max(w_a.segment.end.x);
+            let a_min_y = w_a.segment.start.y.min(w_a.segment.end.y);
+            let a_max_y = w_a.segment.start.y.max(w_a.segment.end.y);
+
             for j in (i + 1)..n_walls {
-                let w_a = &all_walls[i];
                 let w_b = &all_walls[j];
+                if w_b.segment.start.x.max(w_b.segment.end.x) < a_min_x
+                    || w_b.segment.start.x.min(w_b.segment.end.x) > a_max_x
+                    || w_b.segment.start.y.max(w_b.segment.end.y) < a_min_y
+                    || w_b.segment.start.y.min(w_b.segment.end.y) > a_max_y
+                {
+                    continue;
+                }
 
                 // Skip adjacent connected segments (sharing endpoints)
                 if (w_a.segment.start - w_b.segment.start).length_squared() < 0.01
