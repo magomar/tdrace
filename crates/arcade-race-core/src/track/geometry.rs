@@ -1247,6 +1247,44 @@ impl JumpRamp {
             }
         }
     }
+
+    /// Minimum elevation required at the landing lip (`s = s_landing`) to clear the gap of a
+    /// `MegaRamp` onto the catch deck rather than colliding with the vertical landing wall.
+    pub fn mega_clear_height(&self) -> f32 {
+        let catch_h = self.height * 0.92;
+        (catch_h - 1.15).max(0.05)
+    }
+
+    /// Returns the physical concrete wall barrier along the vertical front face of the landing
+    /// segment (`s = s_landing`) for a `MegaRamp` at the given base road elevation, or `None`
+    /// for other ramp kinds.
+    pub fn mega_landing_wall_at_elevation(&self, elevation: f32) -> Option<WallBarrier> {
+        if self.kind != RampKind::MegaRamp {
+            return None;
+        }
+        let (_, s_landing) = self.mega_segment_bounds();
+        let center = self.shape.center();
+        let half = self.half_extents();
+        let half_len = half.x.max(0.5);
+        let half_wid = half.y.max(0.5);
+        let fwd = self.direction.normalize_or_zero();
+        let right = Vec2::new(fwd.y, -fwd.x);
+        let x_landing_start = -half_len + s_landing * (2.0 * half_len);
+        let l0 = center + fwd * x_landing_start - right * half_wid;
+        let l3 = center + fwd * x_landing_start + right * half_wid;
+        Some(WallBarrier::with_elevation(
+            l0,
+            l3,
+            BarrierType::Concrete,
+            elevation,
+        ))
+    }
+
+    /// Returns the physical concrete wall barrier along the vertical front face of the landing
+    /// segment (`s = s_landing`) at base elevation `0.0` for a `MegaRamp`.
+    pub fn mega_landing_wall(&self) -> Option<WallBarrier> {
+        self.mega_landing_wall_at_elevation(0.0)
+    }
 }
 
 /// Extension trait allowing Car to interact with and trigger jump ramps.
@@ -1279,6 +1317,62 @@ impl JumpRampCarExt for wheelbase::Car {
 
         // Handle descending airborne car landing onto an elevated ramp surface (e.g. MegaRamp landing deck or Whoops crest)
         if self.state.is_airborne {
+            if ramp.kind == RampKind::MegaRamp {
+                let (s_takeoff, s_landing) = ramp.mega_segment_bounds();
+                let s = ramp.progress_along_ramp(self.state.position);
+                let min_clear_h = ramp.mega_clear_height();
+
+                if s > s_takeoff && s < s_landing {
+                    let center = ramp.shape.center();
+                    let fwd = ramp.direction.normalize_or_zero();
+                    let half_len = ramp.half_extents().x.max(0.5);
+                    let x_landing_start = -half_len + s_landing * (2.0 * half_len);
+                    let local_x = (self.state.position - center).dot(fwd);
+                    let obb = crate::collision::OrientedBox::from_body(self);
+                    let max_local_x = obb
+                        .corners()
+                        .iter()
+                        .map(|&c| (c - center).dot(fwd))
+                        .fold(f32::NEG_INFINITY, f32::max);
+
+                    if max_local_x >= x_landing_start - 0.02 {
+                        let dx = (x_landing_start - local_x).max(0.0);
+                        let speed_along = self.state.velocity.dot(fwd);
+                        let t_rem = if speed_along > 0.5 { dx / speed_along } else { 1.0 };
+                        let elev_at_wall = self.state.elevation
+                            + self.state.vertical_velocity * t_rem
+                            - 0.5 * 13.5 * t_rem * t_rem;
+                        let eff_elev = self
+                            .state
+                            .elevation
+                            .max(self.state.elevation - self.state.vertical_velocity * dt);
+                        if eff_elev < min_clear_h || elev_at_wall < min_clear_h {
+                            self.state.elevation = 0.0;
+                            self.state.ramp_elevation = 0.0;
+                            self.state.vertical_velocity = 0.0;
+                            self.state.is_airborne = false;
+                            self.state.air_time = 0.0;
+                            return false;
+                        }
+                    }
+                } else if s >= s_landing {
+                    let surf_elev = ramp.surface_elevation_at(self.state.position);
+                    let min_landing_h = (surf_elev - 1.15).max(0.05);
+                    let eff_elev = self
+                        .state
+                        .elevation
+                        .max(self.state.elevation - self.state.vertical_velocity * dt);
+                    if surf_elev > 0.25 && eff_elev < min_landing_h {
+                        self.state.elevation = 0.0;
+                        self.state.ramp_elevation = 0.0;
+                        self.state.vertical_velocity = 0.0;
+                        self.state.is_airborne = false;
+                        self.state.air_time = 0.0;
+                        return false;
+                    }
+                }
+            }
+
             if self.state.vertical_velocity < 0.0 {
                 let surf_elev = ramp.surface_elevation_at(self.state.position);
                 if surf_elev > 0.05 && self.state.elevation <= surf_elev {
@@ -1337,7 +1431,7 @@ impl JumpRampCarExt for wheelbase::Car {
             RampKind::MegaRamp => {
                 let (s_takeoff, s_landing) = ramp.mega_segment_bounds();
                 // Launch at the end of the Take-Off segment (just before the gap)
-                let lip_start = (s_takeoff - 0.08).max(0.10);
+                let lip_start = (s_takeoff - 0.025).max(0.10);
                 if s >= lip_start && s <= s_takeoff + 0.02 && speed_along > 3.5 {
                     let props = wheelbase::JumpRampProperties {
                         direction: ramp.direction,
@@ -1356,6 +1450,14 @@ impl JumpRampCarExt for wheelbase::Car {
                     self.state.is_airborne = true;
                     self.state.vertical_velocity = 0.0;
                     return false;
+                } else if s >= s_landing {
+                    let surf_elev = ramp.surface_elevation_at(self.state.position);
+                    let min_landing_h = (surf_elev - 1.15).max(0.05);
+                    if surf_elev > 0.25 && self.state.ramp_elevation < min_landing_h {
+                        // Grounded in the gap and failed to cross the whole gap: do not snap up onto the landing deck
+                        self.state.ramp_elevation = 0.0;
+                        return false;
+                    }
                 }
             }
         }
@@ -2367,5 +2469,165 @@ mod tests {
         assert!(car.state.just_landed);
         assert_eq!(car.state.vertical_velocity, 0.0);
         assert!((car.state.ramp_elevation - landing_elev).abs() < 0.05);
+    }
+
+    #[test]
+    fn test_mega_ramp_failed_gap_behaves_like_wall_collision() {
+        use crate::collision::resolve_track_wall_collisions_into;
+        use wheelbase::{Car, CarConfig, CarControls, SurfaceType};
+
+        // Mega Ramp from x = 0..40, center at (20, 0), 12m gap
+        let mega = JumpRamp::new(
+            1,
+            SurfaceShape::OrientedBox {
+                center: Vec2::new(20.0, 0.0),
+                half_extents: Vec2::new(20.0, 6.0),
+                angle: 0.0,
+            },
+            Vec2::X,
+            45.0,
+            30.0,
+            4.0,
+            "Mega Ramp",
+        )
+        .with_kind(RampKind::MegaRamp)
+        .with_gap_length(12.0);
+
+        let (_, s_landing) = mega.mega_segment_bounds();
+        let x_landing_start = s_landing * 40.0;
+
+        let mut geom = TrackGeometry::default();
+        geom.jump_ramps.push(mega.clone());
+
+        // Case 1: Car lands short in the gap and drives into the front face of the landing ramp
+        let mut car_short = Car::new(CarConfig::sports_car())
+            .with_pose(Vec2::new(x_landing_start - 1.5, 0.0), 0.0);
+        car_short.state.velocity = Vec2::new(15.0, 0.0);
+        car_short.state.speed = 15.0;
+
+        car_short.step_ramp_interaction(&mega, 1.0 / 60.0);
+        assert_eq!(
+            car_short.state.ramp_elevation, 0.0,
+            "Car in gap must not snap onto elevated landing deck"
+        );
+
+        let mut events = Vec::new();
+        resolve_track_wall_collisions_into(&mut car_short, &geom, &mut events);
+        assert_eq!(
+            events.len(),
+            1,
+            "Car failing to cross MegaRamp gap must trigger a WallCollisionEvent"
+        );
+        assert_eq!(events[0].barrier_type, BarrierType::Concrete);
+        assert!(
+            events[0].normal.x < -0.95,
+            "Wall normal must oppose forward entry into landing ramp, got {:?}",
+            events[0].normal
+        );
+        assert!(
+            car_short.state.velocity.x < 0.0,
+            "Car must bounce back off the landing ramp wall, got vx = {}",
+            car_short.state.velocity.x
+        );
+        assert!(
+            car_short.state.position.x < x_landing_start - 2.0,
+            "Car must be pushed out before the landing ramp start, got x = {}",
+            car_short.state.position.x
+        );
+
+        // Case 2: Car launches off the take-off lip with insufficient speed (10 m/s) to cross the 12m gap
+        let mut car_slow_jump = Car::new(CarConfig::sports_car())
+            .with_pose(Vec2::new(12.6, 0.0), 0.0);
+        car_slow_jump.state.velocity = Vec2::new(10.0, 0.0);
+        car_slow_jump.state.speed = 10.0;
+        let dt = 1.0 / 60.0;
+        let ctrl = CarControls {
+            throttle: 0.5,
+            ..Default::default()
+        };
+        let surfaces = [SurfaceType::Asphalt; 4];
+
+        let mut hit_landing_wall = false;
+        for _ in 0..180 {
+            car_slow_jump.step_per_wheel(&ctrl, surfaces, dt);
+            car_slow_jump.step_ramp_interaction(&mega, dt);
+            events.clear();
+            resolve_track_wall_collisions_into(&mut car_slow_jump, &geom, &mut events);
+            if !events.is_empty() {
+                hit_landing_wall = true;
+                assert_eq!(events[0].barrier_type, BarrierType::Concrete);
+                assert!(events[0].normal.x < -0.95);
+                break;
+            }
+            assert!(
+                car_slow_jump.state.ramp_elevation < 0.1,
+                "Slow-jumping car must never climb onto the landing deck"
+            );
+        }
+        assert!(
+            hit_landing_wall,
+            "Car launching with insufficient speed to clear MegaRamp gap must hit the landing wall"
+        );
+        assert!(car_slow_jump.state.position.x < x_landing_start);
+        assert_eq!(car_slow_jump.state.ramp_elevation, 0.0);
+
+        // Case 3: FIA Rallycross MegaRamp (18m long, 1.3m high, 6.2 deg, 6m gap):
+        // slow launch (7.5 m/s) fails the gap and hits the landing wall; normal speed (16 m/s) clears it.
+        let rx_mega = JumpRamp::new(
+            2,
+            SurfaceShape::OrientedBox {
+                center: Vec2::new(9.0, 0.0),
+                half_extents: Vec2::new(9.0, 5.4),
+                angle: 0.0,
+            },
+            Vec2::X,
+            9.0,
+            6.2,
+            1.3,
+            "FIA RX Mega Jump",
+        )
+        .with_kind(RampKind::MegaRamp)
+        .with_gap_length(6.0);
+        let (rx_s_takeoff, rx_s_landing) = rx_mega.mega_segment_bounds();
+        let rx_x_takeoff = rx_s_takeoff * 18.0;
+        let rx_x_landing = rx_s_landing * 18.0;
+        let mut rx_geom = TrackGeometry::default();
+        rx_geom.jump_ramps.push(rx_mega.clone());
+
+        let mut rx_slow = Car::new(CarConfig::rally_car())
+            .with_pose(Vec2::new(rx_x_takeoff - 0.2, 0.0), 0.0);
+        rx_slow.state.velocity = Vec2::new(7.5, 0.0);
+        rx_slow.state.speed = 7.5;
+        let mut rx_hit_wall = false;
+        for _ in 0..120 {
+            rx_slow.step_per_wheel(&ctrl, [SurfaceType::Dirt; 4], dt);
+            rx_slow.step_ramp_interaction(&rx_mega, dt);
+            events.clear();
+            resolve_track_wall_collisions_into(&mut rx_slow, &rx_geom, &mut events);
+            if !events.is_empty() {
+                rx_hit_wall = true;
+                break;
+            }
+        }
+        assert!(rx_hit_wall, "Slow RX jump failing the 6m gap must hit the landing wall");
+        assert!(rx_slow.state.position.x < rx_x_landing);
+
+        let mut rx_fast = Car::new(CarConfig::rally_car())
+            .with_pose(Vec2::new(rx_x_takeoff - 0.2, 0.0), 0.0);
+        rx_fast.state.velocity = Vec2::new(16.0, 0.0);
+        rx_fast.state.speed = 16.0;
+        let mut rx_cleared = false;
+        for _ in 0..120 {
+            rx_fast.step_per_wheel(&ctrl, [SurfaceType::Dirt; 4], dt);
+            rx_fast.step_ramp_interaction(&rx_mega, dt);
+            events.clear();
+            resolve_track_wall_collisions_into(&mut rx_fast, &rx_geom, &mut events);
+            assert!(events.is_empty(), "Fast RX jump clearing the gap must not hit the landing wall");
+            if rx_fast.state.position.x > rx_x_landing + 1.0 && rx_fast.state.ramp_elevation > 0.5 {
+                rx_cleared = true;
+                break;
+            }
+        }
+        assert!(rx_cleared, "Fast RX jump must clear the gap and land on the elevated landing deck");
     }
 }

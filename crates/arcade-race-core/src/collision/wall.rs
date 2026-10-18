@@ -3,7 +3,9 @@ use serde::{Deserialize, Serialize};
 
 use super::sat::OrientedBox;
 use crate::body::Body2D;
-use crate::track::geometry::{BarrierType, Obstacle, ObstacleShape, TrackGeometry, WallBarrier};
+use crate::track::geometry::{
+    BarrierType, JumpRamp, Obstacle, ObstacleShape, RampKind, TrackGeometry, WallBarrier,
+};
 
 /// Detailed telemetry and physics result of a vehicle-wall collision impact.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -450,6 +452,74 @@ pub fn resolve_all_wall_collisions_into<B: Body2D>(
     }
 }
 
+/// Resolves collisions between a vehicle and the vertical front face of the landing segment
+/// on any [`RampKind::MegaRamp`] when the vehicle fails to clear the gap onto the landing deck.
+pub fn resolve_mega_ramp_wall_collisions_into<B: Body2D>(
+    car: &mut B,
+    jump_ramps: &[JumpRamp],
+    events_out: &mut Vec<WallCollisionEvent>,
+) {
+    if jump_ramps.is_empty() {
+        return;
+    }
+
+    let car_reach = car.hull().reach().max(3.6f32);
+    let road_elevation = car.total_elevation() - car.dynamic_elevation();
+
+    for ramp in jump_ramps {
+        if ramp.kind != RampKind::MegaRamp {
+            continue;
+        }
+        let min_clear_h = ramp.mega_clear_height();
+        if car.dynamic_elevation() >= min_clear_h {
+            continue;
+        }
+
+        let (s_takeoff, s_landing) = ramp.mega_segment_bounds();
+        let center = ramp.shape.center();
+        let half = ramp.half_extents();
+        let half_len = half.x.max(0.5);
+        let half_wid = half.y.max(0.5);
+        let full_len = 2.0 * half_len;
+        let fwd = ramp.direction.normalize_or_zero();
+        let right = Vec2::new(fwd.y, -fwd.x);
+
+        let x_takeoff_end = -half_len + s_takeoff * full_len;
+        let x_landing_start = -half_len + s_landing * full_len;
+
+        let rel = car.position() - center;
+        let local_x = rel.dot(fwd);
+        let local_y = rel.dot(right);
+
+        // Only collide when approaching the landing wall from the gap (or if center slightly tunneled past it at ground level)
+        if local_x <= x_takeoff_end || local_x > x_landing_start + 2.0 {
+            continue;
+        }
+        if local_y.abs() > half_wid + car_reach {
+            continue;
+        }
+
+        // If the vehicle center already crossed x_landing_start without clearing the deck,
+        // shift it back onto the gap side of the wall so the collision normal points into the gap (-fwd).
+        if local_x >= x_landing_start - 0.05 && local_y.abs() <= half_wid + 0.5 {
+            let pullback = (local_x - (x_landing_start - 0.10)).max(0.0);
+            if pullback > 0.0 {
+                car.translate(-fwd * pullback);
+            }
+        }
+
+        if let Some(wall) = ramp.mega_landing_wall_at_elevation(road_elevation) {
+            for iter in 0..2 {
+                if let Some(ev) = resolve_car_wall_collision(car, &wall) {
+                    if iter == 0 {
+                        events_out.push(ev);
+                    }
+                }
+            }
+        }
+    }
+}
+
 /// Resolves all wall and obstacle collisions for a car against [`TrackGeometry`] using its
 /// static 2D uniform spatial grid (`GeometrySpatialGrid`), appending events into `events_out`
 /// with zero heap allocations (Spec 119).
@@ -458,6 +528,8 @@ pub fn resolve_track_wall_collisions_into<B: Body2D>(
     geometry: &TrackGeometry,
     events_out: &mut Vec<WallCollisionEvent>,
 ) {
+    resolve_mega_ramp_wall_collisions_into(car, &geometry.jump_ramps, events_out);
+
     let obstacles = geometry.all_obstacles_with_scenery();
     let Some(grid) = geometry.spatial_grid() else {
         resolve_all_wall_collisions_into(car, &geometry.inner_walls, obstacles, events_out);

@@ -6,7 +6,9 @@ use pyo3::types::{PyDict, PyList};
 use std::f32::consts::PI;
 
 use tdrace_core::collision::car_collision::resolve_multi_car_collisions;
-use tdrace_core::collision::wall::resolve_all_wall_collisions;
+use tdrace_core::collision::wall::{
+    resolve_all_wall_collisions, resolve_mega_ramp_wall_collisions_into,
+};
 use tdrace_core::lidar::{LidarHit, LidarScanner};
 use tdrace_core::physics::car::{normalize_angle, Car, CarControls};
 use tdrace_core::physics::config::CarConfig;
@@ -331,10 +333,15 @@ impl PyEngine {
         let mut wall_impulse = 0.0;
         let mut wall_hit = false;
         let scenery_obstacles = self.track.geometry.all_obstacles_with_scenery();
-        let wall_events = resolve_all_wall_collisions(
+        let mut wall_events = resolve_all_wall_collisions(
             &mut self.cars[0],
             &self.walls,
             scenery_obstacles,
+        );
+        resolve_mega_ramp_wall_collisions_into(
+            &mut self.cars[0],
+            &self.track.geometry.jump_ramps,
+            &mut wall_events,
         );
         for ev in wall_events {
             wall_impulse += ev.normal_impulse;
@@ -502,10 +509,15 @@ impl PyEngine {
         let mut wall_impulses = vec![0.0f32; n];
         let mut wall_hits = vec![false; n];
         for i in 0..n {
-            let wall_events = resolve_all_wall_collisions(
+            let mut wall_events = resolve_all_wall_collisions(
                 &mut self.cars[i],
                 &self.walls,
                 self.track.geometry.all_obstacles_with_scenery(),
+            );
+            resolve_mega_ramp_wall_collisions_into(
+                &mut self.cars[i],
+                &self.track.geometry.jump_ramps,
+                &mut wall_events,
             );
             for ev in wall_events {
                 wall_impulses[i] += ev.normal_impulse;
