@@ -566,10 +566,10 @@ impl SeriesSession {
             self.tournament = Some(weekend);
             return Err(e);
         }
-        let is_world_rx = weekend.config.is_world_rx();
+        let preserve_points = weekend.config.is_world_rx() || weekend.config.is_autocross_30();
         match weekend.final_standings() {
             Some(places) => {
-                self.submit_round_results_with_mode(track_title, places, is_world_rx);
+                self.submit_round_results_with_mode(track_title, places, preserve_points);
                 Ok(true)
             }
             None => {

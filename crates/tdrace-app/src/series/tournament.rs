@@ -27,7 +27,13 @@ pub const RX_GRID_SIZE: usize = 6;
 pub const RX_ADVANCERS_PER_GROUP: usize = 3;
 /// Top drivers in the World RX Intermediate Classification who advance to the Semifinals (Spec 128).
 pub const RX_INTERMEDIATE_CUTOFF: usize = 12;
-/// Number of laps in a World RX SuperPole session: 1 out-lap from launch chute + 1 timed flying lap (Spec 128).
+/// Cars in one FIA European Autocross race: 10-car 3-2-3-2 grid (Spec 130).
+pub const AX_GRID_SIZE: usize = 10;
+/// Drivers each FIA European Autocross semifinal sends to the Grand Final (Spec 130).
+pub const AX_ADVANCERS_PER_GROUP: usize = 5;
+/// Top drivers in the FIA European Autocross Intermediate Classification who advance to the Semifinals (Spec 130).
+pub const AX_INTERMEDIATE_CUTOFF: usize = 20;
+/// Number of laps in a World RX SuperPole / AX Timed Practice session: 1 out-lap from launch chute + 1 timed flying lap (Spec 128, 130).
 pub const SUPERPOLE_LAPS: u32 = 2;
 /// `total_time` of a driver who did not finish. It sorts after every real time.
 pub const DNF_TIME: f32 = 9_999.0;
@@ -41,6 +47,10 @@ pub const WORLD_RX_INTERMEDIATE_POINTS_12: [u32; 12] = [16, 15, 14, 13, 12, 11, 
 pub const WORLD_RX_SEMI_POINTS_6: [u32; 6] = [6, 5, 4, 3, 2, 1];
 /// World RX Stage 3 (Grand Final) points for places 1st through 6th (Spec 128).
 pub const WORLD_RX_FINAL_POINTS_6: [u32; 6] = [8, 5, 4, 3, 2, 1];
+/// FIA Autocross Stage 1 (Intermediate Classification) points for ranks 1st through 10th (Spec 130).
+pub const FIA_AX_INTERMEDIATE_POINTS_10: [u32; 10] = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
+/// FIA Autocross Stage 2 (Grand Final) points for places 1st through 10th (Spec 130).
+pub const FIA_AX_FINAL_POINTS_10: [u32; 10] = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
 
 const REFERENCE_LAP_FALLBACK: f32 = 60.0;
 const SUPERPOLE_REFERENCE_LAP_DEFAULT: f32 = 40.0;
@@ -133,38 +143,58 @@ impl TournamentConfig {
         }
     }
 
+    /// Default 30-driver, 10-car FIA European Autocross weekend configuration (Spec 130).
+    pub fn autocross_default() -> Self {
+        Self {
+            total_drivers: 30,
+            heat_laps: 4,
+            semi_laps: 5,
+            final_laps: 6,
+            qualifying_rounds: 1,
+        }
+    }
+
     /// True when this weekend follows the 24-driver, 6-car FIA World RX format (Spec 128).
     pub fn is_world_rx(&self) -> bool {
         self.total_drivers == 24
     }
 
-    /// Cars per race grid (`6` for World RX, `8` for Autocross).
+    /// True when this weekend follows the 30-driver, 10-car FIA European Autocross format (Spec 130).
+    pub fn is_autocross_30(&self) -> bool {
+        self.total_drivers == 30
+    }
+
+    /// Cars per race grid (`6` for World RX, `10` for Autocross 30, `8` for legacy Autocross).
     pub fn grid_size(&self) -> usize {
         if self.is_world_rx() {
             RX_GRID_SIZE
+        } else if self.is_autocross_30() {
+            AX_GRID_SIZE
         } else {
             GRID_SIZE
         }
     }
 
-    /// Drivers advancing per group (`3` for World RX, `4` for Autocross).
+    /// Drivers advancing per group (`3` for World RX, `5` for Autocross 30, `4` for legacy Autocross).
     pub fn advancers_per_group(&self) -> usize {
         if self.is_world_rx() {
             RX_ADVANCERS_PER_GROUP
+        } else if self.is_autocross_30() {
+            AX_ADVANCERS_PER_GROUP
         } else {
             ADVANCERS_PER_GROUP
         }
     }
 
-    /// True when the weekend begins with Stage 0 (`SuperPole` solo timed flying lap).
+    /// True when the weekend begins with Stage 0 (`SuperPole` / Timed Qualifying Practice solo timed flying lap).
     pub fn has_superpole(&self) -> bool {
-        self.is_world_rx()
+        self.is_world_rx() || self.is_autocross_30()
     }
 
-    /// Checks that `total_drivers` is 16, 24, 32 or 64, `qualifying_rounds` is 1..=4, and every distance is positive.
+    /// Checks that `total_drivers` is 16, 24, 30, 32 or 64, `qualifying_rounds` is 1..=4, and every distance is positive.
     pub fn validate(&self) -> Result<(), String> {
-        if !matches!(self.total_drivers, 16 | 24 | 32 | 64) {
-            return Err(format!("tournament total_drivers must be 16, 24, 32 or 64 (got {})", self.total_drivers));
+        if !matches!(self.total_drivers, 16 | 24 | 30 | 32 | 64) {
+            return Err(format!("tournament total_drivers must be 16, 24, 30, 32 or 64 (got {})", self.total_drivers));
         }
         if !(1..=4).contains(&self.qualifying_rounds) {
             return Err(format!("tournament qualifying_rounds must be 1..=4 (got {})", self.qualifying_rounds));
@@ -179,22 +209,37 @@ impl TournamentConfig {
         self.total_drivers / self.grid_size()
     }
 
-    /// Rounds of the main bracket, the final included: 3 for 24 or 32 drivers.
+    /// Rounds of the main bracket, the final included: 3 for 24, 30 or 32 drivers.
     pub fn round_count(&self) -> usize {
-        self.heat_count().trailing_zeros() as usize + 1
+        if self.is_autocross_30() {
+            3
+        } else {
+            self.heat_count().trailing_zeros() as usize + 1
+        }
     }
 
     /// Races of the main bracket in `round`.
     pub fn groups_in_round(&self, round: usize) -> usize {
-        self.heat_count() >> round
+        if self.is_autocross_30() {
+            match round {
+                0 => 3,
+                1 => 2,
+                _ => 1,
+            }
+        } else {
+            self.heat_count() >> round
+        }
     }
 
     pub fn stage_for_round(&self, round: usize) -> TournamentStage {
-        match self.groups_in_round(round) {
-            _ if round == 0 => TournamentStage::QualifyingHeat,
-            1 => TournamentStage::GrandFinal,
-            2 => TournamentStage::Semifinal,
-            _ => TournamentStage::Quarterfinal,
+        if round == 0 {
+            TournamentStage::QualifyingHeat
+        } else if round == self.final_round() {
+            TournamentStage::GrandFinal
+        } else if self.groups_in_round(round) == 2 {
+            TournamentStage::Semifinal
+        } else {
+            TournamentStage::Quarterfinal
         }
     }
 
@@ -458,6 +503,13 @@ impl TournamentWeekendState {
                     .iter()
                     .any(|r| r.driver_id == self.player_id && r.finish_position > RX_INTERMEDIATE_CUTOFF);
         }
+        if self.config.is_autocross_30() {
+            return self.active_round >= 1
+                && self
+                    .intermediate_standings
+                    .iter()
+                    .any(|r| r.driver_id == self.player_id && r.finish_position > AX_INTERMEDIATE_CUTOFF);
+        }
         let advancers = self.config.advancers_per_group();
         let last_before_b_final = self.config.final_round().saturating_sub(1);
         (0..last_before_b_final).any(|r| {
@@ -468,39 +520,58 @@ impl TournamentWeekendState {
         })
     }
 
-    /// Returns `(intermediate_pts, semi_pts, final_pts)` earned by `driver_id` in a World RX weekend (Spec 128).
+    /// Returns `(intermediate_pts, semi_pts, final_pts)` earned by `driver_id` in a World RX (Three-Stage)
+    /// or FIA Autocross 30 (Two-Phase: intermediate + final) weekend.
     pub fn driver_stage_points(&self, driver_id: &str) -> (u32, u32, u32) {
-        if !self.config.is_world_rx() {
-            return (0, 0, 0);
+        if self.config.is_world_rx() {
+            let inter_pts = self
+                .intermediate_standings
+                .iter()
+                .position(|r| r.driver_id == driver_id)
+                .and_then(|idx| WORLD_RX_INTERMEDIATE_POINTS_12.get(idx).copied())
+                .unwrap_or(0);
+            let semi_pts = self
+                .semi_results
+                .iter()
+                .find_map(|semi| {
+                    semi.iter()
+                        .position(|r| r.driver_id == driver_id)
+                        .and_then(|idx| WORLD_RX_SEMI_POINTS_6.get(idx).copied())
+                })
+                .unwrap_or(0);
+            let final_pts = self
+                .grand_final_results
+                .as_ref()
+                .and_then(|gf| {
+                    gf.iter()
+                        .position(|r| r.driver_id == driver_id)
+                        .and_then(|idx| WORLD_RX_FINAL_POINTS_6.get(idx).copied())
+                })
+                .unwrap_or(0);
+            (inter_pts, semi_pts, final_pts)
+        } else if self.config.is_autocross_30() {
+            let inter_pts = self
+                .intermediate_standings
+                .iter()
+                .position(|r| r.driver_id == driver_id)
+                .and_then(|idx| FIA_AX_INTERMEDIATE_POINTS_10.get(idx).copied())
+                .unwrap_or(0);
+            let final_pts = self
+                .grand_final_results
+                .as_ref()
+                .and_then(|gf| {
+                    gf.iter()
+                        .position(|r| r.driver_id == driver_id)
+                        .and_then(|idx| FIA_AX_FINAL_POINTS_10.get(idx).copied())
+                })
+                .unwrap_or(0);
+            (inter_pts, 0, final_pts)
+        } else {
+            (0, 0, 0)
         }
-        let inter_pts = self
-            .intermediate_standings
-            .iter()
-            .position(|r| r.driver_id == driver_id)
-            .and_then(|idx| WORLD_RX_INTERMEDIATE_POINTS_12.get(idx).copied())
-            .unwrap_or(0);
-        let semi_pts = self
-            .semi_results
-            .iter()
-            .find_map(|semi| {
-                semi.iter()
-                    .position(|r| r.driver_id == driver_id)
-                    .and_then(|idx| WORLD_RX_SEMI_POINTS_6.get(idx).copied())
-            })
-            .unwrap_or(0);
-        let final_pts = self
-            .grand_final_results
-            .as_ref()
-            .and_then(|gf| {
-                gf.iter()
-                    .position(|r| r.driver_id == driver_id)
-                    .and_then(|idx| WORLD_RX_FINAL_POINTS_6.get(idx).copied())
-            })
-            .unwrap_or(0);
-        (inter_pts, semi_pts, final_pts)
     }
 
-    /// Returns the cumulative Three-Stage championship points earned by `driver_id` in a World RX weekend.
+    /// Returns the cumulative championship points earned by `driver_id` in a World RX or Autocross 30 weekend.
     pub fn driver_total_weekend_points(&self, driver_id: &str) -> u32 {
         let (q, s, f) = self.driver_stage_points(driver_id);
         q + s + f
@@ -520,9 +591,9 @@ impl TournamentWeekendState {
 
         let player_results = Self::normalize(&player_race, results)?;
 
-        // Reference pace: in World RX, anchor other heats to the fastest AI in the player's race so
+        // Reference pace: in World RX and Autocross 30, anchor other heats to the fastest AI in the player's race so
         // beating (or trailing) the AI in your own heat translates directly to the overall time sheet.
-        let winner_time = if self.config.is_world_rx() {
+        let winner_time = if self.config.is_world_rx() || self.config.is_autocross_30() {
             player_results
                 .iter()
                 .filter(|r| r.driver_id != self.player_id && !is_dnf(r))
@@ -590,8 +661,8 @@ impl TournamentWeekendState {
         Ok(())
     }
 
-    /// Resolves Stage 0 (`SuperPole`) from either the solo player flying-lap result (`len == 1`) or an explicit
-    /// full-field classification (`len == total_drivers`), then snake-seeds Qualifying Round 1 (`Q1`).
+    /// Resolves Stage 0 (`SuperPole` / Timed Qualifying Practice) from either the solo player flying-lap result (`len == 1`)
+    /// or an explicit full-field classification (`len == total_drivers`), then snake-seeds Qualifying Round 1 (`Q1`).
     fn submit_superpole(&mut self, results: Vec<RoundDriverResult>, entries: &[SeriesStandingEntry]) -> Result<(), String> {
         let mut classification: Vec<RoundDriverResult> = if results.len() == 1 && results[0].driver_id == self.player_id {
             let mut player_res = results.into_iter().next().unwrap();
@@ -663,37 +734,57 @@ impl TournamentWeekendState {
         Ok(())
     }
 
-    /// Recomputes `self.intermediate_standings` across all completed Qualifying Heat rounds (`Q1..=Qn`)
-    /// ranked by cumulative overall completion time across heats.
+    /// Recomputes `self.intermediate_standings` across all completed Qualifying Heat rounds (`Q1..=Qn`).
+    /// In FIA Autocross 30 with 3 completed heats, each driver's score is their Best 2 of 3 heat results (Spec 130).
     fn recompute_intermediate_standings(&mut self, entries: &[SeriesStandingEntry]) {
         if self.qualifying_round_results.is_empty() {
             self.intermediate_standings.clear();
             return;
         }
+        let is_ax_best_2_of_3 = self.config.is_autocross_30()
+            && self.config.qualifying_rounds >= 3
+            && self.qualifying_round_results.len() >= 3;
+
         let mut combined: Vec<RoundDriverResult> = entries
             .iter()
             .map(|entry| {
-                let mut total_time = 0.0f32;
-                let mut any_dnf = false;
                 let mut best_lap: Option<f32> = None;
                 let mut best_heat_pos = usize::MAX;
+                let mut heat_times: Vec<f32> = Vec::with_capacity(self.qualifying_round_results.len());
+
                 for q_round in &self.qualifying_round_results {
                     if let Some(res) = q_round.iter().flatten().find(|r| r.driver_id == entry.driver_id) {
-                        if is_dnf(res) {
-                            any_dnf = true;
-                            total_time += DNF_TIME;
-                        } else {
-                            total_time += res.total_time;
-                        }
+                        heat_times.push(res.total_time);
                         if let Some(bl) = res.best_lap {
                             best_lap = Some(best_lap.map_or(bl, |prev| prev.min(bl)));
                         }
                         best_heat_pos = best_heat_pos.min(res.finish_position);
+                    } else {
+                        heat_times.push(DNF_TIME);
                     }
                 }
-                if any_dnf && total_time < DNF_TIME {
-                    total_time = DNF_TIME;
-                }
+
+                let total_time = if is_ax_best_2_of_3 {
+                    // Best 2 of 3: sort times ascending, sum the lowest 2
+                    heat_times.sort_by(|a, b| a.partial_cmp(b).unwrap_or(Ordering::Equal));
+                    heat_times.iter().take(2).sum()
+                } else {
+                    let mut sum = 0.0f32;
+                    let mut any_dnf = false;
+                    for &t in &heat_times {
+                        if t >= DNF_TIME {
+                            any_dnf = true;
+                            sum += DNF_TIME;
+                        } else {
+                            sum += t;
+                        }
+                    }
+                    if any_dnf && sum < DNF_TIME {
+                        sum = DNF_TIME;
+                    }
+                    sum
+                };
+
                 RoundDriverResult {
                     driver_id: entry.driver_id.clone(),
                     driver_name: entry.driver_name.clone(),
@@ -709,9 +800,15 @@ impl TournamentWeekendState {
 
         combined.sort_by(by_elapsed_time);
         renumber(&mut combined);
-        if self.config.is_world_rx() && self.qualifying_round_results.len() >= self.config.qualifying_rounds {
-            for (idx, r) in combined.iter_mut().enumerate() {
-                r.points_awarded = WORLD_RX_INTERMEDIATE_POINTS_12.get(idx).copied().unwrap_or(0);
+        if self.qualifying_round_results.len() >= self.config.qualifying_rounds {
+            if self.config.is_world_rx() {
+                for (idx, r) in combined.iter_mut().enumerate() {
+                    r.points_awarded = WORLD_RX_INTERMEDIATE_POINTS_12.get(idx).copied().unwrap_or(0);
+                }
+            } else if self.config.is_autocross_30() {
+                for (idx, r) in combined.iter_mut().enumerate() {
+                    r.points_awarded = FIA_AX_INTERMEDIATE_POINTS_10.get(idx).copied().unwrap_or(0);
+                }
             }
         }
         self.intermediate_standings = combined;
@@ -769,6 +866,13 @@ impl TournamentWeekendState {
             let out: Vec<&RoundDriverResult> = self.intermediate_standings.iter().skip(RX_INTERMEDIATE_CUTOFF).collect();
             return (vec![odd, even], out);
         }
+        if self.config.is_autocross_30() && round == 0 {
+            let top20: Vec<&RoundDriverResult> = self.intermediate_standings.iter().take(AX_INTERMEDIATE_CUTOFF).collect();
+            let odd: Vec<&RoundDriverResult> = top20.iter().step_by(2).copied().collect();
+            let even: Vec<&RoundDriverResult> = top20.iter().skip(1).step_by(2).copied().collect();
+            let out: Vec<&RoundDriverResult> = self.intermediate_standings.iter().skip(AX_INTERMEDIATE_CUTOFF).collect();
+            return (vec![odd, even], out);
+        }
         let advancers = self.config.advancers_per_group();
         let mut advancing = Vec::new();
         let mut out = Vec::new();
@@ -779,7 +883,7 @@ impl TournamentWeekendState {
         (advancing, out)
     }
 
-    /// Pairs two 3-driver Semifinal finisher slices row by row (`Row 1: pos 0`, `Row 2: pos 1`, `Row 3: pos 2`),
+    /// Pairs two Semifinal finisher slices row by row (`Row 1: pos 0`, `Row 2: pos 1`, etc.),
     /// ordering the two drivers within each row by their Intermediate Classification rank.
     fn pair_rows_by_intermediate_rank(&self, semi1: &[&RoundDriverResult], semi2: &[&RoundDriverResult]) -> Vec<String> {
         let inter_rank = |id: &str| -> usize {
@@ -816,9 +920,9 @@ impl TournamentWeekendState {
         let groups = config.groups_in_round(round);
         let stage = config.stage_for_round(round);
 
-        if config.is_world_rx() {
+        if config.is_world_rx() || config.is_autocross_30() {
             let mut races: Vec<TournamentRace> = if round == 1 {
-                // World RX Semifinals: Odd/Even split from the Top 12 of the Intermediate Classification.
+                // Semifinals: Odd/Even split from the Top 12 (RX) or Top 20 (AX) of the Intermediate Classification.
                 let (odd_even, _) = self.split_round(0);
                 odd_even
                     .into_iter()
@@ -986,7 +1090,7 @@ impl TournamentWeekendState {
             }
         }
         renumber(&mut ranked);
-        if self.config.is_world_rx() {
+        if self.config.is_world_rx() || self.config.is_autocross_30() {
             for r in &mut ranked {
                 r.points_awarded = self.driver_total_weekend_points(&r.driver_id);
             }
@@ -1016,6 +1120,13 @@ mod tests {
         let c24 = TournamentConfig::world_rx_default();
         assert!(c24.is_world_rx() && c24.has_superpole());
         assert_eq!((c24.grid_size(), c24.heat_count(), c24.round_count()), (6, 4, 3));
+        let c30 = TournamentConfig::autocross_default();
+        assert!(c30.is_autocross_30() && c30.has_superpole());
+        assert_eq!((c30.grid_size(), c30.heat_count(), c30.round_count()), (10, 3, 3));
+        assert_eq!(c30.stage_for_round(0), TournamentStage::QualifyingHeat);
+        assert_eq!(c30.stage_for_round(1), TournamentStage::Semifinal);
+        assert_eq!(c30.stage_for_round(2), TournamentStage::GrandFinal);
+        assert!(c30.validate().is_ok());
         let c64 = TournamentConfig { total_drivers: 64, ..c32 };
         assert_eq!((c64.heat_count(), c64.round_count()), (8, 4));
         assert_eq!(c64.stage_for_round(1), TournamentStage::Quarterfinal);

@@ -83,14 +83,16 @@ impl Default for SeriesMeta {
 }
 
 impl SeriesMeta {
-    /// The weekend of a `tournament_sprint` series; unset sizes take 24 drivers for Rallycross and
-    /// 32 drivers for Autocross, with 3, 4 and 5 laps and 1 qualifying round. `None` for a single-race series.
+    /// The weekend of a `tournament_sprint` series; unset sizes take 24 drivers for Rallycross,
+    /// 30 drivers for Autocross, and 32 drivers for legacy custom series, with 1 qualifying round. `None` for a single-race series.
     pub fn tournament_config(&self) -> Option<TournamentConfig> {
         if self.weekend_format != WeekendFormat::TournamentSprint {
             return None;
         }
         let d = if matches!(self.module_id.as_str(), "rallycross" | "rally") {
             TournamentConfig::world_rx_default()
+        } else if self.module_id == "autocross" {
+            TournamentConfig::autocross_default()
         } else {
             TournamentConfig::default()
         };
