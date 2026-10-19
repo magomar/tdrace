@@ -10,12 +10,13 @@ pub use humanize::{BotDrivingStats, HumanDriver, HumanTraits, MistakeKind};
 pub use rng::LcgRng;
 
 use arcade_race_core::Body2D;
+use arcade_race_core::track::optimal_line::OptimalRacingLine;
 use arcade_race_core::track::{LineSegment, Track, TrackLayout, TrackNetwork, TrackSpline};
 use glam::Vec2;
 use serde::{de, Deserialize, Deserializer, Serialize};
 use wheelbase::{normalize_angle, Car, CarControls};
 
-/// What the bot driver needs from a vehicle besides its [`Body2D`] state. Spec 065.
+/// What the bot driver needs from a vehicle besides its [`Body2D`] state. Spec 065 / Spec 131.
 pub trait BotVehicle: Body2D {
     /// Unit vector to the vehicle's right.
     fn right_vector(&self) -> Vec2;
@@ -27,6 +28,14 @@ pub trait BotVehicle: Body2D {
     /// cars; a vehicle with much less grip returns its own, somewhat below [`BotVehicle::grip`].
     fn planning_grip(&self) -> f32 {
         0.78
+    }
+    /// Nominal longitudinal braking deceleration capability on dry tarmac (m/s²). Spec 131.
+    fn max_braking_decel_mps2(&self) -> f32 {
+        8.5
+    }
+    /// Speed-dependent aerodynamic downforce grip multiplier at `speed_mps` (>= 1.0). Spec 131.
+    fn downforce_grip_factor(&self, _speed_mps: f32) -> f32 {
+        1.0
     }
     /// Maximum tire wear across wheels [0.0..1.0]. The default returns 0.0.
     fn max_tire_wear(&self) -> f32 {
@@ -56,6 +65,19 @@ impl BotVehicle for Car {
         // Spec 083 / 114: scale planning grip with the car's real tire grip (e.g. 1.20 competition compound
         // plans around 0.936, rather than being capped to 0.78 regardless of vehicle capability).
         self.config.tire.grip * 0.78
+    }
+    #[inline]
+    fn max_braking_decel_mps2(&self) -> f32 {
+        let m = self.config.mass.max(50.0);
+        let f_brk = self.config.max_brake_force / m;
+        let f_tire = self.config.tire.grip * 9.81 * 1.05;
+        f_brk.min(f_tire).clamp(7.5, 13.5)
+    }
+    #[inline]
+    fn downforce_grip_factor(&self, speed_mps: f32) -> f32 {
+        let m = self.config.mass.max(50.0);
+        let df_g = (self.config.downforce_coefficient * speed_mps * speed_mps) / (m * 9.81);
+        (1.0 + df_g * 0.70).clamp(1.0, 1.35)
     }
     #[inline]
     fn max_tire_wear(&self) -> f32 {
@@ -124,7 +146,8 @@ impl DrivingStyle {
     }
 }
 
-/// 5-tier experience and performance ladder matching vehicle tiers 1..=5.
+/// Experience and performance ladder: 5 base tiers (`Rookie`..`Legend`) plus error-free
+/// `ProPlus` (`T4+`) and `LegendPlus` (`T5+`) variants (`specs/131_error_free_t4_and_t5_bot_tiers_optimal_racing_line_trajectory_following_and_maximum_pace_controller_unchoking.md`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
 #[repr(u8)]
 #[serde(rename_all = "snake_case")]
@@ -134,6 +157,8 @@ pub enum DriverTier {
     Contender = 3,
     Pro = 4,
     Legend = 5,
+    ProPlus = 6,
+    LegendPlus = 7,
 }
 
 impl Default for DriverTier {
@@ -143,7 +168,8 @@ impl Default for DriverTier {
 }
 
 impl DriverTier {
-    pub const ALL: [Self; 5] = [
+    /// The 5 canonical user-selectable difficulty tiers (`T1`..`T5`).
+    pub const BASE_TIERS: [Self; 5] = [
         Self::Rookie,
         Self::Amateur,
         Self::Contender,
@@ -151,8 +177,26 @@ impl DriverTier {
         Self::Legend,
     ];
 
+    /// All 7 driver tier variants in progression order (`T1`, `T2`, `T3`, `T4`, `T4+`, `T5`, `T5+`).
+    pub const ALL: [Self; 7] = [
+        Self::Rookie,
+        Self::Amateur,
+        Self::Contender,
+        Self::Pro,
+        Self::ProPlus,
+        Self::Legend,
+        Self::LegendPlus,
+    ];
+
+    /// Index in `0..=4` for the 5 base difficulty selectors (`ProPlus` maps to `3`, `LegendPlus` maps to `4`).
     pub const fn to_index(self) -> usize {
-        (self as usize).saturating_sub(1)
+        match self {
+            Self::Rookie => 0,
+            Self::Amateur => 1,
+            Self::Contender => 2,
+            Self::Pro | Self::ProPlus => 3,
+            Self::Legend | Self::LegendPlus => 4,
+        }
     }
 
     pub const fn from_index(idx: usize) -> Self {
@@ -165,12 +209,40 @@ impl DriverTier {
         }
     }
 
+    /// Index in `0..=6` across `DriverTier::ALL`.
+    pub const fn to_variant_index(self) -> usize {
+        match self {
+            Self::Rookie => 0,
+            Self::Amateur => 1,
+            Self::Contender => 2,
+            Self::Pro => 3,
+            Self::ProPlus => 4,
+            Self::Legend => 5,
+            Self::LegendPlus => 6,
+        }
+    }
+
+    pub const fn from_variant_index(idx: usize) -> Self {
+        match idx {
+            0 => Self::Rookie,
+            1 => Self::Amateur,
+            2 => Self::Contender,
+            3 => Self::Pro,
+            4 => Self::ProPlus,
+            5 => Self::Legend,
+            _ => Self::LegendPlus,
+        }
+    }
+
     pub const fn from_u8(val: u8) -> Self {
         match val {
             1 => Self::Rookie,
             2 => Self::Amateur,
             3 => Self::Contender,
             4 => Self::Pro,
+            5 => Self::Legend,
+            6 => Self::ProPlus,
+            7 => Self::LegendPlus,
             _ => Self::Legend,
         }
     }
@@ -179,13 +251,31 @@ impl DriverTier {
         self as u8
     }
 
+    /// Maps this driver tier to the canonical vehicle/career tier `1..=5` (`ProPlus -> 4`, `LegendPlus -> 5`).
+    pub const fn car_tier_u8(self) -> u8 {
+        match self {
+            Self::Rookie => 1,
+            Self::Amateur => 2,
+            Self::Contender => 3,
+            Self::Pro | Self::ProPlus => 4,
+            Self::Legend | Self::LegendPlus => 5,
+        }
+    }
+
+    /// Returns `true` for error-free elite variants (`ProPlus` / `T4+` and `LegendPlus` / `T5+`).
+    pub const fn is_error_free(self) -> bool {
+        matches!(self, Self::ProPlus | Self::LegendPlus)
+    }
+
     pub fn from_str_lossy(s: &str) -> Self {
-        match s.to_ascii_lowercase().as_str() {
-            "1" | "rookie" | "novice" => Self::Rookie,
-            "2" | "amateur" | "club" | "clubman" => Self::Amateur,
-            "3" | "contender" | "semipro" | "semi_pro" | "national" => Self::Contender,
-            "4" | "pro" | "veteran" => Self::Pro,
-            "5" | "legend" | "elite" | "alien" | "champion" => Self::Legend,
+        match s.to_ascii_lowercase().trim() {
+            "1" | "t1" | "rookie" | "novice" => Self::Rookie,
+            "2" | "t2" | "amateur" | "club" | "clubman" => Self::Amateur,
+            "3" | "t3" | "contender" | "semipro" | "semi_pro" | "national" => Self::Contender,
+            "4" | "t4" | "pro" | "veteran" => Self::Pro,
+            "4+" | "t4+" | "pro+" | "pro_plus" | "proplus" | "tier 4+" | "tier 4+: pro+" => Self::ProPlus,
+            "5" | "t5" | "legend" | "elite" | "alien" | "champion" => Self::Legend,
+            "5+" | "t5+" | "legend+" | "legend_plus" | "legendplus" | "tier 5+" | "tier 5+: legend+" | "alien+" | "max" => Self::LegendPlus,
             _ => Self::Pro,
         }
     }
@@ -196,7 +286,9 @@ impl DriverTier {
             Self::Amateur => "Tier 2: Amateur",
             Self::Contender => "Tier 3: Contender",
             Self::Pro => "Tier 4: Pro",
+            Self::ProPlus => "Tier 4+: Pro+",
             Self::Legend => "Tier 5: Legend",
+            Self::LegendPlus => "Tier 5+: Legend+",
         }
     }
 
@@ -206,34 +298,84 @@ impl DriverTier {
             Self::Amateur => "Amateur (T2)",
             Self::Contender => "Contender (T3)",
             Self::Pro => "Pro (T4)",
+            Self::ProPlus => "Pro+ (T4+)",
             Self::Legend => "Legend (T5)",
+            Self::LegendPlus => "Legend+ (T5+)",
         }
     }
 
-    /// Compact badge tag (e.g. "T1" .. "T5") for in-game floating nameplates.
+    /// Compact badge tag (e.g. "T1" .. "T5+") for in-game floating nameplates and grid rows.
     pub const fn tag(self) -> &'static str {
         match self {
             Self::Rookie => "T1",
             Self::Amateur => "T2",
             Self::Contender => "T3",
             Self::Pro => "T4",
+            Self::ProPlus => "T4+",
             Self::Legend => "T5",
+            Self::LegendPlus => "T5+",
         }
     }
 
-    /// Returns the discrete probability distribution [P(T1), P(T2), P(T3), P(T4), P(T5)]
-    /// (summing to 100%) for opponent tiers centered on this target difficulty tier.
+    /// Returns the discrete 5-tier probability distribution [P(T1), P(T2), P(T3), P(T4), P(T5)]
+    /// (summing to 100%) for base opponent tiers centered on this target difficulty tier (Spec 024).
     pub const fn bell_curve_weights(self) -> [u8; 5] {
         match self {
             Self::Rookie => [55, 35, 10, 0, 0],
             Self::Amateur => [20, 50, 25, 5, 0],
             Self::Contender => [5, 20, 50, 20, 5],
-            Self::Pro => [0, 5, 25, 50, 20],
-            Self::Legend => [0, 0, 10, 35, 55],
+            Self::Pro | Self::ProPlus => [0, 5, 25, 50, 20],
+            Self::Legend | Self::LegendPlus => [0, 0, 10, 35, 55],
         }
     }
 
-    /// Samples a tier from the discrete bell curve distribution using a pseudo-random value in 0..100.
+    /// Returns the discrete 7-variant probability distribution `[T1, T2, T3, T4, T4+, T5, T5+]`
+    /// (summing to 100%) used in Casual Racing Modes so `T4+` and `T5+` appear as a fixed proportion
+    /// of high-tier grids (Spec 131).
+    pub const fn casual_bell_curve_weights(self) -> [u8; 7] {
+        match self {
+            Self::Rookie => [55, 35, 10, 0, 0, 0, 0],
+            Self::Amateur => [20, 50, 25, 5, 0, 0, 0],
+            Self::Contender => [5, 20, 45, 20, 5, 5, 0],
+            Self::Pro => [0, 5, 20, 45, 15, 10, 5],
+            Self::ProPlus => [0, 0, 0, 25, 50, 15, 10],
+            Self::Legend => [0, 0, 5, 20, 20, 35, 20],
+            Self::LegendPlus => [0, 0, 0, 0, 25, 25, 50],
+        }
+    }
+
+    /// Returns the progression-scaled 7-variant probability distribution `[T1, T2, T3, T4, T4+, T5, T5+]`
+    /// (summing to 100%) for Career and Championship grids given `championship_tier` (`1..=6`) and
+    /// `experience_score` (`0.0..=1.0`, Spec 131).
+    pub fn championship_bell_curve_weights(championship_tier: u32, experience_score: f32) -> [u8; 7] {
+        let t = experience_score.clamp(0.0, 1.0);
+        let (low, high): ([u8; 7], [u8; 7]) = match championship_tier {
+            0 | 1 => ([55, 35, 10, 0, 0, 0, 0], [35, 40, 15, 5, 5, 0, 0]),
+            2 => ([20, 50, 25, 5, 0, 0, 0], [10, 35, 30, 15, 10, 0, 0]),
+            3 => ([5, 20, 45, 20, 5, 5, 0], [0, 10, 30, 20, 25, 5, 10]),
+            4 => ([0, 5, 20, 45, 15, 10, 5], [0, 0, 10, 20, 40, 10, 20]),
+            _ => ([0, 0, 5, 25, 20, 35, 15], [0, 0, 0, 5, 25, 15, 55]),
+        };
+
+        let mut weights = [0u8; 7];
+        let mut sum: i32 = 0;
+        let mut max_idx = 0usize;
+        let mut max_val = 0u8;
+        for i in 0..7 {
+            let v = ((low[i] as f32) * (1.0 - t) + (high[i] as f32) * t).round().clamp(0.0, 100.0) as u8;
+            weights[i] = v;
+            sum += v as i32;
+            if v >= max_val {
+                max_val = v;
+                max_idx = i;
+            }
+        }
+        let diff = 100 - sum;
+        weights[max_idx] = (weights[max_idx] as i32 + diff).clamp(0, 100) as u8;
+        weights
+    }
+
+    /// Samples a tier from the discrete 5-tier bell curve distribution using a pseudo-random value in 0..100.
     pub fn sample_from_bell_curve(self, roll_0_to_99: u8) -> Self {
         let weights = self.bell_curve_weights();
         let mut accum = 0;
@@ -247,7 +389,21 @@ impl DriverTier {
         self
     }
 
-    /// Samples `n` tiers for a grid of opponents given a target tier and deterministic seed.
+    /// Samples a tier from the 7-variant casual bell curve distribution using a pseudo-random value in 0..100.
+    pub fn sample_casual_from_bell_curve(self, roll_0_to_99: u8) -> Self {
+        let weights = self.casual_bell_curve_weights();
+        let mut accum = 0;
+        let roll = roll_0_to_99 % 100;
+        for (idx, &w) in weights.iter().enumerate() {
+            accum += w;
+            if roll < accum {
+                return Self::ALL[idx];
+            }
+        }
+        self
+    }
+
+    /// Samples `n` tiers from the 5-tier base distribution given a target tier and deterministic seed.
     pub fn sample_grid_tiers(self, n: usize, seed: u64) -> Vec<Self> {
         let mut tiers = Vec::with_capacity(n);
         let mut s = seed.wrapping_add(1442695040888963407);
@@ -255,6 +411,45 @@ impl DriverTier {
             s = s.wrapping_mul(6364136223846793005).wrapping_add(1);
             let roll = ((s >> 33) % 100) as u8;
             tiers.push(self.sample_from_bell_curve(roll));
+        }
+        tiers
+    }
+
+    /// Samples `n` tiers for a casual race grid including `T4+` and `T5+` proportions (Spec 131).
+    pub fn sample_casual_grid_tiers(self, n: usize, seed: u64) -> Vec<Self> {
+        let mut tiers = Vec::with_capacity(n);
+        let mut s = seed.wrapping_add(1442695040888963407);
+        for _ in 0..n {
+            s = s.wrapping_mul(6364136223846793005).wrapping_add(1);
+            let roll = ((s >> 33) % 100) as u8;
+            tiers.push(self.sample_casual_from_bell_curve(roll));
+        }
+        tiers
+    }
+
+    /// Samples `n` tiers for a championship grid where `T4+` and `T5+` proportions scale with `experience_score` (Spec 131).
+    pub fn sample_championship_grid_tiers(
+        championship_tier: u32,
+        experience_score: f32,
+        n: usize,
+        seed: u64,
+    ) -> Vec<Self> {
+        let weights = Self::championship_bell_curve_weights(championship_tier, experience_score);
+        let mut tiers = Vec::with_capacity(n);
+        let mut s = seed.wrapping_add(1442695040888963407);
+        for _ in 0..n {
+            s = s.wrapping_mul(6364136223846793005).wrapping_add(1);
+            let roll = ((s >> 33) % 100) as u8;
+            let mut accum = 0u8;
+            let mut picked = Self::from_u8(championship_tier.clamp(1, 5) as u8);
+            for (idx, &w) in weights.iter().enumerate() {
+                accum = accum.saturating_add(w);
+                if roll < accum {
+                    picked = Self::ALL[idx];
+                    break;
+                }
+            }
+            tiers.push(picked);
         }
         tiers
     }
@@ -271,17 +466,19 @@ impl<'de> Deserialize<'de> for DriverTier {
             type Value = DriverTier;
 
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-                formatter.write_str("a driver tier (1..=5, 'rookie', 'amateur', 'contender', 'pro', 'legend')")
+                formatter.write_str(
+                    "a driver tier (1..=7, 'rookie', 'amateur', 'contender', 'pro', 'pro_plus', 'legend', 'legend_plus')",
+                )
             }
 
             fn visit_i64<E>(self, v: i64) -> Result<DriverTier, E>
             where
                 E: de::Error,
             {
-                if (1..=5).contains(&v) {
+                if (1..=7).contains(&v) {
                     Ok(DriverTier::from_u8(v as u8))
                 } else {
-                    Err(E::custom(format!("invalid driver tier: {}, expected 1..=5", v)))
+                    Err(E::custom(format!("invalid driver tier: {}, expected 1..=7", v)))
                 }
             }
 
@@ -289,10 +486,10 @@ impl<'de> Deserialize<'de> for DriverTier {
             where
                 E: de::Error,
             {
-                if (1..=5).contains(&v) {
+                if (1..=7).contains(&v) {
                     Ok(DriverTier::from_u8(v as u8))
                 } else {
-                    Err(E::custom(format!("invalid driver tier: {}, expected 1..=5", v)))
+                    Err(E::custom(format!("invalid driver tier: {}, expected 1..=7", v)))
                 }
             }
 
@@ -305,7 +502,9 @@ impl<'de> Deserialize<'de> for DriverTier {
                     "2" | "amateur" | "club" | "clubman" | "tier 2" | "tier 2: amateur" | "t2" => Ok(DriverTier::Amateur),
                     "3" | "contender" | "semipro" | "semi_pro" | "national" | "tier 3" | "tier 3: contender" | "t3" => Ok(DriverTier::Contender),
                     "4" | "pro" | "veteran" | "tier 4" | "tier 4: pro" | "t4" => Ok(DriverTier::Pro),
+                    "4+" | "t4+" | "pro+" | "pro_plus" | "proplus" | "tier 4+" | "tier 4+: pro+" | "6" => Ok(DriverTier::ProPlus),
                     "5" | "legend" | "elite" | "alien" | "champion" | "tier 5" | "tier 5: legend" | "t5" => Ok(DriverTier::Legend),
+                    "5+" | "t5+" | "legend+" | "legend_plus" | "legendplus" | "tier 5+" | "tier 5+: legend+" | "alien+" | "max" | "7" => Ok(DriverTier::LegendPlus),
                     _ => Err(E::custom(format!("unknown driver tier '{}'", v))),
                 }
             }
@@ -363,6 +562,14 @@ impl DriverQuality {
                 consistency: 0.93,
                 composure: 0.9,
             },
+            DriverTier::ProPlus => Self {
+                tier,
+                pace_limit: 1.022,
+                brake_padding: -0.02,
+                avoidance_padding: -0.2,
+                consistency: 1.0,
+                composure: 1.0,
+            },
             DriverTier::Legend => Self {
                 tier,
                 pace_limit: 1.0334,
@@ -370,6 +577,14 @@ impl DriverQuality {
                 avoidance_padding: -0.5,
                 consistency: 0.9948,
                 composure: 0.9804,
+            },
+            DriverTier::LegendPlus => Self {
+                tier,
+                pace_limit: 1.042,
+                brake_padding: -0.04,
+                avoidance_padding: -0.35,
+                consistency: 1.0,
+                composure: 1.0,
             },
         }
     }
@@ -622,13 +837,18 @@ impl BotProfile {
     /// `from_style_and_quality` with an explicit style tuning, so offline calibration (spec 083) can
     /// evaluate candidate tunings without changing the constants.
     pub fn from_tuning_and_quality(style: DrivingStyle, tuning: &StyleTuning, quality: &DriverQuality) -> Self {
+        let (max_speed_factor, min_brake_margin) = if quality.tier.is_error_free() {
+            (1.22, 0.72)
+        } else {
+            (1.15, 0.80)
+        };
         Self {
             name: "Composite Bot",
             lookahead_time: (tuning.lookahead_time * (0.80 + 0.20 * quality.consistency)).clamp(0.20, 0.55),
-            speed_factor: (quality.pace_limit * tuning.speed_mult).clamp(0.80, 1.15),
+            speed_factor: (quality.pace_limit * tuning.speed_mult).clamp(0.80, max_speed_factor),
             steering_kp: tuning.steering_kp.clamp(1.50, 3.50),
             steering_kd: (tuning.steering_kd * (0.75 + 0.25 * quality.consistency)).clamp(0.03, 0.12),
-            brake_margin: (tuning.brake_margin + quality.brake_padding).clamp(0.80, 1.45),
+            brake_margin: (tuning.brake_margin + quality.brake_padding).clamp(min_brake_margin, 1.45),
             aggression: tuning.aggression.clamp(0.20, 1.00),
             avoidance_distance: (tuning.avoidance_distance + quality.avoidance_padding).clamp(3.5, 12.0),
             traits: HumanTraits::for_style_and_quality(style, quality, tuning.aggression),
@@ -836,6 +1056,8 @@ pub struct BotAiDriver {
     pub cached_layout_id: Option<String>,
     /// Precomputed composite spline for active layout to prevent per-frame allocations.
     pub cached_layout_spline: Option<TrackSpline>,
+    /// Precomputed minimum-curvature optimal racing line for the active spline (Spec 110 / Spec 131).
+    pub cached_optimal_line: Option<(f32, OptimalRacingLine)>,
     /// First-lap route of a layout with a launch chute (spec 103), with the layout it was built for and the
     /// length of the chute. The bot follows it until it has merged onto the loop.
     pub cached_entry_route: Option<(String, TrackSpline, f32)>,
@@ -863,6 +1085,30 @@ pub struct BotAiDriver {
     pub stall_stop_timer: f32,
     /// Whether this bot is the player's contracted teammate (Spec 127: +20% side-by-side clearance alongside player).
     pub is_player_teammate: bool,
+}
+
+fn sample_optimal_line_at_spline_dist(opt: &OptimalRacingLine, spline_dist: f32) -> (f32, f32) {
+    if opt.nodes.is_empty() {
+        return (0.0, 0.0);
+    }
+    let last_s = opt.nodes.last().map(|n| n.spline_distance).unwrap_or(0.0).max(1e-3);
+    let s = spline_dist.rem_euclid(last_s);
+    let idx = opt.nodes.partition_point(|n| n.spline_distance < s);
+    if idx == 0 {
+        return (opt.nodes[0].lateral_offset, opt.nodes[0].curvature);
+    }
+    if idx >= opt.nodes.len() {
+        let last = &opt.nodes[opt.nodes.len() - 1];
+        return (last.lateral_offset, last.curvature);
+    }
+    let n0 = &opt.nodes[idx - 1];
+    let n1 = &opt.nodes[idx];
+    let ds = (n1.spline_distance - n0.spline_distance).max(1e-4);
+    let t = ((s - n0.spline_distance) / ds).clamp(0.0, 1.0);
+    (
+        n0.lateral_offset + (n1.lateral_offset - n0.lateral_offset) * t,
+        n0.curvature + (n1.curvature - n0.curvature) * t,
+    )
 }
 
 impl BotAiDriver {
@@ -894,6 +1140,7 @@ impl BotAiDriver {
             active_layout_id: None,
             cached_layout_id: None,
             cached_layout_spline: None,
+            cached_optimal_line: None,
             cached_entry_route: None,
             left_launch_chute: false,
             reproject: false,
@@ -1309,8 +1556,32 @@ impl BotAiDriver {
         } else {
             target_sample.point
         };
+        let is_error_free = self.profile.traits.is_error_free();
+        if is_error_free
+            && self
+                .cached_optimal_line
+                .as_ref()
+                .is_none_or(|(len, _)| (*len - spline.total_length()).abs() > 0.5)
+        {
+            self.cached_optimal_line = Some((
+                spline.total_length(),
+                OptimalRacingLine::compute_for_spline(spline),
+            ));
+        }
         let mut human_offset = if self.human.is_active() && on_road {
-            self.human.line_offset(spline, target_dist, target_sample.width, dt)
+            let base_line = self.human.line_offset(spline, target_dist, target_sample.width, dt);
+            if is_error_free && !walled && target_sample.bank_angle.abs() < 4.0 {
+                if let Some((_, ref opt)) = self.cached_optimal_line {
+                    let (opt_lat, _) = sample_optimal_line_at_spline_dist(opt, target_dist);
+                    let safe_half = (target_sample.width * 0.38).max(0.0);
+                    let clamped_opt = opt_lat.clamp(-safe_half, safe_half);
+                    base_line * 0.92 + clamped_opt * 0.08
+                } else {
+                    base_line
+                }
+            } else {
+                base_line
+            }
         } else {
             0.0
         };
@@ -1704,9 +1975,18 @@ impl BotAiDriver {
 
         // 3. Physically Exact Autonomous Racing Braking Envelope: v_allowable = sqrt(v_apex^2 + 2*a_brake*d)
         let max_braking_lookahead = (lookahead_dist + (car_speed * car_speed) / 7.5).clamp(35.0, 220.0);
-        let a_brake = 6.0 * self.profile.brake_margin; // safe braking deceleration m/s²
+        let a_brake = if is_error_free {
+            (6.0 + (car.max_braking_decel_mps2() - 8.0).max(0.0) * 0.06) * self.profile.brake_margin
+        } else {
+            6.0 * self.profile.brake_margin // safe braking deceleration m/s²
+        };
         let mu = car.planning_grip();
         let g = 9.81;
+        let downforce_mult = if is_error_free {
+            1.0 + (car.downforce_grip_factor(car_speed) - 1.0) * 0.12
+        } else {
+            1.0
+        };
 
         let mut target_speed = car.top_speed_mps();
         let num_scan_samples = 20;
@@ -1723,15 +2003,28 @@ impl BotAiDriver {
             let a0 = s0.tangent.y.atan2(s0.tangent.x);
             let a1 = s1.tangent.y.atan2(s1.tangent.x);
             let d_theta = normalize_angle(a1 - a0).abs();
-            let local_curvature = d_theta / span;
+            let centerline_curvature = d_theta / span;
+            let local_curvature = if is_error_free && s0.bank_angle.abs() < 4.0 {
+                if let Some((_, ref opt)) = self.cached_optimal_line {
+                    let (_, opt_curv) = sample_optimal_line_at_spline_dist(opt, scan_dist);
+                    (centerline_curvature * 0.94 + opt_curv.min(centerline_curvature) * 0.06)
+                        .max(centerline_curvature * 0.94)
+                } else {
+                    centerline_curvature
+                }
+            } else {
+                centerline_curvature
+            };
 
             if local_curvature > 1e-4 {
                 let local_radius = 1.0 / local_curvature;
                 let bank_rad = s0.bank_angle.to_radians().abs();
                 let surf_mu = s0.surface.friction_coefficient().min(1.0);
-                let effective_grip = (mu * surf_mu) + bank_rad.tan().clamp(0.0, 0.75);
+                let corner_df = if s0.bank_angle.abs() < 4.0 { downforce_mult } else { 1.0 };
+                let effective_grip = (mu * surf_mu * corner_df) + bank_rad.tan().clamp(0.0, 0.75);
                 let m = self.human.corner_modifiers(scan_dist, spline.total_length());
-                let mut v_apex = (effective_grip * g * local_radius).sqrt() * self.profile.speed_factor * m.speed_mult;
+                let eff_speed_factor = self.profile.speed_factor;
+                let mut v_apex = (effective_grip * g * local_radius).sqrt() * eff_speed_factor * m.speed_mult;
                 let mut a_scan = a_brake * surf_mu;
                 // Spec 046 mistakes are set against the car's real grip, not the controller's
                 // conservative `mu`.
@@ -1820,7 +2113,7 @@ impl BotAiDriver {
                     // If we are rapidly closing in on car ahead
                     if rel_speed > 1.2 && opp_fwd_proj < 10.0 {
                         // In high-speed pack drafting on straights, allow close tucking / bump-drafting
-                        let is_bump_drafting = in_slipstream_zone && rel_speed < 3.0 && opp_fwd_proj > 2.5;
+                        let is_bump_drafting = in_slipstream_zone && rel_speed < 3.0 && opp_fwd_proj > 2.5 && target_sample.bank_angle.abs() < 4.0;
                         if !is_bump_drafting {
                             // Slow down to match speed or avoid rear-end crash
                             let urgency = (1.0 - (opp_fwd_proj / 10.0)).clamp(0.0, 1.0);
@@ -1878,7 +2171,19 @@ impl BotAiDriver {
                 let align_factor = (1.0f32 - (heading_error.abs() - 0.45) / 0.85).clamp(0.2, 1.0);
                 throttle_limit *= align_factor;
             }
-            let steer_traction_limit = if self.human.is_active() {
+            let steer_traction_limit = if is_error_free && target_sample.bank_angle.abs() >= 4.0 {
+                if steer_cmd.abs() > 0.20 {
+                    (1.0f32 - (steer_cmd.abs() - 0.20) * 0.60).clamp(0.35, 1.0)
+                } else {
+                    1.0
+                }
+            } else if is_error_free {
+                if steer_cmd.abs() > 0.28 {
+                    (1.0f32 - (steer_cmd.abs() - 0.28) * 0.40).clamp(0.60, 1.0)
+                } else {
+                    1.0
+                }
+            } else if self.human.is_active() {
                 if steer_cmd.abs() > 0.20 {
                     (1.0f32 - (steer_cmd.abs() - 0.20) * 0.60).clamp(0.35, 1.0)
                 } else {
@@ -1898,15 +2203,24 @@ impl BotAiDriver {
 
         // 6. Longitudinal Throttle & Brake Management
         let speed_err = target_speed - car_speed;
+        let accel_deadband = if is_error_free { 0.10 } else { 0.5 };
+        let brake_deadband = if is_error_free { -0.40 } else { -0.8 };
         let (throttle_cmd, brake_cmd) = if self.is_in_pit_lane && target_speed <= 0.1 {
             (0.0, 1.0)
         } else if extra_brake > 0.2 {
             (0.0, extra_brake)
-        } else if speed_err > 0.5 {
+        } else if speed_err > accel_deadband {
             // Accelerate
-            let th = ((speed_err / 6.0) * throttle_limit).clamp(0.1, 1.0);
+            let ramp = if is_error_free && target_sample.bank_angle.abs() >= 4.0 {
+                speed_err / 6.0
+            } else if is_error_free {
+                (speed_err / 3.0).max(0.75)
+            } else {
+                speed_err / 6.0
+            };
+            let th = (ramp * throttle_limit).clamp(0.1, 1.0);
             (th, 0.0)
-        } else if speed_err < -0.8 {
+        } else if speed_err < brake_deadband {
             // Decelerate / Brake for upcoming corner
             let brk = ((-speed_err / 6.0) * self.profile.brake_margin).clamp(0.35, 1.0);
             (0.0, brk)
@@ -1934,11 +2248,50 @@ mod tests {
 
     #[test]
     fn test_driver_tier_indexing() {
-        for (idx, &tier) in DriverTier::ALL.iter().enumerate() {
+        for (idx, &tier) in DriverTier::BASE_TIERS.iter().enumerate() {
             assert_eq!(tier.to_index(), idx);
             assert_eq!(DriverTier::from_index(idx), tier);
         }
         assert_eq!(DriverTier::from_index(99), DriverTier::Legend);
+        for (idx, &tier) in DriverTier::ALL.iter().enumerate() {
+            assert_eq!(tier.to_variant_index(), idx);
+            assert_eq!(DriverTier::from_variant_index(idx), tier);
+        }
+        assert_eq!(DriverTier::from_variant_index(99), DriverTier::LegendPlus);
+    }
+
+    #[test]
+    fn test_error_free_tiers_and_grid_sampling() {
+        for style in DrivingStyle::ALL {
+            for tier in [DriverTier::ProPlus, DriverTier::LegendPlus] {
+                let p = BotProfile::from_style_and_quality(style, &DriverQuality::for_tier(tier));
+                assert!(p.traits.is_error_free());
+                assert_eq!(p.traits.mistake_rate, 0.0);
+                assert_eq!(p.traits.line_sigma_m, 0.0);
+                assert_eq!(p.traits.brake_shift_sigma_m, 0.0);
+                assert_eq!(p.traits.corner_speed_sigma, 0.0);
+                assert_eq!(p.traits.max_pass_delay_s, 0.0);
+            }
+            for tier in DriverTier::BASE_TIERS {
+                let p = BotProfile::from_style_and_quality(style, &DriverQuality::for_tier(tier));
+                assert!(!p.traits.is_error_free());
+            }
+        }
+
+        let casual_t5 = DriverTier::Legend.sample_casual_grid_tiers(100, 42);
+        let t4_plus_count = casual_t5.iter().filter(|&&t| t == DriverTier::ProPlus).count();
+        let t5_plus_count = casual_t5.iter().filter(|&&t| t == DriverTier::LegendPlus).count();
+        assert!(t4_plus_count > 0 && t5_plus_count > 0);
+        assert!(t4_plus_count + t5_plus_count <= 45);
+
+        let low_exp = DriverTier::sample_championship_grid_tiers(5, 0.0, 200, 99);
+        let high_exp = DriverTier::sample_championship_grid_tiers(5, 1.0, 200, 99);
+        let low_plus = low_exp.iter().filter(|t| t.is_error_free()).count();
+        let high_plus = high_exp.iter().filter(|t| t.is_error_free()).count();
+        assert!(
+            high_plus > low_plus,
+            "high experience should spawn strictly more T4+/T5+ bots ({high_plus} vs {low_plus})"
+        );
     }
 
     #[test]

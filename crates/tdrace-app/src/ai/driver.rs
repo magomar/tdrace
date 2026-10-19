@@ -520,15 +520,20 @@ impl DriverCharacter {
     /// Dynamically constructs the physics BotProfile for this character in a specific game module at the specified tier.
     pub fn resolve_profile_for_module(&self, module_id: &str, tier: DriverTier) -> BotProfile {
         let quality = DriverQuality::for_tier(tier);
+        let (max_speed_factor, min_brake_margin) = if tier.is_error_free() {
+            (1.22, 0.72)
+        } else {
+            (1.15, 0.80)
+        };
         let mut profile = BotProfile::from_modality_style_and_quality(module_id, self.style, &quality);
         profile.name = self.name;
         profile.lookahead_time = (profile.lookahead_time + self.offsets.delta_lookahead).clamp(0.20, 0.55);
         profile.steering_kp = (profile.steering_kp + self.offsets.delta_steering_kp).clamp(1.5, 3.5);
         profile.steering_kd = (profile.steering_kd + self.offsets.delta_steering_kd).clamp(0.03, 0.12);
-        profile.brake_margin = (profile.brake_margin + self.offsets.delta_brake_margin).clamp(0.80, 1.45);
+        profile.brake_margin = (profile.brake_margin + self.offsets.delta_brake_margin).clamp(min_brake_margin, 1.45);
         profile.aggression = (profile.aggression + self.offsets.delta_aggression).clamp(0.20, 1.00);
         profile.avoidance_distance = (profile.avoidance_distance + self.offsets.delta_avoidance).clamp(3.5, 12.0);
-        profile.speed_factor = (profile.speed_factor + self.offsets.delta_speed_factor).clamp(0.80, 1.15);
+        profile.speed_factor = (profile.speed_factor + self.offsets.delta_speed_factor).clamp(0.80, max_speed_factor);
         profile
     }
 

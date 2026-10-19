@@ -127,8 +127,46 @@ impl HumanTraits {
         *self != Self::none()
     }
 
+    /// True when human cornering line geometry is active with all random variance and mistakes removed (Spec 131: T4+ / T5+).
+    pub fn is_error_free(&self) -> bool {
+        self.is_active()
+            && self.mistake_rate == 0.0
+            && self.line_sigma_m == 0.0
+            && self.brake_shift_sigma_m == 0.0
+            && self.corner_speed_sigma == 0.0
+    }
+
     /// Traits of a style at a tier. `aggression` is the style's overtaking aggression.
     pub fn for_style_and_quality(style: DrivingStyle, quality: &DriverQuality, aggression: f32) -> Self {
+        if quality.tier.is_error_free() {
+            let (entry, apex) = match style {
+                DrivingStyle::Smooth => (0.65, 0.92),
+                DrivingStyle::Aggressive => (0.40, 0.95),
+                DrivingStyle::Tenacious => (0.50, 0.90),
+                DrivingStyle::Calculating => (0.65, 0.92),
+                DrivingStyle::Bold => (0.45, 0.95),
+                DrivingStyle::Balanced => (0.55, 0.92),
+            };
+            let curb_cut = match quality.tier {
+                super::DriverTier::LegendPlus => 0.8,
+                _ => 0.6,
+            };
+            return Self {
+                line_sigma_m: 0.0,
+                entry_share: entry,
+                apex_share: apex,
+                line_choice_sigma: 0.0,
+                brake_shift_sigma_m: 0.0,
+                corner_speed_sigma: 0.0,
+                reaction_tau_s: 0.0,
+                mistake_rate: 0.0,
+                mistake_weights: [0.0; 5],
+                pressure_gain: 0.0,
+                max_pass_delay_s: 0.0,
+                curb_cut_m: curb_cut,
+            };
+        }
+
         let loose = 1.0 - quality.consistency;
         let nerves = 1.0 - quality.composure;
         // (line factor, entry share, apex share, style rate, mistake weights, pressure gain)

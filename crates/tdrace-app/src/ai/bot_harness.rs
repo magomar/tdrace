@@ -652,6 +652,8 @@ fn parse_driver(d: &EvalDriver) -> Result<(DrivingStyle, DriverTier), String> {
         3 => DriverTier::Contender,
         4 => DriverTier::Pro,
         5 => DriverTier::Legend,
+        6 => DriverTier::ProPlus,
+        7 => DriverTier::LegendPlus,
         t => return Err(format!("unknown tier {t}")),
     };
     Ok((style, tier))
