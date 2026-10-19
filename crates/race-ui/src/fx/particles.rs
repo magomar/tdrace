@@ -422,6 +422,60 @@ impl ParticleSystem {
         }
     }
 
+    /// Emits translucent cyan-white aerodynamic slipstream wind streaks off the front fenders
+    /// when a vehicle is actively drafting (`draft_intensity >= 0.12`, Spec 129).
+    pub fn emit_slipstream_wind(
+        &mut self,
+        pos: Vec2,
+        fwd: Vec2,
+        right: Vec2,
+        half_width: f32,
+        front_extent: f32,
+        car_vel: Vec2,
+        draft_intensity: f32,
+    ) {
+        if draft_intensity < 0.12 || self.particles.len() >= self.max_particles {
+            return;
+        }
+
+        let norm_draft = ((draft_intensity - 0.12) / 0.26).clamp(0.0, 1.0);
+        let count = if norm_draft > 0.55 { 2 } else { 1 };
+
+        for _ in 0..count {
+            if self.particles.len() >= self.max_particles {
+                break;
+            }
+
+            let side = if self.rand_f32() > 0.5 { 1.0 } else { -1.0 };
+            let lat_jitter = 0.85 + self.rand_f32() * 0.22;
+            let fwd_jitter = (self.rand_f32() - 0.3) * 0.6;
+            let p_pos = pos
+                + fwd * (front_extent * 0.85 + fwd_jitter)
+                + right * (side * half_width * lat_jitter);
+
+            let rel_back_speed = 10.0 + 12.0 * norm_draft + self.rand_f32() * 4.0;
+            let p_vel = car_vel - fwd * rel_back_speed + right * (side * 0.8);
+            let life = 0.10 + self.rand_f32() * 0.06;
+            let alpha = 0.22 + 0.32 * norm_draft;
+            let col_start = Color::new(0.75, 0.96, 1.0, alpha);
+            let col_end = Color::new(0.55, 0.90, 1.0, 0.0);
+
+            self.particles.push(Particle {
+                pos: p_pos,
+                vel: p_vel,
+                size_start: 0.05,
+                size_end: 0.02,
+                color_start: col_start,
+                color_end: col_end,
+                lifetime: life,
+                remaining_life: life,
+                drag: 1.5,
+                is_spark: true,
+                is_ground: false,
+            });
+        }
+    }
+
     /// Updates particle physics, velocities, drag, and lifespans.
     pub fn update(&mut self, dt: f32) {
         let mut i = 0;
@@ -479,5 +533,32 @@ impl ParticleSystem {
         } else {
             draw_circle(p.pos.x, p.pos.y, current_size, col);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_emit_slipstream_wind_respects_threshold_and_emits_streaks() {
+        let mut ps = ParticleSystem::new(64);
+        let pos = Vec2::new(100.0, 50.0);
+        let fwd = Vec2::X;
+        let right = Vec2::new(0.0, -1.0);
+        let car_vel = Vec2::new(35.0, 0.0);
+
+        // Below 0.12 threshold: no particles emitted
+        ps.emit_slipstream_wind(pos, fwd, right, 0.95, 2.2, car_vel, 0.08);
+        assert_eq!(ps.count(), 0);
+
+        // Moderate draft (0.18): emits 1 streak particle
+        ps.emit_slipstream_wind(pos, fwd, right, 0.95, 2.2, car_vel, 0.18);
+        assert_eq!(ps.count(), 1);
+        assert_eq!(ps.ground_count(), 0);
+
+        // Deep slipstream (0.35): emits 2 streak particles
+        ps.emit_slipstream_wind(pos, fwd, right, 0.95, 2.2, car_vel, 0.35);
+        assert_eq!(ps.count(), 3);
     }
 }

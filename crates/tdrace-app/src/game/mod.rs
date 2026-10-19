@@ -14018,7 +14018,23 @@ impl RaceSession {
             }
         }
 
-        // 9. Update visual effects (skidmarks, tire smoke, roost, collision sparks, drift popups)
+        // 9. Update visual effects (skidmarks, tire smoke, roost, slipstream wind streaks, collision sparks, drift popups)
+        for car in &self.world.vehicles {
+            if car.state.draft_intensity >= 0.12
+                && car.state.speed >= 16.0
+                && !car.state.is_airborne
+            {
+                self.fx.particles.emit_slipstream_wind(
+                    car.state.position,
+                    car.forward_vector(),
+                    car.right_vector(),
+                    car.config.chassis.half_width(),
+                    car.config.chassis.half_length(car.config.wheelbase),
+                    car.state.velocity,
+                    car.state.draft_intensity,
+                );
+            }
+        }
         self.fx.update(
             &self.world.vehicles,
             &wheel_surfaces,

@@ -333,7 +333,8 @@ fn render_speedometer(
     render_compound_badge(fonts, scaler, badge_compound_x, badge_y, compound);
 
     // Drift Score Meter Bar (platform MetricBar)
-    if car.state.is_drifting || car.state.drift_score > 0.0 {
+    let has_drift_bar = car.state.is_drifting || car.state.drift_score > 0.0;
+    if has_drift_bar {
         let bar_w = scaler.s(180.0);
         let bar_h = scaler.s(20.0);
         let bar_x = cx - bar_w * 0.5;
@@ -346,6 +347,26 @@ fn render_speedometer(
             Palette::NEON_MAGENTA,
         );
         drift_bar.draw(scaler, fonts, LayoutRect::new(bar_x, bar_y, bar_w, bar_h));
+    }
+
+    // Aerodynamic Slipstream Draft Meter Bar (Spec 129)
+    if car.state.draft_intensity >= 0.08 {
+        let bar_w = scaler.s(180.0);
+        let bar_h = scaler.s(20.0);
+        let bar_x = cx - bar_w * 0.5;
+        let bar_y = if has_drift_bar {
+            cy + radius + scaler.s(36.0)
+        } else {
+            cy + radius + scaler.s(12.0)
+        };
+        let norm_draft = (car.state.draft_intensity / 0.38).clamp(0.0, 1.0);
+        let draft_bar = MetricBar::stat(
+            "DRAFT",
+            norm_draft,
+            format!("{:.0}%", norm_draft * 100.0),
+            Palette::NEON_CYAN,
+        );
+        draft_bar.draw(scaler, fonts, LayoutRect::new(bar_x, bar_y, bar_w, bar_h));
     }
 }
 
