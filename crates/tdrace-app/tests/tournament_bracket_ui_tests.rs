@@ -157,3 +157,57 @@ fn the_bracket_scales_to_64_drivers_and_shows_declared_cars() {
     session.tournament = None;
     assert!(tournament_bracket_view(&session).is_none());
 }
+
+/// Spec 126: Every single participant across all 4 heats (32 drivers) in Autocross and Rallycross
+/// tournament brackets displays a non-empty valid catalog car model name and authentic constructor team.
+#[test]
+fn test_spec126_all_32_tournament_drivers_display_valid_car_models_and_teams() {
+    let mgr = tdrace_app::series::ChampionshipManager::new();
+    for slug in &[
+        "autocross_crosscar_junior_trophy",
+        "autocross_superbuggy_world_series",
+        "rally_grassroots_cup",
+        "rally_world_rallycross_supercars",
+    ] {
+        let def = mgr.get(slug).unwrap_or_else(|| panic!("Preset '{}' must exist", slug));
+        let mut session = def.to_session();
+        session.ensure_tournament_weekend().expect("tournament weekend builds cleanly");
+        assert_eq!(session.standings.len(), 32, "Preset '{}' must synthesize all 32 drivers", slug);
+
+        for entry in &session.standings {
+            let car_id = entry
+                .car_model_id
+                .as_deref()
+                .unwrap_or_else(|| panic!("Driver '{}' in '{}' is missing car_model_id", entry.driver_id, slug));
+            assert!(
+                tdrace_app::catalog::find_model_by_id(car_id).is_some(),
+                "Driver '{}' in '{}' has unknown car_model_id '{}'",
+                entry.driver_id,
+                slug,
+                car_id
+            );
+            assert!(
+                !tdrace_app::series::is_generic_team_name(&entry.team_name, &entry.driver_name),
+                "Driver '{}' in '{}' has generic team name '{}'",
+                entry.driver_name,
+                slug,
+                entry.team_name
+            );
+        }
+
+        let view = tournament_bracket_view(&session).expect("bracket view exists");
+        let heat_cards: Vec<_> = view.columns[0].groups.iter().flat_map(|g| &g.cards).collect();
+        assert_eq!(heat_cards.len(), 32);
+        for card in heat_cards {
+            assert!(
+                card.car.as_deref().is_some_and(|c| !c.trim().is_empty()),
+                "Bracket card for '{}' in '{}' must display a non-empty car model name, got {:?}",
+                card.name,
+                slug,
+                card.car
+            );
+            assert!(!card.team.trim().is_empty(), "Bracket card for '{}' must display team", card.name);
+        }
+    }
+}
+

@@ -5,6 +5,8 @@ pub mod format;
 pub use format::*;
 pub mod manager;
 pub use manager::*;
+pub mod substitution;
+pub use substitution::*;
 pub mod tournament;
 pub use tournament::*;
 
@@ -194,6 +196,8 @@ pub struct SeriesSession {
     #[serde(default = "default_session_tier")]
     pub tier: u32,
     #[serde(default)]
+    pub module_id: String,
+    #[serde(default)]
     pub round_laps: Vec<Option<u32>>,
     /// How each round is run. A tournament sprint round is a whole weekend of heats and finals.
     #[serde(default)]
@@ -204,6 +208,15 @@ pub struct SeriesSession {
     /// The weekend being run in the current round. Built when the round starts, dropped when it is scored.
     #[serde(default)]
     pub tournament: Option<TournamentWeekendState>,
+    /// Regular drivers temporarily sidelined for 1 race (`ReplacementDuration::OneRace`) awaiting restoration.
+    #[serde(default)]
+    pub active_stand_ins: Vec<ActiveTemporalStandIn>,
+    /// Substitution bulletin events awaiting player acknowledgment in the pre-race modal.
+    #[serde(default)]
+    pub pending_substitutions: Vec<DriverSubstitutionEvent>,
+    /// Round index at which pre-race substitutions were last evaluated so re-entering StartingGrid does not re-roll.
+    #[serde(default)]
+    pub last_substitution_round: Option<usize>,
 }
 
 pub type ChampionshipSession = SeriesSession;
@@ -231,10 +244,14 @@ impl SeriesSession {
             history: Vec::new(),
             is_completed: false,
             tier: 1,
+            module_id: String::new(),
             round_laps: Vec::new(),
             weekend_format: WeekendFormat::default(),
             tournament_config: None,
             tournament: None,
+            active_stand_ins: Vec::new(),
+            pending_substitutions: Vec::new(),
+            last_substitution_round: None,
         }
     }
 
@@ -249,10 +266,17 @@ impl SeriesSession {
     ) -> Self {
         let mut standings = Vec::with_capacity(rivals.len() + 1);
         standings.push(SeriesStandingEntry::new("player", "Player", player_team));
-        for rival in rivals {
-            let team = format!("{} Racing", rival.driver_name.split_whitespace().last().unwrap_or("Rival"));
+        for (idx, rival) in rivals.iter().enumerate() {
+            let char_opt = rival.resolve_character();
+            let (car_model_id, team) = resolve_car_and_team_for_driver(
+                "gt",
+                rival.tier.to_u8(),
+                char_opt.as_ref(),
+                idx + 1,
+            );
             let mut entry = SeriesStandingEntry::new(&rival.driver_id, &rival.driver_name, team);
             entry = entry.with_ai_style_and_tier(Some(rival.style.as_str().to_string()), Some(rival.tier.to_u8()));
+            entry.car_model_id = car_model_id;
             entry.race_number = rival.race_number;
             standings.push(entry);
         }
@@ -266,25 +290,54 @@ impl SeriesSession {
             history: Vec::new(),
             is_completed: false,
             tier: 1,
+            module_id: String::new(),
             round_laps: Vec::new(),
             weekend_format: WeekendFormat::default(),
             tournament_config: None,
             tournament: None,
+            active_stand_ins: Vec::new(),
+            pending_substitutions: Vec::new(),
+            last_substitution_round: None,
         }
     }
 
     /// Syncs series standings from a slice of career rivals and sets the current tier.
     pub fn update_from_career_rivals(&mut self, new_tier: u32, rivals: &[CareerRivalEntry]) {
         self.tier = new_tier;
+        let effective_mod = if self.module_id.trim().is_empty() {
+            "gt".to_string()
+        } else {
+            self.module_id.clone()
+        };
+        let tier_u8 = new_tier.clamp(1, 7) as u8;
         let player_entry = self.standings.iter().find(|s| s.driver_id == "player").cloned().unwrap_or_else(|| {
             SeriesStandingEntry::new("player", "Player", "Apex Racing")
         });
         let mut new_standings = vec![player_entry];
-        for rival in rivals {
-            let team = format!("{} Racing", rival.driver_name.split_whitespace().last().unwrap_or("Rival"));
+        for (idx, rival) in rivals.iter().enumerate() {
+            let existing = self.standings.iter().find(|s| s.driver_id == rival.driver_id);
+            let char_opt = rival.resolve_character();
+            let (resolved_car, resolved_team) = resolve_car_and_team_for_driver(
+                &effective_mod,
+                tier_u8,
+                char_opt.as_ref(),
+                idx + 1,
+            );
+            let team = existing
+                .filter(|e| !is_generic_team_name(&e.team_name, &e.driver_name))
+                .map(|e| e.team_name.clone())
+                .unwrap_or(resolved_team);
+            let car_model_id = existing
+                .and_then(|e| e.car_model_id.clone())
+                .filter(|cid| {
+                    crate::catalog::find_model_by_id(cid)
+                        .is_some_and(|m| m.tier == tier_u8)
+                })
+                .or(resolved_car);
             let mut entry = SeriesStandingEntry::new(&rival.driver_id, &rival.driver_name, team);
             entry = entry.with_ai_style_and_tier(Some(rival.style.as_str().to_string()), Some(rival.tier.to_u8()));
-            entry.race_number = rival.race_number;
+            entry.car_model_id = car_model_id;
+            entry.race_number = rival.race_number.or_else(|| existing.and_then(|e| e.race_number));
             new_standings.push(entry);
         }
         self.standings = new_standings;
@@ -325,6 +378,12 @@ impl SeriesSession {
         self
     }
 
+    /// Sets the motorsport discipline module ID for this series or championship.
+    pub fn with_module_id(mut self, module_id: impl Into<String>) -> Self {
+        self.module_id = module_id.into();
+        self
+    }
+
     /// Sets per-round lap counts for the championship schedule.
     pub fn with_round_laps(mut self, round_laps: Vec<Option<u32>>) -> Self {
         self.round_laps = round_laps;
@@ -360,6 +419,7 @@ impl SeriesSession {
         if self.tournament.is_some() || self.is_completed {
             return Ok(());
         }
+        self.ensure_valid_roster_cars_and_teams();
         let seed = weekend_seed(&self.name, self.current_round);
         self.tournament = Some(TournamentWeekendState::new(config, &self.standings, seed)?);
         Ok(())
@@ -459,7 +519,8 @@ impl SeriesSession {
     /// For a brand new championship (round 0 with no history), synchronizes the roster size
     /// to exactly match the starting grid slots of the circuit.
     ///
-    /// If additional racers are needed, they are drawn from `fallback_drivers`.
+    /// If additional racers are needed, they are drawn from `fallback_drivers` using uniform 1/6 driving style
+    /// quotas, discrete bell-curve skill tiers, and valid catalog `car_model_id` and constructor teams.
     /// If fewer racers are needed, the roster is trimmed while always retaining the human player.
     pub fn sync_initial_grid_slots(
         &mut self,
@@ -471,32 +532,54 @@ impl SeriesSession {
             return;
         }
 
+        let effective_mod = if self.module_id.trim().is_empty() {
+            "gt".to_string()
+        } else {
+            self.module_id.clone()
+        };
+        let tier_u8 = self.tier.clamp(1, 7) as u8;
+        let bell_center = DriverTier::from_u8(self.tier.clamp(1, 5) as u8);
+        let seed = weekend_seed(&self.name, self.tier as usize);
+
         if self.standings.len() < circuit_slots {
             let needed = circuit_slots - self.standings.len();
+            let unused_pool: Vec<DriverCharacter> = fallback_drivers
+                .iter()
+                .filter(|c| c.id != "player" && !self.standings.iter().any(|s| s.driver_id == c.id))
+                .cloned()
+                .collect();
+
+            let sampled_chars = DriverCharacter::sample_casual_race_roster(&unused_pool, needed, seed);
+            let sampled_tiers = bell_center.sample_grid_tiers(needed, seed.wrapping_add(777));
+
             let mut added = 0;
-            for character in fallback_drivers {
-                if added >= needed {
-                    break;
-                }
-                if character.id == "player" || self.standings.iter().any(|s| s.driver_id == character.id) {
-                    continue;
-                }
-                let team = format!("{} Racing", character.name.split_whitespace().last().unwrap_or("Motorsport"));
-                let mut entry = SeriesStandingEntry::new(character.id, character.name, team);
-                entry = entry.with_ai_style_and_tier(
-                    Some(character.style.as_str().to_string()),
-                    Some(self.tier as u8),
+            for (character, assigned_tier) in sampled_chars.iter().zip(sampled_tiers.iter()) {
+                let slot_idx = self.standings.len();
+                let (car_model_id, team) = resolve_car_and_team_for_driver(
+                    &effective_mod,
+                    tier_u8,
+                    Some(character),
+                    slot_idx,
                 );
+                let mut entry = SeriesStandingEntry::new(character.id, character.name, team)
+                    .with_ai_style_and_tier(
+                        Some(character.style.as_str().to_string()),
+                        Some(assigned_tier.to_u8()),
+                    );
+                entry.car_model_id = car_model_id;
                 self.standings.push(entry);
                 added += 1;
             }
             if added < needed {
                 for _ in added..needed {
-                    let id = format!("driver_{}", self.standings.len() + 1);
-                    let name = format!("Driver {}", self.standings.len() + 1);
-                    let team = "Independent Racing".to_string();
-                    let mut entry = SeriesStandingEntry::new(id, name, team);
-                    entry = entry.with_ai_style_and_tier(None, Some(self.tier as u8));
+                    let slot_idx = self.standings.len();
+                    let id = format!("driver_{}", slot_idx + 1);
+                    let name = format!("Driver {}", slot_idx + 1);
+                    let (car_model_id, team) =
+                        resolve_car_and_team_for_driver(&effective_mod, tier_u8, None, slot_idx);
+                    let mut entry = SeriesStandingEntry::new(id, name, team)
+                        .with_ai_style_and_tier(None, Some(tier_u8.clamp(1, 5)));
+                    entry.car_model_id = car_model_id;
                     self.standings.push(entry);
                 }
             }
@@ -516,6 +599,8 @@ impl SeriesSession {
                 }
             }
         }
+
+        self.ensure_valid_roster_cars_and_teams();
     }
 
     pub fn current_track_id(&self) -> Option<&str> {
@@ -524,6 +609,33 @@ impl SeriesSession {
 
     pub fn total_rounds(&self) -> usize {
         self.track_ids.len()
+    }
+
+    /// Handles mid-season driver substitution in `seat_index` (Spec 126).
+    /// The incoming driver enters the exact same team and car seat starting with 0 personal driver points.
+    pub fn replace_driver_in_seat(
+        &mut self,
+        seat_index: usize,
+        new_driver_id: &str,
+        new_driver_name: &str,
+        new_style: Option<String>,
+        new_tier: Option<u8>,
+    ) {
+        if seat_index >= self.standings.len() {
+            return;
+        }
+
+        let outgoing = self.standings[seat_index].clone();
+        let old_team_name = outgoing.team_name.clone();
+        let car_model = outgoing.car_model_id.clone();
+        let race_number = outgoing.race_number;
+
+        let mut replacement = SeriesStandingEntry::new(new_driver_id, new_driver_name, &old_team_name);
+        replacement.car_model_id = car_model;
+        replacement.race_number = race_number;
+        replacement = replacement.with_ai_style_and_tier(new_style, new_tier);
+
+        self.standings[seat_index] = replacement;
     }
 
     pub fn submit_round_results(&mut self, track_title: &str, mut results: Vec<RoundDriverResult>) {
@@ -539,6 +651,9 @@ impl SeriesSession {
             res.points_awarded = pts;
 
             if let Some(entry) = self.standings.iter_mut().find(|s| s.driver_id == res.driver_id) {
+                if res.team_name.trim().is_empty() {
+                    res.team_name = entry.team_name.clone();
+                }
                 entry.points += pts;
                 entry.total_race_time += res.total_time;
                 if res.finish_position == 1 {
@@ -574,6 +689,7 @@ impl SeriesSession {
         self.current_round = latest.round_index;
         self.is_completed = false;
         self.tournament = None;
+        self.last_substitution_round = None;
 
         // Deduct points, time, wins, and podiums awarded in this round
         for res in &latest.results {

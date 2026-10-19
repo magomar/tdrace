@@ -22,6 +22,14 @@ impl LcgRng {
         (self.next_u32() as f32) / (u32::MAX as f32)
     }
 
+    pub fn gen_range(&mut self, range: std::ops::Range<u32>) -> u32 {
+        let len = range.end.saturating_sub(range.start);
+        if len == 0 {
+            return range.start;
+        }
+        range.start + (self.next_u32() % len)
+    }
+
     pub fn shuffle<T>(&mut self, slice: &mut [T]) {
         for i in (1..slice.len()).rev() {
             let j = (self.next_u64() >> 33) as usize % (i + 1);

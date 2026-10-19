@@ -144,6 +144,9 @@ Table of contents providing progressive disclosure of project constitution and t
 | [121](121_two_stage_lazy_circuit_menu_loading_and_compile_time_card_metadata.md) | Two-Stage Lazy Circuit Menu Loading and Compile-Time Card Metadata | Architecture Spec | `implemented` | `human:mario` | [042](042_jsononly_official_circuit_catalog_and_embedded_track_data.md), [066](066_navigation_reorganization_category_circuit_filter_and_tiered_career_championships.md) | Eliminates multi-second circuit menu category switching stalls and startup prewarm overhead via compile-time embedded card metadata and thumbnail polylines, lightweight on-demand preview deserialization (Track::from_json_menu), zero-clone Arc<Track> menu caching, and lazy runtime geometry compilation. |
 | [122](122_bounded_spatial_chunked_skidmark_buffer_overdraw_suppression_and_configurable_ring_capacity.md) | Bounded Spatial-Chunked Skidmark Buffer Overdraw Suppression and Configurable Ring Capacity | Architecture Spec | `implemented` | `human:mario` | [058](058_raceui_rendering_camera_effects_and_hud_primitives.md), [119](119_zero_allocation_wall_collisions_static_spatial_barrier_grid_and_pre_built_track_mesh_caching.md) | Eliminates multi-lap frame rate degradation caused by unbounded O(N) skidmark growth and per-frame CPU mesh rebuilding via a configurable ring buffer cap (256K default, 32K-1M range in Display Settings), spatial cell overdraw saturation with coarse rolling-rut stepping, 32m spatial chunk mesh caching, and a built-in runtime profiler (--profile / F7). |
 | [123](123_track_studio_elevation_overlay_hypsometric_color_map_iso_elevation_contour_lines_and_height_legend.md) | Track Studio Elevation Overlay: Hypsometric Color Map, Iso-Elevation Contour Lines, and Height Legend | Feature Spec | `implemented` | `human:mario` | [086](086_compact_track_studio_inspector_with_unified_single_and_multiselection_editing.md) | Adds an interactive elevation visualization overlay to Track Studio toggled with the E key, rendering a translucent hypsometric color-map ribbon, 0.5m/2.0m topographic iso-elevation contour lines with embankment skirts, per-waypoint height/grade labels, and a screen-space elevation legend. |
+| [124](124_mega_jump_dual_wall_gap_trap_and_minimum_gap_sizing.md) | Mega Jump Dual-Wall Gap Trap and 6.0m Minimum Gap Sizing | Feature Spec | `implemented` | `human:mario` | [119](119_zero_allocation_wall_collisions_static_spatial_barrier_grid_and_pre_built_track_mesh_caching.md) | Establishes a dual-wall physical gap trap between the vertical take-off drop-off face and the vertical landing face of a MegaRamp, and enforces a 6.0m minimum longitudinal gap length (MIN_MEGA_RAMP_GAP_METERS = 6.0). |
+| [125](125_bot_multi_point_lateral_k_turn_escape_from_mega_jump_gap_traps.md) | Bot Multi-Point Lateral K-Turn Escape from Mega Jump Gap Traps | Feature Spec | `draft` | — | [115](115_lowgrip_runoff_bot_recovery_and_wall_scraping_resistance_calibration.md), [124](124_mega_jump_dual_wall_gap_trap_and_minimum_gap_sizing.md) | Equips BotDriver with a multi-point back-and-forth K-turn recovery state machine to escape dual-wall Mega Jump gap traps laterally through the side run-off areas and bypass the landing ramp back onto the track. |
+| [126](126_dynamic_championship_rosters_and_mid_season_driver_substitutions.md) | Dynamic Championship Rosters and Mid-Season Driver Substitutions | Feature Spec | `implemented` | `human:mario` | [020](020_driver_favorite_cars_per_discipline_and_tier.md), [024](024_crossmodule_ai_character_rosters_and_dynamic_tier_assignment.md), [104](104_autocross_and_rallycross_tournament_sprint_weekend_format.md) | Decouples competitor rosters from series TOML files, seeds full-grid rosters with uniform style sampling, bell-curve tiering, and valid car models at championship start, and introduces a per-race roster traversal replacement engine with rank-independent medical vs rank-weighted administrative probabilities, temporal 1-race stand-ins, and narrative modal bulletins. |
 
 ### 🗺️ Specification Dependency Graph
 
@@ -153,6 +156,7 @@ flowchart LR
     009["009: Real-World Vehicle Rosters, Physics Balance & Interactive Garage"]
     011["011: Game Asset Catalogue & Technical Reference Portals"]
     017["017: Declarative Series Format and Series Studio Editor (Championships & Cups)"]
+    020["020: Per-Discipline and Per-Tier Driver Favorite Cars & 12-Pilot Rosters"]
     021["021: Authentic OpenStreetMap References and Circuit Provenance"]
     023["023: Orthogonal AI Driving Styles and Quality Tiers"]
     024["024: Cross-Module AI Character Rosters and Dynamic Tier Assignment"]
@@ -233,6 +237,9 @@ flowchart LR
     121["121: Two-Stage Lazy Circuit Menu Loading and Compile-Time Card Metadata"]
     122["122: Bounded Spatial-Chunked Skidmark Buffer Overdraw Suppression and Configurable Ring Capacity"]
     123["123: Track Studio Elevation Overlay: Hypsometric Color Map, Iso-Elevation Contour Lines, and Height Legend"]
+    124["124: Mega Jump Dual-Wall Gap Trap and 6.0m Minimum Gap Sizing"]
+    125["125: Bot Multi-Point Lateral K-Turn Escape from Mega Jump Gap Traps"]
+    126["126: Dynamic Championship Rosters and Mid-Season Driver Substitutions"]
     055 --> 047
     062 --> 063
     055 --> 064
@@ -353,4 +360,10 @@ flowchart LR
     058 --> 122
     119 --> 122
     086 --> 123
+    119 --> 124
+    115 --> 125
+    124 --> 125
+    020 --> 126
+    024 --> 126
+    104 --> 126
 ```
