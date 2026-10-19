@@ -977,16 +977,17 @@ impl Car {
         (grip_limit + (expanded_authority - grip_limit) * blend).clamp(0.0, lock)
     }
 
-    /// Computes the aerodynamic slipstream drafting intensity [0.0..0.40] based on opponent vehicles
-    /// within the forward wake cone (up to 32m ahead, +/- 2.8m lateral), with subtle push-draft support.
+    /// Computes the aerodynamic slipstream drafting intensity [0.0..0.38] based on opponent vehicles
+    /// within the curve-tolerant forward wake cone (up to 32m ahead, expanding lateral width),
+    /// gated by heading alignment, with subtle push-draft support (Spec 129).
     pub fn compute_draft_intensity(&self, other_cars: &[&Car]) -> f32 {
-        if self.state.speed < 20.0 {
+        if self.state.speed < 16.0 {
             return 0.0;
         }
+        let s_self = ((self.state.speed - 16.0) / 8.0).clamp(0.0, 1.0);
 
         let my_pos = self.state.position;
         let my_fwd = self.forward_vector();
-        let my_right = self.right_vector();
 
         let mut max_draft = 0.0f32;
 
@@ -994,25 +995,39 @@ impl Car {
             if std::ptr::eq(*opp, self) {
                 continue;
             }
-            if opp.state.speed < 15.0 {
+            if opp.state.speed < 12.0 {
                 continue;
             }
 
+            let opp_fwd = opp.forward_vector();
+            let heading_align = my_fwd.dot(opp_fwd);
+            if heading_align < 0.70 {
+                continue;
+            }
+            let heading_factor = ((heading_align - 0.70) / 0.25).clamp(0.0, 1.0);
+
+            let wake_fwd = (my_fwd + opp_fwd).normalize_or_zero();
+            let wake_right = Vec2::new(wake_fwd.y, -wake_fwd.x);
             let to_opp = opp.state.position - my_pos;
-            let fwd_dist = to_opp.dot(my_fwd);
-            let lat_dist = to_opp.dot(my_right).abs();
+            let fwd_dist = to_opp.dot(wake_fwd);
+            let lat_dist = to_opp.dot(wake_right).abs();
+            let lat_limit = 2.6 + 0.04 * fwd_dist.max(0.0);
 
             // Check if opponent is ahead within slipstream wake cone (2.0m to 32.0m)
-            if fwd_dist > 2.0 && fwd_dist < 32.0 && lat_dist < 2.8 {
+            if fwd_dist > 2.0 && fwd_dist < 32.0 && lat_dist < lat_limit {
                 let dist_factor = 1.0 - (fwd_dist - 2.0) / 30.0;
-                let lat_factor = (1.0 - lat_dist / 2.8).clamp(0.0, 1.0);
-                let draft = 0.38 * dist_factor * lat_factor;
+                let lat_factor = (1.0 - lat_dist / lat_limit).clamp(0.0, 1.0);
+                let draft = 0.38 * s_self * heading_factor * dist_factor * lat_factor;
                 if draft > max_draft {
                     max_draft = draft;
                 }
             } else if fwd_dist < -2.0 && fwd_dist > -10.0 && lat_dist < 2.0 {
                 // Subtle push draft from trailing car
-                let push_draft = 0.06 * (1.0 - (-fwd_dist - 2.0) / 8.0) * (1.0 - lat_dist / 2.0);
+                let push_draft = 0.06
+                    * s_self
+                    * heading_factor
+                    * (1.0 - (-fwd_dist - 2.0) / 8.0)
+                    * (1.0 - lat_dist / 2.0);
                 if push_draft > max_draft {
                     max_draft = push_draft;
                 }
@@ -1720,12 +1735,15 @@ fn couple_axle(
 
         let omega = self.state.angular_velocity;
 
-        // Drive / Brake torque requests with top-speed governor (Spec 038)
+        // Drive / Brake torque requests with top-speed governor (Spec 038) and slipstream overrun (Spec 129)
         // Average driven-wheel speed (representing driveshaft / differential carrier speed)
         // governs top-speed power taper alongside chassis speed, preventing a single unloaded
         // spinning inside wheel from choking engine power during cornering.
         let power_ratio = self.available_engine_power_ratio();
-        let top_speed = self.config.top_speed_mps * (0.60 + 0.40 * power_ratio);
+        let draft_clamped = self.state.draft_intensity.clamp(0.0, 0.50);
+        let draft_overrun = 1.0 + 0.18 * draft_clamped;
+        let top_speed =
+            self.config.top_speed_mps * (0.60 + 0.40 * power_ratio) * draft_overrun;
         let mut driven_count = 0.0f32;
         let mut driven_speed_sum = 0.0f32;
         for w in self.state.wheel_assemblies.iter() {
@@ -1823,12 +1841,18 @@ fn couple_axle(
         let total_drive_force = if clamped_ctrl.reverse {
             -clamped_ctrl.throttle * self.config.max_reverse_force
         } else if clamped_ctrl.throttle > 0.0 {
+            let wake_suction = if v_long > 16.0 {
+                1.0 + 0.18 * draft_clamped
+            } else {
+                1.0
+            };
             clamped_ctrl.throttle
                 * throttle_scale
                 * self.config.max_engine_force
                 * engine_taper
                 * drive_torque_multiplier
                 * power_ratio
+                * wake_suction
         } else if self.config.engine_braking_coefficient > 0.0 && v_long.abs() > 0.05 {
             // Enhanced generic motor brake with EDR modulation
             let generic_motor_brake_boost = 1.85f32;
