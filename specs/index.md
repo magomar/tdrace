@@ -147,6 +147,7 @@ Table of contents providing progressive disclosure of project constitution and t
 | [124](124_mega_jump_dual_wall_gap_trap_and_minimum_gap_sizing.md) | Mega Jump Dual-Wall Gap Trap and 6.0m Minimum Gap Sizing | Feature Spec | `implemented` | `human:mario` | [119](119_zero_allocation_wall_collisions_static_spatial_barrier_grid_and_pre_built_track_mesh_caching.md) | Establishes a dual-wall physical gap trap between the vertical take-off drop-off face and the vertical landing face of a MegaRamp, and enforces a 6.0m minimum longitudinal gap length (MIN_MEGA_RAMP_GAP_METERS = 6.0). |
 | [125](125_bot_multi_point_lateral_k_turn_escape_from_mega_jump_gap_traps.md) | Bot Multi-Point Lateral K-Turn Escape from Mega Jump Gap Traps | Feature Spec | `draft` | — | [115](115_lowgrip_runoff_bot_recovery_and_wall_scraping_resistance_calibration.md), [124](124_mega_jump_dual_wall_gap_trap_and_minimum_gap_sizing.md) | Equips BotDriver with a multi-point back-and-forth K-turn recovery state machine to escape dual-wall Mega Jump gap traps laterally through the side run-off areas and bypass the landing ramp back onto the track. |
 | [126](126_dynamic_championship_rosters_and_mid_season_driver_substitutions.md) | Dynamic Championship Rosters and Mid-Season Driver Substitutions | Feature Spec | `implemented` | `human:mario` | [020](020_driver_favorite_cars_per_discipline_and_tier.md), [024](024_crossmodule_ai_character_rosters_and_dynamic_tier_assignment.md), [104](104_autocross_and_rallycross_tournament_sprint_weekend_format.md) | Decouples competitor rosters from series TOML files, seeds full-grid rosters with uniform style sampling, bell-curve tiering, and valid car models at championship start, and introduces a per-race roster traversal replacement engine with rank-independent medical vs rank-weighted administrative probabilities, temporal 1-race stand-ins, and narrative modal bulletins. |
+| [127](127_team_standings_constructor_points_and_player_team_ownership.md) | Team Standings, Constructor Points, and Player Team Ownership with Bot Hire | Feature Spec | `implemented` | `human:mario` | [024](024_crossmodule_ai_character_rosters_and_dynamic_tier_assignment.md), [053](053_dual_currency_economy_and_branching_career_progression_architecture.md), [116](116_performance_based_individual_vehicle_pricing_and_dynamic_catalog_valuation.md), [126](126_dynamic_championship_rosters_and_mid_season_driver_substitutions.md) | Introduces team/constructor championship standings where teams accumulate points across drivers and retain points across mid-season driver substitutions, and enables the player to found a custom racing team at the start of any championship by purchasing a companion car, scouting and hiring a bot driver from a diverse candidate pool spanning championship tier distributions with tier-proportional salaries, subjecting the hired teammate to the Spec 024 bot progression engine, paying post-race wages, and receiving 50% of the bot's prize purse earnings. |
 
 ### 🗺️ Specification Dependency Graph
 
@@ -240,6 +241,7 @@ flowchart LR
     124["124: Mega Jump Dual-Wall Gap Trap and 6.0m Minimum Gap Sizing"]
     125["125: Bot Multi-Point Lateral K-Turn Escape from Mega Jump Gap Traps"]
     126["126: Dynamic Championship Rosters and Mid-Season Driver Substitutions"]
+    127["127: Team Standings, Constructor Points, and Player Team Ownership with Bot Hire"]
     055 --> 047
     062 --> 063
     055 --> 064
@@ -366,4 +368,8 @@ flowchart LR
     020 --> 126
     024 --> 126
     104 --> 126
+    024 --> 127
+    053 --> 127
+    116 --> 127
+    126 --> 127
 ```

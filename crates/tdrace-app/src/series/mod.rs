@@ -5,10 +5,88 @@ pub mod format;
 pub use format::*;
 pub mod manager;
 pub use manager::*;
+pub mod progression;
+pub use progression::*;
+pub mod scout;
+pub use scout::*;
 pub mod substitution;
 pub use substitution::*;
 pub mod tournament;
 pub use tournament::*;
+
+/// Detailed record of a team / constructor in championship standings (Spec 127).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct TeamStandingEntry {
+    /// Unique identifier for the team (slugified name).
+    pub team_id: String,
+    /// Display name of the team / constructor.
+    pub team_name: String,
+    /// Cumulative constructor points accumulated across all drivers.
+    pub points: u32,
+    /// Total race wins achieved by drivers of this team.
+    pub wins: u32,
+    /// Total podiums (P1-P3) achieved by drivers of this team.
+    pub podiums: u32,
+    /// Best finish position achieved by any driver of this team.
+    pub best_finish: usize,
+    /// List of driver IDs who have competed for this team during the season.
+    pub driver_ids: Vec<String>,
+    /// Display summaries of drivers (e.g. "A. Senna", "N. Mansell").
+    pub driver_names: Vec<String>,
+    /// Whether this team is owned and managed by the human player.
+    #[serde(default)]
+    pub is_player_owned: bool,
+    /// Primary livery color for team visual identification.
+    #[serde(default)]
+    pub primary_color: Option<[f32; 4]>,
+}
+
+impl TeamStandingEntry {
+    pub fn new(team_name: impl Into<String>, is_player_owned: bool) -> Self {
+        let name = team_name.into();
+        let team_id = name.to_lowercase().replace(' ', "_");
+        Self {
+            team_id,
+            team_name: name,
+            points: 0,
+            wins: 0,
+            podiums: 0,
+            best_finish: usize::MAX,
+            driver_ids: Vec::new(),
+            driver_names: Vec::new(),
+            is_player_owned,
+            primary_color: None,
+        }
+    }
+
+    /// Registers a driver on this team's season roster if not already listed.
+    pub fn register_driver(&mut self, driver_id: &str, driver_name: &str) {
+        if !self.driver_ids.iter().any(|id| id == driver_id) {
+            self.driver_ids.push(driver_id.to_string());
+            self.driver_names.push(driver_name.to_string());
+        }
+    }
+
+    /// Appends driver points and results to the team constructor total.
+    pub fn record_driver_result(&mut self, driver_id: &str, driver_name: &str, position: usize, points: u32) {
+        self.register_driver(driver_id, driver_name);
+        self.points += points;
+        if position == 1 {
+            self.wins += 1;
+        }
+        if position <= 3 {
+            self.podiums += 1;
+        }
+        if position < self.best_finish {
+            self.best_finish = position;
+        }
+    }
+
+    /// Compact summary of all drivers who have represented this team during the season.
+    pub fn drivers_summary(&self) -> String {
+        self.driver_names.join(" / ")
+    }
+}
 
 /// Scoring system for championship tournaments.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -217,6 +295,15 @@ pub struct SeriesSession {
     /// Round index at which pre-race substitutions were last evaluated so re-entering StartingGrid does not re-roll.
     #[serde(default)]
     pub last_substitution_round: Option<usize>,
+    /// Official constructor / team standings table (Spec 127).
+    #[serde(default)]
+    pub team_standings: Vec<TeamStandingEntry>,
+    /// Player team configuration if the player founded a constructor team (Spec 127).
+    #[serde(default)]
+    pub player_team: Option<PlayerTeamConfig>,
+    /// Active tab on the Championship Standings screen (`false` = Drivers, `true` = Constructors).
+    #[serde(default)]
+    pub standings_tab_is_constructors: bool,
 }
 
 pub type ChampionshipSession = SeriesSession;
@@ -234,7 +321,7 @@ impl SeriesSession {
             .map(|&(id, name, team)| SeriesStandingEntry::new(id, name, team))
             .collect();
 
-        Self {
+        let mut session = Self {
             name: name.into(),
             point_system,
             track_ids,
@@ -252,7 +339,12 @@ impl SeriesSession {
             active_stand_ins: Vec::new(),
             pending_substitutions: Vec::new(),
             last_substitution_round: None,
-        }
+            team_standings: Vec::new(),
+            player_team: None,
+            standings_tab_is_constructors: false,
+        };
+        session.rebuild_initial_team_standings();
+        session
     }
 
     /// Creates a series session populated with a player and persistent career rivals.
@@ -280,7 +372,7 @@ impl SeriesSession {
             entry.race_number = rival.race_number;
             standings.push(entry);
         }
-        Self {
+        let mut session = Self {
             name: name.into(),
             point_system,
             track_ids,
@@ -298,7 +390,12 @@ impl SeriesSession {
             active_stand_ins: Vec::new(),
             pending_substitutions: Vec::new(),
             last_substitution_round: None,
-        }
+            team_standings: Vec::new(),
+            player_team: None,
+            standings_tab_is_constructors: false,
+        };
+        session.rebuild_initial_team_standings();
+        session
     }
 
     /// Syncs series standings from a slice of career rivals and sets the current tier.
@@ -341,6 +438,8 @@ impl SeriesSession {
             new_standings.push(entry);
         }
         self.standings = new_standings;
+        self.team_standings.clear();
+        self.rebuild_initial_team_standings();
     }
 
     /// Evolves the series standings using RosterEvolutionEngine upon tier unlock.
@@ -601,6 +700,7 @@ impl SeriesSession {
         }
 
         self.ensure_valid_roster_cars_and_teams();
+        self.rebuild_initial_team_standings();
     }
 
     pub fn current_track_id(&self) -> Option<&str> {
@@ -611,7 +711,142 @@ impl SeriesSession {
         self.track_ids.len()
     }
 
-    /// Handles mid-season driver substitution in `seat_index` (Spec 126).
+    /// Ensures every team present in `self.standings` is registered in `self.team_standings`,
+    /// preserving any already-accumulated constructor points and `is_player_owned` flags.
+    pub fn rebuild_initial_team_standings(&mut self) {
+        let player_team_name = self.player_team.as_ref().map(|pt| pt.team_name.clone());
+        for entry in &self.standings {
+            if entry.team_name.trim().is_empty() {
+                continue;
+            }
+            let is_player_team = player_team_name
+                .as_deref()
+                .is_some_and(|ptn| ptn == entry.team_name);
+            if let Some(team) = self
+                .team_standings
+                .iter_mut()
+                .find(|t| t.team_name == entry.team_name)
+            {
+                if is_player_team {
+                    team.is_player_owned = true;
+                }
+                team.register_driver(&entry.driver_id, &entry.driver_name);
+            } else {
+                let mut new_team = TeamStandingEntry::new(&entry.team_name, is_player_team);
+                new_team.register_driver(&entry.driver_id, &entry.driver_name);
+                self.team_standings.push(new_team);
+            }
+        }
+    }
+
+    /// Synchronizes team / constructor standings after completing a championship round (Spec 127).
+    pub fn update_team_standings_after_round(&mut self, round_results: &[RoundDriverResult]) {
+        self.rebuild_initial_team_standings();
+        let player_team_name = self.player_team.as_ref().map(|pt| pt.team_name.clone());
+        for res in round_results {
+            if res.team_name.trim().is_empty() {
+                continue;
+            }
+            let is_player_team = player_team_name
+                .as_deref()
+                .is_some_and(|ptn| ptn == res.team_name);
+            if let Some(team) = self
+                .team_standings
+                .iter_mut()
+                .find(|t| t.team_name == res.team_name)
+            {
+                if is_player_team {
+                    team.is_player_owned = true;
+                }
+                team.record_driver_result(
+                    &res.driver_id,
+                    &res.driver_name,
+                    res.finish_position,
+                    res.points_awarded,
+                );
+            } else {
+                let mut new_team = TeamStandingEntry::new(&res.team_name, is_player_team);
+                new_team.record_driver_result(
+                    &res.driver_id,
+                    &res.driver_name,
+                    res.finish_position,
+                    res.points_awarded,
+                );
+                self.team_standings.push(new_team);
+            }
+        }
+        self.sort_team_standings();
+    }
+
+    /// Sorts `self.team_standings` by points descending, then wins, podiums, and best finish.
+    pub fn sort_team_standings(&mut self) {
+        self.team_standings.sort_by(|a, b| {
+            b.points
+                .cmp(&a.points)
+                .then_with(|| b.wins.cmp(&a.wins))
+                .then_with(|| b.podiums.cmp(&a.podiums))
+                .then_with(|| a.best_finish.cmp(&b.best_finish))
+                .then_with(|| a.team_name.cmp(&b.team_name))
+        });
+    }
+
+    /// Deterministically recomputes `self.team_standings` from `self.history` and current `self.standings`.
+    pub fn recompute_team_standings_from_history(&mut self) {
+        let prev_drivers: std::collections::HashMap<String, (Vec<String>, Vec<String>, bool, Option<[f32; 4]>)> = self
+            .team_standings
+            .drain(..)
+            .map(|t| (t.team_name, (t.driver_ids, t.driver_names, t.is_player_owned, t.primary_color)))
+            .collect();
+
+        self.rebuild_initial_team_standings();
+        for (team_name, (d_ids, d_names, is_owned, color)) in prev_drivers {
+            if let Some(team) = self.team_standings.iter_mut().find(|t| t.team_name == team_name) {
+                if is_owned {
+                    team.is_player_owned = true;
+                }
+                if team.primary_color.is_none() {
+                    team.primary_color = color;
+                }
+                for (id, name) in d_ids.into_iter().zip(d_names.into_iter()) {
+                    team.register_driver(&id, &name);
+                }
+            }
+        }
+
+        let rounds: Vec<Vec<RoundDriverResult>> = self.history.iter().map(|r| r.results.clone()).collect();
+        for round_res in &rounds {
+            for res in round_res {
+                if let Some(team) = self
+                    .team_standings
+                    .iter_mut()
+                    .find(|t| t.team_name == res.team_name)
+                {
+                    team.record_driver_result(
+                        &res.driver_id,
+                        &res.driver_name,
+                        res.finish_position,
+                        res.points_awarded,
+                    );
+                } else if !res.team_name.trim().is_empty() {
+                    let is_owned = self
+                        .player_team
+                        .as_ref()
+                        .is_some_and(|pt| pt.team_name == res.team_name);
+                    let mut new_team = TeamStandingEntry::new(&res.team_name, is_owned);
+                    new_team.record_driver_result(
+                        &res.driver_id,
+                        &res.driver_name,
+                        res.finish_position,
+                        res.points_awarded,
+                    );
+                    self.team_standings.push(new_team);
+                }
+            }
+        }
+        self.sort_team_standings();
+    }
+
+    /// Handles mid-season driver substitution in `seat_index` while preserving 100% of the team's constructor points (Spec 127).
     /// The incoming driver enters the exact same team and car seat starting with 0 personal driver points.
     pub fn replace_driver_in_seat(
         &mut self,
@@ -624,11 +859,43 @@ impl SeriesSession {
         if seat_index >= self.standings.len() {
             return;
         }
+        self.rebuild_initial_team_standings();
 
         let outgoing = self.standings[seat_index].clone();
         let old_team_name = outgoing.team_name.clone();
         let car_model = outgoing.car_model_id.clone();
         let race_number = outgoing.race_number;
+
+        // Ensure outgoing driver's points are reflected in the team's constructor tally if set directly
+        if let Some(team) = self.team_standings.iter_mut().find(|t| t.team_name == old_team_name) {
+            team.register_driver(&outgoing.driver_id, &outgoing.driver_name);
+            if team.points < outgoing.points {
+                team.points = outgoing.points;
+            }
+            if team.wins < outgoing.wins {
+                team.wins = outgoing.wins;
+            }
+            if team.podiums < outgoing.podiums {
+                team.podiums = outgoing.podiums;
+            }
+            if outgoing.best_finish < team.best_finish {
+                team.best_finish = outgoing.best_finish;
+            }
+            team.register_driver(new_driver_id, new_driver_name);
+        } else if !old_team_name.trim().is_empty() {
+            let is_owned = self
+                .player_team
+                .as_ref()
+                .is_some_and(|pt| pt.team_name == old_team_name);
+            let mut new_team = TeamStandingEntry::new(&old_team_name, is_owned);
+            new_team.points = outgoing.points;
+            new_team.wins = outgoing.wins;
+            new_team.podiums = outgoing.podiums;
+            new_team.best_finish = outgoing.best_finish;
+            new_team.register_driver(&outgoing.driver_id, &outgoing.driver_name);
+            new_team.register_driver(new_driver_id, new_driver_name);
+            self.team_standings.push(new_team);
+        }
 
         let mut replacement = SeriesStandingEntry::new(new_driver_id, new_driver_name, &old_team_name);
         replacement.car_model_id = car_model;
@@ -636,6 +903,7 @@ impl SeriesSession {
         replacement = replacement.with_ai_style_and_tier(new_style, new_tier);
 
         self.standings[seat_index] = replacement;
+        self.sort_team_standings();
     }
 
     pub fn submit_round_results(&mut self, track_title: &str, mut results: Vec<RoundDriverResult>) {
@@ -665,6 +933,9 @@ impl SeriesSession {
                 entry.best_finish = entry.best_finish.min(res.finish_position);
             }
         }
+
+        // Update constructor / team standings before archiving round history
+        self.update_team_standings_after_round(&results);
 
         // Sort standings by points (descending), then wins, then best finish, then total time
         self.sort_standings();
@@ -715,6 +986,7 @@ impl SeriesSession {
             }
         }
 
+        self.recompute_team_standings_from_history();
         self.sort_standings();
         Some(latest.track_id)
     }

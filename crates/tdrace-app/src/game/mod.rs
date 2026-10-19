@@ -471,7 +471,7 @@ impl PlayerRaceTelemetry {
     }
 }
 
-/// Detailed breakdown of XP awarded after completing a race.
+/// Detailed breakdown of XP and constructor finances awarded after completing a race.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct XpAwardReceipt {
     pub per_lap_xp: u64,
@@ -488,6 +488,48 @@ pub struct XpAwardReceipt {
     pub clean_bonus_credits: u64,
     #[serde(default)]
     pub new_credits_balance: u64,
+    /// 50% of the hired bot teammate's gross prize purse remitted to the team owner (Spec 127).
+    #[serde(default)]
+    pub teammate_dividend_credits: u64,
+    /// Per-race wage paid to the hired bot teammate (Spec 127).
+    #[serde(default)]
+    pub teammate_salary_paid: u64,
+    /// Display name of the hired bot teammate if a player-owned team is active.
+    #[serde(default)]
+    pub teammate_name: Option<String>,
+    /// Finishing position of the hired bot teammate in the round.
+    #[serde(default)]
+    pub teammate_finish_pos: Option<usize>,
+    /// Optional warning if wallet balance hit 0 during wage settlement.
+    #[serde(default)]
+    pub salary_deferred_warning: Option<String>,
+}
+
+impl XpAwardReceipt {
+    /// Formats the itemized Constructor Financial Ledger card text when a player-owned team is active (Spec 127).
+    pub fn format_constructor_ledger(&self) -> Option<String> {
+        if self.teammate_salary_paid == 0 && self.teammate_dividend_credits == 0 && self.teammate_name.is_none() {
+            return None;
+        }
+        let tm_name = self.teammate_name.as_deref().unwrap_or("Teammate");
+        let tm_pos = self.teammate_finish_pos.unwrap_or(0);
+        let net: i64 = (self.credits_earned as i64)
+            + (self.clean_bonus_credits as i64)
+            + (self.teammate_dividend_credits as i64)
+            - (self.teammate_salary_paid as i64);
+        let net_sign = if net >= 0 { "+" } else { "-" };
+        Some(format!(
+            "CONSTRUCTOR FINANCIAL LEDGER: Player Finish Prize: +${} Cr | Clean Bonus: +${} Cr | Teammate Prize Dividend (50%): +{} Cr [P{} Finish by {}] | Teammate Post-Race Salary: -{} Cr | NET ROUND EARNINGS: {}${} Cr",
+            self.credits_earned,
+            self.clean_bonus_credits,
+            self.teammate_dividend_credits,
+            tm_pos,
+            tm_name,
+            self.teammate_salary_paid,
+            net_sign,
+            net.unsigned_abs()
+        ))
+    }
 }
 
 
@@ -615,6 +657,8 @@ pub struct RaceSession {
     pub grid_participants: Vec<GridParticipant>,
     pub driver_cards_idx: usize,
     pub championship_standings_page: usize,
+    pub championship_standings_constructors: bool,
+    pub last_teammate_progression_report: Option<crate::series::TeammateSeasonProgressionReport>,
 
     // Interactive Garage Showroom state
     pub garage_origin: GarageOrigin,
@@ -906,6 +950,8 @@ impl RaceSession {
             grid_participants: Vec::new(),
             driver_cards_idx: 0,
             championship_standings_page: 0,
+            championship_standings_constructors: false,
+            last_teammate_progression_report: None,
 
             garage_origin: GarageOrigin::ModalitySelect,
             garage_tier: 1,
@@ -2971,6 +3017,44 @@ impl RaceSession {
         self.init_race();
     }
 
+    /// Checks whether the active player profile has sufficient credits to found a constructor team (Spec 127).
+    pub fn can_afford_team_founding(&self, car_price: u64, initial_salary: u64) -> Result<(), String> {
+        ChampionshipSession::can_afford_team_founding(self.active_profile.credits, car_price, initial_salary)
+    }
+
+    /// Founds a player-owned 2-car constructor team in the active championship session (Spec 127).
+    pub fn found_player_team(
+        &mut self,
+        team_name: &str,
+        companion_car_id: &str,
+        car_price: u64,
+        contract: crate::series::DriverHireQuote,
+    ) -> Result<(), String> {
+        let champ = self
+            .championship_session
+            .as_mut()
+            .ok_or_else(|| "NO ACTIVE CHAMPIONSHIP SESSION".to_string())?;
+        champ.found_player_team(
+            &mut self.active_profile,
+            &mut self.active_career_progress,
+            team_name,
+            companion_car_id,
+            car_price,
+            contract,
+        )?;
+        self.active_career_progress.active_championship = Some(champ.clone());
+        if let Some(db) = &self.hof_db {
+            let _ = db.save_module_progress(&self.active_career_progress);
+            let _ = db.update_profile(&self.active_profile);
+        }
+        self.profile_module_progress.insert(
+            self.active_career_progress.module_id.clone(),
+            self.active_career_progress.clone(),
+        );
+        self.init_race();
+        Ok(())
+    }
+
     /// Launches a NASCAR Career Championship Cup for the given tier (1..=5).
     pub fn start_nascar_career_tier(&mut self, tier: u32) {
         let (cup_name, track_ids) = match tier {
@@ -4666,13 +4750,25 @@ impl RaceSession {
                 let bot_model = champ_model_opt.or(favorite_model_opt).unwrap_or_else(|| {
                     category_models[bot_idx % category_models.len()]
                 });
-                let scheme = Self::resolve_bot_color_scheme(
-                    character.color_scheme,
-                    Some(bot_model),
-                    player_primary,
-                    &participants,
-                    bot_idx,
-                );
+                let is_player_teammate = self
+                    .championship_session
+                    .as_ref()
+                    .and_then(|c| c.player_team.as_ref())
+                    .map(|pt| pt.contract.character_id == character.id)
+                    .unwrap_or(false);
+                let scheme = if is_player_teammate {
+                    let mut ps = self.player_effective_color_scheme();
+                    ps.helmet = character.color_scheme.helmet;
+                    ps
+                } else {
+                    Self::resolve_bot_color_scheme(
+                        character.color_scheme,
+                        Some(bot_model),
+                        player_primary,
+                        &participants,
+                        bot_idx,
+                    )
+                };
                 (bot_model.base_car_choice, bot_model.name.to_string(), Some(bot_model.id), scheme)
             } else {
                 let choice = match self.game_mode {
@@ -4912,8 +5008,15 @@ impl RaceSession {
             };
             let bot_profile = character.resolve_profile_for_module(&self.active_module_id, bot_tier);
             let bot_seed = bot_participant.map(|p| p.random_seed).unwrap_or(bot_idx as u64);
+            let is_player_teammate = self
+                .championship_session
+                .as_ref()
+                .and_then(|c| c.player_team.as_ref())
+                .map(|pt| pt.contract.character_id == character.id)
+                .unwrap_or(false);
             let mut bot_ai = BotAiDriver::with_seed(bot_profile, bot_seed)
-                .with_pit_stall(bot_idx + 1);
+                .with_pit_stall(bot_idx + 1)
+                .with_player_teammate(is_player_teammate);
             if bot_ai.profile.aggression > 0.8 {
                 bot_ai = bot_ai.with_route_strategy(crate::ai::BotRouteStrategy::RallycrossJoker {
                     planned_joker_lap: 2,
@@ -7538,6 +7641,23 @@ impl RaceSession {
                         }
                     }
 
+                    // Award Constructor Championship Podium Bonus & Evaluate Hired Teammate Progression (Spec 127)
+                    if let Some((_, constructor_bonus)) = champ.calculate_constructor_podium_bonus() {
+                        *podium_bonus_to_award.get_or_insert(0) += constructor_bonus;
+                    }
+                    let prog_seed = self
+                        .fixed_roster_seed
+                        .unwrap_or(self.roster_seed)
+                        .wrapping_add((champ.current_round as u64).wrapping_mul(0x9E3779B97F4A7C15));
+                    if let Some(report) = champ.evaluate_and_update_teammate_contract(prog_seed) {
+                        for rival in &mut self.active_career_progress.career_rivals {
+                            if rival.driver_id == report.driver_id {
+                                rival.tier = report.new_tier;
+                            }
+                        }
+                        self.last_teammate_progression_report = Some(report);
+                    }
+
                     self.active_career_progress.active_championship = None;
                 } else {
                     self.active_career_progress.active_championship = Some(champ.clone());
@@ -7593,6 +7713,14 @@ impl RaceSession {
         }
     }
 
+    /// Toggles the Championship Standings view between Drivers' Standings and Constructors' Standings (Spec 127).
+    pub fn toggle_championship_standings_tab(&mut self) {
+        self.championship_standings_constructors = !self.championship_standings_constructors;
+        if let Some(champ) = &mut self.championship_session {
+            champ.standings_tab_is_constructors = self.championship_standings_constructors;
+        }
+    }
+
     /// Updates input and state progression when viewing the Championship Standings screen.
     pub fn update_championship_standings(&mut self) {
         let total_drivers = self.championship_session.as_ref().map(|c| c.standings.len()).unwrap_or(0);
@@ -7601,6 +7729,19 @@ impl RaceSession {
         } else {
             (total_drivers + STANDINGS_PAGE_SIZE - 1) / STANDINGS_PAGE_SIZE
         };
+
+        let tab_toggle_pressed = self.input.gamepad.snapshot.btn_x_pressed
+            || self.input.gamepad.snapshot.btn_lb_pressed
+            || self.input.gamepad.snapshot.btn_rb_pressed
+            || is_key_pressed(KeyCode::Tab)
+            || is_key_pressed(KeyCode::C);
+        if tab_toggle_pressed {
+            self.toggle_championship_standings_tab();
+            if total_pages <= 1 {
+                self.audio.play_sfx(SfxType::UiMove);
+                return;
+            }
+        }
 
         if total_pages > 1 {
             // Page back: Left / A / PageUp / Gamepad Dpad Left / LB
@@ -14146,6 +14287,11 @@ impl RaceSession {
                     credits_earned: finish_prize,
                     clean_bonus_credits: clean_credit_bonus,
                     new_credits_balance: self.active_profile.credits,
+                    teammate_dividend_credits: 0,
+                    teammate_salary_paid: 0,
+                    teammate_name: None,
+                    teammate_finish_pos: None,
+                    salary_deferred_warning: None,
                 };
                 self.last_xp_receipt = Some(receipt);
 
@@ -14181,6 +14327,7 @@ impl RaceSession {
 
             let bot_offset = if self.is_split_screen() { 2 } else { 1 };
             // If an active championship season is underway, prepare round results with points for the Results screen
+            let mut teammate_settlement_info: Option<(String, String, usize, u32)> = None;
             if let Some(champ) = &self.championship_session {
                 let mut round_results = Vec::new();
                 for (pos, res) in self.results.iter().enumerate() {
@@ -14274,7 +14421,50 @@ impl RaceSession {
                     }
                 }
 
+                if !tournament_stage {
+                    if let Some(ref pt) = champ.player_team {
+                        if let Some(tm_res) = round_results.iter().find(|r| r.driver_id == pt.contract.character_id) {
+                            teammate_settlement_info = Some((
+                                pt.contract.character_id.clone(),
+                                pt.contract.character_name.clone(),
+                                tm_res.finish_position,
+                                champ.tier,
+                            ));
+                        }
+                    }
+                }
+
                 self.pending_championship_results = Some(round_results);
+            }
+
+            if let Some((_, tm_name, tm_pos, champ_tier)) = teammate_settlement_info {
+                let effective_tier = self.active_career_progress.level.max(champ_tier);
+                let (tm_gross_prize, _) = ModuleCareerProgress::calculate_round_purse(effective_tier, tm_pos, false);
+                if let Some(champ) = &mut self.championship_session {
+                    let (dividend, salary, deferred_warning) =
+                        champ.settle_post_race_team_finances(&mut self.active_profile, tm_pos, tm_gross_prize);
+                    if let Some(receipt) = &mut self.last_xp_receipt {
+                        receipt.teammate_dividend_credits = dividend;
+                        receipt.teammate_salary_paid = salary;
+                        receipt.teammate_name = Some(tm_name);
+                        receipt.teammate_finish_pos = Some(tm_pos);
+                        receipt.salary_deferred_warning = deferred_warning;
+                        receipt.new_credits_balance = self.active_profile.credits;
+                    } else {
+                        self.last_xp_receipt = Some(XpAwardReceipt {
+                            teammate_dividend_credits: dividend,
+                            teammate_salary_paid: salary,
+                            teammate_name: Some(tm_name),
+                            teammate_finish_pos: Some(tm_pos),
+                            salary_deferred_warning: deferred_warning,
+                            new_credits_balance: self.active_profile.credits,
+                            ..Default::default()
+                        });
+                    }
+                    if let Some(db) = &self.hof_db {
+                        let _ = db.update_profile(&self.active_profile);
+                    }
+                }
             }
 
             // Populate fallback telemetry if synthetic test or laps empty

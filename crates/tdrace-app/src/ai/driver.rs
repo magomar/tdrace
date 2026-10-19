@@ -1,5 +1,6 @@
 use std::collections::{HashMap, HashSet};
 use macroquad::color::Color;
+use serde::{Deserialize, Serialize};
 use crate::ai::{BotProfile, DriverQuality, DriverTier, DrivingStyle, LcgRng};
 use crate::catalog::RealCarModel;
 use crate::module::GameModule;
@@ -7,7 +8,7 @@ use crate::render::color::CarColorScheme;
 use crate::ui::menu::CarChoice;
 
 /// High-level personality and skill stats for a driver character [0.0..1.0].
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct DriverStats {
     pub speed: f32,
     pub aggression: f32,
