@@ -11,7 +11,9 @@ use super::font::Fonts;
 use super::hud::format_lap_time;
 use super::scaler::UiScaler;
 use crate::render::color::Palette;
-use crate::series::{RoundDriverResult, SeriesSession, TournamentStage, ADVANCERS_PER_GROUP, DNF_TIME};
+use crate::series::{
+    RoundDriverResult, SeriesSession, TournamentStage, DNF_TIME, RX_INTERMEDIATE_CUTOFF, SUPERPOLE_LAPS,
+};
 
 /// One driver on the bracket.
 #[derive(Debug, Clone, PartialEq)]
@@ -31,7 +33,7 @@ pub struct BracketCard {
     pub advanced: Option<bool>,
 }
 
-/// One race of the bracket: eight cards, or none for a stage not drawn yet.
+/// One race of the bracket: eight cards (Autocross) or six cards (World RX), or none for a stage not drawn yet.
 #[derive(Debug, Clone, PartialEq)]
 pub struct BracketGroup {
     pub label: String,
@@ -62,6 +64,7 @@ pub struct TournamentBracketView {
 
 fn plural_title(stage: TournamentStage) -> &'static str {
     match stage {
+        TournamentStage::SuperPole => "SUPERPOLE",
         TournamentStage::QualifyingHeat => "QUALIFYING HEATS",
         TournamentStage::Quarterfinal => "QUARTERFINALS",
         TournamentStage::Semifinal => "SEMIFINALS",
@@ -73,6 +76,7 @@ fn plural_title(stage: TournamentStage) -> &'static str {
 
 fn group_label(stage: TournamentStage, group: usize) -> String {
     match stage {
+        TournamentStage::SuperPole => format!("SUPERPOLE FLIGHT {}", group + 1),
         TournamentStage::QualifyingHeat => format!("HEAT {}", group + 1),
         TournamentStage::Quarterfinal => format!("QUARTERFINAL {}", group + 1),
         TournamentStage::Semifinal => format!("SEMIFINAL {}", group + 1),
@@ -86,6 +90,7 @@ pub fn tournament_bracket_view(champ: &SeriesSession) -> Option<TournamentBracke
     let config = weekend.config;
     let final_round = config.round_count() - 1;
     let player_race = weekend.player_race();
+    let advancers_per_group = config.advancers_per_group();
 
     let card = |id: &str, result: Option<&RoundDriverResult>, advanced: Option<bool>| {
         let entry = champ.standings.iter().find(|s| s.driver_id == id);
@@ -103,14 +108,31 @@ pub fn tournament_bracket_view(champ: &SeriesSession) -> Option<TournamentBracke
             advanced,
         }
     };
-    let result_group = |label: String, laps: u32, results: &[RoundDriverResult], mark_advance: bool| BracketGroup {
-        label,
-        laps,
-        is_player_race: false,
-        cards: results
-            .iter()
-            .map(|r| card(&r.driver_id, Some(r), mark_advance.then_some(r.finish_position <= ADVANCERS_PER_GROUP)))
-            .collect(),
+    let result_group = |label: String, laps: u32, results: &[RoundDriverResult], stage: TournamentStage, mark_advance: bool| {
+        BracketGroup {
+            label,
+            laps,
+            is_player_race: false,
+            cards: results
+                .iter()
+                .map(|r| {
+                    let adv = if !mark_advance {
+                        None
+                    } else if config.is_world_rx() && stage == TournamentStage::QualifyingHeat {
+                        Some(
+                            weekend
+                                .intermediate_standings
+                                .iter()
+                                .take(RX_INTERMEDIATE_CUTOFF)
+                                .any(|s| s.driver_id == r.driver_id),
+                        )
+                    } else {
+                        Some(r.finish_position <= advancers_per_group)
+                    };
+                    card(&r.driver_id, Some(r), adv)
+                })
+                .collect(),
+        }
     };
 
     let mut columns = Vec::new();
@@ -118,12 +140,35 @@ pub fn tournament_bracket_view(champ: &SeriesSession) -> Option<TournamentBracke
     for round in 0..=final_round {
         let stage = config.stage_for_round(round);
         let mut groups = Vec::new();
-        if round < weekend.active_round {
-            for (g, results) in weekend.round_results(round).iter().enumerate() {
-                groups.push(result_group(group_label(stage, g), config.laps_for(stage), results, true));
+        if round == 0 && weekend.active_stage == TournamentStage::SuperPole {
+            let grid_size = config.grid_size();
+            for (g, chunk) in champ.standings.chunks(grid_size).enumerate() {
+                let is_player_race = chunk.iter().any(|e| e.driver_id == weekend.player_id);
+                if is_player_race {
+                    player_slot = Some((columns.len(), groups.len()));
+                }
+                groups.push(BracketGroup {
+                    label: group_label(TournamentStage::SuperPole, g),
+                    laps: SUPERPOLE_LAPS,
+                    is_player_race,
+                    cards: chunk.iter().map(|e| card(&e.driver_id, None, None)).collect(),
+                });
             }
-            if let Some((_, results)) = weekend.consolation_results.iter().find(|(r, _)| *r == round) {
-                groups.push(result_group(TournamentStage::ConsolationSemifinal.title().to_string(), config.semi_laps, results, false));
+        } else if round < weekend.active_round {
+            if round == final_round {
+                if let Some(gf) = &weekend.grand_final_results {
+                    groups.push(result_group(TournamentStage::GrandFinal.title().to_string(), config.final_laps, gf, stage, false));
+                }
+                if let Some(bf) = &weekend.b_final_results {
+                    groups.push(result_group(TournamentStage::ConsolationBFinal.title().to_string(), config.semi_laps, bf, stage, false));
+                }
+            } else {
+                for (g, results) in weekend.round_results(round).iter().enumerate() {
+                    groups.push(result_group(group_label(stage, g), config.laps_for(stage), results, stage, true));
+                }
+                if let Some((_, results)) = weekend.consolation_results.iter().find(|(r, _)| *r == round) {
+                    groups.push(result_group(TournamentStage::ConsolationSemifinal.title().to_string(), config.semi_laps, results, stage, false));
+                }
             }
         } else if round == weekend.active_round {
             for race in &weekend.active_races {
@@ -151,11 +196,29 @@ pub fn tournament_bracket_view(champ: &SeriesSession) -> Option<TournamentBracke
                 });
             }
         }
-        columns.push(BracketColumn { title: plural_title(stage).to_string(), is_active: round == weekend.active_round, groups });
+        let col_title = if round == 0 && config.qualifying_rounds > 1 && weekend.active_stage != TournamentStage::SuperPole {
+            let q_num = (weekend.current_qualifying_round + 1).min(config.qualifying_rounds);
+            format!("{} (Q{}/{})", plural_title(stage), q_num, config.qualifying_rounds)
+        } else {
+            plural_title(stage).to_string()
+        };
+        columns.push(BracketColumn { title: col_title, is_active: round == weekend.active_round, groups });
     }
 
     let launch_label = match player_race {
-        Some(race) => format!("LAUNCH RACE — {} • {} LAPS", race.badge(), race.laps),
+        Some(race) => {
+            if race.stage == TournamentStage::QualifyingHeat && config.qualifying_rounds > 1 {
+                format!(
+                    "LAUNCH RACE — Q{}/{} {} • {} LAPS",
+                    weekend.current_qualifying_round + 1,
+                    config.qualifying_rounds,
+                    race.badge(),
+                    race.laps
+                )
+            } else {
+                format!("LAUNCH RACE — {} • {} LAPS", race.badge(), race.laps)
+            }
+        }
         None => "WEEKEND COMPLETE".to_string(),
     };
     Some(TournamentBracketView {
@@ -167,9 +230,15 @@ pub fn tournament_bracket_view(champ: &SeriesSession) -> Option<TournamentBracke
     })
 }
 
-/// The badge the race HUD shows for the race the player drives: `HEAT 2/4`, `GRAND FINAL`.
+/// The badge the race HUD shows for the race the player drives: `SUPERPOLE`, `HEAT 2/4` (`Q1/3 • HEAT 2/4`), `GRAND FINAL`.
 pub fn stage_badge(champ: &SeriesSession) -> Option<String> {
-    champ.tournament_race().map(|r| r.badge())
+    let weekend = champ.tournament.as_ref()?;
+    let race = weekend.player_race()?;
+    if race.stage == TournamentStage::QualifyingHeat && weekend.config.qualifying_rounds > 1 {
+        Some(format!("Q{}/{} • {}", weekend.current_qualifying_round + 1, weekend.config.qualifying_rounds, race.badge()))
+    } else {
+        Some(race.badge())
+    }
 }
 
 fn amber() -> Color {

@@ -178,6 +178,39 @@ impl Track {
         })
     }
 
+    /// Recomputes `launch_chute.grid_slots` and `track.grid_positions` in place along the existing chute spline
+    /// without altering the chute's segment, merge junction, or barrier walls.
+    pub fn rebuild_launch_chute_grid(&mut self, pattern: PackedGridPattern) -> bool {
+        let Some(net) = self.network.as_mut() else {
+            return false;
+        };
+        let Some(chute_cfg) = net.launch_chute.as_ref() else {
+            return false;
+        };
+        let seg_id = chute_cfg.segment_id;
+        let pad_width = chute_cfg.pad_width;
+        let Some(chute_seg) = net.get_segment(seg_id) else {
+            return false;
+        };
+        let rows = pattern.row_counts().len() as f32;
+        let s_front = REAR_MARGIN_M + (rows - 1.0) * ROW_SPACING_M;
+        let spline = chute_seg.to_spline();
+        let grid_slots: Vec<SpawnPose> =
+            generate_packed_launch_grid(Vec2::ZERO, Vec2::X, pad_width, pattern, ROW_SPACING_M)
+                .into_iter()
+                .map(|slot| {
+                    let on_line = spline.sample_at_distance(s_front + slot.position.x);
+                    let pos = on_line.point + on_line.normal * slot.position.y;
+                    SpawnPose::new(pos, on_line.tangent.y.atan2(on_line.tangent.x), slot.grid_slot)
+                })
+                .collect();
+        if let Some(chute_cfg) = net.launch_chute.as_mut() {
+            chute_cfg.grid_slots = grid_slots.clone();
+        }
+        self.grid_positions = grid_slots;
+        true
+    }
+
     /// Stamps a launch chute on the circuit, or leaves the circuit unchanged and says why not.
     ///
     /// The chute merges at `spec.merge_waypoint`, which must lie [`MERGE_BEFORE_FINISH_RANGE`] metres before the

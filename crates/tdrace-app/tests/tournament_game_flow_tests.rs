@@ -116,11 +116,11 @@ fn a_weekend_runs_through_the_game_session() {
     assert_eq!(champ.standings[0].points, 25);
 }
 
-/// Option A through the game: a player who finishes 6th in the heat is on the grid of a consolation
-/// semifinal and then of the B-Final, and never lands on a screen without a race to launch.
+/// Option A through the game (Autocross 32-driver): a player who finishes 6th in the heat is on the grid
+/// of a consolation semifinal and then of the B-Final, and never lands on a screen without a race to launch.
 #[test]
 fn a_player_eliminated_in_the_heat_races_on_in_the_game() {
-    let mut session = launch(WORLD_RX);
+    let mut session = launch(SUPERBUGGY);
     finish_race(&mut session, 6);
     press_confirm(&mut session);
     assert_eq!(session.state, GameState::TournamentBracket);
@@ -143,6 +143,62 @@ fn a_player_eliminated_in_the_heat_races_on_in_the_game() {
     let champ = session.championship_session.as_ref().unwrap();
     let player = champ.standings.iter().find(|s| s.driver_id == "player").unwrap();
     assert_eq!(player.points, TOURNAMENT_POINTS_32[8], "the player won the B-Final: 9th overall");
+}
+
+/// Spec 128: World RX weekend through the game session: starts with a solo 2-lap SuperPole from the launch chute
+/// (0 bots, no mandatory joker), followed by 6-car Qualifying Heat, 6-car Semifinal, and 6-car Grand Final
+/// with Three-Stage cumulative points.
+#[test]
+fn world_rx_weekend_runs_superpole_then_6_car_stages_through_game_session() {
+    let mut session = launch(WORLD_RX);
+    assert_eq!(session.state, GameState::StartingGrid);
+    let champ = session.championship_session.as_ref().unwrap();
+    assert_eq!(champ.standings.len(), 24);
+
+    // Stage 0: SuperPole (solo player car on track, 2 laps = 1 out-lap + 1 flying lap)
+    let sp = next_race(&session);
+    assert_eq!((sp.stage, sp.laps), (TournamentStage::SuperPole, 2));
+    assert_eq!((session.total_laps, session.world.vehicles.len()), (2, 1), "SuperPole runs solo on track for 2 laps");
+    finish_race(&mut session, 1);
+    assert_eq!(session.state, GameState::Finished);
+    assert_eq!(session.results[0].jokers, None, "SuperPole has no mandatory Joker Lap");
+    press_confirm(&mut session);
+    assert_eq!(session.state, GameState::TournamentBracket);
+
+    // Stage 1: Qualifying Heat (6 cars, 3 laps)
+    let heat = next_race(&session);
+    assert_eq!((heat.stage, heat.laps, heat.driver_ids.len()), (TournamentStage::QualifyingHeat, 3, 6));
+    press_confirm(&mut session);
+    assert_eq!(session.state, GameState::StartingGrid);
+    assert_eq!((session.total_laps, session.world.vehicles.len()), (3, 6));
+    finish_race(&mut session, 1);
+    press_confirm(&mut session);
+    assert_eq!(session.state, GameState::TournamentBracket);
+
+    // Stage 2: Semifinal (6 cars, 4 laps)
+    let semi = next_race(&session);
+    assert_eq!((semi.stage, semi.laps, semi.driver_ids.len()), (TournamentStage::Semifinal, 4, 6));
+    press_confirm(&mut session);
+    assert_eq!(session.state, GameState::StartingGrid);
+    assert_eq!((session.total_laps, session.world.vehicles.len()), (4, 6));
+    finish_race(&mut session, 1);
+    press_confirm(&mut session);
+    assert_eq!(session.state, GameState::TournamentBracket);
+
+    // Stage 3: Grand Final (6 cars, 5 laps)
+    let grand = next_race(&session);
+    assert_eq!((grand.stage, grand.laps, grand.driver_ids.len()), (TournamentStage::GrandFinal, 5, 6));
+    press_confirm(&mut session);
+    assert_eq!(session.state, GameState::StartingGrid);
+    assert_eq!((session.total_laps, session.world.vehicles.len()), (5, 6));
+    finish_race(&mut session, 1);
+    press_confirm(&mut session);
+
+    assert_eq!(session.state, GameState::ChampionshipStandings);
+    let champ = session.championship_session.as_ref().unwrap();
+    assert_eq!(champ.current_round, 1);
+    let player = champ.standings.iter().find(|s| s.driver_id == "player").unwrap();
+    assert_eq!(player.points, 30, "16 (Intermediate P1) + 6 (Semi P1) + 8 (Final P1) = 30 pts");
 }
 
 /// Launching an Autocross championship when the profile already has casual race history in Autocross

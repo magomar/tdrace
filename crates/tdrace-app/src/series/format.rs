@@ -44,7 +44,7 @@ pub struct SeriesMeta {
     /// `tournament_sprint` runs each round as a heats-to-final weekend (Spec 104).
     #[serde(default, skip_serializing_if = "WeekendFormat::is_single_race")]
     pub weekend_format: WeekendFormat,
-    /// Drivers in a tournament weekend: 16, 32 (default) or 64.
+    /// Drivers in a tournament weekend: 16, 24 (World RX), 32 (Autocross default) or 64.
     #[serde(default)]
     pub total_drivers: Option<usize>,
     #[serde(default)]
@@ -53,6 +53,9 @@ pub struct SeriesMeta {
     pub semi_laps: Option<u32>,
     #[serde(default)]
     pub final_laps: Option<u32>,
+    /// Number of Qualifying Heat rounds (`Q1..=Qn`, default `1`, valid range `1..=4`, Spec 128).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub qualifying_rounds: Option<usize>,
 }
 
 pub type ChampionshipMeta = SeriesMeta;
@@ -74,23 +77,29 @@ impl Default for SeriesMeta {
             heat_laps: None,
             semi_laps: None,
             final_laps: None,
+            qualifying_rounds: None,
         }
     }
 }
 
 impl SeriesMeta {
-    /// The weekend of a `tournament_sprint` series; unset sizes take the defaults of 32 drivers and
-    /// 3, 4 and 5 laps. `None` for a series that runs a single race per round.
+    /// The weekend of a `tournament_sprint` series; unset sizes take 24 drivers for Rallycross and
+    /// 32 drivers for Autocross, with 3, 4 and 5 laps and 1 qualifying round. `None` for a single-race series.
     pub fn tournament_config(&self) -> Option<TournamentConfig> {
         if self.weekend_format != WeekendFormat::TournamentSprint {
             return None;
         }
-        let d = TournamentConfig::default();
+        let d = if matches!(self.module_id.as_str(), "rallycross" | "rally") {
+            TournamentConfig::world_rx_default()
+        } else {
+            TournamentConfig::default()
+        };
         Some(TournamentConfig {
             total_drivers: self.total_drivers.unwrap_or(d.total_drivers),
             heat_laps: self.heat_laps.unwrap_or(d.heat_laps),
             semi_laps: self.semi_laps.unwrap_or(d.semi_laps),
             final_laps: self.final_laps.unwrap_or(d.final_laps),
+            qualifying_rounds: self.qualifying_rounds.unwrap_or(d.qualifying_rounds),
         })
     }
 }
@@ -468,6 +477,7 @@ impl SeriesDefinition {
             heat_laps: session.tournament_config.map(|c| c.heat_laps),
             semi_laps: session.tournament_config.map(|c| c.semi_laps),
             final_laps: session.tournament_config.map(|c| c.final_laps),
+            qualifying_rounds: session.tournament_config.and_then(|c| (c.qualifying_rounds > 1).then_some(c.qualifying_rounds)),
         };
 
         let scoring = ScoringConfig::from_point_system(&session.point_system);

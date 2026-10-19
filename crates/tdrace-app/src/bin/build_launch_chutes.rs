@@ -42,7 +42,7 @@ fn all_circuits(root: &Path) -> Vec<PathBuf> {
 fn template(track: &Track) -> LaunchChuteSpec {
     let mut spec = LaunchChuteSpec::new(0, ChuteSide::Right);
     if track.car_category == CarCategory::Rally {
-        spec.pattern = PackedGridPattern::RallycrossThreeTwoThreeTwo;
+        spec.pattern = PackedGridPattern::RallycrossTwoTwoTwo;
         spec.surface = SurfaceType::Asphalt;
     }
     if track.name.contains("Vilkyčiai") {
@@ -54,13 +54,27 @@ fn template(track: &Track) -> LaunchChuteSpec {
 
 fn stamp(path: &Path, verbose: bool) -> Result<String, String> {
     let mut track = Track::load_from_file(path).map_err(|e| e.to_string())?;
-    if track.launch_chute().is_some() {
-        return Ok("already has a launch chute".to_string());
+    let template = template(&track);
+    if let Some(chute) = track.launch_chute() {
+        if PackedGridPattern::from_slots(&chute.grid_slots) == Some(template.pattern) {
+            return Ok("already has a launch chute".to_string());
+        }
+        track.rebuild_launch_chute_grid(template.pattern);
+        let errors: Vec<String> = validate_track(&track)
+            .into_iter()
+            .filter(|d| d.severity == ValidationSeverity::Error)
+            .map(|d| format!("{}: {}", d.code, d.message))
+            .collect();
+        if !errors.is_empty() {
+            return Err(format!("validation errors after rebuilding chute grid: {errors:?}"));
+        }
+        track.save_to_file(path).map_err(|e| e.to_string())?;
+        let chute = track.launch_chute().expect("chute");
+        return Ok(format!("updated chute grid in place to {} slots ({:?})", chute.grid_slots.len(), template.pattern));
     }
     if !matches!(track.car_category, CarCategory::Autocross | CarCategory::Rally) {
         return Err(format!("{:?} circuit: launch chutes are for Autocross and Rallycross", track.car_category));
     }
-    let template = template(&track);
     let spec = if track.name.contains("Vilkyčiai") {
         let spec = LaunchChuteSpec { merge_waypoint: 35, side: ChuteSide::Right, ..template };
         track.stamp_launch_chute(&spec).map_err(|e| e.to_string())?;

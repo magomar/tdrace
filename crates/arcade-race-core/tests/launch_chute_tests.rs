@@ -35,7 +35,7 @@ fn test_packed_grid_five_three_rows() {
 fn test_packed_grid_patterns_have_their_row_counts() {
     for (pattern, rows) in [
         (PackedGridPattern::AutocrossFiveThree, vec![5, 3]),
-        (PackedGridPattern::RallycrossThreeTwoThreeTwo, vec![3, 2, 3, 2]),
+        (PackedGridPattern::RallycrossTwoTwoTwo, vec![2, 2, 2]),
         (PackedGridPattern::UniformFourAcross, vec![4, 4, 4]),
     ] {
         let slots = generate_packed_launch_grid(Vec2::ZERO, Vec2::new(0.0, 1.0), 16.0, pattern, 6.0);
@@ -61,7 +61,7 @@ fn test_packed_grid_stays_inside_the_pad() {
     for width in [14.0, 16.0, 18.0] {
         for pattern in [
             PackedGridPattern::AutocrossFiveThree,
-            PackedGridPattern::RallycrossThreeTwoThreeTwo,
+            PackedGridPattern::RallycrossTwoTwoTwo,
             PackedGridPattern::UniformFourAcross,
         ] {
             for slot in generate_packed_launch_grid(Vec2::ZERO, Vec2::X, width, pattern, 6.0) {
@@ -73,11 +73,12 @@ fn test_packed_grid_stays_inside_the_pad() {
 
 #[test]
 fn test_packed_grid_staggers_the_two_car_rows() {
-    let slots = generate_packed_launch_grid(Vec2::ZERO, Vec2::X, 16.0, PackedGridPattern::RallycrossThreeTwoThreeTwo, 6.0);
+    let slots = generate_packed_launch_grid(Vec2::ZERO, Vec2::X, 16.0, PackedGridPattern::RallycrossTwoTwoTwo, 6.0);
+    assert_eq!(slots.len(), 6);
     let lateral = |range: std::ops::Range<usize>| -> Vec<f32> { slots[range].iter().map(|s| s.position.y).collect() };
-    // No car of a two-car row (rows 2 and 4) stands directly behind a car of the three-car row in front of it.
-    for (three, two) in [(lateral(0..3), lateral(3..5)), (lateral(5..8), lateral(8..10))] {
-        assert!(two.iter().all(|m| three.iter().all(|f| (m - f).abs() > 1.5)));
+    // No car of Row 2 stands directly behind a car of Row 1, and no car of Row 3 stands directly behind a car of Row 2.
+    for (front, back) in [(lateral(0..2), lateral(2..4)), (lateral(2..4), lateral(4..6))] {
+        assert!(back.iter().all(|b| front.iter().all(|f| (b - f).abs() > 1.5)));
     }
 }
 
@@ -388,12 +389,12 @@ mod stamp {
     fn test_patterns_and_surface_are_applied() {
         let mut track = rally_oval();
         let mut template = LaunchChuteSpec::new(0, ChuteSide::Left);
-        template.pattern = PackedGridPattern::RallycrossThreeTwoThreeTwo;
+        template.pattern = PackedGridPattern::RallycrossTwoTwoTwo;
         template.surface = SurfaceType::Asphalt;
         template.pad_width = 18.0;
         track.place_launch_chute(&template).unwrap();
         let chute = track.launch_chute().unwrap();
-        assert_eq!(chute.grid_slots.len(), 10);
+        assert_eq!(chute.grid_slots.len(), 6);
         assert_eq!(chute.surface, SurfaceType::Asphalt);
         assert_eq!(chute.pad_width, 18.0);
         let seg = track.network.as_ref().unwrap().get_segment(chute.segment_id).unwrap();

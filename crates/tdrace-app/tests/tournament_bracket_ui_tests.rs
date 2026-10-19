@@ -158,8 +158,8 @@ fn the_bracket_scales_to_64_drivers_and_shows_declared_cars() {
     assert!(tournament_bracket_view(&session).is_none());
 }
 
-/// Spec 126: Every single participant across all 4 heats (32 drivers) in Autocross and Rallycross
-/// tournament brackets displays a non-empty valid catalog car model name and authentic constructor team.
+/// Spec 126 + Spec 128: Every single participant across all 4 heats (32 drivers in Autocross, 24 drivers in Rallycross)
+/// displays a non-empty valid catalog car model name and authentic constructor team.
 #[test]
 fn test_spec126_all_32_tournament_drivers_display_valid_car_models_and_teams() {
     let mgr = tdrace_app::series::ChampionshipManager::new();
@@ -170,9 +170,10 @@ fn test_spec126_all_32_tournament_drivers_display_valid_car_models_and_teams() {
         "rally_world_rallycross_supercars",
     ] {
         let def = mgr.get(slug).unwrap_or_else(|| panic!("Preset '{}' must exist", slug));
+        let expected_drivers = def.series.tournament_config().unwrap().total_drivers;
         let mut session = def.to_session();
         session.ensure_tournament_weekend().expect("tournament weekend builds cleanly");
-        assert_eq!(session.standings.len(), 32, "Preset '{}' must synthesize all 32 drivers", slug);
+        assert_eq!(session.standings.len(), expected_drivers, "Preset '{}' must synthesize all {} drivers", slug, expected_drivers);
 
         for entry in &session.standings {
             let car_id = entry
@@ -197,7 +198,7 @@ fn test_spec126_all_32_tournament_drivers_display_valid_car_models_and_teams() {
 
         let view = tournament_bracket_view(&session).expect("bracket view exists");
         let heat_cards: Vec<_> = view.columns[0].groups.iter().flat_map(|g| &g.cards).collect();
-        assert_eq!(heat_cards.len(), 32);
+        assert_eq!(heat_cards.len(), expected_drivers);
         for card in heat_cards {
             assert!(
                 card.car.as_deref().is_some_and(|c| !c.trim().is_empty()),
@@ -210,4 +211,67 @@ fn test_spec126_all_32_tournament_drivers_display_valid_car_models_and_teams() {
         }
     }
 }
+
+/// Spec 128: World RX bracket view shows SuperPole flights, Q1..Qn badges, overall-time Top-12 heat advancement, and 6-car grids.
+#[test]
+fn world_rx_bracket_and_hud_badges_for_superpole_q_rounds_and_6_car_stages() {
+    let config = TournamentConfig { qualifying_rounds: 2, ..TournamentConfig::world_rx_default() };
+    let mut session = weekend_session(config);
+
+    // 1. Stage 0: SuperPole
+    assert_eq!(stage_badge(&session).as_deref(), Some("SUPERPOLE"));
+    assert_eq!(session.current_round_laps(), Some(2));
+    let view = tournament_bracket_view(&session).expect("SuperPole bracket view");
+    assert_eq!(view.columns[0].groups.len(), 4);
+    assert!(view.columns[0].groups.iter().all(|g| g.cards.len() == 6 && g.laps == 2));
+    assert!(view.launch_label.contains("SUPERPOLE") && view.launch_label.contains("2 LAPS"), "{}", view.launch_label);
+
+    // Submit solo player SuperPole flying lap
+    session
+        .submit_tournament_race(
+            "Holjes",
+            vec![RoundDriverResult {
+                driver_id: "player".into(),
+                driver_name: "Player".into(),
+                team_name: "Apex".into(),
+                finish_position: 1,
+                total_time: 39.2,
+                best_lap: Some(39.2),
+                points_awarded: 0,
+                has_fastest_lap: false,
+            }],
+        )
+        .unwrap();
+
+    // 2. Q1 of 2
+    let badge_q1 = stage_badge(&session).unwrap();
+    assert!(badge_q1.starts_with("Q1/2 • HEAT ") && badge_q1.ends_with("/4"), "{}", badge_q1);
+    let view_q1 = tournament_bracket_view(&session).unwrap();
+    assert_eq!(view_q1.columns[0].title, "QUALIFYING HEATS (Q1/2)");
+    assert!(view_q1.columns[0].groups.iter().all(|g| g.cards.len() == 6 && g.laps == 3));
+    assert!(view_q1.launch_label.contains("Q1/2 HEAT "), "{}", view_q1.launch_label);
+
+    play(&mut session, 1);
+
+    // 3. Q2 of 2
+    let badge_q2 = stage_badge(&session).unwrap();
+    assert!(badge_q2.starts_with("Q2/2 • HEAT ") && badge_q2.ends_with("/4"), "{}", badge_q2);
+    let view_q2 = tournament_bracket_view(&session).unwrap();
+    assert_eq!(view_q2.columns[0].title, "QUALIFYING HEATS (Q2/2)");
+
+    play(&mut session, 1);
+
+    // 4. Semifinals: exactly 12 heat cards across the 4 heats are marked `advanced == Some(true)` (Top 12 overall time)
+    let view_semi = tournament_bracket_view(&session).unwrap();
+    let adv_count = view_semi.columns[0]
+        .groups
+        .iter()
+        .flat_map(|g| &g.cards)
+        .filter(|c| c.advanced == Some(true))
+        .count();
+    assert_eq!(adv_count, 12, "Top 12 by overall time across all heats are marked advanced");
+    assert!(view_semi.columns[1].is_active);
+    assert!(view_semi.columns[1].groups.iter().all(|g| g.cards.len() == 6 && g.laps == 4));
+}
+
 

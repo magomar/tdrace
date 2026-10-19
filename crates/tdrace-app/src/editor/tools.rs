@@ -2301,12 +2301,16 @@ impl ToolSettings {
         })
     }
 
-    /// Builds the circuit's chute again from the tool settings, where it merges now.
+    /// Builds the circuit's chute again from the tool settings, where it merges now (or the nearest fitting waypoint).
     pub fn restamp_launch_chute(&mut self, state: &mut EditorState) -> bool {
         let Some(placed) = state.track.launch_chute_spec() else { return false };
         let spec = LaunchChuteSpec { pad_length: self.chute_pad_length, ..self.chute_spec(placed.merge_waypoint, placed.side) };
         self.edit_launch_chute(state, |track| {
-            track.stamp_launch_chute(&spec).map(|()| "Launch chute updated.".to_string()).map_err(|e| e.0)
+            track
+                .stamp_launch_chute(&spec)
+                .or_else(|_| track.place_launch_chute(&spec).map(|_| ()))
+                .map(|()| "Launch chute updated.".to_string())
+                .map_err(|e| e.0)
         })
     }
 

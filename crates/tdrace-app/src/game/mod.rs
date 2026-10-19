@@ -4268,7 +4268,11 @@ impl RaceSession {
         if let Some(champ) = &self.championship_session {
             let max_grid = self.max_grid_participants();
             let human_count = if self.is_split_screen() { 2 } else { 1 };
-            let bot_count = champ.standings.iter().filter(|s| s.driver_id != "player").count();
+            let bot_count = if champ.tournament_race().is_some() {
+                champ.race_opponents().len()
+            } else {
+                champ.standings.iter().filter(|s| s.driver_id != "player").count()
+            };
             self.num_bots = bot_count.min(max_grid.saturating_sub(human_count));
         }
 
@@ -5160,6 +5164,12 @@ impl RaceSession {
         if let Some(champ) = &mut self.championship_session {
             if let Err(e) = champ.ensure_tournament_weekend() {
                 eprintln!("tournament weekend not started, running a single race: {}", e);
+            }
+            if let Some(weekend) = &mut champ.tournament {
+                if weekend.superpole_reference_lap.is_none() {
+                    let len_m = self.track.spline.total_length().max(400.0);
+                    weekend.superpole_reference_lap = Some((len_m / 26.5).clamp(24.0, 75.0));
+                }
             }
         }
 
@@ -13313,7 +13323,7 @@ impl RaceSession {
 
         // 1. Gather driver controls (Player keyboard with smoothing + Touch combined, and AI bots)
         let mut controls_all = Vec::with_capacity(n_cars);
-        let joker_rule = joker_rule_for(&self.track);
+        let joker_rule = self.active_joker_rule();
         if is_split {
             let p1_speed = self.world.vehicles.first().map(|c| c.state.local_velocity.x).unwrap_or(0.0);
             let p2_speed = self.world.vehicles.get(1).map(|c| c.state.local_velocity.x).unwrap_or(0.0);
@@ -13449,7 +13459,7 @@ impl RaceSession {
         // Everything below reacts to its events, in the order they happened.
         self.world.rules.format = self.race_format();
         self.world.rules.damage_enabled = self.car_damage_enabled();
-        self.world.rules.joker = joker_rule_for(&self.track);
+        self.world.rules.joker = joker_rule;
         if self.lan_ghost_collisions() {
             self.world.rules.collision.iterations = 0;
         } else {
@@ -14365,13 +14375,31 @@ impl RaceSession {
                             (format!("bot_{}", pos), format!("Driver {}", res.car_idx), "Motorsport Team".to_string())
                         }
                     };
+                    let is_superpole = champ
+                        .tournament_race()
+                        .is_some_and(|r| r.stage == crate::series::TournamentStage::SuperPole);
+                    let flying_lap = if is_superpole && res.is_player {
+                        self.player_race_stats
+                            .laps
+                            .get(1)
+                            .map(|l| l.lap_time)
+                            .or_else(|| self.world.trackers.get(my_car_idx).and_then(|t| t.last_lap_time))
+                            .or(res.best_lap)
+                    } else {
+                        res.best_lap
+                    };
+                    let total_time = if is_superpole && res.is_player {
+                        flying_lap.unwrap_or(res.total_time)
+                    } else {
+                        res.total_time
+                    };
                     round_results.push(RoundDriverResult {
                         driver_id,
                         driver_name,
                         team_name,
                         finish_position: pos + 1,
-                        total_time: res.total_time,
-                        best_lap: res.best_lap,
+                        total_time,
+                        best_lap: flying_lap,
                         points_awarded: 0,
                         has_fastest_lap: false,
                     });
@@ -14527,6 +14555,20 @@ impl RaceSession {
         }
     }
 
+    /// Joker rule for the currently running session: disabled (`mandatory = 0`) during a World RX `SuperPole` run.
+    fn active_joker_rule(&self) -> JokerRule {
+        if self
+            .championship_session
+            .as_ref()
+            .and_then(|c| c.tournament_race())
+            .is_some_and(|r| r.stage == crate::series::TournamentStage::SuperPole)
+        {
+            JokerRule::default()
+        } else {
+            joker_rule_for(&self.track)
+        }
+    }
+
     /// Computes real-time race standings: finished cars in finish order, then by lap and progress.
     pub fn compute_standings(&self) -> Vec<usize> {
         if let Some(order) = self.lan_result_order() {
@@ -14548,7 +14590,7 @@ impl RaceSession {
         }
         self.results.clear();
         let leader_time = race_results.first().map(|r| r.time + r.penalty).unwrap_or(0.0);
-        let joker_race = joker_rule_for(&self.track).mandatory > 0;
+        let joker_race = self.active_joker_rule().mandatory > 0;
 
         for row in &race_results {
             let (rank, car_idx) = (row.position - 1, row.car);
@@ -17199,7 +17241,7 @@ impl RaceSession {
         let sw = screen_width_safe();
         let sh = screen_height_safe();
 
-        let joker_mandatory = joker_rule_for(&self.track).mandatory;
+        let joker_mandatory = self.active_joker_rule().mandatory;
         let joker_badge = |i: usize| {
             self.world.trackers.get(i).and_then(|t| {
                 race_ui::hud::widgets::JokerBadge::for_driver(joker_mandatory, self.world.jokers_taken(i), t.current_lap, self.total_laps)

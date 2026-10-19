@@ -878,13 +878,13 @@ pub fn generate_grid_positions_at_distance(
     slots
 }
 
-/// Arrangement of cars on the packed grid of a launch chute (spec 103).
+/// Arrangement of cars on the packed grid of a launch chute (spec 103, amended by spec 128).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PackedGridPattern {
     /// 5 cars on Row 1, 3 cars on Row 2 (Classic FIA Autocross 8-car sprint).
     AutocrossFiveThree,
-    /// 3 cars on Row 1, 2 on Row 2, 3 on Row 3, 2 on Row 4 (FIA Rallycross 3-2-3-2 staggered, 10 cars).
-    RallycrossThreeTwoThreeTwo,
+    /// 2 cars on Row 1, 2 on Row 2, 2 on Row 3 (FIA Rallycross 2-2-2 staggered, 6 cars).
+    RallycrossTwoTwoTwo,
     /// 4 cars per row uniform grid, 3 rows (12 cars).
     UniformFourAcross,
 }
@@ -894,7 +894,7 @@ impl PackedGridPattern {
     pub const fn row_counts(self) -> &'static [usize] {
         match self {
             Self::AutocrossFiveThree => &[5, 3],
-            Self::RallycrossThreeTwoThreeTwo => &[3, 2, 3, 2],
+            Self::RallycrossTwoTwoTwo => &[2, 2, 2],
             Self::UniformFourAcross => &[4, 4, 4],
         }
     }
@@ -920,7 +920,7 @@ impl PackedGridPattern {
             }
             *counts.last_mut()? += 1;
         }
-        [Self::AutocrossFiveThree, Self::RallycrossThreeTwoThreeTwo, Self::UniformFourAcross]
+        [Self::AutocrossFiveThree, Self::RallycrossTwoTwoTwo, Self::UniformFourAcross]
             .into_iter()
             .find(|p| p.row_counts() == counts.as_slice())
     }
@@ -934,8 +934,9 @@ const PACKED_GRID_EDGE_MARGIN: f32 = 1.5;
 /// `pad_center` is the middle of the front row and `pad_tangent` the direction the cars face. Row `k` stands
 /// `k * row_spacing` behind the front row. Every lane has the same width, the pad width less the edge margin
 /// over the largest row, and each row is centred on the pad, so a row with fewer cars than the widest one stays
-/// on the same lanes or, when the counts differ by an odd number, falls between them. Slots are numbered front
-/// row first, from the left of the pad (looking along the tangent) to the right.
+/// on the same lanes or, when the counts differ by an odd number, falls between them. For [`PackedGridPattern::RallycrossTwoTwoTwo`],
+/// odd and even two-car rows are laterally offset so no car stands directly behind a car in the row ahead.
+/// Slots are numbered front row first, from the left of the pad (looking along the tangent) to the right.
 pub fn generate_packed_launch_grid(
     pad_center: Vec2,
     pad_tangent: Vec2,
@@ -951,8 +952,17 @@ pub fn generate_packed_launch_grid(
 
     let mut slots = Vec::with_capacity(pattern.slot_count());
     for (row, &cars) in pattern.row_counts().iter().enumerate() {
+        let stagger = if matches!(pattern, PackedGridPattern::RallycrossTwoTwoTwo) {
+            if row % 2 == 0 {
+                lane * 0.25
+            } else {
+                -lane * 0.25
+            }
+        } else {
+            0.0
+        };
         for i in 0..cars {
-            let lateral = ((cars - 1) as f32 * 0.5 - i as f32) * lane;
+            let lateral = ((cars - 1) as f32 * 0.5 - i as f32) * lane + stagger;
             let pos = pad_center - forward * (row as f32 * row_spacing) + left * lateral;
             slots.push(SpawnPose::new(pos, angle, slots.len()));
         }

@@ -163,14 +163,14 @@ fn check(slug: &str, r: &ChuteRace) -> Result<(), String> {
     Ok(())
 }
 
-/// Races a full chute grid of each circuit's own car for 3 laps (8 bots on Autocross, 10 on Rallycross); returns
+/// Races a full chute grid of each circuit's own car for 3 laps (8 bots on Autocross, 6 on Rallycross); returns
 /// what went wrong.
 fn sweep(circuits: &[(&str, &str)]) -> Vec<String> {
     circuits
         .iter()
         .filter_map(|(module, slug)| {
             let track = with_chute(module, slug);
-            let cars = if track.car_category == CarCategory::Rally { 10 } else { 8 };
+            let cars = if track.car_category == CarCategory::Rally { 6 } else { 8 };
             assert_eq!(track.grid_positions.len(), cars, "{slug}: the chute holds {cars} cars");
             check(slug, &race(&track, own_car(module, &track), cars, 3, 400.0)).err()
         })
@@ -191,7 +191,7 @@ fn test_bots_race_three_laps_from_an_autocross_chute() {
 /// Scenario: Subsequent Laps Exclude the Launch Chute
 ///
 /// Given a Rallycross circuit with a launch chute and a joker lap
-/// When 10 bots race 3 laps
+/// When 6 bots race 3 laps
 /// Then none of them turns back into the chute after lap 1
 #[test]
 fn test_bots_race_three_laps_from_a_rallycross_chute() {
@@ -200,15 +200,15 @@ fn test_bots_race_three_laps_from_a_rallycross_chute() {
 }
 
 /// tdrace-bw6rb: bots that ran wide in the kouvola_rx joker stopped against its outer tyre wall and never got
-/// away; with 8 bots three of them stalled there after lap 1, with 10 before it.
+/// away; with 8 bots three of them stalled there after lap 1, with 6 all finish.
 ///
-/// Given kouvola_rx with a full chute grid of 10 Rallycross bots
+/// Given kouvola_rx with a full chute grid of 6 Rallycross bots
 /// When they race 3 laps
 /// Then every bot finishes all 3 laps
 #[test]
 fn test_every_bot_finishes_three_laps_on_kouvola() {
     let track = with_chute("rally", "kouvola_rx");
-    let r = race(&track, own_car("rally", &track), 10, 3, 400.0);
+    let r = race(&track, own_car("rally", &track), 6, 3, 400.0);
     assert!(r.laps_completed.iter().all(|&l| l >= 3), "laps completed per bot: {:?}", r.laps_completed);
 }
 

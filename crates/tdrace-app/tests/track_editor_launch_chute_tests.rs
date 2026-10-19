@@ -172,7 +172,7 @@ fn test_inspector_controls_edit_the_chute() {
 
     // Pad width: the chute is built again, 18 m wide; an out-of-range value is clamped to the range.
     apply_edit(&mut state, &mut tools, Edit::Set(Prop::ChutePadWidth, 18.0));
-    assert_eq!(state.track.launch_chute().unwrap().pad_width, 18.0);
+    assert_eq!(state.track.launch_chute().unwrap().pad_width, 18.0, "status: {:?}, spec: {:?}", tools.chute_status, state.track.launch_chute_spec());
     apply_edit(&mut state, &mut tools, Edit::Set(Prop::ChutePadWidth, 40.0));
     assert_eq!(state.track.launch_chute().unwrap().pad_width, 18.0);
     apply_edit(&mut state, &mut tools, Edit::Step(Prop::ChutePadWidth, -1.0));
@@ -182,10 +182,10 @@ fn test_inspector_controls_edit_the_chute() {
     apply_edit(&mut state, &mut tools, Edit::Pick(Prop::ChutePattern, 1));
     apply_edit(&mut state, &mut tools, Edit::Pick(Prop::ChuteSurface, 1));
     let spec = state.track.launch_chute_spec().expect("chute read back");
-    assert_eq!(spec.pattern, PackedGridPattern::RallycrossThreeTwoThreeTwo);
+    assert_eq!(spec.pattern, PackedGridPattern::RallycrossTwoTwoTwo);
     assert_eq!(spec.surface, SurfaceType::Asphalt);
     assert_eq!(spec.pad_width, 17.0, "editing one control keeps the others");
-    assert_eq!(state.track.grid_positions.len(), 10);
+    assert_eq!(state.track.grid_positions.len(), 6);
     assert_eq!(error_codes(&state.track), Vec::<&str>::new());
 
     // With another tool the chute controls are in the circuit view and show the chute's own values.

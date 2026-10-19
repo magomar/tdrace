@@ -61,8 +61,8 @@ fn test_rally_module_tracks_integrity_and_validation() {
         if track.checkpoints.len() < 8 {
             panic!("Too few checkpoints ({}) for {}", track.checkpoints.len(), track_def.id);
         }
-        if track.grid_positions.len() < 8 {
-            panic!("Too few grid positions ({}) for {}", track.grid_positions.len(), track_def.id);
+        if track.grid_positions.len() != 6 {
+            panic!("Expected 6 grid positions (got {}) for {}", track.grid_positions.len(), track_def.id);
         }
         if track.category != tdrace_core::track::TrackCategory::Main {
             panic!("Category mismatch for {}", track_def.id);

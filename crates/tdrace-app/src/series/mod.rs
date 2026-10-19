@@ -558,7 +558,7 @@ impl SeriesSession {
     }
 
     /// Scores a race of the running weekend. A stage that is not the last one only moves the weekend on.
-    /// When the Grand Final and the B-Final are done the 32 places are scored as one round.
+    /// When the Grand Final and the B-Final are done the weekend places are scored as one round.
     /// Returns true when the weekend was completed and the round scored.
     pub fn submit_tournament_race(&mut self, track_title: &str, results: Vec<RoundDriverResult>) -> Result<bool, String> {
         let mut weekend = self.tournament.take().ok_or_else(|| "no tournament weekend is running".to_string())?;
@@ -566,9 +566,10 @@ impl SeriesSession {
             self.tournament = Some(weekend);
             return Err(e);
         }
+        let is_world_rx = weekend.config.is_world_rx();
         match weekend.final_standings() {
             Some(places) => {
-                self.submit_round_results(track_title, places);
+                self.submit_round_results_with_mode(track_title, places, is_world_rx);
                 Ok(true)
             }
             None => {
@@ -906,7 +907,16 @@ impl SeriesSession {
         self.sort_team_standings();
     }
 
-    pub fn submit_round_results(&mut self, track_title: &str, mut results: Vec<RoundDriverResult>) {
+    pub fn submit_round_results(&mut self, track_title: &str, results: Vec<RoundDriverResult>) {
+        self.submit_round_results_with_mode(track_title, results, false);
+    }
+
+    pub fn submit_round_results_with_mode(
+        &mut self,
+        track_title: &str,
+        mut results: Vec<RoundDriverResult>,
+        preserve_points_awarded: bool,
+    ) {
         if self.current_round >= self.track_ids.len() {
             return;
         }
@@ -915,7 +925,11 @@ impl SeriesSession {
 
         // Calculate points for each driver
         for res in &mut results {
-            let pts = self.point_system.points_for_position(res.finish_position, res.has_fastest_lap);
+            let pts = if preserve_points_awarded {
+                res.points_awarded
+            } else {
+                self.point_system.points_for_position(res.finish_position, res.has_fastest_lap)
+            };
             res.points_awarded = pts;
 
             if let Some(entry) = self.standings.iter_mut().find(|s| s.driver_id == res.driver_id) {

@@ -148,6 +148,7 @@ Table of contents providing progressive disclosure of project constitution and t
 | [125](125_bot_multi_point_lateral_k_turn_escape_from_mega_jump_gap_traps.md) | Bot Multi-Point Lateral K-Turn Escape from Mega Jump Gap Traps | Feature Spec | `draft` | — | [115](115_lowgrip_runoff_bot_recovery_and_wall_scraping_resistance_calibration.md), [124](124_mega_jump_dual_wall_gap_trap_and_minimum_gap_sizing.md) | Equips BotDriver with a multi-point back-and-forth K-turn recovery state machine to escape dual-wall Mega Jump gap traps laterally through the side run-off areas and bypass the landing ramp back onto the track. |
 | [126](126_dynamic_championship_rosters_and_mid_season_driver_substitutions.md) | Dynamic Championship Rosters and Mid-Season Driver Substitutions | Feature Spec | `implemented` | `human:mario` | [020](020_driver_favorite_cars_per_discipline_and_tier.md), [024](024_crossmodule_ai_character_rosters_and_dynamic_tier_assignment.md), [104](104_autocross_and_rallycross_tournament_sprint_weekend_format.md) | Decouples competitor rosters from series TOML files, seeds full-grid rosters with uniform style sampling, bell-curve tiering, and valid car models at championship start, and introduces a per-race roster traversal replacement engine with rank-independent medical vs rank-weighted administrative probabilities, temporal 1-race stand-ins, and narrative modal bulletins. |
 | [127](127_team_standings_constructor_points_and_player_team_ownership.md) | Team Standings, Constructor Points, and Player Team Ownership with Bot Hire | Feature Spec | `implemented` | `human:mario` | [024](024_crossmodule_ai_character_rosters_and_dynamic_tier_assignment.md), [053](053_dual_currency_economy_and_branching_career_progression_architecture.md), [116](116_performance_based_individual_vehicle_pricing_and_dynamic_catalog_valuation.md), [126](126_dynamic_championship_rosters_and_mid_season_driver_substitutions.md) | Introduces team/constructor championship standings where teams accumulate points across drivers and retain points across mid-season driver substitutions, and enables the player to found a custom racing team at the start of any championship by purchasing a companion car, scouting and hiring a bot driver from a diverse candidate pool spanning championship tier distributions with tier-proportional salaries, subjecting the hired teammate to the Spec 024 bot progression engine, paying post-race wages, and receiving 50% of the bot's prize purse earnings. |
+| [128](128_world_rx_superpole_6_car_2_2_2_grids_overall_heat_time_classification_and_three_stage_scoring.md) | World RX SuperPole, 6-Car 2-2-2 Grids, Overall Heat Time Classification, and Three-Stage Scoring | Feature Spec | `implemented` | `human:mario` | [104](104_autocross_and_rallycross_tournament_sprint_weekend_format.md), [106](106_classic_autocross_launch_chutes_and_tencar_rallycross_chutes.md) | Upgrades the Rallycross (RX) tournament weekend format to authentic FIA World RX rules: 6-car 2-2-2 staggered launch chutes across all 23 RX circuits, a 24-driver field, Stage 0 SuperPole (1 out-lap + 1 flying lap from the chute, bots simulated), configurable multi-round Classificatory Heats (qualifying_rounds = 1 by default across existing series, extensible to Q1–Q4) ranked by cumulative overall completion time across all heats, Odd/Even 6-car Semifinals with top-3 position-only advancement, Row-by-Row Final grid pairing, and Three-Stage cumulative championship points, while preserving the 32-driver 8-car Autocross format untouched. |
 
 ### 🗺️ Specification Dependency Graph
 
@@ -242,6 +243,7 @@ flowchart LR
     125["125: Bot Multi-Point Lateral K-Turn Escape from Mega Jump Gap Traps"]
     126["126: Dynamic Championship Rosters and Mid-Season Driver Substitutions"]
     127["127: Team Standings, Constructor Points, and Player Team Ownership with Bot Hire"]
+    128["128: World RX SuperPole, 6-Car 2-2-2 Grids, Overall Heat Time Classification, and Three-Stage Scoring"]
     055 --> 047
     062 --> 063
     055 --> 064
@@ -372,4 +374,6 @@ flowchart LR
     053 --> 127
     116 --> 127
     126 --> 127
+    104 --> 128
+    106 --> 128
 ```
