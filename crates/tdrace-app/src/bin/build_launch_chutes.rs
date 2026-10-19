@@ -8,7 +8,7 @@
 //! ```
 //! `--all` takes the 17 Autocross circuits (`tracks/autocross`), the 20 Rallycross circuits (`tracks/rally`), the
 //! 3 Classic Autocross circuits and the 3 Classic Rallycross circuits. Each file gets the chute of its category
-//! (Autocross: concrete pad, 5-3 grid, 8 cars; Rallycross: asphalt pad, 3-2-3-2 grid, 10 cars) at the best waypoint
+//! (Autocross: concrete pad, 3-2-3-2 grid, 10 cars; Rallycross: asphalt pad, 2-2-2 grid, 6 cars) at the best waypoint
 //! before its finish line, and is written back in place. A file that already has a chute is left alone; one that
 //! cannot take a chute is reported and left alone, and the exit code is 1. `--verbose` lists why each candidate
 //! waypoint was refused.

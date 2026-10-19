@@ -878,9 +878,11 @@ pub fn generate_grid_positions_at_distance(
     slots
 }
 
-/// Arrangement of cars on the packed grid of a launch chute (spec 103, amended by spec 128).
+/// Arrangement of cars on the packed grid of a launch chute (spec 103, amended by spec 128 and spec 130).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PackedGridPattern {
+    /// 3 cars on Row 1, 2 on Row 2, 3 on Row 3, 2 on Row 4 (FIA European Autocross 3-2-3-2 staggered, 10 cars).
+    AutocrossThreeTwoThreeTwo,
     /// 5 cars on Row 1, 3 cars on Row 2 (Classic FIA Autocross 8-car sprint).
     AutocrossFiveThree,
     /// 2 cars on Row 1, 2 on Row 2, 2 on Row 3 (FIA Rallycross 2-2-2 staggered, 6 cars).
@@ -893,6 +895,7 @@ impl PackedGridPattern {
     /// Cars on each row, front row first.
     pub const fn row_counts(self) -> &'static [usize] {
         match self {
+            Self::AutocrossThreeTwoThreeTwo => &[3, 2, 3, 2],
             Self::AutocrossFiveThree => &[5, 3],
             Self::RallycrossTwoTwoTwo => &[2, 2, 2],
             Self::UniformFourAcross => &[4, 4, 4],
@@ -920,9 +923,14 @@ impl PackedGridPattern {
             }
             *counts.last_mut()? += 1;
         }
-        [Self::AutocrossFiveThree, Self::RallycrossTwoTwoTwo, Self::UniformFourAcross]
-            .into_iter()
-            .find(|p| p.row_counts() == counts.as_slice())
+        [
+            Self::AutocrossThreeTwoThreeTwo,
+            Self::AutocrossFiveThree,
+            Self::RallycrossTwoTwoTwo,
+            Self::UniformFourAcross,
+        ]
+        .into_iter()
+        .find(|p| p.row_counts() == counts.as_slice())
     }
 }
 

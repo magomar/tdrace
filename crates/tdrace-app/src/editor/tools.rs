@@ -322,7 +322,7 @@ impl Default for ToolSettings {
             split_branch_count: 2,
             chute_pad_width: 16.0,
             chute_pad_length: 40.0,
-            chute_pattern: PackedGridPattern::AutocrossFiveThree,
+            chute_pattern: PackedGridPattern::AutocrossThreeTwoThreeTwo,
             chute_surface: SurfaceType::Concrete,
             chute_status: None,
             escape_consumed: false,

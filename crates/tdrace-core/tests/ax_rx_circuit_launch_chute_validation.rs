@@ -30,7 +30,7 @@ fn launch_circuits() -> Vec<(String, Track)> {
 /// When `validate_track()` is executed on every circuit definition
 /// Then all 43 circuits contain a valid `LaunchChuteConfig`
 /// And zero boundary wall gaps or invalid spawn poses are detected
-/// And an Autocross chute holds 8 cars, a Rallycross chute 6
+/// And an Autocross chute holds 10 cars, a Rallycross chute 6
 #[test]
 fn test_all_43_circuits_have_a_valid_launch_chute() {
     let circuits = launch_circuits();
@@ -53,7 +53,7 @@ fn test_all_43_circuits_have_a_valid_launch_chute() {
         if !errors.is_empty() {
             problems.push(format!("{name}: {errors:?}"));
         }
-        let cars = if track.car_category == CarCategory::Rally { 6 } else { 8 };
+        let cars = if track.car_category == CarCategory::Rally { 6 } else { 10 };
         if chute.grid_slots.len() != cars || track.grid_positions != chute.grid_slots {
             problems.push(format!("{name}: the grid is not the chute's {cars} slots"));
         }
@@ -61,7 +61,7 @@ fn test_all_43_circuits_have_a_valid_launch_chute() {
     assert!(problems.is_empty(), "{problems:#?}");
 }
 
-/// The chute of each circuit has the category's template: Autocross a concrete 5-3 pad, Rallycross an asphalt 2-2-2 pad.
+/// The chute of each circuit has the category's template: Autocross a concrete 3-2-3-2 pad, Rallycross an asphalt 2-2-2 pad.
 #[test]
 fn test_each_category_has_its_pad_and_grid() {
     for (name, track) in launch_circuits() {
@@ -69,7 +69,7 @@ fn test_each_category_has_its_pad_and_grid() {
         let (surface, pattern) = if track.car_category == CarCategory::Rally {
             (SurfaceType::Asphalt, PackedGridPattern::RallycrossTwoTwoTwo)
         } else {
-            (SurfaceType::Concrete, PackedGridPattern::AutocrossFiveThree)
+            (SurfaceType::Concrete, PackedGridPattern::AutocrossThreeTwoThreeTwo)
         };
         assert_eq!(chute.surface, surface, "{name}");
         assert_eq!(PackedGridPattern::from_slots(&chute.grid_slots), Some(pattern), "{name}");

@@ -242,10 +242,14 @@ pub const PIT_BOX_COUNT_RANGE: (f32, f32) = (1.0, 40.0);
 pub const PIT_BOX_SPACING_RANGE: (f32, f32) = (4.0, 40.0);
 pub const LAYER_LABELS: [&str; 2] = ["Back", "Front"];
 pub const BRANCH_LABELS: [&str; 2] = ["2 branches", "3 branches"];
-/// Launch chute pad grids and surfaces, in the order of the inspector's segmented controls (spec 103, amended by spec 128).
-pub const CHUTE_PATTERNS: [PackedGridPattern; 3] =
-    [PackedGridPattern::AutocrossFiveThree, PackedGridPattern::RallycrossTwoTwoTwo, PackedGridPattern::UniformFourAcross];
-pub const CHUTE_PATTERN_LABELS: [&str; 3] = ["AX 5-3", "RX 2-2-2", "4 x 3"];
+/// Launch chute pad grids and surfaces, in the order of the inspector's segmented controls (spec 103, amended by spec 128 and spec 130).
+pub const CHUTE_PATTERNS: [PackedGridPattern; 4] = [
+    PackedGridPattern::AutocrossThreeTwoThreeTwo,
+    PackedGridPattern::AutocrossFiveThree,
+    PackedGridPattern::RallycrossTwoTwoTwo,
+    PackedGridPattern::UniformFourAcross,
+];
+pub const CHUTE_PATTERN_LABELS: [&str; 4] = ["AX 3-2-3-2", "AX 5-3", "RX 2-2-2", "4 x 3"];
 pub const CHUTE_SURFACES: [SurfaceType; 2] = [SurfaceType::Concrete, SurfaceType::Asphalt];
 pub const CHUTE_SURFACE_LABELS: [&str; 2] = ["Concrete", "Asphalt"];
 pub const CATEGORY_LABELS: [&str; 6] = ["GT", "Stock Car", "Rallycross", "Kart", "Off-Road", "Autocross"];

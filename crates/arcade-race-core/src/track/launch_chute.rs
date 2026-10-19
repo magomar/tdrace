@@ -69,14 +69,14 @@ pub struct LaunchChuteSpec {
 }
 
 impl LaunchChuteSpec {
-    /// A 16 m x 40 m concrete pad with the Autocross 5-3 grid.
+    /// A 16 m x 40 m concrete pad with the Autocross 3-2-3-2 grid (10 cars).
     pub fn new(merge_waypoint: usize, side: ChuteSide) -> Self {
         Self {
             merge_waypoint,
             side,
             pad_width: 16.0,
             pad_length: 40.0,
-            pattern: PackedGridPattern::AutocrossFiveThree,
+            pattern: PackedGridPattern::AutocrossThreeTwoThreeTwo,
             surface: SurfaceType::Concrete,
         }
     }

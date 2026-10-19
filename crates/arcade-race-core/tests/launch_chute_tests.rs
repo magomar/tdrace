@@ -32,8 +32,50 @@ fn test_packed_grid_five_three_rows() {
 }
 
 #[test]
+fn test_packed_grid_three_two_three_two_rows() {
+    let slots = generate_packed_launch_grid(
+        Vec2::new(100.0, 20.0),
+        Vec2::new(1.0, 0.0),
+        16.0,
+        PackedGridPattern::AutocrossThreeTwoThreeTwo,
+        6.5,
+    );
+    assert_eq!(slots.len(), 10);
+
+    // Row 1: slots 0..=2 (3 cars at x = 100.0)
+    for slot in &slots[0..3] {
+        assert!((slot.position.x - 100.0).abs() < 1e-4);
+    }
+    // Row 2: slots 3..=4 (2 cars at x = 93.5)
+    for slot in &slots[3..5] {
+        assert!((slot.position.x - 93.5).abs() < 1e-4);
+    }
+    // Row 3: slots 5..=7 (3 cars at x = 87.0)
+    for slot in &slots[5..8] {
+        assert!((slot.position.x - 87.0).abs() < 1e-4);
+    }
+    // Row 4: slots 8..=9 (2 cars at x = 80.5)
+    for slot in &slots[8..10] {
+        assert!((slot.position.x - 80.5).abs() < 1e-4);
+    }
+
+    // Lateral staggering: 2-car rows are laterally centered between the 3-car rows
+    let r1_y: Vec<f32> = slots[0..3].iter().map(|s| s.position.y).collect();
+    let r2_y: Vec<f32> = slots[3..5].iter().map(|s| s.position.y).collect();
+    for &y2 in &r2_y {
+        for &y1 in &r1_y {
+            assert!((y2 - y1).abs() > 1.0, "lateral stagger separation between rows");
+        }
+    }
+
+    assert!(slots.iter().all(|s| s.angle.abs() < 1e-6));
+    assert!(slots.iter().enumerate().all(|(i, s)| s.grid_slot == i));
+}
+
+#[test]
 fn test_packed_grid_patterns_have_their_row_counts() {
     for (pattern, rows) in [
+        (PackedGridPattern::AutocrossThreeTwoThreeTwo, vec![3, 2, 3, 2]),
         (PackedGridPattern::AutocrossFiveThree, vec![5, 3]),
         (PackedGridPattern::RallycrossTwoTwoTwo, vec![2, 2, 2]),
         (PackedGridPattern::UniformFourAcross, vec![4, 4, 4]),
@@ -60,6 +102,7 @@ fn test_packed_grid_patterns_have_their_row_counts() {
 fn test_packed_grid_stays_inside_the_pad() {
     for width in [14.0, 16.0, 18.0] {
         for pattern in [
+            PackedGridPattern::AutocrossThreeTwoThreeTwo,
             PackedGridPattern::AutocrossFiveThree,
             PackedGridPattern::RallycrossTwoTwoTwo,
             PackedGridPattern::UniformFourAcross,
@@ -316,8 +359,8 @@ mod stamp {
         assert_eq!(layout.segment_sequence.len(), 2, "the loop is split at the merge: {:?}", layout.segment_sequence);
         assert!(matches!(net.get_junction(chute.merge_junction_id).unwrap().kind, JunctionKind::Merge { .. }));
 
-        // Eight packed slots on the pad, which is the starting grid.
-        assert_eq!(chute.grid_slots.len(), 8);
+        // Ten packed slots on the pad, which is the starting grid (Spec 130).
+        assert_eq!(chute.grid_slots.len(), 10);
         assert_eq!(track.grid_positions, chute.grid_slots);
         assert!(chute.pad_width == spec.pad_width && chute.surface == SurfaceType::Concrete);
 
