@@ -4,6 +4,7 @@ template: architecture
 title: "Error-Free T4+ and T5+ Bot Tiers, Optimal Racing Line Trajectory Following, and Maximum-Pace Controller Unchoking"
 description: "Introduces error-free Pro+ (T4+) and Legend+ (T5+) bot variants with simulated human errors removed, spawns them as a fixed proportion of high-tier casual grids and an experience-scaling proportion in career championships, and upgrades BotAiDriver with OptimalRacingLine tracking and un-choked corner-exit pace."
 status: in_progress
+receipt: "docs/receipts/spec-131-receipt.md"
 verified: { by: human:mario, at: 2026-10-19T05:12:48Z, hash: "fb707dcf8cb1" }
 created: 2026-10-18
 generated: { by: agent/antigravity, at: 2026-10-18T18:46:25Z }
