@@ -214,7 +214,13 @@ pub fn tournament_bracket_view(champ: &SeriesSession) -> Option<TournamentBracke
                 });
             }
         }
-        let col_title = if round == 0 && config.qualifying_rounds > 1 && weekend.active_stage != TournamentStage::SuperPole {
+        let col_title = if round == 0 && weekend.active_stage == TournamentStage::SuperPole {
+            if is_ax {
+                "TIMED PRACTICE".to_string()
+            } else {
+                "SUPERPOLE".to_string()
+            }
+        } else if round == 0 && config.qualifying_rounds > 1 && weekend.active_stage != TournamentStage::SuperPole {
             let q_num = (weekend.current_qualifying_round + 1).min(config.qualifying_rounds);
             format!("{} (Q{}/{})", plural_title(stage, is_ax), q_num, config.qualifying_rounds)
         } else {

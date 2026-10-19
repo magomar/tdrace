@@ -54,7 +54,7 @@ fn test_clicking_a_waypoint_stamps_a_launch_chute() {
     assert_eq!(net.layouts[0].entry_segment, Some(chute.segment_id));
     assert!(chute.terminal_barrier.segment.length() >= chute.pad_width, "walled end cap");
     assert!(!chute.side_barriers.is_empty());
-    assert_eq!(chute.grid_slots.len(), 8, "8 packed grid slots");
+    assert_eq!(chute.grid_slots.len(), 10, "10 packed grid slots");
     assert_eq!(state.track.grid_positions, chute.grid_slots);
     assert_eq!(state.track.launch_chute_spec().unwrap().merge_waypoint, k);
     assert_eq!(error_codes(&state.track), Vec::<&str>::new());
@@ -168,7 +168,7 @@ fn test_inspector_controls_edit_the_chute() {
 
     apply_edit(&mut state, &mut tools, Edit::Do(Action::InsertLaunchChute));
     assert!(state.track.launch_chute().is_some());
-    assert_eq!(state.track.launch_chute().unwrap().grid_slots.len(), 8);
+    assert_eq!(state.track.launch_chute().unwrap().grid_slots.len(), 10);
 
     // Pad width: the chute is built again, 18 m wide; an out-of-range value is clamped to the range.
     apply_edit(&mut state, &mut tools, Edit::Set(Prop::ChutePadWidth, 18.0));
@@ -179,7 +179,7 @@ fn test_inspector_controls_edit_the_chute() {
     assert_eq!(state.track.launch_chute().unwrap().pad_width, 17.0);
 
     // Grid pattern and surface.
-    apply_edit(&mut state, &mut tools, Edit::Pick(Prop::ChutePattern, 1));
+    apply_edit(&mut state, &mut tools, Edit::Pick(Prop::ChutePattern, 2));
     apply_edit(&mut state, &mut tools, Edit::Pick(Prop::ChuteSurface, 1));
     let spec = state.track.launch_chute_spec().expect("chute read back");
     assert_eq!(spec.pattern, PackedGridPattern::RallycrossTwoTwoTwo);
@@ -193,7 +193,7 @@ fn test_inspector_controls_edit_the_chute() {
     let model = build_inspector(&state, &tools).unwrap();
     assert!(matches!(row(&model, "circuit.chute", "Pad width"), Row::Stepper { value: Common::Same(w), .. } if (*w - 17.0).abs() < 1e-4));
     assert!(matches!(row(&model, "circuit.chute", "Surface"), Row::Segmented { value: Common::Same(1), .. }));
-    assert!(matches!(row(&model, "circuit.chute", "Grid"), Row::Segmented { value: Common::Same(1), .. }));
+    assert!(matches!(row(&model, "circuit.chute", "Grid"), Row::Segmented { value: Common::Same(2), .. }));
 
     // Remove: the circuit is a plain one again, with its standard grid.
     apply_edit(&mut state, &mut tools, Edit::Do(Action::RemoveLaunchChute));

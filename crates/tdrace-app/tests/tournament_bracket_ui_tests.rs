@@ -147,7 +147,7 @@ fn the_bracket_scales_to_64_drivers_and_shows_declared_cars() {
 
     let def = SeriesDefinition::from_toml(SUPERBUGGY).unwrap();
     let mut session = def.to_session();
-    session.sync_initial_grid_slots(32, &tdrace_app::ai::DriverCharacter::all_across_modules());
+    session.sync_initial_grid_slots(30, &tdrace_app::ai::DriverCharacter::all_across_modules());
     session.ensure_tournament_weekend().unwrap();
     let view = tournament_bracket_view(&session).unwrap();
     let player = view.columns[0].groups.iter().flat_map(|g| &g.cards).find(|c| c.is_player).unwrap();
@@ -273,5 +273,49 @@ fn world_rx_bracket_and_hud_badges_for_superpole_q_rounds_and_6_car_stages() {
     assert!(view_semi.columns[1].is_active);
     assert!(view_semi.columns[1].groups.iter().all(|g| g.cards.len() == 6 && g.laps == 4));
 }
+
+/// Spec 130: FIA Autocross bracket view shows Timed Practice flights, AX intermediate Top-20 heat advancement, and 10-car grids.
+#[test]
+fn fia_autocross_bracket_and_hud_badges_for_timed_practice_and_10_car_stages() {
+    let config = TournamentConfig::autocross_default();
+    let mut session = weekend_session(config);
+
+    // 1. Stage 0: Timed Practice
+    assert_eq!(stage_badge(&session).as_deref(), Some("TIMED PRACTICE"));
+    let view_tp = tournament_bracket_view(&session).unwrap();
+    assert_eq!(view_tp.columns[0].title, "TIMED PRACTICE");
+    assert_eq!(view_tp.columns[0].groups.len(), 3);
+    assert_eq!(view_tp.columns[0].groups[0].label, "TIMED PRACTICE FLIGHT 1");
+    assert_eq!(view_tp.columns[0].groups[1].label, "TIMED PRACTICE FLIGHT 2");
+    assert_eq!(view_tp.columns[0].groups[2].label, "TIMED PRACTICE FLIGHT 3");
+    assert!(view_tp.columns[0].groups.iter().all(|g| g.cards.len() == 10 && g.laps == 2));
+    assert!(view_tp.launch_label.contains("TIMED PRACTICE"), "{}", view_tp.launch_label);
+
+    play(&mut session, 1);
+
+    // 2. Qualifying Heats
+    let badge_heat = stage_badge(&session).unwrap();
+    assert!(badge_heat.starts_with("HEAT ") && badge_heat.ends_with("/3"), "{}", badge_heat);
+    let view_heat = tournament_bracket_view(&session).unwrap();
+    assert_eq!(view_heat.columns[0].title, "QUALIFYING HEATS");
+    assert_eq!(view_heat.columns[0].groups.len(), 3);
+    assert!(view_heat.columns[0].groups.iter().all(|g| g.cards.len() == 10 && g.laps == 4));
+
+    play(&mut session, 1);
+
+    // 3. Semifinals: exactly 20 heat cards across the 3 heats are marked `advanced == Some(true)` (Top 20 AX cutoff)
+    let view_semi = tournament_bracket_view(&session).unwrap();
+    let adv_count = view_semi.columns[0]
+        .groups
+        .iter()
+        .flat_map(|g| &g.cards)
+        .filter(|c| c.advanced == Some(true))
+        .count();
+    assert_eq!(adv_count, 20, "Top 20 qualifiers are marked advanced for Semifinals");
+    assert!(view_semi.columns[1].is_active);
+    assert_eq!(view_semi.columns[1].groups.len(), 2);
+    assert!(view_semi.columns[1].groups.iter().all(|g| g.cards.len() == 10 && g.laps == 5));
+}
+
 
 

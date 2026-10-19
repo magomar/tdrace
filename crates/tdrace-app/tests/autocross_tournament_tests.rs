@@ -6,13 +6,57 @@ use std::collections::HashSet;
 
 use tdrace_app::series::{
     PointSystem, RoundDriverResult, SeriesDefinition, SeriesSession, SeriesStandingEntry, TournamentConfig, TournamentRace,
-    TournamentStage, TournamentWeekendState, WeekendFormat, DNF_TIME, TOURNAMENT_POINTS_32, WORLD_RX_FINAL_POINTS_6,
-    WORLD_RX_INTERMEDIATE_POINTS_12, WORLD_RX_SEMI_POINTS_6,
+    TournamentStage, TournamentWeekendState, WeekendFormat, AX_INTERMEDIATE_CUTOFF, DNF_TIME, FIA_AX_FINAL_POINTS_10,
+    FIA_AX_INTERMEDIATE_POINTS_10, TOURNAMENT_POINTS_32, WORLD_RX_FINAL_POINTS_6, WORLD_RX_INTERMEDIATE_POINTS_12,
+    WORLD_RX_SEMI_POINTS_6,
 };
 
-const SUPERBUGGY: &str = include_str!("../../../series/autocross/autocross_superbuggy_world_series.toml");
-const CROSSCAR_AX: &str = include_str!("../../../series/autocross/autocross_crosscar_junior_trophy.toml");
+const AX_TIER1: &str = include_str!("../../../series/autocross/autocross_crosscar_junior_trophy.toml");
+const AX_TIER2: &str = include_str!("../../../series/autocross/autocross_crosscar_senior_challenge.toml");
+const AX_TIER3: &str = include_str!("../../../series/autocross/autocross_buggy1600_championship.toml");
+const AX_TIER4: &str = include_str!("../../../series/autocross/autocross_touring_masters.toml");
+const AX_TIER5: &str = include_str!("../../../series/autocross/autocross_superbuggy_world_series.toml");
+const SUPERBUGGY: &str = AX_TIER5;
 const WORLD_RX: &str = include_str!("../../../series/rally/rally_world_rallycross_supercars.toml");
+
+const LEGACY_32_TOURNAMENT: &str = r#"
+[championship]
+id = "legacy_autocross_32"
+name = "Legacy Autocross 32"
+description = "Legacy 32-driver tournament format"
+module_id = "autocross"
+tier = 1
+laps_per_round = 4
+bot_count = 7
+ai_difficulty = "standard"
+icon = "dirt"
+weekend_format = "tournament_sprint"
+total_drivers = 32
+heat_laps = 3
+semi_laps = 4
+final_laps = 5
+
+[scoring]
+system = "tournament"
+fastest_lap_bonus = true
+
+[[rounds]]
+order = 1
+track_id = "seelow_ax"
+name = "Circuit Am Weinberg Seelow"
+laps = 4
+
+[[drivers]]
+id = "player"
+name = "Player"
+team = "Apex"
+is_player = true
+
+[[drivers]]
+id = "mateo"
+name = "Mateo"
+team = "Apex"
+"#;
 
 fn field(n: usize) -> Vec<SeriesStandingEntry> {
     let mut entries = vec![SeriesStandingEntry::new("player", "Player", "Apex")];
@@ -83,7 +127,7 @@ fn ids(race: &TournamentRace) -> HashSet<&str> {
 /// And drivers should be partitioned into 4 Qualifying Heats of 8 cars each
 #[test]
 fn the_32_driver_field_is_drawn_into_4_heats_of_8() {
-    for toml in [SUPERBUGGY, CROSSCAR_AX] {
+    for toml in [LEGACY_32_TOURNAMENT] {
         let def = SeriesDefinition::from_toml(toml).unwrap();
         assert_eq!(def.series.weekend_format, WeekendFormat::TournamentSprint);
         assert_eq!(
@@ -242,7 +286,7 @@ fn the_player_is_in_exactly_one_scheduled_race_at_every_step() {
 /// And the player profile and standings table should update atomically
 #[test]
 fn all_32_drivers_are_scored_by_final_rank_in_one_update() {
-    let def = SeriesDefinition::from_toml(SUPERBUGGY).unwrap();
+    let def = SeriesDefinition::from_toml(LEGACY_32_TOURNAMENT).unwrap();
     let mut session = def.to_session();
     let pool = tdrace_app::ai::DriverCharacter::all_across_modules();
     session.sync_initial_grid_slots(32, &pool);
@@ -447,7 +491,7 @@ fn weekend_keys_are_declared_only_by_tournament_series() {
 
     let mut bad = tournament.clone();
     bad.series.total_drivers = Some(20);
-    assert!(bad.validate().unwrap_err().iter().any(|e| e.contains("16, 24, 32 or 64")));
+    assert!(bad.validate().unwrap_err().iter().any(|e| e.contains("16, 24, 30, 32 or 64")));
 }
 
 /// Re-running the round of a finished weekend starts a new weekend.
@@ -826,5 +870,286 @@ fn world_rx_three_stage_cumulative_championship_points() {
         + WORLD_RX_FINAL_POINTS_6.iter().sum::<u32>();
     let actual_total_pool: u32 = session.standings.iter().map(|s| s.points).sum();
     assert_eq!(actual_total_pool, expected_total_pool);
+}
+
+// =============================================================================
+// Spec 130: FIA European Autocross 10-Car 3-2-3-2 Grids, Timed Qualifying
+// Practice, 30-Driver Knockout Format, Two-Phase Scoring, and Expanded Calendars
+// =============================================================================
+
+/// Scenario: Stage 0 Timed Qualifying Practice and Snake Seeding into 3 Heats of 10 Cars
+#[test]
+fn fia_autocross_30_driver_timed_practice_and_snake_seeding_into_3_heats_of_10() {
+    let def = SeriesDefinition::from_toml(AX_TIER5).unwrap();
+    assert_eq!(def.series.weekend_format, WeekendFormat::TournamentSprint);
+    assert_eq!(def.series.bot_count, Some(9));
+    assert_eq!(
+        def.series.tournament_config(),
+        Some(TournamentConfig { total_drivers: 30, heat_laps: 4, semi_laps: 5, final_laps: 6, qualifying_rounds: 1 })
+    );
+    assert!(def.validate().is_ok());
+
+    let entries = field(30);
+    let mut weekend = TournamentWeekendState::new(TournamentConfig::autocross_default(), &entries, 130).unwrap();
+    assert_eq!(weekend.active_stage, TournamentStage::SuperPole);
+    let sp_race = weekend.player_race().expect("Timed Practice scheduled").clone();
+    assert_eq!(sp_race.stage, TournamentStage::SuperPole);
+    assert_eq!(sp_race.laps, 2, "1 out-lap + 1 flying lap");
+    assert_eq!(sp_race.driver_ids, vec!["player".to_string()], "solo driver on track");
+
+    // Submit deterministic 30-driver flying lap times so P1..P30 order is known exactly.
+    let sp_results: Vec<RoundDriverResult> = entries
+        .iter()
+        .enumerate()
+        .map(|(i, e)| result(&e.driver_id, i + 1, 35.0 + i as f32 * 0.2))
+        .collect();
+    weekend.submit_player_race(sp_results, &entries).unwrap();
+
+    assert_eq!(weekend.superpole_results.len(), 30);
+    assert_eq!(weekend.active_stage, TournamentStage::QualifyingHeat);
+    assert_eq!(weekend.active_races.len(), 3);
+    for h in &weekend.active_races {
+        assert_eq!(h.driver_ids.len(), 10);
+        assert_eq!(h.laps, 4);
+    }
+
+    let p = |rank_1_based: usize| entries[rank_1_based - 1].driver_id.clone();
+    assert_eq!(weekend.active_races[0].driver_ids, vec![p(1), p(6), p(7), p(12), p(13), p(18), p(19), p(24), p(25), p(30)], "Heat 1 snake seed");
+    assert_eq!(weekend.active_races[1].driver_ids, vec![p(2), p(5), p(8), p(11), p(14), p(17), p(20), p(23), p(26), p(29)], "Heat 2 snake seed");
+    assert_eq!(weekend.active_races[2].driver_ids, vec![p(3), p(4), p(9), p(10), p(15), p(16), p(21), p(22), p(27), p(28)], "Heat 3 snake seed");
+}
+
+/// Scenario: Best 2-of-3 Heats Drops Worst Heat and DNF in Multi-Round Mode
+#[test]
+fn fia_autocross_best_2_of_3_heats_drops_worst_heat_and_dnf() {
+    let entries = field(30);
+    let config = TournamentConfig {
+        total_drivers: 30,
+        heat_laps: 4,
+        semi_laps: 5,
+        final_laps: 6,
+        qualifying_rounds: 3,
+    };
+    let mut weekend = TournamentWeekendState::new(config, &entries, 42).unwrap();
+    // Finish Timed Practice
+    drive(&mut weekend, &entries, 1);
+    assert_eq!(weekend.active_stage, TournamentStage::QualifyingHeat);
+    assert_eq!(weekend.current_qualifying_round, 0);
+
+    // Run Q1: Player finishes 1st with fast time 120.0s
+    let player_heat_1 = weekend.player_race().unwrap().clone();
+    let mut q1_res = race_results(&player_heat_1, 1);
+    for (i, r) in q1_res.iter_mut().enumerate() {
+        r.total_time = 120.0 + i as f32 * 1.0;
+    }
+    weekend.submit_player_race(q1_res, &entries).unwrap();
+    assert_eq!(weekend.current_qualifying_round, 1);
+
+    // Run Q2: Player has an engine failure / DNF (9999.0s)
+    let player_heat_2 = weekend.player_race().unwrap().clone();
+    let mut q2_res = race_results(&player_heat_2, 10);
+    for (i, r) in q2_res.iter_mut().enumerate() {
+        if r.driver_id == "player" {
+            r.total_time = DNF_TIME;
+            r.finish_position = 10;
+        } else {
+            r.total_time = 122.0 + i as f32 * 1.0;
+        }
+    }
+    weekend.submit_player_race(q2_res, &entries).unwrap();
+    assert_eq!(weekend.current_qualifying_round, 2);
+
+    // Run Q3: Player recovers and finishes 1st with fast time 119.0s
+    let player_heat_3 = weekend.player_race().unwrap().clone();
+    let mut q3_res = race_results(&player_heat_3, 1);
+    for (i, r) in q3_res.iter_mut().enumerate() {
+        r.total_time = 119.0 + i as f32 * 1.0;
+    }
+    weekend.submit_player_race(q3_res, &entries).unwrap();
+
+    // Now all 3 heats are done -> Intermediate Classification computed via Best 2-of-3!
+    assert_eq!(weekend.active_stage, TournamentStage::Semifinal);
+    assert_eq!(weekend.intermediate_standings.len(), 30);
+
+    // Verify Player's Intermediate Classification: DNF was dropped, and best 2 sum (120.0 + 119.0 = 239.0s) qualifies in Top 5!
+    let player_inter = weekend.intermediate_standings.iter().find(|s| s.driver_id == "player").unwrap();
+    assert!(player_inter.finish_position <= 5, "Best 2-of-3 dropped the DNF; rank is {}", player_inter.finish_position);
+    assert!((player_inter.total_time - 239.0).abs() < 1e-3, "Total time is sum of best 2 heats (120 + 119 = 239)");
+}
+
+/// Scenario: Top 20 Odd/Even Semifinals and Top 5 Advancement to 10-Car Grand Final
+#[test]
+fn fia_autocross_top_20_odd_even_semis_and_top_5_advancement_to_10_car_final() {
+    let entries = field(30);
+    let mut weekend = TournamentWeekendState::new(TournamentConfig::autocross_default(), &entries, 99).unwrap();
+    // Timed practice
+    drive(&mut weekend, &entries, 1);
+    // Heat
+    drive(&mut weekend, &entries, 1);
+    assert_eq!(weekend.active_stage, TournamentStage::Semifinal);
+    assert_eq!(weekend.active_races.len(), 2);
+    assert_eq!(weekend.active_races[0].driver_ids.len(), 10);
+    assert_eq!(weekend.active_races[1].driver_ids.len(), 10);
+
+    // Verify Odd/Even seeding from Intermediate Classification:
+    let inter = &weekend.intermediate_standings;
+    for (idx, id) in weekend.active_races[0].driver_ids.iter().enumerate() {
+        assert_eq!(*id, inter[idx * 2].driver_id, "Semi 1 has odd ranks (0, 2, 4...)");
+    }
+    for (idx, id) in weekend.active_races[1].driver_ids.iter().enumerate() {
+        assert_eq!(*id, inter[idx * 2 + 1].driver_id, "Semi 2 has even ranks (1, 3, 5...)");
+    }
+
+    // Player in Semi 1 finishes 3rd.
+    let semi_race = weekend.player_race().unwrap().clone();
+    let semi_res = race_results(&semi_race, 3);
+    weekend.submit_player_race(semi_res, &entries).unwrap();
+
+    assert_eq!(weekend.active_stage, TournamentStage::GrandFinal);
+    let gf_race = weekend.player_race().unwrap().clone();
+    assert_eq!(gf_race.driver_ids.len(), 10);
+    assert!(gf_race.driver_ids.contains(&"player".to_string()), "Player finished 3rd in Semi so advanced to Grand Final");
+
+    // Check that Grand Final has exactly top 5 from Semi 1 and top 5 from Semi 2
+    let semi1_top5: HashSet<String> = weekend.semi_results[0].iter().take(5).map(|r| r.driver_id.clone()).collect();
+    let semi2_top5: HashSet<String> = weekend.semi_results[1].iter().take(5).map(|r| r.driver_id.clone()).collect();
+    for id in &gf_race.driver_ids {
+        assert!(semi1_top5.contains(id) || semi2_top5.contains(id));
+    }
+}
+
+/// Scenario: Continuous Player Racing in Option A Consolation Semi and B-Final
+#[test]
+fn fia_autocross_continuous_player_racing_in_consolation_semi_and_b_final() {
+    let entries = field(30);
+    let mut weekend = TournamentWeekendState::new(TournamentConfig::autocross_default(), &entries, 55).unwrap();
+    // Timed practice
+    drive(&mut weekend, &entries, 30);
+    // Heat: Player finishes 10th with slow time so places in 21st-30th of Intermediate Classification
+    let heat_race = weekend.player_race().unwrap().clone();
+    let mut heat_res = race_results(&heat_race, 10);
+    for r in heat_res.iter_mut() {
+        if r.driver_id == "player" {
+            r.total_time = 300.0;
+        } else {
+            r.total_time = 100.0;
+        }
+    }
+    weekend.submit_player_race(heat_res, &entries).unwrap();
+
+    assert_eq!(weekend.active_stage, TournamentStage::ConsolationSemifinal);
+    let player_inter_rank = weekend.intermediate_standings.iter().position(|s| s.driver_id == "player").unwrap();
+    assert!(player_inter_rank >= AX_INTERMEDIATE_CUTOFF, "Player is in ranks 21..=30");
+
+    let conso_race = weekend.player_race().unwrap().clone();
+    assert_eq!(conso_race.stage, TournamentStage::ConsolationSemifinal);
+    assert_eq!(conso_race.driver_ids.len(), 10);
+    assert!(conso_race.driver_ids.contains(&"player".to_string()));
+
+    // Drive consolation semi
+    drive(&mut weekend, &entries, 1);
+    assert_eq!(weekend.active_stage, TournamentStage::ConsolationBFinal);
+    let b_final_race = weekend.player_race().unwrap().clone();
+    assert_eq!(b_final_race.stage, TournamentStage::ConsolationBFinal);
+    assert_eq!(b_final_race.driver_ids.len(), 10);
+    assert!(b_final_race.driver_ids.contains(&"player".to_string()), "Player gets continuous racing in B-Final");
+
+    // Complete B-Final
+    assert_eq!(drive(&mut weekend, &entries, 1), TournamentStage::ConsolationBFinal);
+    assert!(weekend.is_complete);
+    assert_eq!(weekend.final_standings().unwrap().len(), 30);
+}
+
+/// Scenario: Two-Phase FIA Autocross Scoring and 35-Point Max Weekend Score
+#[test]
+fn fia_autocross_two_phase_scoring_and_35_point_max_score() {
+    let def = SeriesDefinition::from_toml(AX_TIER5).unwrap();
+    let mut session = def.to_session();
+    let pool = tdrace_app::ai::DriverCharacter::all_across_modules();
+    session.sync_initial_grid_slots(30, &pool);
+    session.ensure_tournament_weekend().unwrap();
+
+    // 1. Timed Practice: Player finishes 1st
+    let _sp_race = session.tournament_race().unwrap().clone();
+    let sp_res = vec![RoundDriverResult {
+        driver_id: "player".to_string(),
+        driver_name: "Player".to_string(),
+        team_name: "T".to_string(),
+        finish_position: 1,
+        total_time: 32.0,
+        best_lap: Some(32.0),
+        points_awarded: 0,
+        has_fastest_lap: true,
+    }];
+    assert!(!session.submit_tournament_race("Seelow", sp_res).unwrap());
+
+    // 2. Heat 1: Player wins Heat 1 with fastest time (110.0s) -> 1st in Intermediate Classification (10 pts)
+    let heat_race = session.tournament_race().unwrap().clone();
+    let mut heat_res = race_results(&heat_race, 1);
+    for (i, r) in heat_res.iter_mut().enumerate() {
+        r.total_time = 110.0 + i as f32 * 1.0;
+    }
+    assert!(!session.submit_tournament_race("Seelow", heat_res).unwrap());
+
+    // 3. Semifinal 1: Player wins Semi 1
+    let semi_race = session.tournament_race().unwrap().clone();
+    assert_eq!(semi_race.stage, TournamentStage::Semifinal);
+    assert!(!session.submit_tournament_race("Seelow", race_results(&semi_race, 1)).unwrap());
+
+    let weekend_before_final = session.tournament.as_ref().unwrap().clone();
+
+    // 4. Grand Final: Player wins Grand Final -> 25 pts!
+    // Total points = 10 (Intermediate) + 25 (Grand Final) = 35 pts!
+    let gf_race = session.tournament_race().unwrap().clone();
+    assert_eq!(gf_race.stage, TournamentStage::GrandFinal);
+    let gf_results = race_results(&gf_race, 1);
+    let mut completed_weekend = weekend_before_final;
+    completed_weekend.submit_player_race(gf_results.clone(), &session.standings).unwrap();
+
+    assert!(session.submit_tournament_race("Seelow", gf_results).unwrap(), "weekend finishes");
+    assert_eq!(session.current_round, 1);
+    let round = &session.history[0];
+    assert_eq!(round.results.len(), 30);
+
+    for r in &round.results {
+        let (inter_pts, semi_pts, final_pts) = completed_weekend.driver_stage_points(&r.driver_id);
+        assert_eq!(semi_pts, 0, "FIA Autocross does not award semi points");
+        assert_eq!(r.points_awarded, inter_pts + final_pts, "2-phase sum for {}", r.driver_id);
+    }
+
+    let player_res = round.results.iter().find(|r| r.driver_id == "player").unwrap();
+    assert_eq!(player_res.points_awarded, 35, "Perfect weekend earns 10 + 25 = 35 pts");
+
+    let expected_total_pool: u32 = FIA_AX_INTERMEDIATE_POINTS_10.iter().sum::<u32>()
+        + FIA_AX_FINAL_POINTS_10.iter().sum::<u32>();
+    let actual_total_pool: u32 = session.standings.iter().map(|s| s.points).sum();
+    assert_eq!(actual_total_pool, expected_total_pool);
+}
+
+/// Scenario: Progressive European Season Calendars across All 5 Career Tiers
+#[test]
+fn fia_autocross_all_5_series_tomls_load_with_30_drivers_and_progressive_calendars() {
+    let tomls = [
+        (AX_TIER1, 1, 5, "autocross_crosscar_junior_trophy"),
+        (AX_TIER2, 2, 6, "autocross_crosscar_senior_challenge"),
+        (AX_TIER3, 3, 7, "autocross_buggy1600_championship"),
+        (AX_TIER4, 4, 8, "autocross_touring_masters"),
+        (AX_TIER5, 5, 10, "autocross_superbuggy_world_series"),
+    ];
+
+    for (toml_content, tier, round_count, id) in tomls {
+        let def = SeriesDefinition::from_toml(toml_content).unwrap();
+        assert_eq!(def.series.id, id);
+        assert_eq!(def.series.tier, tier);
+        assert_eq!(def.series.weekend_format, WeekendFormat::TournamentSprint);
+        assert_eq!(def.series.total_drivers, Some(30));
+        assert_eq!(def.series.bot_count, Some(9));
+        assert_eq!(def.rounds.len(), round_count);
+        assert!(def.validate().is_ok());
+
+        let session = def.to_session();
+        assert_eq!(session.total_rounds(), round_count);
+        assert!(session.is_tournament());
+    }
 }
 
