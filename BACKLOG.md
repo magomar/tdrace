@@ -162,7 +162,15 @@ The `cabinet` crate (`crates/cabinet`) is now an opinionated, batteries-included
   - 3D car models (current vehicles are top-down sprites). Largest art cost.
   - Scenery for a visible horizon: walls, barriers, grandstands, trees, sky.
   - Hills and banked turns. The world is flat; banking matters for ovals and needs physics work.
-  - Lighting and shadows. Macroquad 3D has none built in; a polished look may need a different engine, which needs a `TECH_STACK.md` change.
+  - **Lighting and shadows**: Macroquad 3D has none built in; a polished look may need a different engine, which needs a `TECH_STACK.md` change.
+
+### 2.13 Nations' Cup Standings & Multi-Driver Country Trophy (FIA Autocross)
+- **Motivation**: In the FIA European Autocross Championship, drivers compete not only for individual driver titles but also for the prestigious Nations' Cup, aggregating points from the top drivers of each nation across categories.
+- **Scope**: Nationality flags/iso-codes for competitor profiles, player country selection, and a dedicated Nations' Cup standings table in the championship summary.
+
+### 2.14 JuniorBuggy Feeder Class (600cc 4WD)
+- **Motivation**: JuniorBuggy serves as the primary junior ladder (ages 13–21) in FIA Autocross, featuring lightweight 600cc motorcycle-engined 4WD buggies bridging Grassroots Karting and Buggy1600 / SuperBuggy.
+- **Scope**: Vehicle archetype with restricted 600cc powerband, light chassis, and junior progression tier.
 - **Staged approach**:
   1. *Feasibility prototype (days)*: chase camera, flat extruded road, box cars, one GT circuit. Goal: decide if 3D feels better than top-down for GT/stock cars.
   2. *Presentable view (weeks)*: low-poly GT and stock car models, barriers, sky, simple shading, cockpit camera option.
