@@ -4652,11 +4652,18 @@ impl RaceSession {
             };
 
             let (bot_car_choice, bot_car_title, bot_model_id, bot_scheme) = if !category_models.is_empty() {
+                let champ_model_opt = self
+                    .championship_session
+                    .as_ref()
+                    .and_then(|c| c.standings.iter().find(|s| s.driver_id == character.id))
+                    .and_then(|s| s.car_model_id.as_deref())
+                    .and_then(crate::catalog::find_model_by_id);
+
                 let favorite_model_opt = character
                     .favorite_car_for_discipline_and_tier(effective_module, bot_tier.to_u8())
                     .and_then(|fav_id| category_models.iter().copied().find(|m| m.id == fav_id));
 
-                let bot_model = favorite_model_opt.unwrap_or_else(|| {
+                let bot_model = champ_model_opt.or(favorite_model_opt).unwrap_or_else(|| {
                     category_models[bot_idx % category_models.len()]
                 });
                 let scheme = Self::resolve_bot_color_scheme(
@@ -4905,7 +4912,8 @@ impl RaceSession {
             };
             let bot_profile = character.resolve_profile_for_module(&self.active_module_id, bot_tier);
             let bot_seed = bot_participant.map(|p| p.random_seed).unwrap_or(bot_idx as u64);
-            let mut bot_ai = BotAiDriver::with_seed(bot_profile, bot_seed).with_pit_stall(bot_idx + 1);
+            let mut bot_ai = BotAiDriver::with_seed(bot_profile, bot_seed)
+                .with_pit_stall(bot_idx + 1);
             if bot_ai.profile.aggression > 0.8 {
                 bot_ai = bot_ai.with_route_strategy(crate::ai::BotRouteStrategy::RallycrossJoker {
                     planned_joker_lap: 2,
@@ -5003,7 +5011,23 @@ impl RaceSession {
                 }
             }
             if let Some(champ) = &mut self.championship_session {
+                if champ.module_id.is_empty() {
+                    champ.module_id = effective_module.to_string();
+                }
                 champ.sync_initial_grid_slots(circuit_slots, &fallback_pool);
+
+                let should_eval_subs = !champ.is_completed
+                    && !champ.tournament_in_progress()
+                    && champ.last_substitution_round != Some(champ.current_round)
+                    && (champ.current_round > 0
+                        || (self.game_mode == GameMode::Career
+                            && (champ.tier > 1 || self.active_career_progress.level > 1)));
+                if should_eval_subs {
+                    champ.last_substitution_round = Some(champ.current_round);
+                    let sub_seed = crate::series::weekend_seed(&champ.name, champ.current_round)
+                        .wrapping_add(self.fixed_roster_seed.unwrap_or(0x700D_CAFE));
+                    champ.evaluate_pre_race_substitutions(sub_seed);
+                }
             }
             if self.game_mode == GameMode::Career {
                 if let Some(champ) = &self.championship_session {
@@ -5024,6 +5048,7 @@ impl RaceSession {
                         })
                         .collect();
                     self.active_career_progress.career_rivals = rivals;
+                    self.active_career_progress.active_championship = Some(champ.clone());
                 }
             }
         }
@@ -6565,8 +6590,54 @@ impl RaceSession {
         }
     }
 
+    /// Returns true when the active championship has unacknowledged driver substitution events for the pre-race modal.
+    pub fn has_pending_substitution_modal(&self) -> bool {
+        self.championship_session
+            .as_ref()
+            .is_some_and(|c| !c.pending_substitutions.is_empty())
+    }
+
+    /// Dismisses the pre-race driver substitution modal and clears `pending_substitutions`.
+    pub fn dismiss_substitution_modal(&mut self) -> bool {
+        if let Some(champ) = &mut self.championship_session {
+            if !champ.pending_substitutions.is_empty() {
+                champ.pending_substitutions.clear();
+                self.active_career_progress.active_championship = Some(champ.clone());
+                self.audio.play_sfx(SfxType::UiSelect);
+                return true;
+            }
+        }
+        false
+    }
+
+    /// Processes keyboard, mouse, or gamepad confirmation/cancellation to dismiss the pre-race substitution modal.
+    /// Returns true if the modal was active and dismissed on this frame.
+    pub fn handle_substitution_modal_input(&mut self) -> bool {
+        if !self.has_pending_substitution_modal() {
+            return false;
+        }
+        let dismiss_pressed = is_key_pressed(KeyCode::Enter)
+            || is_key_pressed(KeyCode::KpEnter)
+            || is_key_pressed(KeyCode::Space)
+            || is_key_pressed(KeyCode::Escape)
+            || is_mouse_button_pressed(macroquad::input::MouseButton::Left)
+            || self.input.gamepad.snapshot.btn_confirm_pressed
+            || self.input.gamepad.snapshot.btn_a_pressed
+            || self.input.gamepad.snapshot.btn_b_pressed
+            || self.input.gamepad.snapshot.btn_cancel_pressed;
+        if dismiss_pressed {
+            self.dismiss_substitution_modal();
+            return true;
+        }
+        false
+    }
+
     /// Updates input and state progression when in the StartingGrid screen.
     pub fn update_starting_grid(&mut self) {
+        if is_window_active() && self.has_pending_substitution_modal() {
+            self.handle_substitution_modal_input();
+            return;
+        }
         let (sw, sh) = (screen_width_safe(), screen_height_safe());
         let (btn_x, btn_y, btn_w, btn_h) = crate::ui::starting_grid_launch_button_rect(sw, sh);
         let (g_btn_x, g_btn_y, g_btn_w, g_btn_h) = crate::ui::starting_grid_garage_button_rect(sw, sh);
@@ -7466,6 +7537,7 @@ impl RaceSession {
                             });
                         }
                     }
+
                     self.active_career_progress.active_championship = None;
                 } else {
                     self.active_career_progress.active_championship = Some(champ.clone());
@@ -7616,6 +7688,10 @@ impl RaceSession {
 
     /// Updates input on the tournament bracket between stages: launch the player's next race or leave.
     pub fn update_tournament_bracket(&mut self) {
+        if is_window_active() && self.has_pending_substitution_modal() {
+            self.handle_substitution_modal_input();
+            return;
+        }
         if is_key_pressed(KeyCode::Enter)
             || is_key_pressed(KeyCode::Space)
             || is_key_pressed(KeyCode::KpEnter)
@@ -14648,6 +14724,9 @@ impl RaceSession {
             GameState::TournamentBracket => {
                 if let Some(champ) = &self.championship_session {
                     crate::ui::tournament_bracket::render_tournament_bracket_screen(&self.fonts, champ);
+                    if !champ.pending_substitutions.is_empty() {
+                        crate::ui::render_substitution_modal(&self.fonts, &champ.pending_substitutions);
+                    }
                 } else {
                     self.state = GameState::Menu;
                 }
@@ -14691,6 +14770,11 @@ impl RaceSession {
                     self.casual_ai_difficulty,
                     self.starting_grid_config_idx,
                 );
+                if let Some(champ) = &self.championship_session {
+                    if !champ.pending_substitutions.is_empty() {
+                        crate::ui::render_substitution_modal(&self.fonts, &champ.pending_substitutions);
+                    }
+                }
             }
             GameState::Countdown(remaining) => {
 
@@ -15144,6 +15228,9 @@ impl RaceSession {
         self.switch_to_module(&def.series.module_id);
 
         let champ = if let Some(mut existing) = existing_session {
+            if existing.module_id.is_empty() {
+                existing.module_id = def.series.module_id.clone();
+            }
             if let Some(cfg) = def.series.tournament_config() {
                 existing.weekend_format = crate::series::WeekendFormat::TournamentSprint;
                 existing.tournament_config = Some(cfg);
@@ -15154,9 +15241,12 @@ impl RaceSession {
                     }
                 }
             }
+            existing.ensure_valid_roster_cars_and_teams();
             existing
         } else {
-            let mut c = def.to_session();
+            let roster_seed = crate::series::weekend_seed(&def.series.id, def.series.tier as usize)
+                .wrapping_add(self.fixed_roster_seed.unwrap_or(0));
+            let mut c = def.to_session_with_dynamic_roster(roster_seed);
             let history_rounds = self.profile_history.iter().filter(|h| {
                 h.category == def.series.module_id
                     && h.championship_name.as_deref().is_some_and(|name| {

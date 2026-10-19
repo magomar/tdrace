@@ -235,6 +235,7 @@ pub struct SeriesDefinition {
     #[serde(default)]
     pub scoring: ScoringConfig,
     pub rounds: Vec<RoundConfig>,
+    #[serde(default)]
     pub drivers: Vec<DriverConfig>,
 }
 
@@ -356,8 +357,58 @@ impl SeriesDefinition {
         }
     }
 
+    /// Converts this declarative series definition into an active runtime `SeriesSession`
+    /// with a dynamically synthesized AI roster (uniform 1/6 driving styles, bell-curve skill tiers,
+    /// and 100% valid catalog `car_model_id` and constructor teams) given a random `seed`.
+    pub fn to_session_with_dynamic_roster(&self, seed: u64) -> SeriesSession {
+        let point_system = self.scoring.to_point_system();
+        let track_ids: Vec<String> = self.rounds.iter().map(|r| r.track_id.clone()).collect();
+        let round_laps: Vec<Option<u32>> = self.rounds.iter().map(|r| r.laps).collect();
+
+        let total_drivers = self
+            .series
+            .tournament_config()
+            .map(|c| c.total_drivers)
+            .or_else(|| self.series.bot_count.map(|b| b + 1))
+            .unwrap_or_else(|| self.drivers.len().max(8));
+
+        let player_cfg = self.drivers.iter().find(|d| d.is_player || d.id == "player");
+        let player_team = player_cfg.map(|d| d.team.as_str()).unwrap_or("");
+        let player_car = player_cfg.and_then(|d| d.car_model_id.as_deref());
+
+        let mut session = SeriesSession::generate_dynamic_roster(
+            &self.series.name,
+            &self.series.module_id,
+            self.series.tier,
+            point_system,
+            track_ids,
+            self.series.laps_per_round,
+            total_drivers,
+            player_team,
+            player_car,
+            seed,
+        )
+        .with_round_laps(round_laps);
+
+        if let Some(p_cfg) = player_cfg {
+            if let Some(player_st) = session.standings.iter_mut().find(|s| s.driver_id == "player") {
+                player_st.driver_name = p_cfg.name.clone();
+            }
+        }
+
+        match self.series.tournament_config() {
+            Some(config) if config.validate().is_ok() => session.with_tournament(config),
+            _ => session,
+        }
+    }
+
     /// Converts this declarative series definition into an active runtime `SeriesSession`.
     pub fn to_session(&self) -> SeriesSession {
+        if self.drivers.is_empty() || self.series.weekend_format == WeekendFormat::TournamentSprint {
+            let seed = super::weekend_seed(&self.series.id, self.series.tier as usize);
+            return self.to_session_with_dynamic_roster(seed);
+        }
+
         let point_system = self.scoring.to_point_system();
         let track_ids: Vec<String> = self.rounds.iter().map(|r| r.track_id.clone()).collect();
         let round_laps: Vec<Option<u32>> = self.rounds.iter().map(|r| r.laps).collect();
@@ -375,6 +426,7 @@ impl SeriesDefinition {
             &initial_drivers,
         )
         .with_tier(self.series.tier)
+        .with_module_id(&self.series.module_id)
         .with_round_laps(round_laps);
 
         for (standing, d) in session.standings.iter_mut().zip(&self.drivers) {
@@ -383,6 +435,7 @@ impl SeriesDefinition {
             standing.ai_tier = d.ai_tier;
             standing.car_model_id = d.car_model_id.clone();
         }
+        session.ensure_valid_roster_cars_and_teams();
 
         match self.series.tournament_config() {
             Some(config) if config.validate().is_ok() => session.with_tournament(config),

@@ -766,3 +766,445 @@ fn test_career_roster_evolution_end_to_end_multitier_progression() {
     );
 }
 
+#[test]
+fn test_spec126_dynamic_championship_roster_synthesis_distributions() {
+    use tdrace_app::series::SeriesSession;
+
+    let session = SeriesSession::generate_dynamic_roster(
+        "World Rallycross Supercars",
+        "rally",
+        3,
+        PointSystem::FiaStandard { fastest_lap_bonus: true },
+        vec!["holjes".to_string(), "loheac".to_string()],
+        5,
+        32,
+        "Apex RX",
+        Some("rally_nordic_rx_t3"),
+        2026_126,
+    );
+
+    assert_eq!(session.standings.len(), 32);
+    assert_eq!(session.standings[0].driver_id, "player");
+    assert_eq!(session.standings[0].car_model_id.as_deref(), Some("rally_nordic_rx_t3"));
+
+    // All 31 AI drivers must be unique characters from the global pool with valid cars, teams, styles, and tiers
+    let mut seen_ids = HashSet::new();
+    let mut style_counts: HashMap<String, usize> = HashMap::new();
+    for entry in session.standings.iter().skip(1) {
+        assert!(seen_ids.insert(entry.driver_id.clone()), "Duplicate AI driver ID: {}", entry.driver_id);
+        assert!(DriverCharacter::find_global(&entry.driver_id).is_some(), "AI driver must exist in global pool");
+        let style = entry.ai_style.as_deref().expect("AI style must be populated");
+        *style_counts.entry(style.to_string()).or_insert(0) += 1;
+
+        let ai_tier = entry.ai_tier.expect("AI tier must be populated");
+        assert!((1..=5).contains(&ai_tier), "AI tier must be 1..=5, got {}", ai_tier);
+
+        let car_id = entry.car_model_id.as_deref().expect("AI car_model_id must be populated");
+        let car_model = tdrace_app::catalog::find_model_by_id(car_id).expect("car_model_id must resolve in catalog");
+        assert!(matches!(car_model.module_id, "rally" | "rallycross"));
+        assert_eq!(car_model.tier, 3);
+        assert!(!tdrace_app::series::is_generic_team_name(&entry.team_name, &entry.driver_name));
+    }
+
+    // Uniform 1/6 style quota across 31 AI drivers: base = 5, remainder = 1 (5 styles have 5, 1 style has 6)
+    assert_eq!(style_counts.len(), 6, "All 6 driving styles must be represented");
+    for count in style_counts.values() {
+        assert!(*count == 5 || *count == 6, "Each style must have 5 or 6 drivers in a 31-bot grid, got {}", count);
+    }
+}
+
+#[test]
+fn test_spec126_per_race_traversal_probability_distributions_and_damping() {
+    use tdrace_app::series::{SeriesSession, SubstitutionChannel};
+
+    let base_session = SeriesSession::generate_dynamic_roster(
+        "GT3 European Challenge",
+        "gt",
+        3,
+        PointSystem::FiaStandard { fastest_lap_bonus: true },
+        vec!["monza".to_string(), "spa".to_string(), "brands_hatch".to_string()],
+        3,
+        16, // 1 player + 15 AI drivers (ranks 0..14)
+        "Apex GT",
+        None,
+        42,
+    );
+
+    let ai_ids_by_rank: Vec<String> = base_session
+        .standings
+        .iter()
+        .filter(|s| s.driver_id != "player")
+        .map(|s| s.driver_id.clone())
+        .collect();
+    assert_eq!(ai_ids_by_rank.len(), 15);
+
+    let trials = 4000u64;
+    let mut zero_replacements = 0usize;
+    let mut single_replacements = 0usize;
+    let mut multi_replacements = 0usize;
+
+    let mut med_top_half = 0usize;
+    let mut med_bottom_half = 0usize;
+    let mut admin_top_3 = 0usize;
+    let mut admin_bottom_3 = 0usize;
+    let mut rank_first_total = 0usize;
+    let mut rank_last_total = 0usize;
+
+    for t in 0..trials {
+        let mut session = base_session.clone();
+        session.current_round = 1;
+        let events = session.evaluate_pre_race_substitutions(100_000 + t);
+
+        match events.len() {
+            0 => zero_replacements += 1,
+            1 => single_replacements += 1,
+            _ => multi_replacements += 1,
+        }
+
+        for ev in &events {
+            let rank = ai_ids_by_rank
+                .iter()
+                .position(|id| id == &ev.outgoing_driver_id)
+                .expect("outgoing driver was in initial AI roster");
+
+            if rank == 0 {
+                rank_first_total += 1;
+            }
+            if rank == 14 {
+                rank_last_total += 1;
+            }
+
+            match ev.channel {
+                SubstitutionChannel::MedicalPersonal => {
+                    if rank < 7 {
+                        med_top_half += 1;
+                    } else if rank > 7 {
+                        med_bottom_half += 1;
+                    }
+                }
+                SubstitutionChannel::AdministrativeContract => {
+                    if rank < 3 {
+                        admin_top_3 += 1;
+                    } else if rank >= 12 {
+                        admin_bottom_3 += 1;
+                    }
+                }
+            }
+        }
+    }
+
+    let single_rate = single_replacements as f64 / trials as f64;
+    let multi_rate = multi_replacements as f64 / trials as f64;
+
+    // 1. Moderate 1-driver replacement probability (~14% - 19%)
+    assert!(
+        single_rate >= 0.13 && single_rate <= 0.20,
+        "Single driver replacement rate should be moderate (~16%), got {:.4} ({}/{})",
+        single_rate,
+        single_replacements,
+        trials
+    );
+
+    // 2. Very low multi-driver replacement probability (< 0.8%) due to gamma = 0.12 damping
+    assert!(
+        multi_rate < 0.008,
+        "Multi-driver replacement rate must be very low (< 0.8%), got {:.4} ({}/{})",
+        multi_rate,
+        multi_replacements,
+        trials
+    );
+    assert_eq!(zero_replacements + single_replacements + multi_replacements, trials as usize);
+
+    // 3. Medical/Personal reasons are rank-independent (top 7 vs bottom 7 have roughly equal counts)
+    let med_total = (med_top_half + med_bottom_half).max(1) as f64;
+    let med_top_share = med_top_half as f64 / med_total;
+    assert!(
+        (med_top_share - 0.50).abs() < 0.12,
+        "Medical channel must be rank-independent (~50% top half vs bottom half), got top={} bottom={} (share={:.3})",
+        med_top_half,
+        med_bottom_half,
+        med_top_share
+    );
+
+    // 4. Administrative/Contract reasons are strongly rank-dependent (bottom 3 >> top 3)
+    assert!(
+        admin_bottom_3 > admin_top_3 * 4,
+        "Admin/contract replacements must be much rarer for top 3 ({}) than bottom 3 ({})",
+        admin_top_3,
+        admin_bottom_3
+    );
+
+    // 5. Overall replacement probability for the top-ranked AI driver is significantly smaller than for the last-ranked AI driver
+    assert!(
+        rank_last_total > rank_first_total * 2,
+        "Overall replacements for #1 ranked AI ({}) must be significantly smaller than for last-ranked AI ({})",
+        rank_first_total,
+        rank_last_total
+    );
+}
+
+#[test]
+fn test_spec126_temporal_one_race_stand_in_and_next_race_restoration() {
+    use tdrace_app::series::{ReplacementDuration, SeriesSession};
+
+    let mut session = SeriesSession::generate_dynamic_roster(
+        "GT3 Cup",
+        "gt",
+        2,
+        PointSystem::FiaStandard { fastest_lap_bonus: true },
+        vec!["monza".to_string(), "spa".to_string(), "silverstone".to_string()],
+        3,
+        8,
+        "Apex GT",
+        None,
+        777,
+    );
+
+    // Award points to all initial drivers in Round 1
+    for (idx, entry) in session.standings.iter_mut().enumerate() {
+        entry.points = (100 - idx * 10) as u32;
+        entry.wins = u32::from(idx == 1);
+        entry.podiums = u32::from(idx <= 3);
+    }
+    session.current_round = 1;
+
+    // Find a seed that triggers a OneRace temporal substitution
+    let mut chosen_event = None;
+    for seed in 1..5000u64 {
+        let mut probe = session.clone();
+        let events = probe.evaluate_pre_race_substitutions(seed);
+        if let Some(ev) = events.iter().find(|e| e.duration == ReplacementDuration::OneRace) {
+            chosen_event = Some(ev.clone());
+            session = probe;
+            break;
+        }
+    }
+
+    let ev = chosen_event.expect("Must find a seed producing a OneRace temporal substitution");
+    assert_eq!(ev.duration, ReplacementDuration::OneRace);
+    assert!(ev.outgoing_points > 0, "Outgoing regular driver had points before temporary absence");
+
+    // Verify incoming stand-in is in standings with 0 points, same team and car model
+    let stand_in_entry = session
+        .standings
+        .iter()
+        .find(|s| s.driver_id == ev.incoming_driver_id)
+        .expect("Stand-in driver must be in active standings for this race");
+    assert_eq!(stand_in_entry.points, 0, "Stand-in driver must start with 0 points");
+    assert_eq!(stand_in_entry.wins, 0);
+    assert_eq!(stand_in_entry.podiums, 0);
+    assert_eq!(stand_in_entry.team_name, ev.team_name);
+    assert_eq!(stand_in_entry.car_model_id, ev.car_model_id);
+    assert!(
+        !session.standings.iter().any(|s| s.driver_id == ev.outgoing_driver_id),
+        "Temporarily sidelined regular driver is not on the active grid for this single race"
+    );
+    assert_eq!(session.active_stand_ins.len(), 1);
+
+    // Advance to the next race and restore expired temporal replacements
+    session.current_round = 2;
+    let restored = session.restore_expired_temporal_replacements();
+    assert_eq!(restored.len(), 1);
+    assert_eq!(restored[0].driver_id, ev.outgoing_driver_id);
+    assert_eq!(restored[0].points, ev.outgoing_points);
+
+    let returned_regular = session
+        .standings
+        .iter()
+        .find(|s| s.driver_id == ev.outgoing_driver_id)
+        .expect("Regular driver must return to their seat for the next race");
+    assert_eq!(
+        returned_regular.points, ev.outgoing_points,
+        "Returning regular driver must retain their prior championship points"
+    );
+    assert_eq!(returned_regular.team_name, ev.team_name);
+    assert_eq!(returned_regular.car_model_id, ev.car_model_id);
+    assert!(session.active_stand_ins.is_empty());
+}
+
+#[test]
+fn test_spec126_permanent_replacement_zero_points_and_pool_reentry() {
+    use tdrace_app::series::{ReplacementDuration, SeriesSession};
+
+    let mut session = SeriesSession::generate_dynamic_roster(
+        "Hypercar World GP",
+        "gt",
+        5,
+        PointSystem::FiaStandard { fastest_lap_bonus: true },
+        vec!["monza".to_string(), "spa".to_string(), "le_mans".to_string(), "suzuka".to_string()],
+        3,
+        16,
+        "Apex Hypercar",
+        None,
+        999,
+    );
+
+    for (idx, entry) in session.standings.iter_mut().enumerate() {
+        entry.points = (200 - idx * 10) as u32;
+    }
+    session.current_round = 1;
+
+    // Find a seed that triggers a Permanent substitution
+    let mut perm_event = None;
+    for seed in 1..5000u64 {
+        let mut probe = session.clone();
+        let events = probe.evaluate_pre_race_substitutions(seed);
+        if let Some(ev) = events.iter().find(|e| e.duration == ReplacementDuration::Permanent && events.len() == 1) {
+            perm_event = Some(ev.clone());
+            session = probe;
+            break;
+        }
+    }
+
+    let ev = perm_event.expect("Must find a seed producing a Permanent substitution");
+    let removed_driver_id = ev.outgoing_driver_id.clone();
+
+    // Incoming permanent replacement starts at 0 points
+    let incoming = session
+        .standings
+        .iter()
+        .find(|s| s.driver_id == ev.incoming_driver_id)
+        .expect("Incoming permanent replacement must be in standings");
+    assert_eq!(incoming.points, 0);
+    assert_eq!(incoming.team_name, ev.team_name);
+    assert_eq!(incoming.car_model_id, ev.car_model_id);
+    assert!(session.active_stand_ins.is_empty(), "Permanent replacement must not queue a temporal stand-in");
+    assert!(!session.standings.iter().any(|s| s.driver_id == removed_driver_id));
+
+    // Verify the removed driver is back in the available pool and can re-enter in a later round
+    session.current_round = 2;
+    let mut reentered_team = None;
+    for seed in 1..20_000u64 {
+        let mut probe = session.clone();
+        let events = probe.evaluate_pre_race_substitutions(seed);
+        if let Some(re_ev) = events.iter().find(|e| e.incoming_driver_id == removed_driver_id) {
+            let re_entry = probe
+                .standings
+                .iter()
+                .find(|s| s.driver_id == removed_driver_id)
+                .unwrap();
+            assert_eq!(re_entry.points, 0, "Re-entering driver must start fresh with 0 points");
+            reentered_team = Some(re_ev.team_name.clone());
+            break;
+        }
+    }
+    assert!(
+        reentered_team.is_some(),
+        "Permanently removed driver '{}' must return to the pool and be eligible to re-enter later",
+        removed_driver_id
+    );
+}
+
+#[test]
+fn test_spec126_no_mid_tournament_substitutions_and_tier_advance_race1_eval() {
+    use tdrace_app::game::RaceSession;
+    use tdrace_app::series::{ChampionshipManager, TournamentConfig};
+
+    // 1. Mid-tournament guard: while a tournament sprint weekend is in progress (heats -> semis -> finals),
+    // evaluate_pre_race_substitutions must NEVER replace any driver.
+    let mgr = ChampionshipManager::new();
+    let def = mgr.get("autocross_superbuggy_world_series").unwrap();
+    let mut champ = def.to_session();
+    champ.ensure_tournament_weekend().unwrap();
+    assert!(champ.tournament_in_progress());
+
+    let roster_before: Vec<String> = champ.standings.iter().map(|s| s.driver_id.clone()).collect();
+    for seed in 0..200u64 {
+        let events = champ.evaluate_pre_race_substitutions(seed);
+        assert!(events.is_empty(), "Must never trigger driver replacements mid-tournament");
+    }
+    let roster_after: Vec<String> = champ.standings.iter().map(|s| s.driver_id.clone()).collect();
+    assert_eq!(roster_before, roster_after);
+
+    // 2. Starting a new championship after advancing tier (level > 1 or tier > 1) applies pre-race substitution evaluation before Race 1
+    let mut game = RaceSession::new();
+    game.active_career_progress.level = 2;
+    game.fixed_roster_seed = Some(1);
+    let tier2_def = mgr.get("gt3_european_challenge").unwrap();
+    game.launch_or_resume_championship(tier2_def);
+    let active_champ = game.championship_session.as_ref().unwrap();
+    assert_eq!(active_champ.current_round, 0);
+    assert_eq!(
+        active_champ.last_substitution_round,
+        Some(0),
+        "Pre-race substitution check must be evaluated before Race 1 of a new championship after advancing tier"
+    );
+    let _ = TournamentConfig::default();
+}
+
+#[test]
+fn test_spec126_substitution_reason_templates_and_modal_dismissal() {
+    use tdrace_app::game::RaceSession;
+    use tdrace_app::series::{
+        DriverSubstitutionEvent, ReplacementDuration, SubstitutionChannel, SUBSTITUTION_REASON_TEMPLATES,
+    };
+
+    // Minimum 10 templates required by user request; we provide 13 across both channels and durations
+    assert!(
+        SUBSTITUTION_REASON_TEMPLATES.len() >= 10,
+        "Pool of explanation templates must contain at least 10 templates, found {}",
+        SUBSTITUTION_REASON_TEMPLATES.len()
+    );
+
+    let med_count = SUBSTITUTION_REASON_TEMPLATES
+        .iter()
+        .filter(|t| t.channel == SubstitutionChannel::MedicalPersonal)
+        .count();
+    let admin_count = SUBSTITUTION_REASON_TEMPLATES
+        .iter()
+        .filter(|t| t.channel == SubstitutionChannel::AdministrativeContract)
+        .count();
+    let one_race_count = SUBSTITUTION_REASON_TEMPLATES
+        .iter()
+        .filter(|t| t.duration == ReplacementDuration::OneRace)
+        .count();
+    let perm_count = SUBSTITUTION_REASON_TEMPLATES
+        .iter()
+        .filter(|t| t.duration == ReplacementDuration::Permanent)
+        .count();
+
+    assert!(med_count >= 5);
+    assert!(admin_count >= 5);
+    assert!(one_race_count >= 4);
+    assert!(perm_count >= 4);
+
+    let mut seen_ids = HashSet::new();
+    for tpl in SUBSTITUTION_REASON_TEMPLATES {
+        assert!(seen_ids.insert(tpl.id), "Duplicate template ID: {}", tpl.id);
+        let text = tpl.format_reason("Carlos Sainz", "Liam Lawson", "Apex Factory GT", "Porsche 911 GT3 R");
+        assert!(text.contains("Carlos Sainz"));
+        assert!(text.contains("Liam Lawson"));
+        assert!(text.contains("Apex Factory GT"));
+        assert!(text.contains("Porsche 911 GT3 R"));
+        assert!(!text.contains("{outgoing}") && !text.contains("{incoming}") && !text.contains("{team}") && !text.contains("{car}"));
+    }
+
+    // Verify modal state and gamepad/keyboard dismissal on RaceSession
+    let mut game = RaceSession::new();
+    game.start_rally_career_tier(1);
+    assert!(!game.has_pending_substitution_modal());
+
+    game.championship_session.as_mut().unwrap().pending_substitutions.push(DriverSubstitutionEvent {
+        round_index: 1,
+        outgoing_driver_id: "jonas_lindqvist".to_string(),
+        outgoing_driver_name: "Jonas Lindqvist".to_string(),
+        outgoing_points: 18,
+        incoming_driver_id: "klara_andersson".to_string(),
+        incoming_driver_name: "Klara Andersson".to_string(),
+        team_name: "Nordic World RX Team".to_string(),
+        car_model_id: Some("rally_gallia_200_t1".to_string()),
+        car_name: "Gallia 200 Rally4".to_string(),
+        duration: ReplacementDuration::OneRace,
+        channel: SubstitutionChannel::MedicalPersonal,
+        reason_headline: "ILLNESS STAND-IN — HIGH FEVER & FLU".to_string(),
+        reason_text: "Jonas Lindqvist woke up with a high fever.".to_string(),
+    });
+    assert!(game.has_pending_substitution_modal());
+
+    game.input.gamepad.snapshot.btn_confirm_pressed = true;
+    assert!(game.handle_substitution_modal_input());
+    game.input.gamepad.snapshot.btn_confirm_pressed = false;
+    assert!(!game.has_pending_substitution_modal());
+}
+
+
