@@ -4,6 +4,7 @@ template: feature
 title: "FIA European Autocross 10-Car 3-2-3-2 Grids, Timed Qualifying Practice, 30-Driver Knockout Format, Two-Phase Scoring, and Expanded Season Calendars"
 description: "Upgrades the FIA Autocross (AX) championship format to authentic FIA European Autocross rules: 10-car 3-2-3-2 staggered concrete launch chutes across all 20 AX circuits, a 30-driver field, Stage 0 Timed Qualifying Practice (1 out-lap + 1 flying lap from the chute), configurable Qualifying Heats (default 1 heat for arcade pace, up to 3 heats with Best 2-of-3 Intermediate Classification), Top 20 into two 10-car Semifinals with Top 5 position-only advancement to the 10-car Final (plus B-Final and Consolation Semifinal for Option A continuous racing), Two-Phase FIA Autocross points (Intermediate Top 10: 10..1 pts + Final Top 10: 25-18-15-12-10-8-6-4-2-1 pts), and expanded 5-to-10-round season calendars across all 5 career tiers."
 status: in_progress
+receipt: "docs/receipts/spec-130-receipt.md"
 verified: { by: "human:mario", at: "2026-10-19T15:11:05Z", hash: "b486242cdc18" }
 created: 2026-10-19
 generated: { by: agent/antigravity, at: 2026-10-19T15:00:00Z }
