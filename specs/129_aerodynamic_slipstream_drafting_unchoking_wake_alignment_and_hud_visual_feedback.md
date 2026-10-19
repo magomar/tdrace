@@ -4,6 +4,7 @@ template: architecture
 title: "Aerodynamic Slipstream Drafting Unchoking, Wake Alignment, and HUD Visual Feedback"
 description: "Unchokes aerodynamic slipstream drafting from the top-speed governor, adds heading and curve-tolerant wake cone geometry, provides mid-range wake suction pull, and surfaces in-world wind streaks and a live HUD draft indicator."
 status: implemented
+receipt: "docs/receipts/spec-129-receipt.md"
 created: 2026-10-19
 generated: { by: agent/antigravity, at: 2026-10-19T14:52:12Z }
 verified: { by: human:mario, at: 2026-10-19T14:59:07Z, hash: "f542933d30ce" }
