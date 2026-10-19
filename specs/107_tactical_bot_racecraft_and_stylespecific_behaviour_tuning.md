@@ -8,6 +8,7 @@ created: 2026-10-11
 generated: { by: agent/claude, at: 2026-10-11T00:00:00Z }
 depends_on:
   - "083"
+  - "129"
 ---
 
 # Architecture Spec 107: Tactical Bot Racecraft and Style-Specific Behaviour Tuning 🏁
@@ -24,9 +25,10 @@ existed.
   per style. In a pack, all styles use the same reactive overtake and avoidance logic.
 - **There is no defend logic.** No bot code reacts to a car behind. `defense` exists only as a UI stat in
   `DriverStats`.
-- **Drafting exists in physics, not in tactics.** `Car::compute_draft_intensity`
-  (`crates/wheelbase/src/car.rs`) gives a drag reduction in a 2–32 m wake cone. Bots follow a wake only
-  by chance.
+- **Drafting physics are unchoked by Spec 129, not yet used in tactics.** `Car::compute_draft_intensity`
+  (`crates/wheelbase/src/car.rs`, upgraded in [Spec 129](129_aerodynamic_slipstream_drafting_unchoking_wake_alignment_and_hud_visual_feedback.md))
+  gives a heading-gated, curve-tolerant wake cone (2–32 m) with top-speed governor overrun and mid-range
+  wake suction pull. Bots follow a wake only by chance until this tactical layer is added.
 - **Telemetry that can be measured today:** `CarState.sideslip_angle` (body slip), per-wheel
   `WheelTelemetry` (slip angle, slip ratio, lateral and longitudinal force) and the draft intensity.
   Tyre scrub energy is not measured. It must be derived as force x slip velocity.
