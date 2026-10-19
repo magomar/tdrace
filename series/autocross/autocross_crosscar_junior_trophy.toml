@@ -6,15 +6,15 @@
 [championship]
 id = "autocross_crosscar_junior_trophy"
 name = "Cross Car Junior Academy Trophy"
-description = "Official grassroots junior championship for 13 to 16-year-old drivers. Identical 80 BHP restricted cross cars fighting across 3 tight European dirt tracks."
+description = "Official grassroots junior championship for 13 to 16-year-old drivers. Identical 80 BHP restricted cross cars fighting across 5 tight European dirt tracks."
 module_id = "autocross"
 tier = 1
 laps_per_round = 4
-bot_count = 7
+bot_count = 9
 ai_difficulty = "standard"
 icon = "dirt"
 weekend_format = "tournament_sprint"
-total_drivers = 32
+total_drivers = 30
 heat_laps = 3
 semi_laps = 4
 final_laps = 5
@@ -39,8 +39,20 @@ laps = 4
 
 [[rounds]]
 order = 3
+track_id = "uelzen_ax"
+name = "Uhlenköper-Ring Uelzen"
+laps = 4
+
+[[rounds]]
+order = 4
 track_id = "vilkyciai_ax"
 name = "Vilkyčiai Autosporto Kompleksas"
+laps = 4
+
+[[rounds]]
+order = 5
+track_id = "musa_ax"
+name = "Mūsa Raceland Bauska"
 laps = 4
 
 [[drivers]]

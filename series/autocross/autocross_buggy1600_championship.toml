@@ -6,18 +6,18 @@
 [championship]
 id = "autocross_buggy1600_championship"
 name = "Continental Buggy 1600 Championship"
-description = "Traditional European 4WD single-seater stepping stone featuring high-revving 1.6L engines and sharp point-and-squirt dynamics across iconic Czech, Italian, and French venues."
+description = "Traditional European 4WD single-seater stepping stone featuring high-revving 1.6L engines and sharp point-and-squirt dynamics across 7 iconic European venues."
 module_id = "autocross"
 tier = 3
 laps_per_round = 5
-bot_count = 7
+bot_count = 9
 ai_difficulty = "challenging"
 icon = "dirt"
 weekend_format = "tournament_sprint"
-total_drivers = 32
-heat_laps = 3
-semi_laps = 4
-final_laps = 5
+total_drivers = 30
+heat_laps = 4
+semi_laps = 5
+final_laps = 6
 
 [scoring]
 system = "tournament"
@@ -27,26 +27,44 @@ clean_race_bonus = false
 
 [[rounds]]
 order = 1
-track_id = "prerov_ax"
-name = "Přerovská rokle Přerov"
+track_id = "seelow_ax"
+name = "Circuit Am Weinberg Seelow"
 laps = 5
 
 [[rounds]]
 order = 2
-track_id = "humpolec_ax"
-name = "Pod Vilémovským lomem Humpolec"
+track_id = "musa_ax"
+name = "Mūsa Raceland Bauska"
 laps = 5
 
 [[rounds]]
 order = 3
-track_id = "maggiora_ax"
-name = "Autodromo Pragiarolo Maggiora"
+track_id = "vilkyciai_ax"
+name = "Vilkyčiai Autosporto Kompleksas"
 laps = 5
 
 [[rounds]]
 order = 4
-track_id = "st_junien_ax"
-name = "Circuit de Saint-Junien"
+track_id = "matschenberg_ax"
+name = "Matschenberg Offroad Arena"
+laps = 5
+
+[[rounds]]
+order = 5
+track_id = "nova_paka_ax"
+name = "Nová Paka - Štikovská rokle"
+laps = 5
+
+[[rounds]]
+order = 6
+track_id = "st_georges_ax"
+name = "Circuit du Bouvreau Saint-Georges"
+laps = 5
+
+[[rounds]]
+order = 7
+track_id = "maggiora_ax"
+name = "Autodromo Pragiarolo Maggiora"
 laps = 5
 
 [[drivers]]

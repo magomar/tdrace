@@ -6,18 +6,18 @@
 [championship]
 id = "autocross_touring_masters"
 name = "TouringAutocross SuperSaloon Masters"
-description = "550+ BHP production silhouette touring monsters with anti-lag turbo boost and crushing torque conquering heavy dirt ruts across Spain, France, and Germany."
+description = "550+ BHP production silhouette touring monsters with anti-lag turbo boost and crushing torque conquering heavy dirt ruts across 8 premier European venues."
 module_id = "autocross"
 tier = 4
 laps_per_round = 5
-bot_count = 7
+bot_count = 9
 ai_difficulty = "expert"
 icon = "dirt"
 weekend_format = "tournament_sprint"
-total_drivers = 32
-heat_laps = 3
-semi_laps = 4
-final_laps = 5
+total_drivers = 30
+heat_laps = 4
+semi_laps = 5
+final_laps = 6
 
 [scoring]
 system = "tournament"
@@ -27,14 +27,14 @@ clean_race_bonus = false
 
 [[rounds]]
 order = 1
-track_id = "carballo_ax"
-name = "Circuito Motor Bértoa Carballo"
+track_id = "seelow_ax"
+name = "Circuit Am Weinberg Seelow"
 laps = 5
 
 [[rounds]]
 order = 2
-track_id = "faleyras_ax"
-name = "Circuit de Faleyras"
+track_id = "humpolec_ax"
+name = "Pod Vilémovským lomem Humpolec"
 laps = 5
 
 [[rounds]]
@@ -45,8 +45,32 @@ laps = 5
 
 [[rounds]]
 order = 4
+track_id = "faleyras_ax"
+name = "Circuit de Faleyras"
+laps = 5
+
+[[rounds]]
+order = 5
+track_id = "carballo_ax"
+name = "Circuito Motor Bértoa Carballo"
+laps = 5
+
+[[rounds]]
+order = 6
 track_id = "matschenberg_ax"
-name = "Offroad Arena Matschenberg Cunewalde"
+name = "Matschenberg Offroad Arena"
+laps = 5
+
+[[rounds]]
+order = 7
+track_id = "prerov_ax"
+name = "Přerovská rokle Přerov"
+laps = 5
+
+[[rounds]]
+order = 8
+track_id = "nova_paka_ax"
+name = "Nová Paka - Štikovská rokle"
 laps = 5
 
 [[drivers]]

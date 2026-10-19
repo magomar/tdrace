@@ -12,7 +12,8 @@ use super::hud::format_lap_time;
 use super::scaler::UiScaler;
 use crate::render::color::Palette;
 use crate::series::{
-    RoundDriverResult, SeriesSession, TournamentStage, DNF_TIME, RX_INTERMEDIATE_CUTOFF, SUPERPOLE_LAPS,
+    RoundDriverResult, SeriesSession, TournamentStage, AX_INTERMEDIATE_CUTOFF, DNF_TIME,
+    RX_INTERMEDIATE_CUTOFF, SUPERPOLE_LAPS,
 };
 
 /// One driver on the bracket.
@@ -62,9 +63,9 @@ pub struct TournamentBracketView {
     pub launch_label: String,
 }
 
-fn plural_title(stage: TournamentStage) -> &'static str {
+fn plural_title(stage: TournamentStage, is_autocross: bool) -> &'static str {
     match stage {
-        TournamentStage::SuperPole => "SUPERPOLE",
+        TournamentStage::SuperPole => if is_autocross { "TIMED PRACTICE" } else { "SUPERPOLE" },
         TournamentStage::QualifyingHeat => "QUALIFYING HEATS",
         TournamentStage::Quarterfinal => "QUARTERFINALS",
         TournamentStage::Semifinal => "SEMIFINALS",
@@ -74,9 +75,13 @@ fn plural_title(stage: TournamentStage) -> &'static str {
     }
 }
 
-fn group_label(stage: TournamentStage, group: usize) -> String {
+fn group_label(stage: TournamentStage, group: usize, is_autocross: bool) -> String {
     match stage {
-        TournamentStage::SuperPole => format!("SUPERPOLE FLIGHT {}", group + 1),
+        TournamentStage::SuperPole => if is_autocross {
+            format!("TIMED PRACTICE FLIGHT {}", group + 1)
+        } else {
+            format!("SUPERPOLE FLIGHT {}", group + 1)
+        },
         TournamentStage::QualifyingHeat => format!("HEAT {}", group + 1),
         TournamentStage::Quarterfinal => format!("QUARTERFINAL {}", group + 1),
         TournamentStage::Semifinal => format!("SEMIFINAL {}", group + 1),
@@ -108,6 +113,7 @@ pub fn tournament_bracket_view(champ: &SeriesSession) -> Option<TournamentBracke
             advanced,
         }
     };
+    let is_ax = config.is_autocross_30();
     let result_group = |label: String, laps: u32, results: &[RoundDriverResult], stage: TournamentStage, mark_advance: bool| {
         BracketGroup {
             label,
@@ -124,6 +130,14 @@ pub fn tournament_bracket_view(champ: &SeriesSession) -> Option<TournamentBracke
                                 .intermediate_standings
                                 .iter()
                                 .take(RX_INTERMEDIATE_CUTOFF)
+                                .any(|s| s.driver_id == r.driver_id),
+                        )
+                    } else if config.is_autocross_30() && stage == TournamentStage::QualifyingHeat {
+                        Some(
+                            weekend
+                                .intermediate_standings
+                                .iter()
+                                .take(AX_INTERMEDIATE_CUTOFF)
                                 .any(|s| s.driver_id == r.driver_id),
                         )
                     } else {
@@ -148,7 +162,7 @@ pub fn tournament_bracket_view(champ: &SeriesSession) -> Option<TournamentBracke
                     player_slot = Some((columns.len(), groups.len()));
                 }
                 groups.push(BracketGroup {
-                    label: group_label(TournamentStage::SuperPole, g),
+                    label: group_label(TournamentStage::SuperPole, g, is_ax),
                     laps: SUPERPOLE_LAPS,
                     is_player_race,
                     cards: chunk.iter().map(|e| card(&e.driver_id, None, None)).collect(),
@@ -164,7 +178,7 @@ pub fn tournament_bracket_view(champ: &SeriesSession) -> Option<TournamentBracke
                 }
             } else {
                 for (g, results) in weekend.round_results(round).iter().enumerate() {
-                    groups.push(result_group(group_label(stage, g), config.laps_for(stage), results, stage, true));
+                    groups.push(result_group(group_label(stage, g, is_ax), config.laps_for(stage), results, stage, true));
                 }
                 if let Some((_, results)) = weekend.consolation_results.iter().find(|(r, _)| *r == round) {
                     groups.push(result_group(TournamentStage::ConsolationSemifinal.title().to_string(), config.semi_laps, results, stage, false));
@@ -177,7 +191,11 @@ pub fn tournament_bracket_view(champ: &SeriesSession) -> Option<TournamentBracke
                     player_slot = Some((columns.len(), groups.len()));
                 }
                 groups.push(BracketGroup {
-                    label: group_label(race.stage, race.group),
+                    label: if race.stage == TournamentStage::SuperPole && is_ax {
+                        format!("TIMED PRACTICE FLIGHT {}", race.group + 1)
+                    } else {
+                        group_label(race.stage, race.group, is_ax)
+                    },
                     laps: race.laps,
                     is_player_race,
                     cards: race.driver_ids.iter().map(|id| card(id, None, None)).collect(),
@@ -185,7 +203,7 @@ pub fn tournament_bracket_view(champ: &SeriesSession) -> Option<TournamentBracke
             }
         } else {
             for g in 0..config.groups_in_round(round) {
-                groups.push(BracketGroup { label: group_label(stage, g), laps: config.laps_for(stage), is_player_race: false, cards: Vec::new() });
+                groups.push(BracketGroup { label: group_label(stage, g, is_ax), laps: config.laps_for(stage), is_player_race: false, cards: Vec::new() });
             }
             if round == final_round {
                 groups.push(BracketGroup {
@@ -198,25 +216,30 @@ pub fn tournament_bracket_view(champ: &SeriesSession) -> Option<TournamentBracke
         }
         let col_title = if round == 0 && config.qualifying_rounds > 1 && weekend.active_stage != TournamentStage::SuperPole {
             let q_num = (weekend.current_qualifying_round + 1).min(config.qualifying_rounds);
-            format!("{} (Q{}/{})", plural_title(stage), q_num, config.qualifying_rounds)
+            format!("{} (Q{}/{})", plural_title(stage, is_ax), q_num, config.qualifying_rounds)
         } else {
-            plural_title(stage).to_string()
+            plural_title(stage, is_ax).to_string()
         };
         columns.push(BracketColumn { title: col_title, is_active: round == weekend.active_round, groups });
     }
 
     let launch_label = match player_race {
         Some(race) => {
+            let badge_name = if race.stage == TournamentStage::SuperPole && config.is_autocross_30() {
+                "TIMED PRACTICE".to_string()
+            } else {
+                race.badge()
+            };
             if race.stage == TournamentStage::QualifyingHeat && config.qualifying_rounds > 1 {
                 format!(
                     "LAUNCH RACE — Q{}/{} {} • {} LAPS",
                     weekend.current_qualifying_round + 1,
                     config.qualifying_rounds,
-                    race.badge(),
+                    badge_name,
                     race.laps
                 )
             } else {
-                format!("LAUNCH RACE — {} • {} LAPS", race.badge(), race.laps)
+                format!("LAUNCH RACE — {} • {} LAPS", badge_name, race.laps)
             }
         }
         None => "WEEKEND COMPLETE".to_string(),
@@ -234,7 +257,9 @@ pub fn tournament_bracket_view(champ: &SeriesSession) -> Option<TournamentBracke
 pub fn stage_badge(champ: &SeriesSession) -> Option<String> {
     let weekend = champ.tournament.as_ref()?;
     let race = weekend.player_race()?;
-    if race.stage == TournamentStage::QualifyingHeat && weekend.config.qualifying_rounds > 1 {
+    if race.stage == TournamentStage::SuperPole && weekend.config.is_autocross_30() {
+        Some("TIMED PRACTICE".to_string())
+    } else if race.stage == TournamentStage::QualifyingHeat && weekend.config.qualifying_rounds > 1 {
         Some(format!("Q{}/{} • {}", weekend.current_qualifying_round + 1, weekend.config.qualifying_rounds, race.badge()))
     } else {
         Some(race.badge())
