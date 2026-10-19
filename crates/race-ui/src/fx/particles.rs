@@ -424,6 +424,7 @@ impl ParticleSystem {
 
     /// Emits translucent cyan-white aerodynamic slipstream wind streaks off the front fenders
     /// when a vehicle is actively drafting (`draft_intensity >= 0.12`, Spec 129).
+    #[allow(clippy::too_many_arguments)]
     pub fn emit_slipstream_wind(
         &mut self,
         pos: Vec2,

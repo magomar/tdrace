@@ -2390,7 +2390,14 @@ fn couple_axle(
             .sum::<f32>()
             / 4.0;
         let effective_drag_coeff = self.effective_air_drag_coefficient();
-        let drag_fwd = -effective_drag_coeff * v_long * v_long.abs() * avg_surface_drag;
+        let mut drag_fwd = -effective_drag_coeff * v_long * v_long.abs() * avg_surface_drag;
+        if draft_clamped > 0.0
+            && !clamped_ctrl.reverse
+            && clamped_ctrl.throttle > 0.0
+            && v_long > 16.0
+        {
+            drag_fwd += clamped_ctrl.throttle * self.config.max_engine_force * 0.16 * draft_clamped;
+        }
         let drag_lat =
             -self.config.lateral_drag_coefficient * v_lat * v_lat.abs() * avg_surface_drag;
         let mut drag_world = fwd * drag_fwd + right * drag_lat;

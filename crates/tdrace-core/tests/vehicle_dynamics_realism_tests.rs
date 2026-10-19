@@ -354,3 +354,157 @@ fn test_braking_stability_and_rear_lockup_prevention() {
     );
 }
 
+#[test]
+fn test_spec_129_unchoked_terminal_slipstream_top_speed_gain() {
+    let dt = 1.0 / 60.0;
+    let cfg = CarConfig::sports_car();
+
+    // Solo car running flat out in clean air (draft_intensity = 0.0)
+    let mut solo_car = Car::new(cfg);
+    for _ in 0..(60 * 15) {
+        solo_car.step(&CarControls::accelerate(), SurfaceType::Asphalt, dt);
+    }
+
+    // Trailing car initialized from identical clean-air terminal state, held 8.0m behind an aligned lead car
+    let mut trailing_car = solo_car.clone();
+    let mut lead_car = solo_car
+        .clone()
+        .with_pose(solo_car.state.position + glam::Vec2::new(8.0, 0.0), 0.0);
+
+    for _ in 0..(60 * 10) {
+        solo_car.step(&CarControls::accelerate(), SurfaceType::Asphalt, dt);
+
+        lead_car.state.position = trailing_car.state.position + glam::Vec2::new(8.0, 0.0);
+        lead_car.state.velocity = trailing_car.state.velocity;
+        lead_car.state.speed = trailing_car.state.speed;
+
+        let draft = trailing_car.compute_draft_intensity(&[&lead_car]);
+        assert!(
+            draft >= 0.28,
+            "Draft intensity at 8.0m behind aligned lead car must be >= 0.28 (got {draft:.3})"
+        );
+        trailing_car.state.draft_intensity = draft;
+        trailing_car.step(&CarControls::accelerate(), SurfaceType::Asphalt, dt);
+    }
+
+    let solo_kmh = solo_car.speed_kmh();
+    let draft_kmh = trailing_car.speed_kmh();
+    let gain_kmh = draft_kmh - solo_kmh;
+    println!(
+        "Spec 129 Sports Car Terminal Speed: Solo = {solo_kmh:.2} km/h, Drafting (8m) = {draft_kmh:.2} km/h, Gain = +{gain_kmh:.2} km/h"
+    );
+
+    assert!(
+        gain_kmh >= 8.0,
+        "Drafting sports car must gain at least +8.0 km/h over clean-air terminal speed (got +{gain_kmh:.2} km/h)"
+    );
+}
+
+#[test]
+fn test_spec_129_mid_range_slipstream_gap_closure_rate() {
+    let dt = 1.0 / 60.0;
+    let cfg = CarConfig::sports_car();
+
+    // Warm up a baseline car to 22.0 m/s (79.2 km/h) so tire and wheel states are settled
+    let mut base_car = Car::new(cfg);
+    while base_car.state.speed < 22.0 {
+        base_car.step(&CarControls::accelerate(), SurfaceType::Asphalt, dt);
+    }
+    base_car.state.position = glam::Vec2::ZERO;
+
+    let mut solo_car = base_car.clone();
+    let mut trailing_car = base_car.clone();
+    let mut lead_car = base_car.clone();
+    lead_car.state.position = glam::Vec2::new(14.0, 0.0);
+
+    for _ in 0..240 {
+        solo_car.step(&CarControls::accelerate(), SurfaceType::Asphalt, dt);
+
+        lead_car.state.draft_intensity = 0.0;
+        lead_car.step(&CarControls::accelerate(), SurfaceType::Asphalt, dt);
+
+        let draft = trailing_car.compute_draft_intensity(&[&lead_car]);
+        trailing_car.state.draft_intensity = draft;
+        trailing_car.step(&CarControls::accelerate(), SurfaceType::Asphalt, dt);
+    }
+
+    let solo_dist = solo_car.state.position.x;
+    let trail_dist = trailing_car.state.position.x;
+    let closure_m = trail_dist - solo_dist;
+    println!(
+        "Spec 129 Mid-Range 4.0s Acceleration from 22 m/s: Solo = {solo_dist:.2} m, Drafting (14m) = {trail_dist:.2} m, Closure = +{closure_m:.2} m"
+    );
+
+    assert!(
+        closure_m >= 1.5,
+        "Trailing car in slipstream wake must cover at least 1.5 m more distance over 4.0 s than solo car (got +{closure_m:.2} m)"
+    );
+}
+
+#[test]
+fn test_spec_129_heading_rejection_and_curved_sweeper_wake_retention() {
+    let cfg = CarConfig::sports_car();
+
+    let mut my_car = Car::new(cfg).with_pose(glam::Vec2::ZERO, 0.0);
+    my_car.state.speed = 35.0;
+    my_car.state.velocity = glam::Vec2::new(35.0, 0.0);
+
+    // 1. Opposite-direction car 10m ahead along +X (rotation = PI)
+    let mut opp_opposite =
+        Car::new(cfg).with_pose(glam::Vec2::new(10.0, 0.0), std::f32::consts::PI);
+    opp_opposite.state.speed = 35.0;
+    assert_eq!(
+        my_car.compute_draft_intensity(&[&opp_opposite]),
+        0.0,
+        "Opposite-direction traffic must produce 0.0 draft intensity"
+    );
+
+    // 2. Perpendicular cross-track car 10m ahead along +X (rotation = FRAC_PI_2)
+    let mut opp_perp =
+        Car::new(cfg).with_pose(glam::Vec2::new(10.0, 0.0), std::f32::consts::FRAC_PI_2);
+    opp_perp.state.speed = 35.0;
+    assert_eq!(
+        my_car.compute_draft_intensity(&[&opp_perp]),
+        0.0,
+        "Perpendicular cross-track traffic must produce 0.0 draft intensity"
+    );
+
+    // 3. Curved sweeper (R = 60m, 15m arc ahead: position = (14.8, 2.95), rotation = 0.25 rad, speed = 30.0 m/s)
+    my_car.state.speed = 30.0;
+    let mut opp_curve = Car::new(cfg).with_pose(glam::Vec2::new(14.8, 2.95), 0.25);
+    opp_curve.state.speed = 30.0;
+    let curve_draft = my_car.compute_draft_intensity(&[&opp_curve]);
+    println!("Spec 129 Curved Sweeper (R=60m, d=15m) draft intensity: {curve_draft:.3}");
+    assert!(
+        curve_draft >= 0.10,
+        "Curve-tolerant bisector wake cone must retain >= 0.10 draft intensity on R=60m sweeper (got {curve_draft:.3})"
+    );
+}
+
+#[test]
+fn test_spec_129_clean_air_solo_determinism_invariance() {
+    let dt = 1.0 / 60.0;
+    let cfg = CarConfig::sports_car();
+
+    let mut car_a = Car::new(cfg);
+    let mut car_b = Car::new(cfg);
+    let opp_outside = Car::new(cfg).with_pose(glam::Vec2::new(-50.0, 0.0), 0.0);
+
+    for _ in 0..600 {
+        car_a.state.draft_intensity = 0.0;
+        car_a.step(&CarControls::accelerate(), SurfaceType::Asphalt, dt);
+
+        car_b.state.draft_intensity = car_b.compute_draft_intensity(&[&opp_outside]);
+        assert_eq!(car_b.state.draft_intensity, 0.0);
+        car_b.step(&CarControls::accelerate(), SurfaceType::Asphalt, dt);
+    }
+
+    assert_eq!(car_a.state.speed.to_bits(), car_b.state.speed.to_bits());
+    assert_eq!(
+        car_a.state.position.x.to_bits(),
+        car_b.state.position.x.to_bits()
+    );
+}
+
+
+
