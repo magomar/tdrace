@@ -1018,6 +1018,28 @@ impl ModuleCareerProgress {
         false
     }
 
+    /// Computes the player's normalized championship experience score `[0.0..=1.0]` used to scale
+    /// the proportion of error-free `T4+` (`ProPlus`) and `T5+` (`LegendPlus`) rivals in career
+    /// and championship grids (Spec 131).
+    pub fn elite_variant_progression_score(&self) -> f32 {
+        let completed_seasons: u32 = self
+            .championships_completed
+            .values()
+            .map(|c| c.times_completed)
+            .sum();
+        let podium_weight = self.trophies_gold * 3 + self.trophies_silver * 2 + self.trophies_bronze;
+        let effective_xp = self.lifetime_xp.max(self.xp);
+        if self.level <= 2 && completed_seasons == 0 && podium_weight == 0 && effective_xp == 0 {
+            return 0.0;
+        }
+        let max_t = self.max_tier().saturating_sub(1).max(1) as f32;
+        let tier_factor = (self.level.saturating_sub(1) as f32 / max_t).clamp(0.0, 1.0);
+        let season_factor = ((completed_seasons as f32 * 0.14) + (podium_weight as f32 * 0.05)).clamp(0.0, 1.0);
+        let top_license_xp = Self::tier_license_xp_for_module(&self.module_id, self.max_tier()).max(1) as f32;
+        let xp_factor = (effective_xp as f32 / (top_license_xp * 1.5)).clamp(0.0, 1.0);
+        (0.40 * tier_factor + 0.40 * season_factor + 0.20 * xp_factor).clamp(0.0, 1.0)
+    }
+
     /// Records a completed championship result, updating best finish, count, and legacy trophy counts.
     pub fn record_championship_finish(
         &mut self,
@@ -1055,6 +1077,25 @@ impl ModuleCareerProgress {
             3 => self.trophies_bronze += 1,
             _ => {}
         }
+
+        if !self.career_rivals.is_empty() && tier >= 3 {
+            let exp = self.elite_variant_progression_score();
+            let total_completed: u32 = self
+                .championships_completed
+                .values()
+                .map(|c| c.times_completed)
+                .sum();
+            let vet_seed = (tier as u64)
+                .wrapping_mul(0x9E37_79B9)
+                .wrapping_add(total_completed as u64 * 7919)
+                .wrapping_add(points as u64);
+            RosterEvolutionEngine::evolve_post_season_veterans(
+                &mut self.career_rivals,
+                tier,
+                exp,
+                vet_seed,
+            );
+        }
     }
 
     /// Checks whether the driver satisfies the conditions to advance to the next tier:
@@ -1082,13 +1123,26 @@ impl ModuleCareerProgress {
         opponent_count: usize,
         seed: u64,
     ) -> &[CareerRivalEntry] {
+        let exp = self.elite_variant_progression_score();
         if self.career_rivals.is_empty() {
             let tier = DriverTier::from_u8(self.level.clamp(1, 5) as u8);
-            self.career_rivals = RosterEvolutionEngine::initialize_career_roster_from_pool(pool, opponent_count, tier, seed);
+            self.career_rivals = RosterEvolutionEngine::initialize_career_roster_from_pool_with_progression(
+                pool,
+                opponent_count,
+                tier,
+                exp,
+                seed,
+            );
         } else if self.career_rivals.len() < opponent_count {
             let diff = opponent_count - self.career_rivals.len();
             let tier = DriverTier::from_u8(self.level.clamp(1, 5) as u8);
-            let extra = RosterEvolutionEngine::initialize_career_roster_from_pool(pool, diff, tier, seed.wrapping_add(12345));
+            let extra = RosterEvolutionEngine::initialize_career_roster_from_pool_with_progression(
+                pool,
+                diff,
+                tier,
+                exp,
+                seed.wrapping_add(12345),
+            );
             for r in extra {
                 if !self.career_rivals.iter().any(|existing| existing.driver_id == r.driver_id) {
                     self.career_rivals.push(r);
@@ -1100,7 +1154,9 @@ impl ModuleCareerProgress {
 
     /// Evolves the career rival roster upon unlocking a new tier.
     pub fn evolve_career_rivals(&mut self, new_tier: DriverTier, seed: u64) -> RosterEvolutionReport {
-        let (updated, report) = RosterEvolutionEngine::evolve_roster(&self.career_rivals, new_tier, seed);
+        let exp = self.elite_variant_progression_score();
+        let (updated, report) =
+            RosterEvolutionEngine::evolve_roster_with_progression(&self.career_rivals, new_tier, exp, seed);
         self.career_rivals = updated;
         report
     }

@@ -2926,7 +2926,9 @@ impl RaceSession {
             !s.is_completed && s.tier == tier
         });
 
+        let exp = self.active_career_progress.elite_variant_progression_score();
         let champ = if let Some(mut existing) = active_session {
+            existing.progression_score = exp;
             if !self.active_career_progress.career_rivals.is_empty() {
                 existing.update_from_career_rivals(tier, &self.active_career_progress.career_rivals);
             }
@@ -2948,27 +2950,7 @@ impl RaceSession {
                     ("owen_prescott", "Owen Prescott", "Hyperion GT"),
                 ],
             );
-            if !self.active_career_progress.career_rivals.is_empty() {
-                c.update_from_career_rivals(tier, &self.active_career_progress.career_rivals);
-            } else {
-                let rivals = c
-                    .standings
-                    .iter()
-                    .filter(|s| s.driver_id != "player")
-                    .map(|s| {
-                        let char_def = DriverCharacter::find_global(&s.driver_id);
-                        let style = char_def.as_ref().map(|c| c.style).unwrap_or(DrivingStyle::Balanced);
-                        CareerRivalEntry {
-                            driver_id: s.driver_id.clone(),
-                            driver_name: s.driver_name.clone(),
-                            style,
-                            tier: DriverTier::from_u8(tier.clamp(1, 5) as u8),
-                            race_number: s.race_number,
-                        }
-                    })
-                    .collect();
-                self.active_career_progress.career_rivals = rivals;
-            }
+            self.sync_career_championship_rivals(&mut c, tier, 0x4754_0126);
             c
         };
         let prev_selected = self.selected_car_model_id;
@@ -3001,7 +2983,7 @@ impl RaceSession {
         } else {
             self.car_choice = car_choice;
         }
-        self.championship_session = Some(champ.with_tier(tier));
+        self.championship_session = Some(champ.with_tier(tier).with_progression_score(exp));
         self.active_career_progress.active_championship = self.championship_session.clone();
         if let Some(db) = &self.hof_db {
             let _ = db.save_module_progress(&self.active_career_progress);
@@ -3015,6 +2997,57 @@ impl RaceSession {
             }
         }
         self.init_race();
+    }
+
+    fn sync_career_championship_rivals(
+        &mut self,
+        c: &mut ChampionshipSession,
+        tier: u32,
+        seed_salt: u64,
+    ) {
+        let exp = self.active_career_progress.elite_variant_progression_score();
+        c.progression_score = exp;
+        if !self.active_career_progress.career_rivals.is_empty() {
+            c.update_from_career_rivals(tier, &self.active_career_progress.career_rivals);
+        } else {
+            let non_player_count = c.standings.iter().filter(|s| s.driver_id != "player").count();
+            let sampled_tiers = if exp > 0.0 {
+                Some(DriverTier::sample_championship_grid_tiers(
+                    tier,
+                    exp,
+                    non_player_count,
+                    seed_salt.wrapping_add(tier as u64 * 997),
+                ))
+            } else {
+                None
+            };
+            let rivals: Vec<CareerRivalEntry> = c
+                .standings
+                .iter()
+                .filter(|s| s.driver_id != "player")
+                .enumerate()
+                .map(|(idx, s)| {
+                    let char_def = DriverCharacter::find_global(&s.driver_id);
+                    let style = char_def.as_ref().map(|c| c.style).unwrap_or(DrivingStyle::Balanced);
+                    let rival_tier = sampled_tiers
+                        .as_ref()
+                        .and_then(|v| v.get(idx))
+                        .copied()
+                        .unwrap_or_else(|| DriverTier::from_u8(tier.clamp(1, 5) as u8));
+                    CareerRivalEntry {
+                        driver_id: s.driver_id.clone(),
+                        driver_name: s.driver_name.clone(),
+                        style,
+                        tier: rival_tier,
+                        race_number: s.race_number,
+                    }
+                })
+                .collect();
+            if exp > 0.0 {
+                c.update_from_career_rivals(tier, &rivals);
+            }
+            self.active_career_progress.career_rivals = rivals;
+        }
     }
 
     /// Checks whether the active player profile has sufficient credits to found a constructor team (Spec 127).
@@ -3132,7 +3165,9 @@ impl RaceSession {
             !s.is_completed && s.tier == tier
         });
 
+        let exp = self.active_career_progress.elite_variant_progression_score();
         let champ = if let Some(mut existing) = active_session {
+            existing.progression_score = exp;
             if !self.active_career_progress.career_rivals.is_empty() {
                 existing.update_from_career_rivals(tier, &self.active_career_progress.career_rivals);
             }
@@ -3158,27 +3193,7 @@ impl RaceSession {
                     ("curtis_yancey", "Curtis 'The Wall' Yancey", "Brushy Mountain Racing"),
                 ],
             );
-            if !self.active_career_progress.career_rivals.is_empty() {
-                c.update_from_career_rivals(tier, &self.active_career_progress.career_rivals);
-            } else {
-                let rivals = c
-                    .standings
-                    .iter()
-                    .filter(|s| s.driver_id != "player")
-                    .map(|s| {
-                        let char_def = DriverCharacter::find_global(&s.driver_id);
-                        let style = char_def.as_ref().map(|c| c.style).unwrap_or(DrivingStyle::Balanced);
-                        CareerRivalEntry {
-                            driver_id: s.driver_id.clone(),
-                            driver_name: s.driver_name.clone(),
-                            style,
-                            tier: DriverTier::from_u8(tier.clamp(1, 5) as u8),
-                            race_number: s.race_number,
-                        }
-                    })
-                    .collect();
-                self.active_career_progress.career_rivals = rivals;
-            }
+            self.sync_career_championship_rivals(&mut c, tier, 0x4E41_0126);
             c
         };
         let prev_selected = self.selected_car_model_id;
@@ -3211,7 +3226,7 @@ impl RaceSession {
         } else {
             self.car_choice = CarChoice::StockCar;
         }
-        self.championship_session = Some(champ.with_tier(tier));
+        self.championship_session = Some(champ.with_tier(tier).with_progression_score(exp));
         self.active_career_progress.active_championship = self.championship_session.clone();
         if let Some(db) = &self.hof_db {
             let _ = db.save_module_progress(&self.active_career_progress);
@@ -3319,7 +3334,9 @@ impl RaceSession {
             !s.is_completed && s.tier == tier
         });
 
+        let exp = self.active_career_progress.elite_variant_progression_score();
         let champ = if let Some(mut existing) = active_session {
+            existing.progression_score = exp;
             if !self.active_career_progress.career_rivals.is_empty() {
                 existing.update_from_career_rivals(tier, &self.active_career_progress.career_rivals);
             }
@@ -3341,27 +3358,7 @@ impl RaceSession {
                     ("tobias_schmidt", "Tobias Schmidt", "Saxon Speedworks"),
                 ],
             );
-            if !self.active_career_progress.career_rivals.is_empty() {
-                c.update_from_career_rivals(tier, &self.active_career_progress.career_rivals);
-            } else {
-                let rivals = c
-                    .standings
-                    .iter()
-                    .filter(|s| s.driver_id != "player")
-                    .map(|s| {
-                        let char_def = DriverCharacter::find_global(&s.driver_id);
-                        let style = char_def.as_ref().map(|c| c.style).unwrap_or(DrivingStyle::Balanced);
-                        CareerRivalEntry {
-                            driver_id: s.driver_id.clone(),
-                            driver_name: s.driver_name.clone(),
-                            style,
-                            tier: DriverTier::from_u8(tier.clamp(1, 5) as u8),
-                            race_number: s.race_number,
-                        }
-                    })
-                    .collect();
-                self.active_career_progress.career_rivals = rivals;
-            }
+            self.sync_career_championship_rivals(&mut c, tier, 0x5258_0126);
             c
         };
         let prev_selected = self.selected_car_model_id;
@@ -3394,7 +3391,7 @@ impl RaceSession {
         } else {
             self.car_choice = CarChoice::RallyCar;
         }
-        self.championship_session = Some(champ.with_tier(tier));
+        self.championship_session = Some(champ.with_tier(tier).with_progression_score(exp));
         self.active_career_progress.active_championship = self.championship_session.clone();
         if let Some(db) = &self.hof_db {
             let _ = db.save_module_progress(&self.active_career_progress);
@@ -3500,7 +3497,9 @@ impl RaceSession {
             !s.is_completed && s.tier == tier
         });
 
+        let exp = self.active_career_progress.elite_variant_progression_score();
         let champ = if let Some(mut existing) = active_session {
+            existing.progression_score = exp;
             if !self.active_career_progress.career_rivals.is_empty() {
                 existing.update_from_career_rivals(tier, &self.active_career_progress.career_rivals);
             }
@@ -3522,27 +3521,7 @@ impl RaceSession {
                     ("mateo_silva", "Mateo Silva", "Veneto Kart Racing"),
                 ],
             );
-            if !self.active_career_progress.career_rivals.is_empty() {
-                c.update_from_career_rivals(tier, &self.active_career_progress.career_rivals);
-            } else {
-                let rivals = c
-                    .standings
-                    .iter()
-                    .filter(|s| s.driver_id != "player")
-                    .map(|s| {
-                        let char_def = DriverCharacter::find_global(&s.driver_id);
-                        let style = char_def.as_ref().map(|c| c.style).unwrap_or(DrivingStyle::Balanced);
-                        CareerRivalEntry {
-                            driver_id: s.driver_id.clone(),
-                            driver_name: s.driver_name.clone(),
-                            style,
-                            tier: DriverTier::from_u8(tier.clamp(1, 5) as u8),
-                            race_number: s.race_number,
-                        }
-                    })
-                    .collect();
-                self.active_career_progress.career_rivals = rivals;
-            }
+            self.sync_career_championship_rivals(&mut c, tier, 0x4B52_0126);
             c
         };
         let prev_selected = self.selected_car_model_id;
@@ -3573,7 +3552,7 @@ impl RaceSession {
                     .next()
             });
 
-        let mut champ = champ.with_tier(tier);
+        let mut champ = champ.with_tier(tier).with_progression_score(exp);
         if let Some(model) = selected_model {
             self.active_career_progress.ensure_car(model.id);
             self.selected_car_model_id = Some(model.id);
@@ -3695,7 +3674,9 @@ impl RaceSession {
             !s.is_completed && s.tier == tier
         });
 
+        let exp = self.active_career_progress.elite_variant_progression_score();
         let champ = if let Some(mut existing) = active_session {
+            existing.progression_score = exp;
             if !self.active_career_progress.career_rivals.is_empty() {
                 existing.update_from_career_rivals(tier, &self.active_career_progress.career_rivals);
             }
@@ -3719,27 +3700,7 @@ impl RaceSession {
                 ],
             )
             .with_round_laps(round_laps);
-            if !self.active_career_progress.career_rivals.is_empty() {
-                c.update_from_career_rivals(tier, &self.active_career_progress.career_rivals);
-            } else {
-                let rivals = c
-                    .standings
-                    .iter()
-                    .filter(|s| s.driver_id != "player")
-                    .map(|s| {
-                        let char_def = DriverCharacter::find_global(&s.driver_id);
-                        let style = char_def.as_ref().map(|c| c.style).unwrap_or(DrivingStyle::Balanced);
-                        CareerRivalEntry {
-                            driver_id: s.driver_id.clone(),
-                            driver_name: s.driver_name.clone(),
-                            style,
-                            tier: DriverTier::from_u8(tier.clamp(1, 5) as u8),
-                            race_number: s.race_number,
-                        }
-                    })
-                    .collect();
-                self.active_career_progress.career_rivals = rivals;
-            }
+            self.sync_career_championship_rivals(&mut c, tier, 0x4F52_0126);
             c
         };
         let prev_selected = self.selected_car_model_id;
@@ -3772,7 +3733,7 @@ impl RaceSession {
         } else {
             self.car_choice = CarChoice::SandRail;
         }
-        self.championship_session = Some(champ.with_tier(tier));
+        self.championship_session = Some(champ.with_tier(tier).with_progression_score(exp));
         self.active_career_progress.active_championship = self.championship_session.clone();
         if let Some(db) = &self.hof_db {
             let _ = db.save_module_progress(&self.active_career_progress);
@@ -3897,7 +3858,9 @@ impl RaceSession {
             !s.is_completed && s.tier == tier
         });
 
+        let exp = self.active_career_progress.elite_variant_progression_score();
         let champ = if let Some(mut existing) = active_session {
+            existing.progression_score = exp;
             if !self.active_career_progress.career_rivals.is_empty() {
                 existing.update_from_career_rivals(tier, &self.active_career_progress.career_rivals);
             }
@@ -3910,27 +3873,7 @@ impl RaceSession {
                 default_laps,
                 drivers,
             );
-            if !self.active_career_progress.career_rivals.is_empty() {
-                c.update_from_career_rivals(tier, &self.active_career_progress.career_rivals);
-            } else {
-                let rivals = c
-                    .standings
-                    .iter()
-                    .filter(|s| s.driver_id != "player")
-                    .map(|s| {
-                        let char_def = DriverCharacter::find_global(&s.driver_id);
-                        let style = char_def.as_ref().map(|c| c.style).unwrap_or(DrivingStyle::Balanced);
-                        CareerRivalEntry {
-                            driver_id: s.driver_id.clone(),
-                            driver_name: s.driver_name.clone(),
-                            style,
-                            tier: DriverTier::from_u8(tier.clamp(1, 5) as u8),
-                            race_number: s.race_number,
-                        }
-                    })
-                    .collect();
-                self.active_career_progress.career_rivals = rivals;
-            }
+            self.sync_career_championship_rivals(&mut c, tier, 0x4158_0126);
             c
         };
         let prev_selected = self.selected_car_model_id;
@@ -3963,7 +3906,7 @@ impl RaceSession {
         } else {
             self.car_choice = CarChoice::SandRail;
         }
-        self.championship_session = Some(champ.with_tier(tier));
+        self.championship_session = Some(champ.with_tier(tier).with_progression_score(exp));
         self.active_career_progress.active_championship = self.championship_session.clone();
         if let Some(db) = &self.hof_db {
             let _ = db.save_module_progress(&self.active_career_progress);
@@ -4152,8 +4095,8 @@ impl RaceSession {
             DriverTier::Rookie => DriverTier::Amateur,
             DriverTier::Amateur => DriverTier::Contender,
             DriverTier::Contender => DriverTier::Pro,
-            DriverTier::Pro => DriverTier::Legend,
-            DriverTier::Legend => DriverTier::Rookie,
+            DriverTier::Pro | DriverTier::ProPlus => DriverTier::Legend,
+            DriverTier::Legend | DriverTier::LegendPlus => DriverTier::Rookie,
         };
         self.set_casual_ai_difficulty(next_tier);
     }
@@ -4164,8 +4107,8 @@ impl RaceSession {
             DriverTier::Rookie => DriverTier::Legend,
             DriverTier::Amateur => DriverTier::Rookie,
             DriverTier::Contender => DriverTier::Amateur,
-            DriverTier::Pro => DriverTier::Contender,
-            DriverTier::Legend => DriverTier::Pro,
+            DriverTier::Pro | DriverTier::ProPlus => DriverTier::Contender,
+            DriverTier::Legend | DriverTier::LegendPlus => DriverTier::Pro,
         };
         self.set_casual_ai_difficulty(prev_tier);
     }
@@ -4377,7 +4320,7 @@ impl RaceSession {
         }
 
         let casual_tiers = if self.championship_session.is_none() && self.game_mode != GameMode::Career {
-            self.casual_ai_difficulty.sample_grid_tiers(self.opponent_drivers.len(), seed.wrapping_add(888))
+            self.casual_ai_difficulty.sample_casual_grid_tiers(self.opponent_drivers.len(), seed.wrapping_add(888))
         } else {
             Vec::new()
         };
@@ -4748,7 +4691,7 @@ impl RaceSession {
                     .and_then(crate::catalog::find_model_by_id);
 
                 let favorite_model_opt = character
-                    .favorite_car_for_discipline_and_tier(effective_module, bot_tier.to_u8())
+                    .favorite_car_for_discipline_and_tier(effective_module, bot_tier.car_tier_u8())
                     .and_then(|fav_id| category_models.iter().copied().find(|m| m.id == fav_id));
 
                 let bot_model = champ_model_opt.or(favorite_model_opt).unwrap_or_else(|| {

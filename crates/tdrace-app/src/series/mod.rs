@@ -304,6 +304,9 @@ pub struct SeriesSession {
     /// Active tab on the Championship Standings screen (`false` = Drivers, `true` = Constructors).
     #[serde(default)]
     pub standings_tab_is_constructors: bool,
+    /// Normalized player experience score `[0.0..=1.0]` used to scale error-free `T4+`/`T5+` rival proportions (Spec 131).
+    #[serde(default)]
+    pub progression_score: f32,
 }
 
 pub type ChampionshipSession = SeriesSession;
@@ -342,6 +345,7 @@ impl SeriesSession {
             team_standings: Vec::new(),
             player_team: None,
             standings_tab_is_constructors: false,
+            progression_score: 0.0,
         };
         session.rebuild_initial_team_standings();
         session
@@ -372,6 +376,7 @@ impl SeriesSession {
             entry.race_number = rival.race_number;
             standings.push(entry);
         }
+
         let mut session = Self {
             name: name.into(),
             point_system,
@@ -393,6 +398,7 @@ impl SeriesSession {
             team_standings: Vec::new(),
             player_team: None,
             standings_tab_is_constructors: false,
+            progression_score: 0.0,
         };
         session.rebuild_initial_team_standings();
         session
@@ -474,6 +480,12 @@ impl SeriesSession {
     /// Sets the motorsport category tier (1..=5) for this series or championship.
     pub fn with_tier(mut self, tier: u32) -> Self {
         self.tier = tier;
+        self
+    }
+
+    /// Sets the player experience progression score `[0.0..=1.0]` used for `T4+`/`T5+` scaling (Spec 131).
+    pub fn with_progression_score(mut self, score: f32) -> Self {
+        self.progression_score = score.clamp(0.0, 1.0);
         self
     }
 
@@ -650,7 +662,16 @@ impl SeriesSession {
                 .collect();
 
             let sampled_chars = DriverCharacter::sample_casual_race_roster(&unused_pool, needed, seed);
-            let sampled_tiers = bell_center.sample_grid_tiers(needed, seed.wrapping_add(777));
+            let sampled_tiers = if self.progression_score > 0.0 {
+                DriverTier::sample_championship_grid_tiers(
+                    self.tier,
+                    self.progression_score,
+                    needed,
+                    seed.wrapping_add(777),
+                )
+            } else {
+                bell_center.sample_grid_tiers(needed, seed.wrapping_add(777))
+            };
 
             let mut added = 0;
             for (character, assigned_tier) in sampled_chars.iter().zip(sampled_tiers.iter()) {
@@ -671,14 +692,18 @@ impl SeriesSession {
                 added += 1;
             }
             if added < needed {
-                for _ in added..needed {
+                for idx in added..needed {
                     let slot_idx = self.standings.len();
                     let id = format!("driver_{}", slot_idx + 1);
                     let name = format!("Driver {}", slot_idx + 1);
                     let (car_model_id, team) =
                         resolve_car_and_team_for_driver(&effective_mod, tier_u8, None, slot_idx);
+                    let assigned_tier_u8 = sampled_tiers
+                        .get(idx)
+                        .map(|t| t.to_u8())
+                        .unwrap_or_else(|| tier_u8.clamp(1, 5));
                     let mut entry = SeriesStandingEntry::new(id, name, team)
-                        .with_ai_style_and_tier(None, Some(tier_u8.clamp(1, 5)));
+                        .with_ai_style_and_tier(None, Some(assigned_tier_u8));
                     entry.car_model_id = car_model_id;
                     self.standings.push(entry);
                 }

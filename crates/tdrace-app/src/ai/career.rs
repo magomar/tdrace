@@ -75,12 +75,32 @@ impl RosterEvolutionEngine {
         target_tier: DriverTier,
         seed: u64,
     ) -> Vec<CareerRivalEntry> {
+        Self::initialize_career_roster_from_pool_with_progression(pool, n, target_tier, 0.0, seed)
+    }
+
+    /// Initializes a career rival roster with experience-scaled `T4+`/`T5+` probability weights (Spec 131).
+    pub fn initialize_career_roster_from_pool_with_progression(
+        pool: &[DriverCharacter],
+        n: usize,
+        target_tier: DriverTier,
+        experience_score: f32,
+        seed: u64,
+    ) -> Vec<CareerRivalEntry> {
         let opponents = if !pool.is_empty() {
             DriverCharacter::sample_casual_race_roster(pool, n, seed)
         } else {
             DriverCharacter::sample_casual_race_opponents(n, seed)
         };
-        let tiers = target_tier.sample_grid_tiers(n, seed.wrapping_add(777));
+        let tiers = if experience_score > 0.0 {
+            DriverTier::sample_championship_grid_tiers(
+                target_tier.car_tier_u8() as u32,
+                experience_score,
+                n,
+                seed.wrapping_add(777),
+            )
+        } else {
+            target_tier.sample_grid_tiers(n, seed.wrapping_add(777))
+        };
         opponents
             .into_iter()
             .zip(tiers.into_iter())
@@ -101,8 +121,20 @@ impl RosterEvolutionEngine {
         new_tier: DriverTier,
         seed: u64,
     ) -> (Vec<CareerRivalEntry>, RosterEvolutionReport) {
+        Self::evolve_roster_with_progression(current_roster, new_tier, 0.0, seed)
+    }
+
+    /// Advances the career roster to `new_tier` while scaling the promotion probability of `T4+` (`ProPlus`)
+    /// and `T5+` (`LegendPlus`) error-free variants with the player's `experience_score` (`0.0..=1.0`, Spec 131).
+    pub fn evolve_roster_with_progression(
+        current_roster: &[CareerRivalEntry],
+        new_tier: DriverTier,
+        experience_score: f32,
+        seed: u64,
+    ) -> (Vec<CareerRivalEntry>, RosterEvolutionReport) {
+        let exp = experience_score.clamp(0.0, 1.0);
         if current_roster.is_empty() {
-            let initial = Self::initialize_career_roster(7, new_tier, seed);
+            let initial = Self::initialize_career_roster_from_pool_with_progression(&[], 7, new_tier, exp, seed);
             let report = RosterEvolutionReport {
                 retained_rivals: Vec::new(),
                 churned_out: Vec::new(),
@@ -156,14 +188,40 @@ impl RosterEvolutionEngine {
                 let p_step = 1.0 - p_leap - p_hold;
 
                 let roll = rng.next_f32();
-                let (assigned_tier, outcome) = if roll < p_step {
+                let (mut assigned_tier, outcome) = if roll < p_step {
                     (new_tier, SkillProgressionOutcome::StepUp)
                 } else if roll < p_step + p_hold {
                     (previous_tier, SkillProgressionOutcome::HoldSteady)
                 } else {
-                    let leap_tier = DriverTier::from_u8((new_tier.to_u8() + 1).min(5));
+                    let leap_tier = DriverTier::from_u8((new_tier.car_tier_u8() + 1).min(5));
                     (leap_tier, SkillProgressionOutcome::StandoutLeap)
                 };
+
+                if exp > 0.0 {
+                    let mut plus_rng = LcgRng::new(seed.wrapping_add(0x4117_E000 ^ ((idx as u64) * 0x9E37_79B9)));
+                    let plus_roll = plus_rng.next_f32();
+                    if previous_tier == DriverTier::LegendPlus {
+                        assigned_tier = DriverTier::LegendPlus;
+                    } else if assigned_tier == DriverTier::Legend {
+                        let p_t5_plus = (0.10 + 0.55 * exp + 0.12 * perf_score
+                            + if previous_tier == DriverTier::ProPlus { 0.15 } else { 0.0 })
+                        .clamp(0.0, 0.85);
+                        if plus_roll < p_t5_plus {
+                            assigned_tier = DriverTier::LegendPlus;
+                        }
+                    } else if assigned_tier == DriverTier::Pro {
+                        let p_t4_plus = (0.12 + 0.55 * exp + 0.10 * perf_score).clamp(0.0, 0.80);
+                        if plus_roll < p_t4_plus {
+                            assigned_tier = DriverTier::ProPlus;
+                        }
+                    } else if assigned_tier == DriverTier::Contender
+                        && outcome == SkillProgressionOutcome::StandoutLeap
+                        && exp >= 0.35
+                        && plus_roll < 0.35 * exp
+                    {
+                        assigned_tier = DriverTier::ProPlus;
+                    }
+                }
 
                 let mut updated_rival = rival.clone();
                 updated_rival.tier = assigned_tier;
@@ -208,7 +266,17 @@ impl RosterEvolutionEngine {
             });
 
             // Sample incoming rival tier from bell curve of new_tier
-            let incoming_tier = new_tier.sample_grid_tiers(1, rng.next_u32() as u64)[0];
+            let incoming_seed = rng.next_u32() as u64;
+            let incoming_tier = if exp > 0.0 {
+                DriverTier::sample_championship_grid_tiers(
+                    new_tier.car_tier_u8() as u32,
+                    exp,
+                    1,
+                    incoming_seed,
+                )[0]
+            } else {
+                new_tier.sample_grid_tiers(1, incoming_seed)[0]
+            };
             let replacement_rival = CareerRivalEntry::new(&replacement_char, incoming_tier);
 
             churned_in.push(replacement_rival.clone());
@@ -222,5 +290,55 @@ impl RosterEvolutionEngine {
         };
 
         (new_roster, report)
+    }
+
+    /// Post-season veteran progression pass: as a player completes additional championships,
+    /// front-running rivals at Tier 3+ have a chance to graduate into error-free `T4+` (`ProPlus`)
+    /// and `T5+` (`LegendPlus`) variants proportional to `experience_score` (Spec 131).
+    pub fn evolve_post_season_veterans(
+        roster: &mut [CareerRivalEntry],
+        championship_tier: u32,
+        experience_score: f32,
+        seed: u64,
+    ) {
+        let exp = experience_score.clamp(0.0, 1.0);
+        if exp <= 0.0 || championship_tier < 3 || roster.is_empty() {
+            return;
+        }
+        let n = roster.len();
+        let mut rng = LcgRng::new(seed.wrapping_add(0x5EA5_0126));
+        for (idx, rival) in roster.iter_mut().enumerate() {
+            let perf_score = if n > 1 {
+                1.0 - (idx as f32) / ((n - 1) as f32)
+            } else {
+                0.5
+            };
+            let roll = rng.next_f32();
+            match rival.tier {
+                DriverTier::Pro => {
+                    let p_promote = (0.15 + 0.45 * exp + 0.15 * perf_score).clamp(0.0, 0.75);
+                    if roll < p_promote {
+                        rival.tier = DriverTier::ProPlus;
+                    }
+                }
+                DriverTier::ProPlus if championship_tier >= 4 => {
+                    let p_promote = (0.10 + 0.40 * exp + 0.15 * perf_score).clamp(0.0, 0.65);
+                    if roll < p_promote {
+                        rival.tier = if championship_tier >= 5 {
+                            DriverTier::LegendPlus
+                        } else {
+                            DriverTier::Legend
+                        };
+                    }
+                }
+                DriverTier::Legend if championship_tier >= 4 => {
+                    let p_promote = (0.12 + 0.50 * exp + 0.15 * perf_score).clamp(0.0, 0.78);
+                    if roll < p_promote {
+                        rival.tier = DriverTier::LegendPlus;
+                    }
+                }
+                _ => {}
+            }
+        }
     }
 }

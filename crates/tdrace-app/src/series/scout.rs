@@ -122,8 +122,8 @@ impl SeriesSession {
             DriverTier::Rookie => 350,      // Tier 1
             DriverTier::Amateur => 750,     // Tier 2 (~2.1x)
             DriverTier::Contender => 1_500, // Tier 3 (~4.3x)
-            DriverTier::Pro => 3_200,       // Tier 4 (~9.1x)
-            DriverTier::Legend => 6_500,    // Tier 5 (~18.6x)
+            DriverTier::Pro | DriverTier::ProPlus => 3_200,       // Tier 4 (~9.1x)
+            DriverTier::Legend | DriverTier::LegendPlus => 6_500,    // Tier 5 (~18.6x)
         };
         let speed_factor = 0.85 + (speed_stat - 0.70) * 0.75;
         let raw = (base_salary as f32) * speed_factor;

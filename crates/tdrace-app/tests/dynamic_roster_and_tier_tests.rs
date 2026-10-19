@@ -1207,4 +1207,86 @@ fn test_spec126_substitution_reason_templates_and_modal_dismissal() {
     assert!(!game.has_pending_substitution_modal());
 }
 
+#[test]
+fn test_spec131_casual_mode_spawns_t4_plus_and_t5_plus_as_minority_proportion() {
+    let draws = 3000;
+
+    // 1. Rookie & Amateur casual grids spawn 0% T4+ / T5+
+    for low_tier in [DriverTier::Rookie, DriverTier::Amateur] {
+        let sampled = low_tier.sample_casual_grid_tiers(500, 126);
+        assert!(
+            sampled.iter().all(|t| !t.is_error_free()),
+            "Low casual tier {:?} should not spawn error-free variants",
+            low_tier
+        );
+    }
+
+    // 2. Pro (T4) casual grid: ~15% T4+ and ~5% T5+ (20% minority), majority standard T4 (~45%) & T5 (~10%)
+    let pro_grid = DriverTier::Pro.sample_casual_grid_tiers(draws, 2026);
+    let pro_t4 = pro_grid.iter().filter(|&&t| t == DriverTier::Pro).count() as f64 / draws as f64;
+    let pro_t4_plus = pro_grid.iter().filter(|&&t| t == DriverTier::ProPlus).count() as f64 / draws as f64;
+    let pro_t5_plus = pro_grid.iter().filter(|&&t| t == DriverTier::LegendPlus).count() as f64 / draws as f64;
+    assert!(pro_t4_plus >= 0.11 && pro_t4_plus <= 0.19, "Pro casual T4+ should be ~15%, got {:.3}", pro_t4_plus);
+    assert!(pro_t5_plus >= 0.02 && pro_t5_plus <= 0.08, "Pro casual T5+ should be ~5%, got {:.3}", pro_t5_plus);
+    assert!(pro_t4 > pro_t4_plus + pro_t5_plus, "Standard T4 ({:.3}) must remain majority over T4+/T5+ ({:.3})", pro_t4, pro_t4_plus + pro_t5_plus);
+
+    // 3. Legend (T5) casual grid: ~20% T4+ and ~20% T5+ (~40% total error-free minority vs ~55% standard T4+T5)
+    let legend_grid = DriverTier::Legend.sample_casual_grid_tiers(draws, 2027);
+    let leg_t4 = legend_grid.iter().filter(|&&t| t == DriverTier::Pro).count() as f64 / draws as f64;
+    let leg_t4_plus = legend_grid.iter().filter(|&&t| t == DriverTier::ProPlus).count() as f64 / draws as f64;
+    let leg_t5 = legend_grid.iter().filter(|&&t| t == DriverTier::Legend).count() as f64 / draws as f64;
+    let leg_t5_plus = legend_grid.iter().filter(|&&t| t == DriverTier::LegendPlus).count() as f64 / draws as f64;
+    assert!(leg_t4_plus >= 0.15 && leg_t4_plus <= 0.25, "Legend casual T4+ should be ~20%, got {:.3}", leg_t4_plus);
+    assert!(leg_t5_plus >= 0.15 && leg_t5_plus <= 0.25, "Legend casual T5+ should be ~20%, got {:.3}", leg_t5_plus);
+    assert!(leg_t4 + leg_t5 > leg_t4_plus + leg_t5_plus, "Standard T4+T5 must outnumber T4+/T5+ in casual mode");
+}
+
+#[test]
+fn test_spec131_championship_and_career_scale_t4_plus_and_t5_plus_with_player_progress() {
+    let draws = 2000;
+
+    // 1. Championship grid sampling scales monotonically with progression_score
+    let leg_fresh = DriverTier::sample_championship_grid_tiers(5, 0.0, draws, 9001);
+    let leg_mid = DriverTier::sample_championship_grid_tiers(5, 0.5, draws, 9001);
+    let leg_vet = DriverTier::sample_championship_grid_tiers(5, 1.0, draws, 9001);
+
+    let count_plus = |grid: &[DriverTier]| grid.iter().filter(|t| t.is_error_free()).count();
+    let c_fresh = count_plus(&leg_fresh);
+    let c_mid = count_plus(&leg_mid);
+    let c_vet = count_plus(&leg_vet);
+    assert!(
+        c_fresh < c_mid && c_mid < c_vet,
+        "Championship T4+/T5+ count must grow with experience: fresh={} < mid={} < vet={}",
+        c_fresh, c_mid, c_vet
+    );
+
+    // 2. Career progress score & veteran rival promotion across seasons
+    let mut progress = ModuleCareerProgress::default_for_module(77, "gt");
+    assert_eq!(progress.elite_variant_progression_score(), 0.0);
+
+    progress.level = 5;
+    progress.ensure_career_rivals(12, 500);
+    let initial_plus = progress.career_rivals.iter().filter(|r| r.tier.is_error_free()).count();
+
+    // Simulate completing several Tier 5 championships
+    progress.xp = ModuleCareerProgress::tier_license_xp(5);
+    for season in 0..4 {
+        progress.record_championship_finish(
+            &format!("gt_t5_s{season}"),
+            5,
+            1,
+            75,
+            "2026-10-19T00:00:00Z",
+        );
+    }
+
+    assert!(progress.elite_variant_progression_score() > 0.70);
+    let veteran_plus = progress.career_rivals.iter().filter(|r| r.tier.is_error_free()).count();
+    assert!(
+        veteran_plus > initial_plus,
+        "Veteran career rivals should promote more T4+/T5+ drivers after repeated championship finishes: initial={} -> veteran={}",
+        initial_plus, veteran_plus
+    );
+}
+
 
