@@ -287,6 +287,7 @@ impl SeriesSession {
             .with_tier(tier)
             .with_module_id(module_id);
         session.standings = standings;
+        session.rebuild_initial_team_standings();
         session
     }
 
@@ -340,6 +341,7 @@ impl SeriesSession {
                 entry.team_name = resolved_team;
             }
         }
+        self.rebuild_initial_team_standings();
     }
 
     /// Restores any regular drivers who were temporarily replaced for 1 race (`ReplacementDuration::OneRace`)
@@ -394,13 +396,19 @@ impl SeriesSession {
         // 1. Restore any 1-race stand-ins from the prior race
         self.restore_expired_temporal_replacements();
 
-        // Collect indices of eligible AI drivers (must be in the global 72-character pool, excluding "player")
+        let player_teammate_id = self
+            .player_team
+            .as_ref()
+            .map(|pt| pt.contract.character_id.clone());
+
+        // Collect indices of eligible AI drivers (must be in the global 72-character pool, excluding "player" and player's contracted teammate)
         let ai_indices: Vec<usize> = self
             .standings
             .iter()
             .enumerate()
             .filter(|(_, s)| {
                 s.driver_id != "player"
+                    && player_teammate_id.as_deref() != Some(s.driver_id.as_str())
                     && DriverCharacter::find_global(&s.driver_id).is_some()
             })
             .map(|(idx, _)| idx)

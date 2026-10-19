@@ -54,10 +54,11 @@ pub use series::format::{
     SeriesDefinition, SeriesMeta,
 };
 pub use series::{
-    ChampionshipManager, ChampionshipRoundResult, ChampionshipSession, EliminationSession,
-    PointSystem, QualifyingResult, QualifyingSession, RallyStageResult, RoundDriverResult,
-    SeriesFormat, SeriesManager, SeriesRoundResult, SeriesSession, SeriesStandingEntry,
-    StageRallySession, TournamentFormat, TournamentStandingEntry,
+    BotProgressionOutcome, ChampionshipManager, ChampionshipRoundResult, ChampionshipSession,
+    DriverHireQuote, EliminationSession, PlayerTeamConfig, PointSystem, QualifyingResult,
+    QualifyingSession, RallyStageResult, RoundDriverResult, SeriesFormat, SeriesManager,
+    SeriesRoundResult, SeriesSession, SeriesStandingEntry, StageRallySession, TeamStandingEntry,
+    TeammateSeasonProgressionReport, TournamentFormat, TournamentStandingEntry,
 };
 pub use track_manager::{CustomTrackInfo, TrackManager};
 
@@ -87,7 +88,10 @@ pub use ui::career_hub::CareerHubFocus;
 pub use ui::curve_indicator::CurveColorScheme;
 pub use ui::garage::{garage_select_button_rect, render_garage_screen, GarageViewMode};
 pub use ui::hud::{render_hud, render_split_hud, PersonalBestNotification, VisibilityToast};
-pub use ui::menu::{CarChoice, GameMode, GameModeChoice, RaceResultEntry, TrackChoice};
+pub use ui::menu::{
+    championship_standings_table, constructors_standings_table, CarChoice, GameMode, GameModeChoice,
+    RaceResultEntry, TrackChoice,
+};
 pub use ui::profile_ui::{
     championship_visible_count, get_sorted_championships, render_profile_badge,
     render_profile_create_screen, render_profile_manager_screen, ProfileFocusArea,

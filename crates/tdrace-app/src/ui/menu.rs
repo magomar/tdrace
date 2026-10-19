@@ -3343,14 +3343,20 @@ pub fn render_results_screen(
         } else {
             String::new()
         };
+        let ledger_text = if let Some(ledger) = receipt.format_constructor_ledger() {
+            format!("   |   {}", ledger)
+        } else {
+            String::new()
+        };
         let receipt_str = format!(
-            "+{} XP EARNED ({} LAPS: {} XP  •  FINISH BONUS: +{} XP{})   |   BALANCE: {} XP",
+            "+{} XP EARNED ({} LAPS: {} XP  •  FINISH BONUS: +{} XP{})   |   BALANCE: {} XP{}",
             receipt.total_xp,
             receipt.completed_laps,
             receipt.lap_xp,
             receipt.completion_bonus,
             first_text,
-            receipt.new_balance
+            receipt.new_balance,
+            ledger_text
         );
         fonts.draw_ui_bold_centered(
             &receipt_str,
@@ -4073,6 +4079,57 @@ pub fn championship_standings_table(
     table
 }
 
+/// Builds the Constructors' / Team Standings DataTable (Spec 127).
+pub fn constructors_standings_table(
+    champ: &ChampionshipSession,
+    page: usize,
+) -> DataTable<(usize, crate::series::TeamStandingEntry)> {
+    let total_teams = champ.team_standings.len();
+    let total_pages = if total_teams == 0 {
+        1
+    } else {
+        (total_teams + STANDINGS_PAGE_SIZE - 1) / STANDINGS_PAGE_SIZE
+    };
+    let current_page = page.min(total_pages.saturating_sub(1));
+    let start_idx = current_page * STANDINGS_PAGE_SIZE;
+    let end_idx = (start_idx + STANDINGS_PAGE_SIZE).min(total_teams);
+    let visible_teams = if start_idx < total_teams {
+        &champ.team_standings[start_idx..end_idx]
+    } else {
+        &[]
+    };
+
+    let mut table = DataTable::new(0.0, 0.0, 1.0, 28.0, 28.0);
+    type TeamRow = (usize, crate::series::TeamStandingEntry);
+    table.add_column(DataColumn::new("pos", "POS", 7.0, ColumnAlign::Left, |r: &TeamRow| format!("#{}", r.0)));
+    table.add_column(DataColumn::new("team", "CONSTRUCTOR TEAM", 30.0, ColumnAlign::Left, |r: &TeamRow| {
+        if r.1.is_player_owned {
+            format!("{} [PLAYER TEAM]", r.1.team_name)
+        } else {
+            r.1.team_name.clone()
+        }
+    }));
+    table.add_column(DataColumn::new("lineup", "DRIVERS", 33.0, ColumnAlign::Left, |r: &TeamRow| {
+        r.1.driver_names.join(" • ")
+    }));
+    table.add_column(DataColumn::new("wins", "WINS", 8.0, ColumnAlign::Right, |r: &TeamRow| r.1.wins.to_string()));
+    table.add_column(DataColumn::new("podiums", "PODIUMS", 8.0, ColumnAlign::Right, |r: &TeamRow| r.1.podiums.to_string()));
+    table.add_column(DataColumn::new("points", "POINTS", 14.0, ColumnAlign::Right, |r: &TeamRow| format!("{} PTS", r.1.points)));
+    table.set_rows(
+        visible_teams
+            .iter()
+            .enumerate()
+            .map(|(i, entry)| {
+                let global_rank = start_idx + i + 1;
+                DataRow::new(entry.team_name.clone(), (global_rank, entry.clone()))
+                    .with_rank(global_rank)
+                    .with_player(entry.is_player_owned)
+            })
+            .collect(),
+    );
+    table
+}
+
 /// Renders the Championship Standings table and round victory screen with page-based presentation.
 pub fn render_championship_standings_screen(fonts: &Fonts, champ: &ChampionshipSession, page: usize) {
     let sw = screen_width();
@@ -4081,11 +4138,16 @@ pub fn render_championship_standings_screen(fonts: &Fonts, champ: &ChampionshipS
 
     draw_rectangle(0.0, 0.0, sw, sh, Color::new(0.04, 0.05, 0.08, 0.98));
 
-    let total_drivers = champ.standings.len();
-    let total_pages = if total_drivers == 0 {
+    let is_constructors = champ.standings_tab_is_constructors;
+    let total_items = if is_constructors {
+        champ.team_standings.len()
+    } else {
+        champ.standings.len()
+    };
+    let total_pages = if total_items == 0 {
         1
     } else {
-        (total_drivers + STANDINGS_PAGE_SIZE - 1) / STANDINGS_PAGE_SIZE
+        (total_items + STANDINGS_PAGE_SIZE - 1) / STANDINGS_PAGE_SIZE
     };
     let current_page = page.min(total_pages.saturating_sub(1));
 
@@ -4101,29 +4163,37 @@ pub fn render_championship_standings_screen(fonts: &Fonts, champ: &ChampionshipS
         scaler.s(2.0),
     );
 
+    let tab_label = if is_constructors {
+        "CONSTRUCTORS' STANDINGS"
+    } else {
+        "DRIVER STANDINGS"
+    };
     let subtitle = if champ.is_completed {
         if total_pages > 1 {
             format!(
-                "SEASON FINALE — CHAMPIONSHIP DECIDED! (PAGE {}/{})",
+                "SEASON FINALE — {} (PAGE {}/{})",
+                tab_label,
                 current_page + 1,
                 total_pages
             )
         } else {
-            "SEASON FINALE — CHAMPIONSHIP DECIDED!".to_string()
+            format!("SEASON FINALE — {}!", tab_label)
         }
     } else if total_pages > 1 {
         format!(
-            "ROUND {} OF {} COMPLETED — DRIVER STANDINGS (PAGE {}/{})",
+            "ROUND {} OF {} COMPLETED — {} (PAGE {}/{})",
             champ.current_round,
             champ.total_rounds(),
+            tab_label,
             current_page + 1,
             total_pages
         )
     } else {
         format!(
-            "ROUND {} OF {} COMPLETED — DRIVER STANDINGS",
+            "ROUND {} OF {} COMPLETED — {}",
             champ.current_round,
-            champ.total_rounds()
+            champ.total_rounds(),
+            tab_label
         )
     };
     fonts.draw_ui_bold_centered(
@@ -4144,32 +4214,45 @@ pub fn render_championship_standings_screen(fonts: &Fonts, champ: &ChampionshipS
     let table_y = scaler.s(90.0);
     let table_h = scaler.s(420.0);
 
+    let card_border = if is_constructors && champ.player_team.is_some() {
+        Palette::NEON_CYAN
+    } else {
+        Palette::UI_CARD_BORDER
+    };
+
     scaler.draw_glass_card(
         table_x,
         table_y,
         table_w,
         table_h,
         Palette::UI_CARD_BG,
-        Palette::UI_CARD_BORDER,
+        card_border,
         1.5,
     );
 
-    let mut table = championship_standings_table(champ, current_page);
-    table.base_x = table_x;
-    table.base_y = table_y;
-    table.total_width = table_w;
-    table.row_height = scaler.s(28.0);
-    table.header_height = scaler.s(28.0);
-    table.draw(
-        &scaler,
-        fonts,
-        LayoutRect::new(
-            table_x + scaler.s(15.0),
-            table_y + scaler.s(12.0),
-            table_w - scaler.s(30.0),
-            table_h - scaler.s(24.0),
-        ),
+    let table_rect = LayoutRect::new(
+        table_x + scaler.s(15.0),
+        table_y + scaler.s(12.0),
+        table_w - scaler.s(30.0),
+        table_h - scaler.s(24.0),
     );
+    if is_constructors {
+        let mut table = constructors_standings_table(champ, current_page);
+        table.base_x = table_x;
+        table.base_y = table_y;
+        table.total_width = table_w;
+        table.row_height = scaler.s(28.0);
+        table.header_height = scaler.s(28.0);
+        table.draw(&scaler, fonts, table_rect);
+    } else {
+        let mut table = championship_standings_table(champ, current_page);
+        table.base_x = table_x;
+        table.base_y = table_y;
+        table.total_width = table_w;
+        table.row_height = scaler.s(28.0);
+        table.header_height = scaler.s(28.0);
+        table.draw(&scaler, fonts, table_rect);
+    }
 
     // Page selector pills if multi-page (e.g. 32 drivers in autocross/rallycross)
     let page_rects = championship_standings_page_rects(sw, sh, total_pages);
@@ -4193,7 +4276,7 @@ pub fn render_championship_standings_screen(fonts: &Fonts, champ: &ChampionshipS
         scaler.draw_glass_card(rect.x, rect.y, rect.w, rect.h, bg, border, border_thick);
 
         let p_start = i * STANDINGS_PAGE_SIZE + 1;
-        let p_end = ((i + 1) * STANDINGS_PAGE_SIZE).min(total_drivers);
+        let p_end = ((i + 1) * STANDINGS_PAGE_SIZE).min(total_items);
         let btn_label = if is_active {
             format!("PAGE {} • POS #{}-#{}", i + 1, p_start, p_end)
         } else {
@@ -4211,7 +4294,7 @@ pub fn render_championship_standings_screen(fonts: &Fonts, champ: &ChampionshipS
     if total_pages > 1 {
         let hint_y = table_y + table_h + scaler.s(58.0);
         fonts.draw_ui_regular_centered(
-            "[Left / Right / Tab / LB / RB] Switch Page",
+            "[Left / Right / Tab / LB / RB] Switch Page / Constructors",
             sw * 0.5,
             hint_y,
             scaler.font_s(11.5),
@@ -4221,9 +4304,10 @@ pub fn render_championship_standings_screen(fonts: &Fonts, champ: &ChampionshipS
 
     let mut footer_items = vec![
         ("Enter / A", if champ.is_completed { "Menu" } else { "Next Round" }),
+        ("Tab / C / LB / RB", if is_constructors { "Drivers' Table" } else { "Constructors' Table" }),
     ];
     if total_pages > 1 {
-        footer_items.push(("◀ / ▶ / Tab", "Page"));
+        footer_items.push(("◀ / ▶", "Page"));
     }
     footer_items.push(("R", "Re-run Round"));
     footer_items.push(("Esc / B", "Exit"));

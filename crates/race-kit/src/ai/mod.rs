@@ -861,6 +861,8 @@ pub struct BotAiDriver {
     pub pit_cooldown: f32,
     /// Timer measuring duration stationary inside team pit box stall (s).
     pub stall_stop_timer: f32,
+    /// Whether this bot is the player's contracted teammate (Spec 127: +20% side-by-side clearance alongside player).
+    pub is_player_teammate: bool,
 }
 
 impl BotAiDriver {
@@ -904,7 +906,14 @@ impl BotAiDriver {
             pit_stall_idx: 0,
             pit_cooldown: 0.0,
             stall_stop_timer: 0.0,
+            is_player_teammate: false,
         }
+    }
+
+    /// Marks whether this bot is the player's contracted constructor teammate (Spec 127).
+    pub fn with_player_teammate(mut self, is_teammate: bool) -> Self {
+        self.is_player_teammate = is_teammate;
+        self
     }
 
     pub fn with_in_pit_lane(mut self, in_pit: bool) -> Self {
@@ -1781,13 +1790,18 @@ impl BotAiDriver {
         let mut had_pass_target = false;
 
         // 4b. Opponent cars avoidance
-        for &opp in other_cars {
+        for (opp_i, &opp) in other_cars.iter().enumerate() {
             let to_opp = opp.position() - car_pos;
             let dist = to_opp.length();
 
             if dist < self.profile.avoidance_distance && dist > 0.05 {
                 let opp_fwd_proj = to_opp.dot(car_fwd);
                 let opp_lat_proj = to_opp.dot(car_right);
+                let side_lat_threshold = if self.is_player_teammate && opp_i == 0 {
+                    2.4
+                } else {
+                    2.0
+                };
 
                 // Opponent is in front of us
                 if opp_fwd_proj > 0.5 {
@@ -1827,9 +1841,9 @@ impl BotAiDriver {
                     }
                 }
                 // Opponent is side-by-side (prevent rubbing/interlocking wheels)
-                else if opp_fwd_proj.abs() <= 2.5 && opp_lat_proj.abs() < 2.0 {
+                else if opp_fwd_proj.abs() <= 2.5 && opp_lat_proj.abs() < side_lat_threshold {
                     let push_away = if opp_lat_proj > 0.0 { 1.0 } else { -1.0 };
-                    let side_urgency = (1.0 - (opp_lat_proj.abs() / 2.0)).clamp(0.0, 1.0);
+                    let side_urgency = (1.0 - (opp_lat_proj.abs() / side_lat_threshold)).clamp(0.0, 1.0);
                     avoidance_steer += push_away * side_urgency * 0.40;
                 }
             }
