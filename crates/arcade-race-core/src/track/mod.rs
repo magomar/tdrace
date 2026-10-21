@@ -1530,7 +1530,31 @@ impl Track {
     /// - Autocross circuits -> `SurfaceType::DeepGravel`
     /// - Pure dirt or mud circuits -> `SurfaceType::Dirt`
     /// - Kart circuits -> `SurfaceType::Concrete`
+    /// - Stock car (NASCAR) circuits (except Eldora/dirt) -> `SurfaceType::Concrete`
     /// - GT and Rallycross circuits -> `SurfaceType::DeepGravel` (gravel traps, Spec 099)
+    /// Returns `true` if this circuit is predominantly a dirt or clay track (e.g. Eldora Speedway).
+    pub fn is_dirt_circuit(&self) -> bool {
+        if self.default_surface == SurfaceType::Dirt || self.default_surface.is_mud() {
+            return true;
+        }
+        let total = self.spline.waypoints.len();
+        if total > 0 {
+            let dirt_count = self
+                .spline
+                .waypoints
+                .iter()
+                .filter(|wp| {
+                    let s = wp.surface.unwrap_or(self.default_surface);
+                    s == SurfaceType::Dirt || s.is_mud()
+                })
+                .count();
+            if dirt_count * 2 >= total {
+                return true;
+            }
+        }
+        false
+    }
+
     pub fn default_runoff_surface(&self) -> Option<SurfaceType> {
         let name_lower = self.name.to_lowercase();
 
@@ -1580,6 +1604,7 @@ impl Track {
             || name_lower.contains("mud")
             || name_lower.contains("dirt")
             || name_lower.contains("clay")
+            || name_lower.contains("eldora")
         {
             return Some(SurfaceType::Dirt);
         }
@@ -1592,7 +1617,15 @@ impl Track {
             return Some(SurfaceType::Concrete);
         }
 
-        // 6. GT and Rallycross circuits
+        // 6. Stock car (NASCAR) circuits
+        if self.car_category == CarCategory::Nascar
+            || self.belongs_to_module("nascar")
+            || name_lower.contains("nascar")
+        {
+            return Some(SurfaceType::Concrete);
+        }
+
+        // 7. GT and Rallycross circuits
         if self.car_category == CarCategory::Gt
             || self.car_category == CarCategory::Rally
             || self.belongs_to_module("gt")
@@ -1678,8 +1711,11 @@ impl Track {
             || name_lower.contains("kart")
         {
             2.0
-        } else if self.belongs_to_module("nascar") {
-            1.8
+        } else if self.belongs_to_module("nascar")
+            || self.car_category == CarCategory::Nascar
+            || name_lower.contains("nascar")
+        {
+            1.2
         } else if self.belongs_to_module("extreme_offroad") {
             6.0
         } else {
@@ -3108,6 +3144,19 @@ mod tests {
         assert_eq!(ice_track.default_runoff_surface(), Some(SurfaceType::DeepSnow));
         ice_track.apply_default_runoff_surfaces();
         assert_eq!(ice_track.spline.samples[0].left_runoff_surface, Some(SurfaceType::DeepSnow));
+
+        // 7. Stock car (NASCAR) circuits -> Concrete (except Eldora -> Dirt)
+        let mut nascar_track = make_track("Daytona Superspeedway", CarCategory::Nascar, SurfaceType::Grass, "nascar");
+        assert_eq!(nascar_track.default_runoff_surface(), Some(SurfaceType::Concrete));
+        nascar_track.apply_default_runoff_surfaces();
+        assert_eq!(nascar_track.spline.samples[0].left_runoff_surface, Some(SurfaceType::Concrete));
+        assert_eq!(nascar_track.spline.samples[0].right_runoff_surface, Some(SurfaceType::Concrete));
+
+        let mut eldora_track = make_track("Eldora Speedway", CarCategory::Nascar, SurfaceType::Dirt, "nascar");
+        assert_eq!(eldora_track.default_runoff_surface(), Some(SurfaceType::Dirt));
+        eldora_track.apply_default_runoff_surfaces();
+        assert_eq!(eldora_track.spline.samples[0].left_runoff_surface, Some(SurfaceType::Dirt));
+        assert_eq!(eldora_track.spline.samples[0].right_runoff_surface, Some(SurfaceType::Dirt));
 
         // Custom override preservation:
         let mut custom_track = make_track("Nurburgring GP", CarCategory::Gt, SurfaceType::Grass, "gt");

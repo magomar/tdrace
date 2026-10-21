@@ -1261,10 +1261,10 @@ pub fn create_prototypical_track(
         ),
         "nascar" => (
             SurfaceType::Asphalt,
-            SurfaceType::Grass,
+            SurfaceType::Concrete,
             CarCategory::Nascar,
-            BarrierType::Concrete,
-            1.5,
+            BarrierType::Steel,
+            1.2,
             22.0,
             10,
         ),

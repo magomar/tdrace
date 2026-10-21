@@ -481,7 +481,8 @@ pub fn validate_track(track: &Track) -> Vec<TrackValidationError> {
                 let elev_diff = (w_elev - proj.elevation).abs();
 
                 if elev_diff < 2.5 {
-                    let curb_extra = if proj.left_curb || proj.right_curb { 1.35 } else { 0.0 };
+                    let has_curb = if proj.lateral_offset < 0.0 { proj.left_curb } else { proj.right_curb };
+                    let curb_extra = if has_curb { 1.35 } else { 0.0 };
                     let road_half_w = proj.track_width * 0.5 + curb_extra;
 
                     // If point is closer to centerline than the road edge (allowing 0.15m tolerance for wall on edge)
