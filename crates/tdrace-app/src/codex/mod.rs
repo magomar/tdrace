@@ -1839,14 +1839,14 @@ fn racing_data(scope: Scope, cars: &[CodexCar], circuits: &[CodexCircuit]) -> Co
                     ],
                 ),
                 "rallycross" => (
-                    "Explosive multi-surface circuits combining tarmac, gravel, jump crests, and tactical joker lap routes from front-wheel-drive Rally4 up to electric RX1e and Apex Group E beasts.",
+                    "Explosive multi-surface circuits combining tarmac, gravel, jump crests, and tactical joker lap routes from front-wheel-drive Rally4 up to electric RX1e and Nitro ERX beasts.",
                     vec![
                         CodexTierInfo { tier: 1, name: "Rally4 Grassroots Cup".to_string(), required_licence: "Class C (Junior Competition)", car_cost_credits: 16_000, alt_promotion_xp: 0, car_cost_xp: 0, base_purse: 5_000 },
                         CodexTierInfo { tier: 2, name: "Supercar Lites Trophy".to_string(), required_licence: "Class C (Junior Competition)", car_cost_credits: 48_000, alt_promotion_xp: 8_200, car_cost_xp: 8_200, base_purse: 12_000 },
                         CodexTierInfo { tier: 3, name: "Continental RX Supercars".to_string(), required_licence: "Class C (Junior Competition)", car_cost_credits: 85_000, alt_promotion_xp: 18_700, car_cost_xp: 18_700, base_purse: 25_000 },
                         CodexTierInfo { tier: 4, name: "World Rallycross Supercars".to_string(), required_licence: "Class C (Junior Competition)", car_cost_credits: 150_000, alt_promotion_xp: 33_400, car_cost_xp: 33_400, base_purse: 55_000 },
                         CodexTierInfo { tier: 5, name: "RX1e Electric Championship".to_string(), required_licence: "Class C (Junior Competition)", car_cost_credits: 190_000, alt_promotion_xp: 49_800, car_cost_xp: 49_800, base_purse: 120_000 },
-                        CodexTierInfo { tier: 6, name: "Apex Group E / Supercar Pro".to_string(), required_licence: "Class C (Junior Competition)", car_cost_credits: 240_000, alt_promotion_xp: 62_800, car_cost_xp: 62_800, base_purse: 150_000 },
+                        CodexTierInfo { tier: 6, name: "Nitro ERX".to_string(), required_licence: "Class C (Junior Competition)", car_cost_credits: 240_000, alt_promotion_xp: 62_800, car_cost_xp: 62_800, base_purse: 150_000 },
                     ],
                 ),
                 "gt" => (
@@ -2131,7 +2131,7 @@ fn racing_data(scope: Scope, cars: &[CodexCar], circuits: &[CodexCircuit]) -> Co
                 CodexCareerTierDetails { tier: 3, name: "Tier 3: Continental RX Supercars", promotion_criteria: "Primary: Top 3 finish in Tier 2 championship. Alternative: Reach 18,700 cumulative XP.", starter_car_id: None, starter_car_name: None, car_cost_credits: 85_000, alt_promotion_xp: 18_700, car_cost_xp: 18_700, first_time_exploration_xp: 750, round_base_purse: 25_000, unlocked_tracks: vec!["kouvola_rx", "montalegre_rx", "nyirad_rx"] },
                 CodexCareerTierDetails { tier: 4, name: "Tier 4: World Rallycross Supercars", promotion_criteria: "Primary: Top 3 finish in Tier 3 championship. Alternative: Reach 33,400 cumulative XP.", starter_car_id: None, starter_car_name: None, car_cost_credits: 150_000, alt_promotion_xp: 33_400, car_cost_xp: 33_400, first_time_exploration_xp: 1_000, round_base_purse: 55_000, unlocked_tracks: vec!["estering_rx", "hell_rx", "loheac_rx"] },
                 CodexCareerTierDetails { tier: 5, name: "Tier 5: RX1e Electric Championship", promotion_criteria: "Primary: Top 3 finish in Tier 4 championship. Alternative: Reach 49,800 cumulative XP.", starter_car_id: None, starter_car_name: None, car_cost_credits: 190_000, alt_promotion_xp: 49_800, car_cost_xp: 49_800, first_time_exploration_xp: 1_250, round_base_purse: 120_000, unlocked_tracks: vec!["riga_rx", "killarney_rx", "catalunya_rx"] },
-                CodexCareerTierDetails { tier: 6, name: "Tier 6: Apex Group E / Supercar Pro", promotion_criteria: "Primary: Top 3 finish in Tier 5 championship. Alternative: Reach 62,800 cumulative XP.", starter_car_id: None, starter_car_name: None, car_cost_credits: 240_000, alt_promotion_xp: 62_800, car_cost_xp: 62_800, first_time_exploration_xp: 1_500, round_base_purse: 150_000, unlocked_tracks: vec!["spa_rx", "silverstone_rx", "erx_motor_park"] },
+                CodexCareerTierDetails { tier: 6, name: "Tier 6: Nitro ERX", promotion_criteria: "Primary: Top 3 finish in Tier 5 championship. Alternative: Reach 62,800 cumulative XP.", starter_car_id: None, starter_car_name: None, car_cost_credits: 240_000, alt_promotion_xp: 62_800, car_cost_xp: 62_800, first_time_exploration_xp: 1_500, round_base_purse: 150_000, unlocked_tracks: vec!["spa_rx", "silverstone_rx", "erx_motor_park"] },
             ],
         },
         CodexCareerLadder {

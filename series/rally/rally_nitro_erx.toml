@@ -1,11 +1,11 @@
 # ==============================================================================
 # TdRace Championship Specification
-# Rallycross Career Mode: Apex Group E Electric Trophy (Tier 6)
+# Rallycross Career Mode: Nitro ERX Trophy (Tier 6)
 # ==============================================================================
 
 [championship]
-id = "rally_apex_group_e"
-name = "Apex Group E Electric Trophy"
+id = "rally_nitro_erx"
+name = "Nitro ERX Trophy"
 description = "1,070 BHP electric FC1-X machines, the most powerful rallycross cars ever raced, across 12 world circuits."
 module_id = "rallycross"
 tier = 6

@@ -274,7 +274,7 @@ impl RealWorldBenchmark {
             ("rally" | "rallycross", 6) => Self {
                 modality: "rallycross",
                 tier: 6,
-                category_archetype: "Apex Group E Electric",
+                category_archetype: "Nitro ERX",
                 representative_real_cars: "Nordic Valkyrie T6, Green Mountain Titan T6, Rampart Wasp T6",
                 real_kinematic_circle_min_m: 6.0,
                 real_kinematic_circle_max_m: 8.0,

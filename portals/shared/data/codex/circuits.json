@@ -3502,7 +3502,7 @@
         }
       ],
       "has_jumps": true,
-      "has_joker": true,
+      "has_joker": false,
       "has_pit_lane": false,
       "has_junctions": true,
       "image": "/textures/circuits/rally/holjes_rx.svg"
@@ -3523,21 +3523,21 @@
       "osm_url": "https://www.openstreetmap.org/way/234347787",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1151.1,
+      "length_m": 1361.6,
       "min_width_m": 12.5,
       "max_width_m": 14.0,
       "surfaces": [
         {
           "surface": "Asphalt",
-          "share_pct": 64.4
+          "share_pct": 70.1
         },
         {
           "surface": "Dirt",
-          "share_pct": 35.6
+          "share_pct": 29.9
         }
       ],
       "has_jumps": true,
-      "has_joker": true,
+      "has_joker": false,
       "has_pit_lane": false,
       "has_junctions": true,
       "image": "/textures/circuits/rally/lydden_hill.svg"

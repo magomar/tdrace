@@ -1346,7 +1346,7 @@ fn test_all_modules_career_tier_launch_and_calendar_counts() {
             ],
         ),
         (
-            "Apex Group E Electric Trophy (Tier 6)",
+            "Nitro ERX Trophy (Tier 6)",
             vec![
                 "catalunya_rx",
                 "lessay_rx",

@@ -3327,7 +3327,7 @@ impl RaceSession {
                 ],
             ),
             _ => (
-                "Apex Group E Electric Trophy (Tier 6)",
+                "Nitro ERX Trophy (Tier 6)",
                 vec![
                     "catalunya_rx".to_string(),
                     "lessay_rx".to_string(),

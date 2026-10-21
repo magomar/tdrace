@@ -419,7 +419,7 @@ fn test_all_motorsport_modules_tiers_1_to_5_specifications() {
                 (3, "rally_continental_rx_challenge", 7, "rally_volkskraft_strassen_t3"),
                 (4, "rally_world_rallycross_supercars", 8, "rally_gallia_lyon_t4"),
                 (5, "rally_rx1e_electric_championship", 10, "rally_gallia_volt_t5"),
-                (6, "rally_apex_group_e", 12, "rally_nordic_valkyrie_t6"),
+                (6, "rally_nitro_erx", 12, "rally_nordic_valkyrie_t6"),
             ],
         ),
         (
@@ -1247,7 +1247,7 @@ fn test_championship_lap_calibration_across_all_modules() {
         "rally_continental_rx_challenge",
         "rally_world_rallycross_supercars",
         "rally_rx1e_electric_championship",
-        "rally_apex_group_e",
+        "rally_nitro_erx",
         "rally_group_b_masters",
     ] {
         let def = mgr.get(slug).expect("Rallycross preset must exist");

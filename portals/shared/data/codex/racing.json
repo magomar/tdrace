@@ -153,7 +153,7 @@
           "id": "rallycross",
           "title": "RALLYCROSS WORLD CUP",
           "subtitle": "World & Continental Rallycross Mixed Surface Stages, Stadium Jumps & Drifts",
-          "description": "Explosive multi-surface circuits combining tarmac, gravel, jump crests, and tactical joker lap routes from front-wheel-drive Rally4 up to electric RX1e and Apex Group E beasts.",
+          "description": "Explosive multi-surface circuits combining tarmac, gravel, jump crests, and tactical joker lap routes from front-wheel-drive Rally4 up to electric RX1e and Nitro ERX beasts.",
           "launch": true,
           "car_count": 21,
           "circuit_count": 0,
@@ -206,7 +206,7 @@
             },
             {
               "tier": 6,
-              "name": "Apex Group E / Supercar Pro",
+              "name": "Nitro ERX",
               "required_licence": "Class C (Junior Competition)",
               "car_cost_credits": 240000,
               "alt_promotion_xp": 62800,
@@ -2980,8 +2980,8 @@
           ]
         },
         {
-          "id": "rally_apex_group_e",
-          "name": "Apex Group E Electric Trophy",
+          "id": "rally_nitro_erx",
+          "name": "Nitro ERX Trophy",
           "description": "1,070 BHP electric FC1-X machines, the most powerful rallycross cars ever raced, across 12 world circuits.",
           "module_id": "rallycross",
           "tier": 6,
@@ -5878,7 +5878,7 @@
               },
               {
                 "tier": 6,
-                "name": "Tier 6: Apex Group E / Supercar Pro",
+                "name": "Tier 6: Nitro ERX",
                 "promotion_criteria": "Primary: Top 3 finish in Tier 5 championship. Alternative: Reach 62,800 cumulative XP.",
                 "starter_car_id": null,
                 "starter_car_name": null,
