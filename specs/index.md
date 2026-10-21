@@ -152,6 +152,8 @@ Table of contents providing progressive disclosure of project constitution and t
 | [129](129_aerodynamic_slipstream_drafting_unchoking_wake_alignment_and_hud_visual_feedback.md) | Aerodynamic Slipstream Drafting Unchoking, Wake Alignment, and HUD Visual Feedback | Architecture Spec | `implemented` | `human:mario` | [043](043_vehicle_dynamics_rebuild_and_simplified_handling_settings.md), [079](079_tactical_hologram_cockpit_telemetry_hud.md) | Unchokes aerodynamic slipstream drafting from the top-speed governor, adds heading and curve-tolerant wake cone geometry, provides mid-range wake suction pull, and surfaces in-world wind streaks and a live HUD draft indicator. |
 | [130](130_fia_european_autocross_10_car_3_2_3_2_grids_timed_qualifying_practice_30_driver_knockout_format_two_phase_scoring_and_expanded_season_calendars.md) | FIA European Autocross 10-Car 3-2-3-2 Grids, Timed Qualifying Practice, 30-Driver Knockout Format, Two-Phase Scoring, and Expanded Season Calendars | Feature Spec | `implemented` | `human:mario` | [050](050_fia_autocross_championship_and_vehicle_roster.md), [103](103_autocross_and_rallycross_launch_chutes_and_templated_track_components.md), [104](104_autocross_and_rallycross_tournament_sprint_weekend_format.md), [106](106_classic_autocross_launch_chutes_and_tencar_rallycross_chutes.md) | Upgrades the FIA Autocross (AX) championship format to authentic FIA European Autocross rules: 10-car 3-2-3-2 staggered concrete launch chutes across all 20 AX circuits, a 30-driver field, Stage 0 Timed Qualifying Practice (1 out-lap + 1 flying lap from the chute), configurable Qualifying Heats (default 1 heat for arcade pace, up to 3 heats with Best 2-of-3 Intermediate Classification), Top 20 into two 10-car Semifinals with Top 5 position-only advancement to the 10-car Final (plus B-Final and Consolation Semifinal for Option A continuous racing), Two-Phase FIA Autocross points (Intermediate Top 10: 10..1 pts + Final Top 10: 25-18-15-12-10-8-6-4-2-1 pts), and expanded 5-to-10-round season calendars across all 5 career tiers. |
 | [131](131_error_free_t4_and_t5_bot_tiers_optimal_racing_line_trajectory_following_and_maximum_pace_controller_unchoking.md) | Error-Free T4+ and T5+ Bot Tiers, Optimal Racing Line Trajectory Following, and Maximum-Pace Controller Unchoking | Architecture Spec | `implemented` | `human:mario` | [023](023_orthogonal_ai_driving_styles_and_quality_tiers.md), [046](046_humanlike_bot_driving_with_tiered_mistakes_and_varied_lines.md), [083](083_evorl_bot_driving_style_and_performance_optimization.md), [110](110_mathematically_ideal_racing_line_visual_aid.md) | Introduces error-free Pro+ (T4+) and Legend+ (T5+) bot variants with simulated human errors removed, spawns them as a fixed proportion of high-tier casual grids and an experience-scaling proportion in career championships, and upgrades BotAiDriver with OptimalRacingLine tracking and un-choked corner-exit pace. |
+| [132](132_evorl_human_driving_imitation_telemetry_trajectory_extraction_and_multi_car_championship_tuning.md) | EvoRL Human Driving Imitation, Telemetry Trajectory Extraction, and Multi-Car Championship Tuning | Architecture Spec | `draft` | — | [083](083_evorl_bot_driving_style_and_performance_optimization.md), [110](110_mathematically_ideal_racing_line_visual_aid.md), [128](128_world_rx_superpole_6_car_2_2_2_grids_overall_heat_time_classification_and_three_stage_scoring.md), [130](130_fia_european_autocross_10_car_3_2_3_2_grids_timed_qualifying_practice_30_driver_knockout_format_two_phase_scoring_and_expanded_season_calendars.md), [131](131_error_free_t4_and_t5_bot_tiers_optimal_racing_line_trajectory_following_and_maximum_pace_controller_unchoking.md) | Offline EvoRL pipeline extensions enabling human .tdr replay trajectory extraction, ghost-matching and behavioral warm-start tuning, and multi-car pack/championship tournament evaluation across all motorsport modalities. |
+| [133](133_physics_exact_qss_velocity_solver_online_sector_grip_memory_and_short_horizon_rollout_bot_controller.md) | Physics-Exact QSS Velocity Solver, Online Sector Grip Memory, and Short-Horizon Rollout Bot Controller | Architecture Spec | `draft` | — | [083](083_evorl_bot_driving_style_and_performance_optimization.md), [110](110_mathematically_ideal_racing_line_visual_aid.md), [131](131_error_free_t4_and_t5_bot_tiers_optimal_racing_line_trajectory_following_and_maximum_pace_controller_unchoking.md) | Upgrades BotAiDriver in race-kit with a forward-backward quasi-steady-state (QSS) friction-circle velocity profile solver, online per-sector adaptive grip memory across laps, and zero-allocation short-horizon Model Predictive Control (MPC) trajectory rollouts for elite tiers. |
 
 ### 🗺️ Specification Dependency Graph
 
@@ -250,6 +252,8 @@ flowchart LR
     129["129: Aerodynamic Slipstream Drafting Unchoking, Wake Alignment, and HUD Visual Feedback"]
     130["130: FIA European Autocross 10-Car 3-2-3-2 Grids, Timed Qualifying Practice, 30-Driver Knockout Format, Two-Phase Scoring, and Expanded Season Calendars"]
     131["131: Error-Free T4+ and T5+ Bot Tiers, Optimal Racing Line Trajectory Following, and Maximum-Pace Controller Unchoking"]
+    132["132: EvoRL Human Driving Imitation, Telemetry Trajectory Extraction, and Multi-Car Championship Tuning"]
+    133["133: Physics-Exact QSS Velocity Solver, Online Sector Grip Memory, and Short-Horizon Rollout Bot Controller"]
     055 --> 047
     062 --> 063
     055 --> 064
@@ -393,4 +397,12 @@ flowchart LR
     046 --> 131
     083 --> 131
     110 --> 131
+    083 --> 132
+    110 --> 132
+    128 --> 132
+    130 --> 132
+    131 --> 132
+    083 --> 133
+    110 --> 133
+    131 --> 133
 ```
