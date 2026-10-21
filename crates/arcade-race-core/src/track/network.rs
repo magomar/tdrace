@@ -1060,10 +1060,70 @@ impl TrackNetwork {
             return;
         };
 
+        let entry_shared_idxs: Vec<usize> = entry_sock_id
+            .and_then(|sid| {
+                let j = self.get_junction(sid.junction_id)?;
+                Some(match &j.kind {
+                    JunctionKind::Split { egress_sockets, .. } => (0..egress_sockets.len())
+                        .filter(|&i| {
+                            i != sid.socket_index
+                                && !self.segments.iter().any(|s| {
+                                    s.id != seg_id
+                                        && self.is_branch_segment(s.id)
+                                        && s.entry_junction == Some(SocketId::new(sid.junction_id, i))
+                                })
+                        })
+                        .collect(),
+                    JunctionKind::Merge { ingress_sockets, .. } => (0..ingress_sockets.len())
+                        .filter(|&i| {
+                            !self.segments.iter().any(|s| {
+                                s.id != seg_id
+                                    && self.is_branch_segment(s.id)
+                                    && s.exit_junction == Some(SocketId::new(sid.junction_id, i))
+                            })
+                        })
+                        .collect(),
+                    _ => Vec::new(),
+                })
+            })
+            .unwrap_or_default();
+
+        let exit_shared_idxs: Vec<usize> = exit_sock_id
+            .and_then(|sid| {
+                let j = self.get_junction(sid.junction_id)?;
+                Some(match &j.kind {
+                    JunctionKind::Merge { ingress_sockets, .. } => (0..ingress_sockets.len())
+                        .filter(|&i| {
+                            i != sid.socket_index
+                                && !self.segments.iter().any(|s| {
+                                    s.id != seg_id
+                                        && self.is_branch_segment(s.id)
+                                        && s.exit_junction == Some(SocketId::new(sid.junction_id, i))
+                                })
+                        })
+                        .collect(),
+                    JunctionKind::Split { egress_sockets, .. } => (0..egress_sockets.len())
+                        .filter(|&i| {
+                            !self.segments.iter().any(|s| {
+                                s.id != seg_id
+                                    && self.is_branch_segment(s.id)
+                                    && s.entry_junction == Some(SocketId::new(sid.junction_id, i))
+                            })
+                        })
+                        .collect(),
+                    _ => Vec::new(),
+                })
+            })
+            .unwrap_or_default();
+
         if let Some(sid) = entry_sock_id {
             if let Some(j) = self.get_junction_mut(sid.junction_id) {
                 match &mut j.kind {
-                    JunctionKind::Split { egress_sockets, .. } => {
+                    JunctionKind::Split {
+                        ingress_socket,
+                        egress_sockets,
+                        gore_config,
+                    } => {
                         if let Some(sock) = egress_sockets.get_mut(sid.socket_index) {
                             sock.point = wp0.point;
                             sock.width = wp0.width.max(1.0);
@@ -1073,14 +1133,42 @@ impl TrackNetwork {
                                 sock.surface = surf;
                             }
                         }
+                        for idx in entry_shared_idxs {
+                            if let Some(sock) = egress_sockets.get_mut(idx) {
+                                sock.point = wp0.point;
+                                sock.elevation = wp0.elevation;
+                            }
+                        }
+                        ingress_socket.point = wp0.point;
+                        ingress_socket.elevation = wp0.elevation;
+                        if let Some(gore) = gore_config {
+                            let delta = wp0.point - gore.apex_point;
+                            gore.apex_point = wp0.point;
+                            gore.nose_barrier.segment.start += delta;
+                            gore.nose_barrier.segment.end += delta;
+                            gore.nose_barrier.elevation = wp0.elevation;
+                        }
                     }
-                    JunctionKind::Merge { egress_socket, .. } if sid.socket_index == 0 => {
+                    JunctionKind::Merge {
+                        ingress_sockets,
+                        egress_socket,
+                        merge_config,
+                    } if sid.socket_index == 0 => {
                         egress_socket.point = wp0.point;
                         egress_socket.width = wp0.width.max(1.0);
                         egress_socket.elevation = wp0.elevation;
                         egress_socket.bank_angle = wp0.bank_angle;
                         if let Some(surf) = wp0.surface {
                             egress_socket.surface = surf;
+                        }
+                        for idx in entry_shared_idxs {
+                            if let Some(sock) = ingress_sockets.get_mut(idx) {
+                                sock.point = wp0.point;
+                                sock.elevation = wp0.elevation;
+                            }
+                        }
+                        if let Some(cfg) = merge_config {
+                            cfg.convergence_point = wp0.point;
                         }
                     }
                     _ => {}
@@ -1091,7 +1179,11 @@ impl TrackNetwork {
         if let Some(sid) = exit_sock_id {
             if let Some(j) = self.get_junction_mut(sid.junction_id) {
                 match &mut j.kind {
-                    JunctionKind::Split { ingress_socket, .. } if sid.socket_index == 0 => {
+                    JunctionKind::Split {
+                        ingress_socket,
+                        egress_sockets,
+                        gore_config,
+                    } if sid.socket_index == 0 => {
                         ingress_socket.point = wp_last.point;
                         ingress_socket.width = wp_last.width.max(1.0);
                         ingress_socket.elevation = wp_last.elevation;
@@ -1099,8 +1191,25 @@ impl TrackNetwork {
                         if let Some(surf) = wp_last.surface {
                             ingress_socket.surface = surf;
                         }
+                        for idx in exit_shared_idxs {
+                            if let Some(sock) = egress_sockets.get_mut(idx) {
+                                sock.point = wp_last.point;
+                                sock.elevation = wp_last.elevation;
+                            }
+                        }
+                        if let Some(gore) = gore_config {
+                            let delta = wp_last.point - gore.apex_point;
+                            gore.apex_point = wp_last.point;
+                            gore.nose_barrier.segment.start += delta;
+                            gore.nose_barrier.segment.end += delta;
+                            gore.nose_barrier.elevation = wp_last.elevation;
+                        }
                     }
-                    JunctionKind::Merge { ingress_sockets, .. } => {
+                    JunctionKind::Merge {
+                        ingress_sockets,
+                        egress_socket,
+                        merge_config,
+                    } => {
                         if let Some(sock) = ingress_sockets.get_mut(sid.socket_index) {
                             sock.point = wp_last.point;
                             sock.width = wp_last.width.max(1.0);
@@ -1109,6 +1218,17 @@ impl TrackNetwork {
                             if let Some(surf) = wp_last.surface {
                                 sock.surface = surf;
                             }
+                        }
+                        for idx in exit_shared_idxs {
+                            if let Some(sock) = ingress_sockets.get_mut(idx) {
+                                sock.point = wp_last.point;
+                                sock.elevation = wp_last.elevation;
+                            }
+                        }
+                        egress_socket.point = wp_last.point;
+                        egress_socket.elevation = wp_last.elevation;
+                        if let Some(cfg) = merge_config {
+                            cfg.convergence_point = wp_last.point;
                         }
                     }
                     JunctionKind::Terminal { socket } if sid.socket_index == 0 => {
@@ -1151,6 +1271,99 @@ impl TrackNetwork {
             self.layouts[idx].total_lap_length = len;
         }
         self.recompute_composite_splines();
+    }
+
+    /// Aligns the connected split/merge junction socket tangents and normals of `seg_id`
+    /// with `main_spline` at their current anchor positions, then refreshes `seg_id`'s samples.
+    pub fn align_segment_junctions_to_spline(&mut self, seg_id: SegmentId, main_spline: &TrackSpline) {
+        if main_spline.samples.len() < 2 {
+            return;
+        }
+        let Some((entry_sock_id, exit_sock_id)) = self
+            .get_segment(seg_id)
+            .map(|s| (s.entry_junction, s.exit_junction))
+        else {
+            return;
+        };
+
+        let rotate_sockets_to_spline = |j: &mut RoadJunction| {
+            match &mut j.kind {
+                JunctionKind::Split {
+                    ingress_socket,
+                    egress_sockets,
+                    ..
+                } => {
+                    let proj = main_spline.project_point(ingress_socket.point);
+                    let new_t = proj.tangent.normalize_or_zero();
+                    if new_t.length_squared() > 0.5 {
+                        let new_n = Vec2::new(-new_t.y, new_t.x);
+                        let old_t = ingress_socket.tangent.normalize_or_zero();
+                        let (cos_a, sin_a) = if old_t.length_squared() > 0.5 {
+                            (old_t.dot(new_t), old_t.perp_dot(new_t))
+                        } else {
+                            (1.0, 0.0)
+                        };
+                        for sock in egress_sockets.iter_mut() {
+                            let v = sock.tangent;
+                            let rot = Vec2::new(v.x * cos_a - v.y * sin_a, v.x * sin_a + v.y * cos_a)
+                                .normalize_or_zero();
+                            sock.tangent = if rot.length_squared() > 0.5 { rot } else { new_t };
+                            sock.normal = Vec2::new(-sock.tangent.y, sock.tangent.x);
+                        }
+                        ingress_socket.tangent = new_t;
+                        ingress_socket.normal = new_n;
+                    }
+                }
+                JunctionKind::Merge {
+                    ingress_sockets,
+                    egress_socket,
+                    ..
+                } => {
+                    let proj = main_spline.project_point(egress_socket.point);
+                    let new_t = proj.tangent.normalize_or_zero();
+                    if new_t.length_squared() > 0.5 {
+                        let new_n = Vec2::new(-new_t.y, new_t.x);
+                        let old_t = egress_socket.tangent.normalize_or_zero();
+                        let (cos_a, sin_a) = if old_t.length_squared() > 0.5 {
+                            (old_t.dot(new_t), old_t.perp_dot(new_t))
+                        } else {
+                            (1.0, 0.0)
+                        };
+                        for sock in ingress_sockets.iter_mut() {
+                            let v = sock.tangent;
+                            let rot = Vec2::new(v.x * cos_a - v.y * sin_a, v.x * sin_a + v.y * cos_a)
+                                .normalize_or_zero();
+                            sock.tangent = if rot.length_squared() > 0.5 { rot } else { new_t };
+                            sock.normal = Vec2::new(-sock.tangent.y, sock.tangent.x);
+                        }
+                        egress_socket.tangent = new_t;
+                        egress_socket.normal = new_n;
+                    }
+                }
+                JunctionKind::Terminal { .. } => {}
+            }
+        };
+
+        if let Some(sid) = entry_sock_id {
+            if let Some(j) = self.get_junction_mut(sid.junction_id) {
+                rotate_sockets_to_spline(j);
+            }
+        }
+        if let Some(sid) = exit_sock_id {
+            if let Some(j) = self.get_junction_mut(sid.junction_id) {
+                rotate_sockets_to_spline(j);
+            }
+        }
+
+        let entry_sock = entry_sock_id
+            .and_then(|sid| self.get_junction(sid.junction_id).and_then(|j| j.egress_socket(sid.socket_index)))
+            .copied();
+        let exit_sock = exit_sock_id
+            .and_then(|sid| self.get_junction(sid.junction_id).and_then(|j| j.ingress_socket(sid.socket_index)))
+            .copied();
+        if let Some(seg) = self.get_segment_mut(seg_id) {
+            seg.recompute_samples(entry_sock.as_ref(), exit_sock.as_ref());
+        }
     }
 
     /// Returns a pre-cached composite spline for the given layout ID, if available (Spec 084).

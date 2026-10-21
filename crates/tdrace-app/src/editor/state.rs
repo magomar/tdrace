@@ -662,6 +662,7 @@ pub struct EditorState {
 
 impl EditorState {
     pub fn new(mut track: Track) -> Self {
+        track.sync_network_main_segments();
         if track.grid_positions.is_empty() && (track.spline.samples.len() >= 2 || track.is_arena()) {
             track.auto_generate_grid_default();
         }
@@ -770,6 +771,7 @@ impl EditorState {
             unique.dedup();
             for sid in unique {
                 net.rebuild_segment_samples(sid);
+                net.align_segment_junctions_to_spline(sid, &self.track.spline);
             }
         }
         self.rebuild_geometry_interactive();

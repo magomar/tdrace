@@ -2279,6 +2279,52 @@ impl Track {
             return;
         }
 
+        // Heal any merged branch segment whose Split or Merge junction sockets drifted out of sync
+        // with its first/last waypoint (e.g. from an earlier editor session).
+        let desynced_branches: Vec<SegmentId> = net
+            .segments
+            .iter()
+            .filter(|s| !default_seq.contains(&s.id) && s.exit_junction.is_some() && !s.waypoints.is_empty())
+            .filter_map(|s| {
+                let wp0 = s.waypoints.first()?.point;
+                let wpl = s.waypoints.last()?.point;
+                let entry_desync = s.entry_junction.is_some_and(|sid| {
+                    net.get_junction(sid.junction_id).is_some_and(|j| match &j.kind {
+                        network::JunctionKind::Split {
+                            egress_sockets,
+                            gore_config,
+                            ..
+                        } => {
+                            egress_sockets.iter().any(|sock| sock.point.distance_squared(wp0) > 1e-3)
+                                || gore_config.as_ref().is_some_and(|g| g.apex_point.distance_squared(wp0) > 1e-3)
+                        }
+                        _ => false,
+                    })
+                });
+                let exit_desync = s.exit_junction.is_some_and(|sid| {
+                    net.get_junction(sid.junction_id).is_some_and(|j| match &j.kind {
+                        network::JunctionKind::Merge {
+                            ingress_sockets,
+                            egress_socket,
+                            merge_config,
+                        } => {
+                            egress_socket.point.distance_squared(wpl) > 1e-3
+                                || ingress_sockets.iter().any(|sock| sock.point.distance_squared(wpl) > 1e-3)
+                                || merge_config
+                                    .as_ref()
+                                    .is_some_and(|c| c.convergence_point.distance_squared(wpl) > 1e-3)
+                        }
+                        _ => false,
+                    })
+                });
+                (entry_desync || exit_desync).then_some(s.id)
+            })
+            .collect();
+        for b_id in desynced_branches {
+            net.rebuild_segment_samples(b_id);
+            net.align_segment_junctions_to_spline(b_id, &self.spline);
+        }
+
         let wps = &self.spline.waypoints;
         let n = wps.len();
 
@@ -2412,6 +2458,15 @@ impl Track {
                             .and_then(|j| j.egress_socket(s.socket_index))
                     })
                     .copied()
+                    .map(|mut sock| {
+                        if let Some(first) = expected_wps.first() {
+                            sock.point = first.point;
+                            sock.width = first.width;
+                            sock.elevation = first.elevation;
+                            sock.bank_angle = first.bank_angle;
+                        }
+                        sock
+                    })
             };
             let exit_sock = if non_wrapping && k + 1 == m {
                 None
@@ -2422,6 +2477,15 @@ impl Track {
                             .and_then(|j| j.ingress_socket(s.socket_index))
                     })
                     .copied()
+                    .map(|mut sock| {
+                        if let Some(last) = expected_wps.last() {
+                            sock.point = last.point;
+                            sock.width = last.width;
+                            sock.elevation = last.elevation;
+                            sock.bank_angle = last.bank_angle;
+                        }
+                        sock
+                    })
             };
 
             if let Some(seg) = net.get_segment_mut(sid) {

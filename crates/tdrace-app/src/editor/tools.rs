@@ -1557,15 +1557,19 @@ impl ToolSettings {
 
         // In RoadSplit mode, check if clicking near any branch socket to activate it for extension
         if self.active_tool == EditorToolType::RoadSplit {
+            let has_branch_wp_here = find_closest_branch_waypoint(state, mouse_world, 6.0).is_some();
             let network = state.track.ensure_network();
             for j in &network.junctions {
                 if let JunctionKind::Split { egress_sockets, .. } = &j.kind {
                     for (idx, socket) in egress_sockets.iter().enumerate() {
                         if (socket.point - mouse_world).length() <= 3.5 {
                             self.active_branch_socket = Some(SocketId::new(j.id, idx));
-                            self.is_box_selecting = false;
-                            self.is_dragging = false;
-                            return;
+                            if !has_branch_wp_here {
+                                self.is_box_selecting = false;
+                                self.is_dragging = false;
+                                return;
+                            }
+                            break;
                         }
                     }
                 }
@@ -3182,7 +3186,7 @@ fn find_closest_entity(state: &EditorState, point: Vec2) -> Option<Selection> {
     let closest_branch = find_closest_branch_waypoint_with_dist(state, point, pick_dist);
     match (closest_main, closest_branch) {
         (Some((m_idx, m_d)), Some(((seg_id, b_idx), b_d))) => {
-            if b_d < m_d {
+            if b_d <= m_d + 1e-3 {
                 return Some(Selection::BranchWaypoint(seg_id, b_idx));
             } else {
                 return Some(Selection::Waypoint(m_idx));

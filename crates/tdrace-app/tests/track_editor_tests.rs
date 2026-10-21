@@ -3207,4 +3207,270 @@ fn test_spec_123_banked_and_unbanked_iso_contour_extraction() {
     );
 }
 
+#[test]
+fn test_moving_branch_endpoints_moves_split_and_merge_junctions_generically() {
+    use tdrace_app::editor::GridSnapSetting;
+    use tdrace_core::track::network::{JunctionKind, SegmentId};
+
+    // 1. Test on a rallycross track with a joker lap (SegmentId(2) on rx_canyon_flyer):
+    // Moving wp[0] moves the entire Split junction ([Main] + [Joker] + gore_config) and re-slices main segments.
+    // Moving wp[last] moves the entire Merge junction (all ingress_sockets + egress_socket + convergence_point).
+    let rx_track = tdrace_core::catalog::official_track("classic", "rx_canyon_flyer");
+    let mut state = EditorState::new(rx_track);
+    state.grid_snap = GridSnapSetting::Off;
+    let mut tools = ToolSettings::default();
+    tools.active_tool = EditorToolType::Select;
+
+    let branch_seg_id = state
+        .track
+        .network
+        .as_ref()
+        .unwrap()
+        .branch_segments()
+        .first()
+        .unwrap()
+        .id;
+
+    // Pick a different main spline waypoint for the split (wp[0]) and merge (wp[last])
+    let new_split_main_wp = state.track.spline.waypoints[3].point;
+    let new_merge_main_wp = state.track.spline.waypoints[10].point;
+
+    let old_wp0 = state
+        .track
+        .network
+        .as_ref()
+        .unwrap()
+        .get_segment(branch_seg_id)
+        .unwrap()
+        .waypoints[0]
+        .point;
+
+    // Click and drag branch wp[0] to new_split_main_wp
+    tools.handle_primary_down(&mut state, old_wp0, false);
+    assert_eq!(state.selection, Selection::BranchWaypoint(branch_seg_id, 0));
+    tools.handle_primary_drag(&mut state, new_split_main_wp);
+    tools.handle_primary_up(&mut state, new_split_main_wp);
+
+    let net = state.track.network.as_ref().unwrap();
+    let split_junc = net
+        .junctions
+        .iter()
+        .find(|j| matches!(j.kind, JunctionKind::Split { .. }))
+        .expect("Split junction must exist");
+    if let JunctionKind::Split {
+        ingress_socket,
+        egress_sockets,
+        gore_config,
+    } = &split_junc.kind
+    {
+        assert!(
+            ingress_socket.point.distance(new_split_main_wp) < 1e-3,
+            "Split ingress_socket must move to new wp[0]"
+        );
+        for (idx, sock) in egress_sockets.iter().enumerate() {
+            assert!(
+                sock.point.distance(new_split_main_wp) < 1e-3,
+                "Split egress_sockets[{idx}] ([Main]/[Joker]) must move together with wp[0], got {:?}",
+                sock.point
+            );
+        }
+        if let Some(gore) = gore_config {
+            assert!(
+                gore.apex_point.distance(new_split_main_wp) < 1e-3,
+                "Split gore_config.apex_point must move with wp[0]"
+            );
+        }
+    }
+
+    // Now drag branch wp[last] to new_merge_main_wp
+    let last_idx = state
+        .track
+        .network
+        .as_ref()
+        .unwrap()
+        .get_segment(branch_seg_id)
+        .unwrap()
+        .waypoints
+        .len()
+        - 1;
+    let old_wp_last = state
+        .track
+        .network
+        .as_ref()
+        .unwrap()
+        .get_segment(branch_seg_id)
+        .unwrap()
+        .waypoints[last_idx]
+        .point;
+
+    tools.handle_primary_down(&mut state, old_wp_last, false);
+    assert_eq!(
+        state.selection,
+        Selection::BranchWaypoint(branch_seg_id, last_idx)
+    );
+    tools.handle_primary_drag(&mut state, new_merge_main_wp);
+    tools.handle_primary_up(&mut state, new_merge_main_wp);
+
+    let net = state.track.network.as_ref().unwrap();
+    let merge_junc = net
+        .junctions
+        .iter()
+        .find(|j| matches!(j.kind, JunctionKind::Merge { .. }))
+        .expect("Merge junction must exist");
+    if let JunctionKind::Merge {
+        ingress_sockets,
+        egress_socket,
+        merge_config,
+    } = &merge_junc.kind
+    {
+        assert!(
+            egress_socket.point.distance(new_merge_main_wp) < 1e-3,
+            "Merge egress_socket must move to new wp[last]"
+        );
+        for (idx, sock) in ingress_sockets.iter().enumerate() {
+            assert!(
+                sock.point.distance(new_merge_main_wp) < 1e-3,
+                "Merge ingress_sockets[{idx}] must move together with wp[last], got {:?}",
+                sock.point
+            );
+        }
+        if let Some(merge) = merge_config {
+            assert!(
+                merge.convergence_point.distance(new_merge_main_wp) < 1e-3,
+                "Merge convergence_point must move with wp[last]"
+            );
+        }
+    }
+
+    // Verify main segments re-sliced cleanly to the new split (wp 3) and merge (wp 10)
+    let seg0 = net.get_segment(SegmentId(0)).unwrap();
+    let seg1 = net.get_segment(SegmentId(1)).unwrap();
+    assert!(seg0.waypoints.last().unwrap().point.distance(new_split_main_wp) < 1e-3);
+    assert!(seg1.waypoints.first().unwrap().point.distance(new_split_main_wp) < 1e-3);
+    assert!(seg1.waypoints.last().unwrap().point.distance(new_merge_main_wp) < 1e-3);
+
+    // 2. Test generic non-joker RoadSplit created in the editor ("alternative" layout, "Branch 1"):
+    let mut gp_state = EditorState::new(tdrace_core::catalog::official_track(
+        "classic",
+        "classic_grand_prix",
+    ));
+    gp_state.grid_snap = GridSnapSetting::Off;
+    let mut gp_tools = ToolSettings::default();
+    gp_tools.active_tool = EditorToolType::RoadSplit;
+
+    let wp2 = gp_state.track.spline.waypoints[2].point;
+    let wp5 = gp_state.track.spline.waypoints[5].point;
+    // Secondary click on wp2 creates Split(0) and seeds branch segment
+    gp_tools.handle_secondary_down(&mut gp_state, wp2);
+    // Secondary click in open space extends the new branch
+    let mid_branch = wp2 + Vec2::new(40.0, 30.0);
+    gp_tools.handle_secondary_down(&mut gp_state, mid_branch);
+    // Secondary click near wp5 merges the branch back into the main spline
+    gp_tools.handle_secondary_down(&mut gp_state, wp5 + Vec2::new(2.0, 1.0));
+
+    let gen_branch_id = gp_state
+        .track
+        .network
+        .as_ref()
+        .unwrap()
+        .branch_segments()
+        .first()
+        .expect("Generic branch segment must exist")
+        .id;
+
+    // Move generic branch wp[0] to wp3 and wp[last] to wp6
+    let wp3 = gp_state.track.spline.waypoints[3].point;
+    let wp6 = gp_state.track.spline.waypoints[6].point;
+
+    gp_state.record_undo();
+    gp_state
+        .track
+        .network
+        .as_mut()
+        .unwrap()
+        .get_segment_mut(gen_branch_id)
+        .unwrap()
+        .waypoints[0]
+        .point = wp3;
+    let gen_last = gp_state
+        .track
+        .network
+        .as_ref()
+        .unwrap()
+        .get_segment(gen_branch_id)
+        .unwrap()
+        .waypoints
+        .len()
+        - 1;
+    gp_state
+        .track
+        .network
+        .as_mut()
+        .unwrap()
+        .get_segment_mut(gen_branch_id)
+        .unwrap()
+        .waypoints[gen_last]
+        .point = wp6;
+    gp_state.rebuild_branch_segments_interactive(&[gen_branch_id]);
+    gp_state.rebuild_geometry();
+
+    let gp_net = gp_state.track.network.as_ref().unwrap();
+    let gen_seg = gp_net.get_segment(gen_branch_id).unwrap();
+    let split_jid = gen_seg.entry_junction.unwrap().junction_id;
+    let merge_jid = gen_seg.exit_junction.unwrap().junction_id;
+    if let JunctionKind::Split { egress_sockets, .. } = &gp_net.get_junction(split_jid).unwrap().kind {
+        assert!(egress_sockets[0].point.distance(wp3) < 1e-3);
+        assert!(egress_sockets[1].point.distance(wp3) < 1e-3);
+    } else {
+        panic!("Expected Split junction");
+    }
+    if let JunctionKind::Merge {
+        ingress_sockets,
+        egress_socket,
+        ..
+    } = &gp_net.get_junction(merge_jid).unwrap().kind
+    {
+        assert!(egress_socket.point.distance(wp6) < 1e-3);
+        for sock in ingress_sockets {
+            assert!(sock.point.distance(wp6) < 1e-3);
+        }
+    } else {
+        panic!("Expected Merge junction");
+    }
+
+    // 3. Verify that loading a track where [Main] previously drifted from [Joker] (e.g. holjes_rx)
+    // automatically aligns [Main] and [Joker] upon EditorState::new.
+    let holjes_state = EditorState::new(tdrace_core::catalog::official_track("rally", "holjes_rx"));
+    let holjes_net = holjes_state.track.network.as_ref().unwrap();
+    let holjes_joker = holjes_net.get_segment(SegmentId(2)).unwrap();
+    let joker_start = holjes_joker.waypoints.first().unwrap().point;
+    let joker_end = holjes_joker.waypoints.last().unwrap().point;
+    let holjes_split = holjes_net
+        .junctions
+        .iter()
+        .find(|j| matches!(j.kind, JunctionKind::Split { .. }))
+        .unwrap();
+    if let JunctionKind::Split { egress_sockets, .. } = &holjes_split.kind {
+        assert!(egress_sockets[0].point.distance(joker_start) < 1e-3);
+        assert!(egress_sockets[1].point.distance(joker_start) < 1e-3);
+    }
+    let holjes_merge = holjes_net
+        .junctions
+        .iter()
+        .find(|j| matches!(j.kind, JunctionKind::Merge { .. }))
+        .unwrap();
+    if let JunctionKind::Merge {
+        ingress_sockets,
+        egress_socket,
+        ..
+    } = &holjes_merge.kind
+    {
+        assert!(egress_socket.point.distance(joker_end) < 1e-3);
+        for sock in ingress_sockets {
+            assert!(sock.point.distance(joker_end) < 1e-3);
+        }
+    }
+}
+
+
 
