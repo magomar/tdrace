@@ -3850,10 +3850,10 @@ pub fn get_models_for_module(module_id: &str) -> Vec<&'static RealCarModel> {
     ALL_REAL_CARS.iter().filter(|c| c.module_id == mod_id || (mod_id == "rallycross" && c.module_id == "rally")).collect()
 }
 
-/// Returns all vehicles belonging to the specified module ID and tier (1..=5).
+/// Returns all vehicles belonging to the specified module ID and tier (1..=5, or 1..=6 car type tabs in Classic).
 pub fn get_models_for_module_and_tier(module_id: &str, tier: u8) -> Vec<&'static RealCarModel> {
     if module_id == "classic" {
-        return CLASSIC_ARCADE_CARS.iter().collect();
+        return get_classic_models_for_category(classic_category_for_tab(tier));
     }
     if module_id == "vault" {
         return VAULT_ARCHIVE_CARS.iter().filter(|c| c.tier == tier).collect();
@@ -3870,9 +3870,50 @@ pub fn get_models_for_module_and_tier(module_id: &str, tier: u8) -> Vec<&'static
 }
 
 /// Highest garage tier page of a module: the five career tiers, plus the unranked tiers that
-/// Extreme Off-Road uses to park the Rally Raid T1+ and Stadium Super Truck cars (spec 048).
+/// Extreme Off-Road uses to park the Rally Raid T1+ and Stadium Super Truck cars (spec 048),
+/// or the 6 car type tabs in the Classic module.
 pub fn garage_tier_count(module_id: &str) -> u8 {
+    if module_id == "classic" {
+        return tdrace_core::CarCategory::ALL.len() as u8;
+    }
     get_models_for_module(module_id).iter().map(|c| c.tier).max().unwrap_or(1).max(5)
+}
+
+/// Maps a 1-based Classic Garage tab index (`1..=6`) to its corresponding [`tdrace_core::CarCategory`].
+pub fn classic_category_for_tab(tier: u8) -> tdrace_core::CarCategory {
+    let idx = tier.saturating_sub(1) as usize;
+    tdrace_core::CarCategory::ALL
+        .get(idx)
+        .copied()
+        .unwrap_or(tdrace_core::CarCategory::Gt)
+}
+
+/// Maps a [`tdrace_core::CarCategory`] to its 1-based Classic Garage tab index (`1..=6`).
+pub fn classic_tab_for_category(category: tdrace_core::CarCategory) -> u8 {
+    tdrace_core::CarCategory::ALL
+        .iter()
+        .position(|&c| c == category)
+        .map(|i| (i + 1) as u8)
+        .unwrap_or(1)
+}
+
+/// Returns the Classic arcade vehicles belonging to a given [`tdrace_core::CarCategory`].
+pub fn get_classic_models_for_category(category: tdrace_core::CarCategory) -> Vec<&'static RealCarModel> {
+    CLASSIC_ARCADE_CARS
+        .iter()
+        .filter(|c| c.base_car_choice.category() == category)
+        .collect()
+}
+
+/// Returns all Classic arcade vehicles organized by car type, with the vehicles matching `primary_category` first.
+pub fn get_classic_models_ordered_for_category(primary_category: tdrace_core::CarCategory) -> Vec<&'static RealCarModel> {
+    let mut ordered = get_classic_models_for_category(primary_category);
+    for &cat in &tdrace_core::CarCategory::ALL {
+        if cat != primary_category {
+            ordered.extend(get_classic_models_for_category(cat));
+        }
+    }
+    ordered
 }
 
 /// Resolves the canonical Classic Fantasy arcade vehicle model for a given CarCategory.
@@ -3885,6 +3926,16 @@ pub fn get_classic_model_for_category(category: tdrace_core::CarCategory) -> &'s
         tdrace_core::CarCategory::Rally => &CLASSIC_ARCADE_CARS[4],  // classic_rally (Trailfire Turbo 4WD)
         tdrace_core::CarCategory::Autocross => &CLASSIC_ARCADE_CARS[5], // classic_ax_mudlark (Mudlark Cross Car)
     }
+}
+
+/// Resolves the default Classic arcade vehicle model for a specific track, respecting `track.car_model_id` when set.
+pub fn get_classic_model_for_track(track: &tdrace_core::track::Track) -> &'static RealCarModel {
+    track
+        .car_model_id
+        .as_deref()
+        .and_then(find_model_by_id)
+        .filter(|m| m.module_id == "classic")
+        .unwrap_or_else(|| get_classic_model_for_category(track.car_category))
 }
 
 /// Returns all vehicles belonging to the specified module ID and category name.
@@ -4054,7 +4105,11 @@ fn build_car_performance_cache() -> HashMap<&'static str, (f32, f32)> {
     }
 
     for (module_id, tier) in cohorts {
-        let cohort_cars = get_models_for_module_and_tier(module_id, tier);
+        let cohort_cars = if module_id == "classic" {
+            CLASSIC_ARCADE_CARS.iter().collect()
+        } else {
+            get_models_for_module_and_tier(module_id, tier)
+        };
         if cohort_cars.is_empty() {
             continue;
         }

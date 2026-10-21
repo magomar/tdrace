@@ -838,3 +838,114 @@ fn test_quick_custom_and_time_trial_allow_free_unlimited_car_access() {
     }
 }
 
+#[test]
+fn test_classic_garage_organizes_cars_by_type_tabs() {
+    use tdrace_app::catalog::{
+        classic_category_for_tab, classic_tab_for_category, garage_tier_count,
+        get_classic_models_for_category,
+    };
+    use tdrace_app::ui::garage::{garage_classic_type_tab_rect, CLASSIC_GARAGE_TABS};
+    use tdrace_core::CarCategory;
+
+    assert_eq!(garage_tier_count("classic"), 6);
+    assert_eq!(CLASSIC_GARAGE_TABS.len(), 6);
+
+    let (sw, sh) = (1280.0, 720.0);
+    let mut prev_right = 0.0;
+    for (idx, &category) in CarCategory::ALL.iter().enumerate() {
+        let tab = (idx + 1) as u8;
+        assert_eq!(classic_category_for_tab(tab), category);
+        assert_eq!(classic_tab_for_category(category), tab);
+
+        let tab_models = get_models_for_module_and_tier("classic", tab);
+        let cat_models = get_classic_models_for_category(category);
+        assert_eq!(
+            tab_models.len(),
+            2,
+            "Classic tab {} ({:?}) should contain 2 cars, got {}",
+            tab,
+            category,
+            tab_models.len()
+        );
+        assert_eq!(tab_models.len(), cat_models.len());
+        for model in &tab_models {
+            assert_eq!(model.module_id, "classic");
+            assert_eq!(model.base_car_choice.category(), category);
+        }
+
+        let (tx, ty, tw, th) = garage_classic_type_tab_rect(sw, sh, idx);
+        assert!(tw > 40.0);
+        assert!(th > 15.0);
+        assert!(ty > 0.0 && ty < sh);
+        assert!(tx >= prev_right, "Classic type tab {} should not overlap previous tab", idx);
+        prev_right = tx + tw;
+    }
+}
+
+#[test]
+fn test_classic_car_selection_preselects_circuit_modality_tab_and_cars() {
+    use tdrace_app::catalog::{classic_category_for_tab, classic_tab_for_category};
+    use tdrace_core::CarCategory;
+
+    let mut session = RaceSession::new();
+    session.switch_to_classic();
+    session.game_mode = GameMode::ExperimentalRace;
+
+    let circuit_cases = [
+        ("kart_pine_grove", CarCategory::Kart, "classic_kart"),
+        ("rx_quarry_sprint", CarCategory::Rallycross, "classic_rally"),
+        ("ax_meadow_sprint", CarCategory::Autocross, "classic_ax_mudlark"),
+        ("ax_clay_bowl", CarCategory::Autocross, "classic_ax_brawler"),
+        ("gt_coastal_grand_prix", CarCategory::Gt, "classic_gt"),
+        ("stock_tri_oval_speedway", CarCategory::Nascar, "classic_nascar"),
+        ("at_dune_sea", CarCategory::OffRoad, "classic_offroad"),
+    ];
+
+    for (slug, expected_cat, expected_model_id) in circuit_cases {
+        session.state = GameState::Menu;
+        let menu_tracks = session.filtered_menu_tracks();
+        session.menu_track_idx = menu_tracks
+            .iter()
+            .position(|t| t.track_id() == slug)
+            .unwrap_or_else(|| panic!("Classic circuit {} must be in menu", slug));
+
+        // 1. Selecting the circuit in Menu preselects the car matching the circuit's modality
+        inject_key_presses_for_tests(&[KeyCode::Enter]);
+        session.update_menu();
+        inject_key_presses_for_tests(&[]);
+
+        assert_eq!(session.state, GameState::StartingGrid);
+        assert_eq!(session.track.car_category, expected_cat);
+        assert_eq!(
+            session.selected_car_model_id,
+            Some(expected_model_id),
+            "Circuit {} ({:?}) should preselect {}",
+            slug,
+            expected_cat,
+            expected_model_id
+        );
+
+        // 2. Opening Garage from StartingGrid preselects the tab and car matching the circuit modality
+        session.open_garage_from_starting_grid();
+        assert_eq!(session.state, GameState::Garage(GarageOrigin::StartingGrid));
+        assert_eq!(session.garage_tier, classic_tab_for_category(expected_cat));
+        assert_eq!(classic_category_for_tab(session.garage_tier), expected_cat);
+
+        let visible_cars = get_models_for_module_and_tier("classic", session.garage_tier);
+        assert!(
+            visible_cars.iter().all(|m| m.base_car_choice.category() == expected_cat),
+            "All visible cars on the preselected tab must belong to the circuit's modality {:?}",
+            expected_cat
+        );
+        assert_eq!(visible_cars[session.garage_car_idx].id, expected_model_id);
+    }
+
+    // 3. Cycling tabs in Classic Garage with Q / E wraps cleanly across the 6 car types
+    session.garage_tier = 1;
+    garage_press(&mut session, GarageOrigin::StartingGrid, &[KeyCode::Q]);
+    assert_eq!(session.garage_tier, 6);
+    garage_press(&mut session, GarageOrigin::StartingGrid, &[KeyCode::E]);
+    assert_eq!(session.garage_tier, 1);
+}
+
+

@@ -2092,17 +2092,30 @@ impl RaceSession {
         pool[idx]
     }
 
+    /// Synchronizes the Garage tab (`garage_tier`) and car index (`garage_car_idx`) in the Classic module
+    /// so that the car type tab and car matching `track`'s modality are preselected.
+    pub fn sync_classic_garage_for_track(&mut self, track: &Track) {
+        let target_model = self
+            .selected_car_model_id
+            .and_then(crate::catalog::find_model_by_id)
+            .filter(|m| m.module_id == "classic" && m.base_car_choice.category() == track.car_category)
+            .unwrap_or_else(|| crate::catalog::get_classic_model_for_track(track));
+        self.garage_tier = crate::catalog::classic_tab_for_category(track.car_category);
+        let tier_models = crate::catalog::get_models_for_module_and_tier("classic", self.garage_tier);
+        self.garage_car_idx = tier_models
+            .iter()
+            .position(|m| m.id == target_model.id)
+            .unwrap_or(0);
+    }
+
     /// Transitions from Starting Grid to Garage Showroom, focusing on the circuit's category vehicle.
     pub fn open_garage_from_starting_grid(&mut self) {
         self.audio.play_sfx(SfxType::UiSelect);
         self.garage_origin = GarageOrigin::StartingGrid;
         self.garage_tier = self.current_race_required_tier();
         if self.active_module_id == "classic" {
-            let target_model_id = self.selected_car_model_id
-                .or_else(|| self.track.car_model_id.as_deref())
-                .or_else(|| crate::catalog::get_classic_model_for_category(self.track.car_category).id.into());
-            let models = crate::catalog::get_models_for_module("classic");
-            self.garage_car_idx = models.iter().position(|m| Some(m.id) == target_model_id).unwrap_or(0);
+            let track_clone = self.track.clone();
+            self.sync_classic_garage_for_track(&track_clone);
         } else {
             if let Some(selected_id) = self.selected_car_model_id {
                 if let Some(model) = crate::catalog::find_model_by_id(selected_id) {
@@ -2866,6 +2879,8 @@ impl RaceSession {
         self.camera.setup_for_track(&self.track);
         self.camera_p2.setup_for_track(&self.track);
         self.rebuild_roster_participants();
+        let track_clone = self.track.clone();
+        self.sync_classic_garage_for_track(&track_clone);
         self.state = GameState::Menu;
     }
 
@@ -4350,13 +4365,13 @@ impl RaceSession {
                         .or_else(|| crate::catalog::get_models_for_module(effective_module).into_iter().next())
                 })
         } else {
-            if self.free_car_selection || self.game_mode.allows_car_change() || self.active_academy_lesson.is_some() {
+            if self.free_car_selection || self.active_academy_lesson.is_some() {
                 self.selected_car_model_id
                     .and_then(crate::catalog::find_model_by_id)
-                    .filter(|m| m.module_id == "classic" && m.base_car_choice == player_car_choice)
+                    .filter(|m| m.module_id == "classic" && m.base_car_choice.category() == player_car_choice.category())
                     .or_else(|| Some(crate::catalog::get_classic_model_for_category(player_car_choice.category())))
             } else {
-                Some(crate::catalog::get_classic_model_for_category(self.track.car_category))
+                Some(crate::catalog::get_classic_model_for_track(&self.track))
             }
         };
 
@@ -6565,7 +6580,11 @@ impl RaceSession {
         if !self.game_mode.allows_roster_customization() {
             return;
         }
-        let models = crate::catalog::get_models_for_module(self.active_module_id);
+        let models = if self.active_module_id == "classic" {
+            crate::catalog::get_classic_models_ordered_for_category(self.track.car_category)
+        } else {
+            crate::catalog::get_models_for_module(self.active_module_id)
+        };
         if models.is_empty() {
             return;
         }
@@ -6946,7 +6965,11 @@ impl RaceSession {
                             return;
                         }
                         if self.game_mode.allows_car_change() {
-                            let models = crate::catalog::get_models_for_module(self.active_module_id);
+                            let models = if self.active_module_id == "classic" {
+                                crate::catalog::get_classic_models_ordered_for_category(self.track.car_category)
+                            } else {
+                                crate::catalog::get_models_for_module(self.active_module_id)
+                            };
                             if !models.is_empty() {
                                 let current_idx = self.selected_car_model_id
                                     .and_then(|id| models.iter().position(|m| m.id == id))
@@ -9318,6 +9341,10 @@ impl RaceSession {
         if is_key_pressed(KeyCode::G) {
             self.audio.play_sfx(SfxType::UiSelect);
             self.garage_origin = GarageOrigin::ModalitySelect;
+            if self.active_module_id == "classic" {
+                let track_clone = self.track.clone();
+                self.sync_classic_garage_for_track(&track_clone);
+            }
             self.state = GameState::Garage(GarageOrigin::ModalitySelect);
             return;
         }
@@ -9491,6 +9518,10 @@ impl RaceSession {
                     ModalityItem::Garage => {
                         self.audio.play_sfx(SfxType::UiSelect);
                         self.garage_origin = GarageOrigin::ModalitySelect;
+                        if self.active_module_id == "classic" {
+                            let track_clone = self.track.clone();
+                            self.sync_classic_garage_for_track(&track_clone);
+                        }
                         self.state = GameState::Garage(GarageOrigin::ModalitySelect);
                         return;
                     }
@@ -10085,11 +10116,21 @@ impl RaceSession {
         };
         let current = crate::catalog::find_model_by_id(&current_car).filter(|m| m.module_id == module);
         self.active_module_id = module;
-        self.garage_tier = current.map(|m| m.tier).unwrap_or(1);
-        let tier_models = crate::catalog::get_models_for_module_and_tier(module, self.garage_tier);
-        self.garage_car_idx = current
-            .and_then(|m| tier_models.iter().position(|t| t.id == m.id))
-            .unwrap_or(0);
+        if module == "classic" {
+            let target = current.unwrap_or_else(|| crate::catalog::get_classic_model_for_track(&self.track));
+            self.garage_tier = crate::catalog::classic_tab_for_category(target.base_car_choice.category());
+            let tier_models = crate::catalog::get_models_for_module_and_tier(module, self.garage_tier);
+            self.garage_car_idx = tier_models
+                .iter()
+                .position(|t| t.id == target.id)
+                .unwrap_or(0);
+        } else {
+            self.garage_tier = current.map(|m| m.tier).unwrap_or(1);
+            let tier_models = crate::catalog::get_models_for_module_and_tier(module, self.garage_tier);
+            self.garage_car_idx = current
+                .and_then(|m| tier_models.iter().position(|t| t.id == m.id))
+                .unwrap_or(0);
+        }
         self.garage_gallery_mode = false;
         self.garage_origin = GarageOrigin::LanLobby;
         self.state = GameState::Garage(GarageOrigin::LanLobby);
@@ -11144,14 +11185,19 @@ impl RaceSession {
             self.audio.play_sfx(SfxType::UiMove);
         }
 
-        // 6. Tier Navigation (Q / E or Up / Down or Gamepad D-pad Up / Down or LB / RB)
+        // 6. Tier / Car Type Tab Navigation (Q / E or Up / Down or Gamepad D-pad Up / Down or LB / RB)
+        let max_tier = crate::catalog::garage_tier_count(self.active_module_id);
         if is_key_pressed(KeyCode::Q)
             || is_key_pressed(KeyCode::Up)
             || is_key_pressed(KeyCode::W)
             || self.input.gamepad.snapshot.dpad_up_pressed
             || self.input.gamepad.snapshot.btn_lb_pressed
         {
-            if self.garage_tier > 1 {
+            if self.active_module_id == "classic" {
+                self.garage_tier = if self.garage_tier <= 1 { max_tier } else { self.garage_tier - 1 };
+                self.garage_car_idx = 0;
+                self.audio.play_sfx(SfxType::UiMove);
+            } else if self.garage_tier > 1 {
                 self.garage_tier -= 1;
                 self.garage_car_idx = 0;
                 self.audio.play_sfx(SfxType::UiMove);
@@ -11162,7 +11208,11 @@ impl RaceSession {
             || self.input.gamepad.snapshot.dpad_down_pressed
             || self.input.gamepad.snapshot.btn_rb_pressed
         {
-            if self.garage_tier < crate::catalog::garage_tier_count(self.active_module_id) {
+            if self.active_module_id == "classic" {
+                self.garage_tier = if self.garage_tier >= max_tier { 1 } else { self.garage_tier + 1 };
+                self.garage_car_idx = 0;
+                self.audio.play_sfx(SfxType::UiMove);
+            } else if self.garage_tier < max_tier {
                 self.garage_tier += 1;
                 self.garage_car_idx = 0;
                 self.audio.play_sfx(SfxType::UiMove);
@@ -11194,6 +11244,22 @@ impl RaceSession {
         let (mx, my) = mouse_position_safe();
         let mouse_clicked = is_mouse_button_pressed(macroquad::input::MouseButton::Left);
         let select_btn_clicked = mouse_clicked && mx >= sel_bx && mx <= sel_bx + sel_bw && my >= sel_by && my <= sel_by + sel_bh;
+
+        // Allow clicking on car type tabs in Classic mode
+        if self.active_module_id == "classic" && mouse_clicked {
+            for i in 0..crate::ui::CLASSIC_GARAGE_TABS.len() {
+                let (tx, ty, tw, th) = crate::ui::garage_classic_type_tab_rect(sw, sh, i);
+                if mx >= tx && mx <= tx + tw && my >= ty && my <= ty + th {
+                    let target_tier = (i + 1) as u8;
+                    if self.garage_tier != target_tier {
+                        self.garage_tier = target_tier;
+                        self.garage_car_idx = 0;
+                        self.audio.play_sfx(SfxType::UiMove);
+                    }
+                    break;
+                }
+            }
+        }
 
         // Also allow clicking directly on car cards in bottom carousel
         if mouse_clicked {
@@ -11578,8 +11644,17 @@ impl RaceSession {
         if is_key_pressed(KeyCode::G) {
             self.audio.play_sfx(SfxType::UiSelect);
             self.garage_origin = GarageOrigin::Menu;
-            self.garage_tier = self.current_race_required_tier();
-            self.garage_car_idx = 0;
+            if self.active_module_id == "classic" || self.menu_category_filter == MenuCategoryFilter::Classic {
+                self.active_module_id = "classic";
+                let menu_track = available_tracks
+                    .get(self.menu_track_idx)
+                    .and_then(resolve_track_for_menu);
+                let target_track = menu_track.as_ref().unwrap_or(&self.track).clone();
+                self.sync_classic_garage_for_track(&target_track);
+            } else {
+                self.garage_tier = self.current_race_required_tier();
+                self.garage_car_idx = 0;
+            }
             self.state = GameState::Garage(GarageOrigin::Menu);
             return;
         }
@@ -12163,6 +12238,20 @@ impl RaceSession {
                 };
                 self.active_module_id = target_mod;
                 self.sync_career_progress_for_active_module();
+                if self.active_module_id == "classic" {
+                    if let Some(tr) = loaded.as_ref() {
+                        let keep_selected = self.free_car_selection
+                            && self
+                                .selected_car_model_id
+                                .and_then(crate::catalog::find_model_by_id)
+                                .is_some_and(|m| m.module_id == "classic" && m.base_car_choice.category() == tr.car_category);
+                        if !keep_selected {
+                            let default_model = crate::catalog::get_classic_model_for_track(tr);
+                            self.selected_car_model_id = Some(default_model.id);
+                            self.free_car_selection = false;
+                        }
+                    }
+                }
                 if self.free_car_selection || self.game_mode.allows_car_change() {
                     if let Some(model) = self.selected_car_model_id.and_then(crate::catalog::find_model_by_id) {
                         if Self::modules_match(model.module_id, self.active_module_id) {
@@ -12178,6 +12267,10 @@ impl RaceSession {
                     self.car_choice = resolve_predefined_car_for_track(loaded.as_ref(), self.active_module_id);
                 }
                 self.init_race();
+                if self.active_module_id == "classic" {
+                    let track_clone = self.track.clone();
+                    self.sync_classic_garage_for_track(&track_clone);
+                }
             } else if has_tm_entry {
                 let has_module_customs = !self.track_manager.module_custom_tracks(self.active_module_id).is_empty();
                 let has_drafts = !self.track_manager.draft_track_choices().is_empty();

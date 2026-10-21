@@ -471,21 +471,25 @@ fn test_session_resolve_active_sound_type_for_classic_vehicles() {
     session.selected_car_model_id = Some("classic_gt");
     assert_eq!(session.resolve_active_sound_type(), EngineSoundType::Gt4Clubsport);
 
-    // B. Garage showroom context: active car matches garage_car_idx
+    // B. Garage showroom context: active car matches garage_tier (car type tab) and garage_car_idx
     session.state = GameState::Garage(GarageOrigin::Menu);
-    session.garage_tier = 1;
+    session.garage_car_idx = 0;
 
     let garage_expected = [
-        (0, EngineSoundType::Gt4Clubsport),      // classic_gt
-        (1, EngineSoundType::LateModelV8),       // classic_nascar
-        (2, EngineSoundType::SandRailBoxer),     // classic_offroad
-        (3, EngineSoundType::KartCadet60),       // classic_kart
-        (4, EngineSoundType::Rally2Turbo),       // classic_rally
+        (tdrace_core::CarCategory::Gt, EngineSoundType::Gt4Clubsport),        // classic_gt
+        (tdrace_core::CarCategory::Nascar, EngineSoundType::LateModelV8),     // classic_nascar
+        (tdrace_core::CarCategory::OffRoad, EngineSoundType::SandRailBoxer),  // classic_offroad
+        (tdrace_core::CarCategory::Kart, EngineSoundType::KartCadet60),       // classic_kart
+        (tdrace_core::CarCategory::Rally, EngineSoundType::Rally2Turbo),      // classic_rally
     ];
 
-    for (idx, sound) in garage_expected {
-        session.garage_car_idx = idx;
-        assert_eq!(session.resolve_active_sound_type(), sound, "Garage car at idx {idx} should have sound {sound:?}");
+    for (category, sound) in garage_expected {
+        session.garage_tier = tdrace_app::catalog::classic_tab_for_category(category);
+        assert_eq!(
+            session.resolve_active_sound_type(),
+            sound,
+            "Garage car on category tab {category:?} should have sound {sound:?}"
+        );
     }
 }
 

@@ -45,6 +45,19 @@ pub fn garage_car_card_rect(sw: f32, sh: f32, idx: usize, total: usize) -> (f32,
     (card_x, card_y, card_w, card_h)
 }
 
+/// The 6 car type tabs displayed in the Garage showroom when the Classic module is active.
+pub const CLASSIC_GARAGE_TABS: &[tdrace_core::CarCategory] = &tdrace_core::CarCategory::ALL;
+
+/// Returns the rectangle (x, y, w, h) for a Classic car type tab in the Garage showroom.
+pub fn garage_classic_type_tab_rect(sw: f32, sh: f32, idx: usize) -> (f32, f32, f32, f32) {
+    let scaler = UiScaler::new(sw, sh);
+    let total_w = sw * 0.56 - scaler.safe_pad_x;
+    let tab_w = total_w / CLASSIC_GARAGE_TABS.len() as f32;
+    let tx = scaler.safe_pad_x + (idx as f32) * tab_w;
+    let ty = sh - scaler.s(176.0);
+    (tx, ty, tab_w - scaler.s(4.0), scaler.s(22.0))
+}
+
 /// What the TYRES row of the garage shows for the car in focus (spec 098).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GarageTyres {
@@ -203,7 +216,12 @@ pub fn render_garage_screen(
         format!("TIER {}", garage_tier)
     };
     let module_subtitle = if active_module_id == "classic" {
-        "MODULE: CLASSIC ARCADE MOTORSPORT • FANTASY ARCADE ROSTER [◄ A / D ►]".to_string()
+        let active_cat = crate::catalog::classic_category_for_tab(garage_tier);
+        format!(
+            "MODULE: CLASSIC ARCADE MOTORSPORT  •  TYPE: {} ({})  [◄ Q/E ►]  •  CARS  [◄ A/D ►]",
+            active_cat.title(),
+            category_name.to_uppercase()
+        )
     } else if let Some(cp) = career_progress {
         format!(
             "MODULE: {}{}  •  {}: {}  [◄ Q/E ►]  •  DISCIPLINE XP: {} XP  •  WALLET: ${} CR",
@@ -390,6 +408,26 @@ pub fn render_garage_screen(
             Palette::NEON_CYAN
         };
         draw_rectangle(tacho_x, tacho_y, fill_w, tacho_h, bar_col);
+    }
+
+    // Classic Car Type Tabs above Vehicle Carousel
+    if active_module_id == "classic" {
+        let type_labels: Vec<&str> = CLASSIC_GARAGE_TABS.iter().map(|c| c.title()).collect();
+        let active_tab_idx = garage_tier.saturating_sub(1) as usize;
+        let total_w = sw * 0.56 - scaler.safe_pad_x;
+        let tab_bar = FilterBar::from_labels(&type_labels)
+            .with_style(FilterBarStyle::Pills)
+            .with_active(active_tab_idx.min(type_labels.len().saturating_sub(1)))
+            .with_focus(true);
+        tab_bar.draw(
+            &scaler,
+            fonts,
+            scaler.safe_pad_x,
+            sh - scaler.s(176.0),
+            total_w,
+            scaler.s(22.0),
+            mod_accent,
+        );
     }
 
     // Vehicle Carousel / Selection Cards below Hero Stage
@@ -892,7 +930,15 @@ pub fn render_garage_screen(
 
     // Bottom Navigation Bar
     let bottom_y = sh - scaler.s(16.0);
-    let nav_prompt = if !car_change_allowed {
+    let nav_prompt = if active_module_id == "classic" {
+        if !car_change_allowed {
+            "USE [◄ / ►] CARS  •  [Q / E] CAR TYPES  •  [SPACE] REV  •  [ESC] RETURN"
+        } else if module_locked {
+            "USE [◄ / ►] CARS  •  [Q / E] CAR TYPES  •  [SPACE] REV  •  [ENTER] SELECT  •  [ESC] RETURN TO LOBBY"
+        } else {
+            "USE [◄ / ►] CARS  •  [Q / E] CAR TYPES  •  [1..6] MODULES  •  [SPACE] REV  •  [ENTER] SELECT  •  [ESC] RETURN"
+        }
+    } else if !car_change_allowed {
         "USE [◄ / ►] CARS  •  [Q / E] TIERS  •  [SPACE] REV  •  [ESC] RETURN"
     } else if module_locked {
         "USE [◄ / ►] CARS  •  [Q / E] TIERS  •  [SPACE] REV  •  [B / ENTER] BUY/SELECT  •  [ESC] RETURN TO LOBBY"
