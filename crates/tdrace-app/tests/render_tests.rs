@@ -2256,8 +2256,8 @@ fn test_wheel_texture_cache_memory_bounds() {
         total_mb
     );
 
-    // Verify all 8 motorsport compounds have valid badge codes and distinct accent RGBA
-    assert_eq!(CompoundId::ALL.len(), 8);
+    // Verify all 9 motorsport compounds have valid badge codes and distinct accent RGBA
+    assert_eq!(CompoundId::ALL.len(), 9);
     for c in CompoundId::ALL {
         assert!(!c.name().is_empty());
         assert!(!c.badge_code().is_empty());

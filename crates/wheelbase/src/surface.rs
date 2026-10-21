@@ -8,6 +8,7 @@ pub enum SurfaceType {
     #[default]
     Asphalt,
     /// Solid cast or poured concrete: high grip, smooth pavement, and grandstand/stadium aprons.
+    #[serde(alias = "Cement")]
     Concrete,
     /// Kerb / rumble strip: high grip with slight vibration and higher rolling resistance.
     Curb,
@@ -407,10 +408,12 @@ pub enum CompoundId {
     ExtremeMud,
     /// Steel-studded winter competition tire for hard-packed snow and sheet ice.
     StuddedIce,
+    /// Cross-grooved dirt-track competition tire for banked clay and dirt ovals.
+    GroovedDirt,
 }
 
 impl CompoundId {
-    pub const ALL: [Self; 8] = [
+    pub const ALL: [Self; 9] = [
         Self::SoftSlick,
         Self::MediumSlick,
         Self::HardSlick,
@@ -419,6 +422,7 @@ impl CompoundId {
         Self::AllTerrain,
         Self::ExtremeMud,
         Self::StuddedIce,
+        Self::GroovedDirt,
     ];
 
     /// Human-readable display label.
@@ -432,6 +436,7 @@ impl CompoundId {
             Self::AllTerrain => "All-Terrain",
             Self::ExtremeMud => "Extreme Mud",
             Self::StuddedIce => "Studded Ice",
+            Self::GroovedDirt => "Grooved Dirt",
         }
     }
 
@@ -446,6 +451,7 @@ impl CompoundId {
             Self::AllTerrain => "AT",
             Self::ExtremeMud => "MUD",
             Self::StuddedIce => "ICE",
+            Self::GroovedDirt => "DRT",
         }
     }
 
@@ -460,6 +466,7 @@ impl CompoundId {
             Self::AllTerrain => [0.95, 0.55, 0.10, 1.0],      // Orange [AT]
             Self::ExtremeMud => [0.55, 0.35, 0.15, 1.0],      // Brown [MUD]
             Self::StuddedIce => [0.60, 0.90, 1.00, 1.0],      // Cyan [ICE]
+            Self::GroovedDirt => [0.85, 0.52, 0.22, 1.0],     // Clay Ochre [DRT]
         }
     }
 }
@@ -681,6 +688,24 @@ impl SurfaceAffinityMap {
                 0.20, // Oil
                 0.70, // DeepGravel
             ]),
+            CompoundId::GroovedDirt => Self::new([
+                0.85, // Asphalt
+                0.84, // Concrete
+                0.88, // Curb
+                1.22, // Dirt (high-bite grooved clay/dirt compound)
+                1.18, // PackedGravel
+                0.75, // Grass
+                0.85, // PackedSand
+                0.70, // DeepSand
+                1.05, // MudTrack
+                0.65, // DeepMud
+                0.50, // PackedSnow
+                0.40, // DeepSnow
+                0.20, // SheetIce
+                0.75, // Water
+                0.20, // Oil
+                0.80, // DeepGravel
+            ]),
         }
     }
 }
@@ -800,6 +825,12 @@ mod tests {
         assert_eq!(ice.get(SurfaceType::SheetIce), 1.45);
         assert!(ice.get(SurfaceType::SheetIce) > at.get(SurfaceType::SheetIce));
         assert!(at.get(SurfaceType::SheetIce) > soft.get(SurfaceType::SheetIce));
+
+        // Dirt: GroovedDirt (1.22) > AllTerrain (1.15) > HardSlick (0.40)
+        let grooved = SurfaceAffinityMap::for_compound(CompoundId::GroovedDirt);
+        assert_eq!(grooved.get(SurfaceType::Dirt), 1.22);
+        assert!(grooved.get(SurfaceType::Dirt) > at.get(SurfaceType::Dirt));
+        assert!(grooved.get(SurfaceType::Dirt) > hard.get(SurfaceType::Dirt));
     }
 
     #[test]

@@ -4897,14 +4897,14 @@
         {
           "id": "autocross_crosscar_junior_trophy",
           "name": "Cross Car Junior Academy Trophy",
-          "description": "Official grassroots junior championship for 13 to 16-year-old drivers. Identical 80 BHP restricted cross cars fighting across 3 tight European dirt tracks.",
+          "description": "Official grassroots junior championship for 13 to 16-year-old drivers. Identical 80 BHP restricted cross cars fighting across 5 tight European dirt tracks.",
           "module_id": "autocross",
           "tier": 1,
           "laps_per_round": 4,
           "scoring_system": "tournament",
           "fastest_lap_bonus": true,
           "stage_win_bonus": false,
-          "round_count": 3,
+          "round_count": 5,
           "rounds": [
             {
               "order": 1,
@@ -4920,8 +4920,20 @@
             },
             {
               "order": 3,
+              "track_id": "uelzen_ax",
+              "name": "Uhlenköper-Ring Uelzen",
+              "laps": 4
+            },
+            {
+              "order": 4,
               "track_id": "vilkyciai_ax",
               "name": "Vilkyčiai Autosporto Kompleksas",
+              "laps": 4
+            },
+            {
+              "order": 5,
+              "track_id": "musa_ax",
+              "name": "Mūsa Raceland Bauska",
               "laps": 4
             }
           ],
@@ -5012,37 +5024,49 @@
         {
           "id": "autocross_crosscar_senior_challenge",
           "name": "European Cross Car Challenge",
-          "description": "High-powered 145 BHP motorcycle-engined sprint weapons with locked rear axles racing across 4 premier Iberian, Baltic, and German venues.",
+          "description": "High-powered 145 BHP motorcycle-engined sprint weapons with locked rear axles racing across 6 premier Iberian, Baltic, and German venues.",
           "module_id": "autocross",
           "tier": 2,
           "laps_per_round": 5,
           "scoring_system": "tournament",
           "fastest_lap_bonus": true,
           "stage_win_bonus": false,
-          "round_count": 4,
+          "round_count": 6,
           "rounds": [
             {
               "order": 1,
+              "track_id": "seelow_ax",
+              "name": "Circuit Am Weinberg Seelow",
+              "laps": 5
+            },
+            {
+              "order": 2,
               "track_id": "arteixo_ax",
               "name": "Circuito José Ramón Losada Arteixo",
               "laps": 5
             },
             {
-              "order": 2,
-              "track_id": "uelzen_ax",
-              "name": "Uhlenköper-Ring Uelzen",
+              "order": 3,
+              "track_id": "castelo_branco_ax",
+              "name": "Parque de Desportos Motorizados Castelo Branco",
               "laps": 5
             },
             {
-              "order": 3,
+              "order": 4,
+              "track_id": "st_georges_ax",
+              "name": "Circuit du Bouvreau Saint-Georges",
+              "laps": 5
+            },
+            {
+              "order": 5,
               "track_id": "musa_ax",
               "name": "Mūsa Raceland Bauska",
               "laps": 5
             },
             {
-              "order": 4,
-              "track_id": "castelo_branco_ax",
-              "name": "Parque de Desportos Motorizados Castelo Branco",
+              "order": 6,
+              "track_id": "maggiora_ax",
+              "name": "Autodromo Pragiarolo Maggiora",
               "laps": 5
             }
           ],
@@ -5133,37 +5157,55 @@
         {
           "id": "autocross_buggy1600_championship",
           "name": "Continental Buggy 1600 Championship",
-          "description": "Traditional European 4WD single-seater stepping stone featuring high-revving 1.6L engines and sharp point-and-squirt dynamics across iconic Czech, Italian, and French venues.",
+          "description": "Traditional European 4WD single-seater stepping stone featuring high-revving 1.6L engines and sharp point-and-squirt dynamics across 7 iconic European venues.",
           "module_id": "autocross",
           "tier": 3,
           "laps_per_round": 5,
           "scoring_system": "tournament",
           "fastest_lap_bonus": true,
           "stage_win_bonus": false,
-          "round_count": 4,
+          "round_count": 7,
           "rounds": [
             {
               "order": 1,
-              "track_id": "prerov_ax",
-              "name": "Přerovská rokle Přerov",
+              "track_id": "seelow_ax",
+              "name": "Circuit Am Weinberg Seelow",
               "laps": 5
             },
             {
               "order": 2,
-              "track_id": "humpolec_ax",
-              "name": "Pod Vilémovským lomem Humpolec",
+              "track_id": "musa_ax",
+              "name": "Mūsa Raceland Bauska",
               "laps": 5
             },
             {
               "order": 3,
-              "track_id": "maggiora_ax",
-              "name": "Autodromo Pragiarolo Maggiora",
+              "track_id": "vilkyciai_ax",
+              "name": "Vilkyčiai Autosporto Kompleksas",
               "laps": 5
             },
             {
               "order": 4,
-              "track_id": "st_junien_ax",
-              "name": "Circuit de Saint-Junien",
+              "track_id": "matschenberg_ax",
+              "name": "Matschenberg Offroad Arena",
+              "laps": 5
+            },
+            {
+              "order": 5,
+              "track_id": "nova_paka_ax",
+              "name": "Nová Paka - Štikovská rokle",
+              "laps": 5
+            },
+            {
+              "order": 6,
+              "track_id": "st_georges_ax",
+              "name": "Circuit du Bouvreau Saint-Georges",
+              "laps": 5
+            },
+            {
+              "order": 7,
+              "track_id": "maggiora_ax",
+              "name": "Autodromo Pragiarolo Maggiora",
               "laps": 5
             }
           ],
@@ -5254,25 +5296,25 @@
         {
           "id": "autocross_touring_masters",
           "name": "TouringAutocross SuperSaloon Masters",
-          "description": "550+ BHP production silhouette touring monsters with anti-lag turbo boost and crushing torque conquering heavy dirt ruts across Spain, France, and Germany.",
+          "description": "550+ BHP production silhouette touring monsters with anti-lag turbo boost and crushing torque conquering heavy dirt ruts across 8 premier European venues.",
           "module_id": "autocross",
           "tier": 4,
           "laps_per_round": 5,
           "scoring_system": "tournament",
           "fastest_lap_bonus": true,
           "stage_win_bonus": false,
-          "round_count": 4,
+          "round_count": 8,
           "rounds": [
             {
               "order": 1,
-              "track_id": "carballo_ax",
-              "name": "Circuito Motor Bértoa Carballo",
+              "track_id": "seelow_ax",
+              "name": "Circuit Am Weinberg Seelow",
               "laps": 5
             },
             {
               "order": 2,
-              "track_id": "faleyras_ax",
-              "name": "Circuit de Faleyras",
+              "track_id": "humpolec_ax",
+              "name": "Pod Vilémovským lomem Humpolec",
               "laps": 5
             },
             {
@@ -5283,8 +5325,32 @@
             },
             {
               "order": 4,
+              "track_id": "faleyras_ax",
+              "name": "Circuit de Faleyras",
+              "laps": 5
+            },
+            {
+              "order": 5,
+              "track_id": "carballo_ax",
+              "name": "Circuito Motor Bértoa Carballo",
+              "laps": 5
+            },
+            {
+              "order": 6,
               "track_id": "matschenberg_ax",
-              "name": "Offroad Arena Matschenberg Cunewalde",
+              "name": "Matschenberg Offroad Arena",
+              "laps": 5
+            },
+            {
+              "order": 7,
+              "track_id": "prerov_ax",
+              "name": "Přerovská rokle Přerov",
+              "laps": 5
+            },
+            {
+              "order": 8,
+              "track_id": "nova_paka_ax",
+              "name": "Nová Paka - Štikovská rokle",
               "laps": 5
             }
           ],
@@ -5375,43 +5441,73 @@
         {
           "id": "autocross_superbuggy_world_series",
           "name": "World SuperBuggy Series",
-          "description": "The premier unlimited dirt racing predator with 700+ BHP and 1:1 power-to-weight ratio battling on the most legendary European autocross cathedrals.",
+          "description": "The premier unlimited dirt racing predator with 700+ BHP and 1:1 power-to-weight ratio battling on 10 legendary European autocross cathedrals.",
           "module_id": "autocross",
           "tier": 5,
           "laps_per_round": 6,
           "scoring_system": "tournament",
           "fastest_lap_bonus": true,
           "stage_win_bonus": false,
-          "round_count": 5,
+          "round_count": 10,
           "rounds": [
             {
               "order": 1,
-              "track_id": "nova_paka_ax",
-              "name": "Štikovská rokle Nová Paka",
+              "track_id": "seelow_ax",
+              "name": "Circuit Am Weinberg Seelow",
               "laps": 6
             },
             {
               "order": 2,
+              "track_id": "musa_ax",
+              "name": "Mūsa Raceland Bauska",
+              "laps": 6
+            },
+            {
+              "order": 3,
+              "track_id": "vilkyciai_ax",
+              "name": "Vilkyčiai Autosporto Kompleksas",
+              "laps": 6
+            },
+            {
+              "order": 4,
+              "track_id": "matschenberg_ax",
+              "name": "Matschenberg Offroad Arena",
+              "laps": 6
+            },
+            {
+              "order": 5,
+              "track_id": "nova_paka_ax",
+              "name": "Nová Paka - Štikovská rokle",
+              "laps": 6
+            },
+            {
+              "order": 6,
               "track_id": "st_georges_ax",
               "name": "Circuit du Bouvreau Saint-Georges",
               "laps": 6
             },
             {
-              "order": 3,
-              "track_id": "matschenberg_ax",
-              "name": "Offroad Arena Matschenberg Cunewalde",
-              "laps": 6
-            },
-            {
-              "order": 4,
+              "order": 7,
               "track_id": "prerov_ax",
               "name": "Přerovská rokle Přerov",
               "laps": 6
             },
             {
-              "order": 5,
+              "order": 8,
               "track_id": "maggiora_ax",
               "name": "Autodromo Pragiarolo Maggiora",
+              "laps": 6
+            },
+            {
+              "order": 9,
+              "track_id": "st_junien_ax",
+              "name": "Circuit de Saint-Junien",
+              "laps": 6
+            },
+            {
+              "order": 10,
+              "track_id": "arteixo_ax",
+              "name": "Circuito José Ramón Losada Arteixo",
               "laps": 6
             }
           ],

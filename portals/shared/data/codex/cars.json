@@ -878,7 +878,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -930,7 +930,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -982,7 +982,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -1034,7 +1034,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -1627,7 +1627,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -1679,7 +1679,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -1731,7 +1731,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -1783,7 +1783,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -1996,7 +1996,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -2048,7 +2048,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -2100,7 +2100,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -2152,7 +2152,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -2377,7 +2377,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -2429,7 +2429,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -2481,7 +2481,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -2533,7 +2533,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -3870,7 +3870,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -3922,7 +3922,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -3974,7 +3974,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -4026,7 +4026,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -4239,7 +4239,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -4291,7 +4291,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -4343,7 +4343,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -4395,7 +4395,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -11238,7 +11238,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -11290,7 +11290,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -11342,7 +11342,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -11394,7 +11394,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -11607,7 +11607,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -11659,7 +11659,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -11711,7 +11711,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -11763,7 +11763,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -11976,7 +11976,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -12028,7 +12028,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -12080,7 +12080,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -12132,7 +12132,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -12345,7 +12345,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -12397,7 +12397,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -12449,7 +12449,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -12501,7 +12501,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -12714,7 +12714,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -12766,7 +12766,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -12818,7 +12818,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -12870,7 +12870,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -13083,7 +13083,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -13135,7 +13135,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -13187,7 +13187,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -13239,7 +13239,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -13464,7 +13464,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -13516,7 +13516,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -13568,7 +13568,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -13620,7 +13620,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -13845,7 +13845,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -13897,7 +13897,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -13949,7 +13949,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -14001,7 +14001,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -14226,7 +14226,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -14278,7 +14278,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -14330,7 +14330,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -14382,7 +14382,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -14607,7 +14607,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -14659,7 +14659,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -14711,7 +14711,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -14763,7 +14763,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -14988,7 +14988,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -15040,7 +15040,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -15092,7 +15092,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -15144,7 +15144,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -15369,7 +15369,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -15421,7 +15421,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -15473,7 +15473,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -15525,7 +15525,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -15750,7 +15750,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -15802,7 +15802,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -15854,7 +15854,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -15906,7 +15906,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -16131,7 +16131,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -16183,7 +16183,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -16235,7 +16235,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -16287,7 +16287,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -16512,7 +16512,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -16564,7 +16564,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -16616,7 +16616,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -16668,7 +16668,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -16893,7 +16893,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -16945,7 +16945,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -16997,7 +16997,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -17049,7 +17049,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -17274,7 +17274,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -17326,7 +17326,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -17378,7 +17378,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -17430,7 +17430,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -17655,7 +17655,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -17707,7 +17707,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -17759,7 +17759,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -17811,7 +17811,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -18036,7 +18036,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -18088,7 +18088,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -18140,7 +18140,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -18192,7 +18192,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -18417,7 +18417,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -18469,7 +18469,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -18521,7 +18521,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -18573,7 +18573,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -18798,7 +18798,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -18850,7 +18850,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -18902,7 +18902,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -18954,7 +18954,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -19179,7 +19179,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -19231,7 +19231,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -19283,7 +19283,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -19335,7 +19335,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -19560,7 +19560,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -19612,7 +19612,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -19664,7 +19664,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -19716,7 +19716,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -19941,7 +19941,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -19993,7 +19993,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -20045,7 +20045,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -20097,7 +20097,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -20322,7 +20322,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -20374,7 +20374,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -20426,7 +20426,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -20478,7 +20478,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -20703,7 +20703,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -20755,7 +20755,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -20807,7 +20807,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -20859,7 +20859,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -21084,7 +21084,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -21136,7 +21136,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -21188,7 +21188,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -21240,7 +21240,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -21465,7 +21465,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -21517,7 +21517,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -21569,7 +21569,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -21621,7 +21621,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -21846,7 +21846,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -21898,7 +21898,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -21950,7 +21950,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -22002,7 +22002,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -22227,7 +22227,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -22279,7 +22279,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -22331,7 +22331,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -22383,7 +22383,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -22608,7 +22608,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -22660,7 +22660,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -22712,7 +22712,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -22764,7 +22764,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -22989,7 +22989,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -23041,7 +23041,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -23093,7 +23093,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -23145,7 +23145,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -23370,7 +23370,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -23422,7 +23422,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -23474,7 +23474,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -23526,7 +23526,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -23751,7 +23751,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -23803,7 +23803,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -23855,7 +23855,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -23907,7 +23907,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -24132,7 +24132,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -24184,7 +24184,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -24236,7 +24236,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -24288,7 +24288,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -24513,7 +24513,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -24565,7 +24565,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -24617,7 +24617,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -24669,7 +24669,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -37917,7 +37917,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -37969,7 +37969,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -38021,7 +38021,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -38073,7 +38073,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -38286,7 +38286,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -38338,7 +38338,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -38390,7 +38390,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -38442,7 +38442,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -38655,7 +38655,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -38707,7 +38707,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -38759,7 +38759,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -38811,7 +38811,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -39024,7 +39024,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -39076,7 +39076,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -39128,7 +39128,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -39180,7 +39180,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -39393,7 +39393,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -39445,7 +39445,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -39497,7 +39497,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -39549,7 +39549,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -39762,7 +39762,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -39814,7 +39814,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -39866,7 +39866,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -39918,7 +39918,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -40143,7 +40143,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -40195,7 +40195,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -40247,7 +40247,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -40299,7 +40299,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -40524,7 +40524,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -40576,7 +40576,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -40628,7 +40628,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -40680,7 +40680,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -40905,7 +40905,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -40957,7 +40957,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -41009,7 +41009,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -41061,7 +41061,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -41274,7 +41274,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -41326,7 +41326,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -41378,7 +41378,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -41430,7 +41430,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -41643,7 +41643,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -41695,7 +41695,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -41747,7 +41747,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -41799,7 +41799,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -42012,7 +42012,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -42064,7 +42064,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -42116,7 +42116,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -42168,7 +42168,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -42381,7 +42381,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -42433,7 +42433,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -42485,7 +42485,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -42537,7 +42537,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -42750,7 +42750,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -42802,7 +42802,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -42854,7 +42854,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -42906,7 +42906,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -43119,7 +43119,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -43171,7 +43171,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -43223,7 +43223,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -43275,7 +43275,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -43488,7 +43488,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -43540,7 +43540,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -43592,7 +43592,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -43644,7 +43644,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -43857,7 +43857,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -43909,7 +43909,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -43961,7 +43961,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -44013,7 +44013,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -44226,7 +44226,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -44278,7 +44278,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -44330,7 +44330,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -44382,7 +44382,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -44595,7 +44595,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -44647,7 +44647,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -44699,7 +44699,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -44751,7 +44751,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -44964,7 +44964,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -45016,7 +45016,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -45068,7 +45068,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -45120,7 +45120,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -45333,7 +45333,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -45385,7 +45385,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -45437,7 +45437,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0
@@ -45489,7 +45489,7 @@
               "peak_slip_angle_deg": 13.0,
               "peak_slip_ratio": 0.13,
               "slide_grip": 0.88,
-              "wear_rate": 2e-7,
+              "wear_rate": 1e-7,
               "optimal_temp_range": [
                 65.0,
                 95.0

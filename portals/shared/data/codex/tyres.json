@@ -1114,7 +1114,7 @@
         0.1,
         1.0
       ],
-      "wear_rate": 2e-7,
+      "wear_rate": 1e-7,
       "optimal_temp_c": [
         65.0,
         95.0
@@ -1767,6 +1767,224 @@
         [
           160.0,
           0.8275
+        ]
+      ],
+      "platforms": []
+    },
+    {
+      "id": "GroovedDirt",
+      "name": "Grooved Dirt",
+      "badge": "DRT",
+      "accent_rgba": [
+        0.85,
+        0.52,
+        0.22,
+        1.0
+      ],
+      "wear_rate": 1.8e-7,
+      "optimal_temp_c": [
+        65.0,
+        95.0
+      ],
+      "overheat_temp_c": 115.0,
+      "affinity": [
+        {
+          "surface": "Asphalt",
+          "multiplier": 0.85
+        },
+        {
+          "surface": "Concrete",
+          "multiplier": 0.84
+        },
+        {
+          "surface": "Curb",
+          "multiplier": 0.88
+        },
+        {
+          "surface": "Dirt",
+          "multiplier": 1.22
+        },
+        {
+          "surface": "PackedGravel",
+          "multiplier": 1.18
+        },
+        {
+          "surface": "Grass",
+          "multiplier": 0.75
+        },
+        {
+          "surface": "PackedSand",
+          "multiplier": 0.85
+        },
+        {
+          "surface": "DeepSand",
+          "multiplier": 0.7
+        },
+        {
+          "surface": "MudTrack",
+          "multiplier": 1.05
+        },
+        {
+          "surface": "DeepMud",
+          "multiplier": 0.65
+        },
+        {
+          "surface": "PackedSnow",
+          "multiplier": 0.5
+        },
+        {
+          "surface": "DeepSnow",
+          "multiplier": 0.4
+        },
+        {
+          "surface": "SheetIce",
+          "multiplier": 0.2
+        },
+        {
+          "surface": "Water",
+          "multiplier": 0.75
+        },
+        {
+          "surface": "Oil",
+          "multiplier": 0.2
+        },
+        {
+          "surface": "DeepGravel",
+          "multiplier": 0.8
+        }
+      ],
+      "thermal_curve": [
+        [
+          0.0,
+          0.96
+        ],
+        [
+          5.0,
+          0.9667
+        ],
+        [
+          10.0,
+          0.9733
+        ],
+        [
+          15.0,
+          0.98
+        ],
+        [
+          20.0,
+          0.9867
+        ],
+        [
+          25.0,
+          0.9933
+        ],
+        [
+          30.0,
+          1.0
+        ],
+        [
+          35.0,
+          1.0086
+        ],
+        [
+          40.0,
+          1.0171
+        ],
+        [
+          45.0,
+          1.0257
+        ],
+        [
+          50.0,
+          1.0343
+        ],
+        [
+          55.0,
+          1.0429
+        ],
+        [
+          60.0,
+          1.0514
+        ],
+        [
+          65.0,
+          1.06
+        ],
+        [
+          70.0,
+          1.06
+        ],
+        [
+          75.0,
+          1.06
+        ],
+        [
+          80.0,
+          1.06
+        ],
+        [
+          85.0,
+          1.06
+        ],
+        [
+          90.0,
+          1.06
+        ],
+        [
+          95.0,
+          1.06
+        ],
+        [
+          100.0,
+          1.015
+        ],
+        [
+          105.0,
+          0.97
+        ],
+        [
+          110.0,
+          0.925
+        ],
+        [
+          115.0,
+          0.88
+        ],
+        [
+          120.0,
+          0.8763
+        ],
+        [
+          125.0,
+          0.8725
+        ],
+        [
+          130.0,
+          0.8688
+        ],
+        [
+          135.0,
+          0.865
+        ],
+        [
+          140.0,
+          0.8613
+        ],
+        [
+          145.0,
+          0.8575
+        ],
+        [
+          150.0,
+          0.8538
+        ],
+        [
+          155.0,
+          0.85
+        ],
+        [
+          160.0,
+          0.8463
         ]
       ],
       "platforms": []

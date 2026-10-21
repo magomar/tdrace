@@ -620,9 +620,9 @@
       "osm_url": "https://www.openstreetmap.org/way/75490872",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1101.7,
-      "min_width_m": 5.0,
-      "max_width_m": 9.2,
+      "length_m": 698.2,
+      "min_width_m": 10.0,
+      "max_width_m": 11.1,
       "surfaces": [
         {
           "surface": "Asphalt",
@@ -651,9 +651,9 @@
       "osm_url": "https://www.openstreetmap.org/way/643206090",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1451.6,
-      "min_width_m": 6.0,
-      "max_width_m": 9.5,
+      "length_m": 1243.3,
+      "min_width_m": 10.0,
+      "max_width_m": 11.3,
       "surfaces": [
         {
           "surface": "Asphalt",
@@ -682,9 +682,9 @@
       "osm_url": "https://www.openstreetmap.org/way/67660672",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1275.7,
-      "min_width_m": 5.0,
-      "max_width_m": 9.2,
+      "length_m": 894.8,
+      "min_width_m": 10.0,
+      "max_width_m": 11.1,
       "surfaces": [
         {
           "surface": "Asphalt",
@@ -713,9 +713,9 @@
       "osm_url": "https://www.openstreetmap.org/way/1208588289",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1290.7,
-      "min_width_m": 5.5,
-      "max_width_m": 9.2,
+      "length_m": 998.1,
+      "min_width_m": 10.0,
+      "max_width_m": 11.1,
       "surfaces": [
         {
           "surface": "Asphalt",
@@ -744,9 +744,9 @@
       "osm_url": "https://www.openstreetmap.org/way/490212650",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1619.2,
-      "min_width_m": 6.5,
-      "max_width_m": 10.0,
+      "length_m": 1265.7,
+      "min_width_m": 10.0,
+      "max_width_m": 11.5,
       "surfaces": [
         {
           "surface": "Asphalt",
@@ -775,9 +775,9 @@
       "osm_url": "https://www.openstreetmap.org/way/482284812",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1325.9,
-      "min_width_m": 7.0,
-      "max_width_m": 9.2,
+      "length_m": 1105.6,
+      "min_width_m": 10.0,
+      "max_width_m": 11.1,
       "surfaces": [
         {
           "surface": "Asphalt",
@@ -806,9 +806,9 @@
       "osm_url": "https://www.openstreetmap.org/way/363049742",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1531.0,
-      "min_width_m": 8.0,
-      "max_width_m": 9.5,
+      "length_m": 1431.3,
+      "min_width_m": 10.5,
+      "max_width_m": 11.3,
       "surfaces": [
         {
           "surface": "Asphalt",
@@ -837,9 +837,9 @@
       "osm_url": "https://www.openstreetmap.org/way/1474753177",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1231.0,
-      "min_width_m": 8.0,
-      "max_width_m": 9.2,
+      "length_m": 1150.6,
+      "min_width_m": 10.5,
+      "max_width_m": 11.1,
       "surfaces": [
         {
           "surface": "Asphalt",
@@ -868,9 +868,9 @@
       "osm_url": "https://www.openstreetmap.org/way/156019609",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1103.0,
-      "min_width_m": 6.0,
-      "max_width_m": 9.2,
+      "length_m": 653.1,
+      "min_width_m": 10.5,
+      "max_width_m": 11.1,
       "surfaces": [
         {
           "surface": "Asphalt",
@@ -899,9 +899,9 @@
       "osm_url": "https://www.openstreetmap.org/way/87888593",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1130.3,
-      "min_width_m": 4.5,
-      "max_width_m": 9.2,
+      "length_m": 743.1,
+      "min_width_m": 10.0,
+      "max_width_m": 11.1,
       "surfaces": [
         {
           "surface": "Asphalt",
@@ -930,9 +930,9 @@
       "osm_url": "https://www.openstreetmap.org/way/80905675",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1181.3,
-      "min_width_m": 6.0,
-      "max_width_m": 9.2,
+      "length_m": 932.1,
+      "min_width_m": 10.0,
+      "max_width_m": 11.1,
       "surfaces": [
         {
           "surface": "Asphalt",
@@ -961,9 +961,9 @@
       "osm_url": "https://www.openstreetmap.org/way/110580562",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 923.1,
-      "min_width_m": 6.0,
-      "max_width_m": 9.2,
+      "length_m": 369.0,
+      "min_width_m": 10.0,
+      "max_width_m": 11.1,
       "surfaces": [
         {
           "surface": "Asphalt",
@@ -992,9 +992,9 @@
       "osm_url": "https://www.openstreetmap.org/way/1526452831",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 489.1,
-      "min_width_m": 6.5,
-      "max_width_m": 8.8,
+      "length_m": 453.3,
+      "min_width_m": 10.0,
+      "max_width_m": 10.9,
       "surfaces": [
         {
           "surface": "Asphalt",
@@ -1023,9 +1023,9 @@
       "osm_url": "https://www.openstreetmap.org/way/751513226",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1407.3,
-      "min_width_m": 6.0,
-      "max_width_m": 9.2,
+      "length_m": 1320.4,
+      "min_width_m": 10.0,
+      "max_width_m": 11.1,
       "surfaces": [
         {
           "surface": "Asphalt",
@@ -1054,9 +1054,9 @@
       "osm_url": "https://www.openstreetmap.org/way/639076279",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1550.8,
-      "min_width_m": 6.5,
-      "max_width_m": 9.2,
+      "length_m": 1296.6,
+      "min_width_m": 10.0,
+      "max_width_m": 11.1,
       "surfaces": [
         {
           "surface": "Asphalt",
@@ -1085,9 +1085,9 @@
       "osm_url": "https://www.openstreetmap.org/way/183330357",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1213.1,
-      "min_width_m": 8.0,
-      "max_width_m": 9.2,
+      "length_m": 1175.5,
+      "min_width_m": 10.5,
+      "max_width_m": 11.1,
       "surfaces": [
         {
           "surface": "Asphalt",
@@ -1116,9 +1116,9 @@
       "osm_url": "https://www.openstreetmap.org/relation/16338535",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1031.9,
-      "min_width_m": 5.0,
-      "max_width_m": 9.2,
+      "length_m": 969.6,
+      "min_width_m": 10.0,
+      "max_width_m": 11.1,
       "surfaces": [
         {
           "surface": "Asphalt",
@@ -1147,9 +1147,9 @@
       "osm_url": "https://www.openstreetmap.org/way/121084004",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1152.7,
-      "min_width_m": 5.0,
-      "max_width_m": 9.2,
+      "length_m": 915.1,
+      "min_width_m": 10.0,
+      "max_width_m": 11.1,
       "surfaces": [
         {
           "surface": "Asphalt",
@@ -1178,9 +1178,9 @@
       "osm_url": "https://www.openstreetmap.org/way/814876031",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1233.5,
-      "min_width_m": 6.5,
-      "max_width_m": 9.5,
+      "length_m": 303.3,
+      "min_width_m": 10.0,
+      "max_width_m": 11.3,
       "surfaces": [
         {
           "surface": "Asphalt",
@@ -1209,9 +1209,9 @@
       "osm_url": "https://www.openstreetmap.org/way/798432703",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1227.7,
-      "min_width_m": 6.0,
-      "max_width_m": 9.5,
+      "length_m": 867.0,
+      "min_width_m": 10.0,
+      "max_width_m": 11.3,
       "surfaces": [
         {
           "surface": "Asphalt",
@@ -1240,7 +1240,7 @@
       "osm_url": "https://www.openstreetmap.org/way/166701854",
       "is_inspired": false,
       "default_laps": 6,
-      "length_m": 1060.0,
+      "length_m": 1054.5,
       "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
@@ -1249,7 +1249,7 @@
           "share_pct": 100.0
         }
       ],
-      "has_jumps": false,
+      "has_jumps": true,
       "has_joker": false,
       "has_pit_lane": false,
       "has_junctions": false,
@@ -1271,7 +1271,7 @@
       "osm_url": "https://www.openstreetmap.org/way/159576897",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 999.9,
+      "length_m": 991.1,
       "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
@@ -1280,7 +1280,7 @@
           "share_pct": 100.0
         }
       ],
-      "has_jumps": false,
+      "has_jumps": true,
       "has_joker": false,
       "has_pit_lane": false,
       "has_junctions": false,
@@ -1302,7 +1302,7 @@
       "osm_url": "https://www.openstreetmap.org/way/100006815",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 980.0,
+      "length_m": 969.5,
       "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
@@ -1311,7 +1311,7 @@
           "share_pct": 100.0
         }
       ],
-      "has_jumps": false,
+      "has_jumps": true,
       "has_joker": false,
       "has_pit_lane": false,
       "has_junctions": false,
@@ -1333,7 +1333,7 @@
       "osm_url": "https://www.openstreetmap.org/way/1363616670",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1180.0,
+      "length_m": 1172.7,
       "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
@@ -1342,7 +1342,7 @@
           "share_pct": 100.0
         }
       ],
-      "has_jumps": false,
+      "has_jumps": true,
       "has_joker": false,
       "has_pit_lane": false,
       "has_junctions": false,
@@ -1364,7 +1364,7 @@
       "osm_url": "https://www.openstreetmap.org/way/119083954",
       "is_inspired": false,
       "default_laps": 4,
-      "length_m": 1170.0,
+      "length_m": 1156.7,
       "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
@@ -1373,7 +1373,7 @@
           "share_pct": 100.0
         }
       ],
-      "has_jumps": false,
+      "has_jumps": true,
       "has_joker": false,
       "has_pit_lane": false,
       "has_junctions": false,
@@ -1395,7 +1395,7 @@
       "osm_url": "https://www.openstreetmap.org/way/134067270",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1199.9,
+      "length_m": 1188.1,
       "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
@@ -1404,7 +1404,7 @@
           "share_pct": 100.0
         }
       ],
-      "has_jumps": false,
+      "has_jumps": true,
       "has_joker": false,
       "has_pit_lane": false,
       "has_junctions": false,
@@ -1426,7 +1426,7 @@
       "osm_url": "https://www.openstreetmap.org/way/62020741",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 810.0,
+      "length_m": 809.8,
       "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
@@ -1435,7 +1435,7 @@
           "share_pct": 100.0
         }
       ],
-      "has_jumps": false,
+      "has_jumps": true,
       "has_joker": false,
       "has_pit_lane": false,
       "has_junctions": false,
@@ -1457,7 +1457,7 @@
       "osm_url": "https://www.openstreetmap.org/way/674904429",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 940.1,
+      "length_m": 928.0,
       "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
@@ -1466,7 +1466,7 @@
           "share_pct": 100.0
         }
       ],
-      "has_jumps": false,
+      "has_jumps": true,
       "has_joker": false,
       "has_pit_lane": false,
       "has_junctions": false,
@@ -1488,7 +1488,7 @@
       "osm_url": "https://www.openstreetmap.org/way/808191053",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1149.9,
+      "length_m": 930.4,
       "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
@@ -1497,7 +1497,7 @@
           "share_pct": 100.0
         }
       ],
-      "has_jumps": false,
+      "has_jumps": true,
       "has_joker": false,
       "has_pit_lane": false,
       "has_junctions": false,
@@ -1519,7 +1519,7 @@
       "osm_url": "https://www.openstreetmap.org/way/685441292",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1260.0,
+      "length_m": 1243.5,
       "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
@@ -1528,7 +1528,7 @@
           "share_pct": 100.0
         }
       ],
-      "has_jumps": false,
+      "has_jumps": true,
       "has_joker": false,
       "has_pit_lane": false,
       "has_junctions": false,
@@ -1550,7 +1550,7 @@
       "osm_url": "https://www.openstreetmap.org/way/803500149",
       "is_inspired": false,
       "default_laps": 4,
-      "length_m": 1050.0,
+      "length_m": 1046.8,
       "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
@@ -1559,7 +1559,7 @@
           "share_pct": 100.0
         }
       ],
-      "has_jumps": false,
+      "has_jumps": true,
       "has_joker": false,
       "has_pit_lane": false,
       "has_junctions": false,
@@ -1581,7 +1581,7 @@
       "osm_url": "https://www.openstreetmap.org/way/152379106",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1389.9,
+      "length_m": 1279.2,
       "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
@@ -1590,7 +1590,7 @@
           "share_pct": 100.0
         }
       ],
-      "has_jumps": false,
+      "has_jumps": true,
       "has_joker": false,
       "has_pit_lane": false,
       "has_junctions": false,
@@ -1612,7 +1612,7 @@
       "osm_url": "https://www.openstreetmap.org/way/131117868",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1120.0,
+      "length_m": 1070.1,
       "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
@@ -1621,7 +1621,7 @@
           "share_pct": 100.0
         }
       ],
-      "has_jumps": false,
+      "has_jumps": true,
       "has_joker": false,
       "has_pit_lane": false,
       "has_junctions": false,
@@ -1640,10 +1640,10 @@
       "country_name": "Lithuania",
       "scale": "1:1",
       "wikipedia_url": "https://lt.wikipedia.org/wiki/Vilky%C4%8Diai",
-      "osm_url": "https://www.openstreetmap.org/way/431154657",
+      "osm_url": "https://www.openstreetmap.org/way/430154178",
       "is_inspired": false,
       "default_laps": 4,
-      "length_m": 880.0,
+      "length_m": 1063.0,
       "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
@@ -1652,7 +1652,7 @@
           "share_pct": 100.0
         }
       ],
-      "has_jumps": false,
+      "has_jumps": true,
       "has_joker": false,
       "has_pit_lane": false,
       "has_junctions": false,
@@ -1674,7 +1674,7 @@
       "osm_url": "https://www.openstreetmap.org/way/192380335",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1325.1,
+      "length_m": 1321.5,
       "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
@@ -1683,7 +1683,7 @@
           "share_pct": 100.0
         }
       ],
-      "has_jumps": false,
+      "has_jumps": true,
       "has_joker": false,
       "has_pit_lane": false,
       "has_junctions": false,
@@ -1705,7 +1705,7 @@
       "osm_url": "https://www.openstreetmap.org/way/854048813",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 964.9,
+      "length_m": 956.5,
       "min_width_m": 13.0,
       "max_width_m": 13.0,
       "surfaces": [
@@ -1714,7 +1714,7 @@
           "share_pct": 100.0
         }
       ],
-      "has_jumps": false,
+      "has_jumps": true,
       "has_joker": false,
       "has_pit_lane": false,
       "has_junctions": false,
@@ -1745,7 +1745,7 @@
           "share_pct": 100.0
         }
       ],
-      "has_jumps": false,
+      "has_jumps": true,
       "has_joker": false,
       "has_pit_lane": false,
       "has_junctions": false,
@@ -3488,17 +3488,17 @@
       "osm_url": "https://www.openstreetmap.org/way/599300791",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1194.5,
-      "min_width_m": 11.5,
+      "length_m": 1168.3,
+      "min_width_m": 13.4,
       "max_width_m": 14.5,
       "surfaces": [
         {
           "surface": "Asphalt",
-          "share_pct": 63.2
+          "share_pct": 63.3
         },
         {
           "surface": "Dirt",
-          "share_pct": 36.8
+          "share_pct": 36.7
         }
       ],
       "has_jumps": true,
@@ -3523,20 +3523,20 @@
       "osm_url": "https://www.openstreetmap.org/way/234347787",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1158.8,
-      "min_width_m": 9.5,
-      "max_width_m": 13.0,
+      "length_m": 1151.1,
+      "min_width_m": 12.5,
+      "max_width_m": 14.0,
       "surfaces": [
         {
           "surface": "Asphalt",
-          "share_pct": 64.0
+          "share_pct": 64.4
         },
         {
           "surface": "Dirt",
-          "share_pct": 36.0
+          "share_pct": 35.6
         }
       ],
-      "has_jumps": false,
+      "has_jumps": true,
       "has_joker": true,
       "has_pit_lane": false,
       "has_junctions": true,
@@ -3558,17 +3558,17 @@
       "osm_url": "https://www.openstreetmap.org/way/1069390967",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1004.1,
-      "min_width_m": 11.5,
-      "max_width_m": 14.0,
+      "length_m": 1005.0,
+      "min_width_m": 13.4,
+      "max_width_m": 14.5,
       "surfaces": [
         {
           "surface": "Asphalt",
-          "share_pct": 67.7
+          "share_pct": 66.7
         },
         {
           "surface": "Dirt",
-          "share_pct": 32.3
+          "share_pct": 33.3
         }
       ],
       "has_jumps": true,
@@ -3593,8 +3593,8 @@
       "osm_url": "https://www.openstreetmap.org/way/787615501",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1078.8,
-      "min_width_m": 11.5,
+      "length_m": 1065.5,
+      "min_width_m": 13.4,
       "max_width_m": 14.5,
       "surfaces": [
         {
@@ -3628,20 +3628,20 @@
       "osm_url": "https://www.openstreetmap.org/way/267094190",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 936.6,
-      "min_width_m": 11.5,
+      "length_m": 940.0,
+      "min_width_m": 13.4,
       "max_width_m": 14.5,
       "surfaces": [
         {
           "surface": "Asphalt",
-          "share_pct": 69.2
+          "share_pct": 68.1
         },
         {
           "surface": "Dirt",
-          "share_pct": 30.8
+          "share_pct": 31.9
         }
       ],
-      "has_jumps": false,
+      "has_jumps": true,
       "has_joker": true,
       "has_pit_lane": false,
       "has_junctions": true,
@@ -3663,9 +3663,9 @@
       "osm_url": "https://www.openstreetmap.org/way/1096210264",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1024.2,
-      "min_width_m": 10.0,
-      "max_width_m": 14.0,
+      "length_m": 1035.0,
+      "min_width_m": 12.7,
+      "max_width_m": 14.5,
       "surfaces": [
         {
           "surface": "Asphalt",
@@ -3698,20 +3698,20 @@
       "osm_url": "https://www.openstreetmap.org/way/172413357",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1081.1,
-      "min_width_m": 9.0,
+      "length_m": 1075.0,
+      "min_width_m": 12.2,
       "max_width_m": 14.5,
       "surfaces": [
         {
           "surface": "Dirt",
-          "share_pct": 60.0
+          "share_pct": 60.8
         },
         {
           "surface": "Asphalt",
-          "share_pct": 40.0
+          "share_pct": 39.2
         }
       ],
-      "has_jumps": false,
+      "has_jumps": true,
       "has_joker": true,
       "has_pit_lane": false,
       "has_junctions": true,
@@ -3733,17 +3733,17 @@
       "osm_url": "https://www.openstreetmap.org/way/149713976",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 965.8,
-      "min_width_m": 7.5,
-      "max_width_m": 13.0,
+      "length_m": 1000.0,
+      "min_width_m": 12.0,
+      "max_width_m": 14.0,
       "surfaces": [
         {
-          "surface": "Asphalt",
-          "share_pct": 50.4
+          "surface": "Dirt",
+          "share_pct": 53.2
         },
         {
-          "surface": "Dirt",
-          "share_pct": 49.6
+          "surface": "Asphalt",
+          "share_pct": 46.8
         }
       ],
       "has_jumps": true,
@@ -3768,17 +3768,17 @@
       "osm_url": "https://www.openstreetmap.org/relation/11362868",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1077.8,
-      "min_width_m": 8.5,
+      "length_m": 1105.1,
+      "min_width_m": 12.0,
       "max_width_m": 14.5,
       "surfaces": [
         {
           "surface": "Asphalt",
-          "share_pct": 60.7
+          "share_pct": 60.1
         },
         {
           "surface": "Dirt",
-          "share_pct": 39.3
+          "share_pct": 39.9
         }
       ],
       "has_jumps": true,
@@ -3803,17 +3803,17 @@
       "osm_url": "https://www.openstreetmap.org/way/178240082",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1113.4,
-      "min_width_m": 10.0,
-      "max_width_m": 14.0,
+      "length_m": 1101.8,
+      "min_width_m": 12.0,
+      "max_width_m": 12.0,
       "surfaces": [
         {
           "surface": "Asphalt",
-          "share_pct": 57.3
+          "share_pct": 56.4
         },
         {
           "surface": "Dirt",
-          "share_pct": 42.7
+          "share_pct": 43.6
         }
       ],
       "has_jumps": true,
@@ -3838,20 +3838,20 @@
       "osm_url": "https://www.openstreetmap.org/relation/11752542",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1063.5,
-      "min_width_m": 10.5,
+      "length_m": 1055.9,
+      "min_width_m": 12.9,
       "max_width_m": 14.5,
       "surfaces": [
         {
           "surface": "Dirt",
-          "share_pct": 56.6
+          "share_pct": 57.0
         },
         {
           "surface": "Asphalt",
-          "share_pct": 43.4
+          "share_pct": 43.0
         }
       ],
-      "has_jumps": false,
+      "has_jumps": true,
       "has_joker": true,
       "has_pit_lane": false,
       "has_junctions": true,
@@ -3873,17 +3873,17 @@
       "osm_url": "https://www.openstreetmap.org/way/588947722",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1031.1,
-      "min_width_m": 7.5,
-      "max_width_m": 13.5,
+      "length_m": 1035.1,
+      "min_width_m": 12.0,
+      "max_width_m": 14.3,
       "surfaces": [
         {
           "surface": "Asphalt",
-          "share_pct": 51.2
+          "share_pct": 55.7
         },
         {
           "surface": "Dirt",
-          "share_pct": 48.8
+          "share_pct": 44.3
         }
       ],
       "has_jumps": true,
@@ -3908,17 +3908,17 @@
       "osm_url": "https://www.openstreetmap.org/way/42125321",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1051.4,
-      "min_width_m": 11.5,
-      "max_width_m": 14.0,
+      "length_m": 1039.4,
+      "min_width_m": 13.4,
+      "max_width_m": 14.5,
       "surfaces": [
         {
           "surface": "Dirt",
-          "share_pct": 53.6
+          "share_pct": 54.3
         },
         {
           "surface": "Asphalt",
-          "share_pct": 46.4
+          "share_pct": 45.7
         }
       ],
       "has_jumps": true,
@@ -3943,20 +3943,20 @@
       "osm_url": "https://www.openstreetmap.org/way/788196389",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 883.6,
-      "min_width_m": 11.5,
+      "length_m": 871.4,
+      "min_width_m": 13.4,
       "max_width_m": 14.5,
       "surfaces": [
         {
           "surface": "Asphalt",
-          "share_pct": 57.8
+          "share_pct": 57.2
         },
         {
           "surface": "Dirt",
-          "share_pct": 42.2
+          "share_pct": 42.8
         }
       ],
-      "has_jumps": false,
+      "has_jumps": true,
       "has_joker": true,
       "has_pit_lane": false,
       "has_junctions": true,
@@ -3978,17 +3978,17 @@
       "osm_url": "https://www.openstreetmap.org/relation/10968337",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 920.4,
-      "min_width_m": 9.0,
-      "max_width_m": 14.0,
+      "length_m": 901.5,
+      "min_width_m": 12.2,
+      "max_width_m": 14.5,
       "surfaces": [
         {
           "surface": "Asphalt",
-          "share_pct": 63.8
+          "share_pct": 64.8
         },
         {
           "surface": "Dirt",
-          "share_pct": 36.2
+          "share_pct": 35.2
         }
       ],
       "has_jumps": true,
@@ -4013,17 +4013,17 @@
       "osm_url": "https://www.openstreetmap.org/relation/10950539",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1045.4,
-      "min_width_m": 8.5,
+      "length_m": 1040.6,
+      "min_width_m": 12.0,
       "max_width_m": 14.5,
       "surfaces": [
         {
           "surface": "Dirt",
-          "share_pct": 56.8
+          "share_pct": 56.6
         },
         {
           "surface": "Asphalt",
-          "share_pct": 43.2
+          "share_pct": 43.4
         }
       ],
       "has_jumps": true,
@@ -4048,20 +4048,20 @@
       "osm_url": "https://www.openstreetmap.org/relation/21228308",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1243.6,
-      "min_width_m": 11.5,
+      "length_m": 1233.8,
+      "min_width_m": 13.4,
       "max_width_m": 14.5,
       "surfaces": [
         {
           "surface": "Dirt",
-          "share_pct": 55.8
+          "share_pct": 55.4
         },
         {
           "surface": "Asphalt",
-          "share_pct": 44.2
+          "share_pct": 44.6
         }
       ],
-      "has_jumps": false,
+      "has_jumps": true,
       "has_joker": true,
       "has_pit_lane": false,
       "has_junctions": true,
@@ -4118,17 +4118,17 @@
       "osm_url": "https://www.openstreetmap.org/way/169851260",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 957.3,
-      "min_width_m": 11.5,
-      "max_width_m": 14.0,
+      "length_m": 939.6,
+      "min_width_m": 13.4,
+      "max_width_m": 14.5,
       "surfaces": [
         {
           "surface": "Asphalt",
-          "share_pct": 60.8
+          "share_pct": 61.0
         },
         {
           "surface": "Dirt",
-          "share_pct": 39.2
+          "share_pct": 39.0
         }
       ],
       "has_jumps": true,
@@ -4153,17 +4153,17 @@
       "osm_url": "https://www.openstreetmap.org/way/1023648273",
       "is_inspired": false,
       "default_laps": 5,
-      "length_m": 1145.6,
-      "min_width_m": 13.5,
+      "length_m": 1142.6,
+      "min_width_m": 14.3,
       "max_width_m": 14.5,
       "surfaces": [
         {
           "surface": "Dirt",
-          "share_pct": 85.6
+          "share_pct": 86.2
         },
         {
           "surface": "Asphalt",
-          "share_pct": 14.4
+          "share_pct": 13.8
         }
       ],
       "has_jumps": true,

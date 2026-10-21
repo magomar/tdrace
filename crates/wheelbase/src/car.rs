@@ -816,6 +816,13 @@ impl Car {
         }
     }
 
+    /// Fits [`CompoundId::GroovedDirt`] across config and runtime wheel assemblies for dirt oval racing.
+    pub fn fit_grooved_dirt_compound(&mut self) {
+        let mut cfg = self.config;
+        cfg.fit_grooved_dirt_compound();
+        self.set_config(cfg);
+    }
+
     /// Returns the current forward unit vector in world space.
     #[inline]
     pub fn forward_vector(&self) -> Vec2 {
@@ -2384,11 +2391,8 @@ fn couple_axle(
             .map(|s| s.surface_drag_multiplier())
             .sum::<f32>()
             / 4.0;
-        let avg_surface_mu: f32 = surfaces
-            .iter()
-            .map(|s| s.friction_coefficient())
-            .sum::<f32>()
-            / 4.0;
+        // Effective surface grip (compound affinity, ice studs, dirt contamination) times tire grip
+        let grip_mu = surface_mus.iter().sum::<f32>() * 0.25 * self.config.tire.grip;
         let effective_drag_coeff = self.effective_air_drag_coefficient();
         let mut drag_fwd = -effective_drag_coeff * v_long * v_long.abs() * avg_surface_drag;
         if draft_clamped > 0.0
@@ -2430,8 +2434,6 @@ fn couple_axle(
             // the grip limit (mu*g/v) and switched ESC off in fast corners (Spec 043, review B6).
             let speed_fade = ((v_long.abs() - 8.0) / 8.0).clamp(0.0, 1.0);
             let low_speed_floor = 0.60 * (1.0 - speed_fade * speed_fade * (3.0 - 2.0 * speed_fade));
-            // Effective surface grip (ice studs, dirt contamination) times tire grip
-            let grip_mu = surface_mus.iter().sum::<f32>() * 0.25 * self.config.tire.grip;
             let max_physical_yaw_rate =
                 ((grip_mu * effective_g) / v_long.abs().max(2.0)).max(low_speed_floor);
             let target_yaw_rate =
@@ -2509,31 +2511,39 @@ fn couple_axle(
 
         let is_holding_brakes = clamped_ctrl.brake > 0.05 || clamped_ctrl.handbrake;
 
-        // Static friction reaction for stationary or near-stopped vehicle on slopes:
+        // Static friction reaction for stationary or low-speed vehicle on slopes:
         // Rubber tires cannot roll laterally; static Coulomb friction resists downhill slope forces
-        // up to the traction limit (mu * N).
+        // up to the traction limit (mu * N). Because Pass C fades out lateral tire force below
+        // |v_long| = 3.0 m/s (`low_speed_blend`), lateral slope holding bridges the complementary
+        // (1 - |v_long| / 3.0) window so cars launching on banked turns do not slide down the banking.
         let static_friction_world =
-            if !self.state.is_airborne && ground_contact > 0.0 && self.state.speed < 0.25 {
+            if !self.state.is_airborne && ground_contact > 0.0 && (self.state.speed < 0.25 || v_long.abs() < 3.0) {
             let total_slope_gravity = bank_gravity_world + grade_gravity_world;
             if total_slope_gravity.length_squared() > 1e-4 {
-                let static_blend = (1.0 - (self.state.speed / 0.25)).clamp(0.0, 1.0);
-                let max_static_friction = avg_surface_mu * total_normal_load * ground_contact;
+                let max_static_friction = grip_mu * total_normal_load * ground_contact;
 
-                // Lateral holding: tires cannot roll sideways, so static friction resists lateral slope force
+                // Lateral holding: complements `low_speed_blend = (|v_long| / 3.0)` while not sliding laterally fast
+                let lat_static_blend = (1.0 - (v_long.abs() / 3.0)).clamp(0.0, 1.0)
+                    * (1.0 - (v_lat.abs() / 1.5)).clamp(0.0, 1.0);
                 let lat_slope_force = total_slope_gravity.dot(right);
-                    let lat_holding = -lat_slope_force
-                        .clamp(-max_static_friction, max_static_friction)
-                        * static_blend;
+                let lat_holding = -lat_slope_force
+                    .clamp(-max_static_friction, max_static_friction)
+                    * lat_static_blend;
 
-                // Longitudinal holding: resisted by brakes/handbrake or rolling resistance
-                let long_slope_force = total_slope_gravity.dot(fwd);
-                let long_holding = if is_holding_brakes {
+                // Longitudinal holding: resisted by brakes/handbrake or rolling resistance when stationary
+                let long_holding = if self.state.speed < 0.25 {
+                    let static_blend = (1.0 - (self.state.speed / 0.25)).clamp(0.0, 1.0);
+                    let long_slope_force = total_slope_gravity.dot(fwd);
+                    if is_holding_brakes {
                         -long_slope_force.clamp(-max_static_friction, max_static_friction)
                             * static_blend
-                } else {
+                    } else {
                         let rr_holding_cap =
                             self.config.rolling_resistance_coefficient * total_normal_load;
-                    -long_slope_force.clamp(-rr_holding_cap, rr_holding_cap) * static_blend
+                        -long_slope_force.clamp(-rr_holding_cap, rr_holding_cap) * static_blend
+                    }
+                } else {
+                    0.0
                 };
 
                 right * lat_holding + fwd * long_holding
@@ -2571,9 +2581,9 @@ fn couple_axle(
         // A slope is only "too steep" to remain static if the incline angle exceeds the static friction limit:
         // tan(theta) > mu for lateral banking, or grade exceeds rolling/braking limits.
         if self.state.speed < 0.08 {
-            let on_steep_bank = fast_tan_small(bank_rad.abs()) > avg_surface_mu;
+            let on_steep_bank = fast_tan_small(bank_rad.abs()) > grip_mu;
             let on_steep_grade = if is_holding_brakes {
-                fast_tan_small(grade_rad.abs()) > avg_surface_mu
+                fast_tan_small(grade_rad.abs()) > grip_mu
             } else {
                 grade_rad.abs() > 0.02
             };

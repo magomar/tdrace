@@ -332,3 +332,62 @@ fn test_nascar_phase2_config_file_and_overrides() {
     assert_eq!(gameplay.get("default_num_bots").and_then(|v| v.as_integer()), Some(11));
 }
 
+#[test]
+fn test_eldora_speedway_equips_grooved_dirt_tires_and_launches_cleanly_on_banking() {
+    use tdrace_app::ai::bot_harness::{run_harness_race, sample_bot, sample_seed, HarnessEntry};
+    use tdrace_app::ai::{DriverTier, DrivingStyle};
+    use tdrace_core::physics::surface::CompoundId;
+
+    let mut session = RaceSession::new();
+    session.switch_to_nascar();
+    session.track_choice = TrackChoice::Custom {
+        id: "eldora_speedway".to_string(),
+        title: "Eldora Speedway".to_string(),
+        description: "0.5-mile high-banked clay oval".to_string(),
+        path: "nascar/eldora_speedway".to_string(),
+    };
+    session.track = tdrace_app::ui::menu::resolve_track_for_menu(&session.track_choice)
+        .expect("Eldora Speedway must resolve");
+    assert!(session.track.is_dirt_circuit(), "Eldora Speedway must be detected as a dirt circuit");
+
+    session.num_bots = 11;
+    session.init_race();
+
+    assert_eq!(session.world.vehicles.len(), 12);
+    for (idx, car) in session.world.vehicles.iter().enumerate() {
+        for w in 0..4 {
+            assert_eq!(
+                car.config.wheels[w].compound.id,
+                CompoundId::GroovedDirt,
+                "Vehicle {idx} wheel {w} config must equip GroovedDirt at Eldora"
+            );
+            assert_eq!(
+                car.state.wheel_assemblies[w].config.compound.id,
+                CompoundId::GroovedDirt,
+                "Vehicle {idx} wheel {w} runtime assembly must equip GroovedDirt at Eldora"
+            );
+        }
+    }
+
+    // Run a 2-lap race from a standing start with 8 stock cars (spanning the 24-deg banked Turn 4 grid slots)
+    let entries: Vec<HarnessEntry> = (0..8)
+        .map(|i| {
+            let style = DrivingStyle::ALL[i % DrivingStyle::ALL.len()];
+            HarnessEntry::bot(
+                sample_bot(style, DriverTier::Pro, sample_seed(0, DriverTier::Pro, i)),
+                CarConfig::stock_car_ta1(),
+            )
+        })
+        .collect();
+    let results = run_harness_race(&session.track, entries, 2, 90.0);
+    for (i, r) in results.iter().enumerate() {
+        assert!(
+            r.finished,
+            "Stock car in grid slot {i} at Eldora Speedway must complete 2 laps without getting stuck (laps={:?}, longest_no_progress={:.2}s)",
+            r.lap_times,
+            r.longest_no_progress_s
+        );
+    }
+}
+
+

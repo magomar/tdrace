@@ -107,6 +107,11 @@ pub fn run_harness_race(track: &Track, entries: Vec<HarnessEntry>, laps: u32, ma
     for (i, e) in entries.into_iter().enumerate() {
         let spawn = track.grid_positions[i];
         let mut car = Car::new(e.config).with_pose(spawn.position, spawn.angle);
+        if track.is_dirt_circuit()
+            && car.config.wheels[0].compound.id == tdrace_core::physics::surface::CompoundId::HardSlick
+        {
+            car.fit_grooved_dirt_compound();
+        }
         // Like RaceSession::apply_car_damage_setting: the game's default (damage off) reaches every car,
         // so curb and landing strikes do not wear the suspension either.
         car.config.damage_enabled = world.rules.damage_enabled;

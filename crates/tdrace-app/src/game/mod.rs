@@ -4820,9 +4820,13 @@ impl RaceSession {
                 grid_slot: player_slot,
             });
         // Only the player's own car wears the garage compound; player 2 (below) and the bots keep their preset.
+        let is_dirt_track = self.track.is_dirt_circuit();
         let mut player_config = base_config;
         if let Some(id) = player_model.and_then(|pm| self.active_profile.garage_compound(pm.module_id, pm.id)) {
             player_config.set_slick_compound(id);
+        }
+        if is_dirt_track && player_config.wheels[0].compound.id == tdrace_core::physics::surface::CompoundId::HardSlick {
+            player_config.fit_grooved_dirt_compound();
         }
         let mut player_car = Car::new(player_config).with_pose(grid_pose_player.position, grid_pose_player.angle);
                     player_car.config.player = Self::player_handling(self.assist_profile, &self.input.filter.config);
@@ -4852,6 +4856,9 @@ impl RaceSession {
                 CarColorScheme::from_index(1)
             };
             let mut p2_config = base_config;
+            if is_dirt_track && p2_config.wheels[0].compound.id == tdrace_core::physics::surface::CompoundId::HardSlick {
+                p2_config.fit_grooved_dirt_compound();
+            }
             p2_config.assists = self.assist_profile_p2.to_config();
             let mut p2_car = Car::new(p2_config).with_pose(grid_pose_p2.position, grid_pose_p2.angle);
             p2_car.config.player = Self::player_handling(self.assist_profile_p2, &self.filter_p2.config);
@@ -4932,6 +4939,10 @@ impl RaceSession {
                 (cfg, visual, character.color_scheme, None)
             };
 
+            let mut bot_config = bot_config;
+            if is_dirt_track && bot_config.wheels[0].compound.id == tdrace_core::physics::surface::CompoundId::HardSlick {
+                bot_config.fit_grooved_dirt_compound();
+            }
             let bot_car = Car::new(bot_config).with_pose(grid_pose_bot.position, grid_pose_bot.angle);
 
             self.world.spawn(bot_car, TrackProgressTracker::new(num_cps, num_sectors));
@@ -6622,6 +6633,11 @@ impl RaceSession {
                 if let Some(id) = self.active_profile.garage_compound(next_m.module_id, next_m.id) {
                     next_config.set_slick_compound(id);
                 }
+                if self.track.is_dirt_circuit()
+                    && next_config.wheels[0].compound.id == tdrace_core::physics::surface::CompoundId::HardSlick
+                {
+                    next_config.fit_grooved_dirt_compound();
+                }
                 if let Some(car) = self.world.vehicles.get_mut(0) {
                     // set_config also refits the wheel assemblies, which carry the compound in the race.
                     car.set_config(next_config);
@@ -6640,7 +6656,13 @@ impl RaceSession {
                     *vt = next_m.visual_type;
                 }
                 if let Some(car) = self.world.vehicles.get_mut(car_idx) {
-                    car.config = next_m.to_car_config();
+                    let mut next_config = next_m.to_car_config();
+                    if self.track.is_dirt_circuit()
+                        && next_config.wheels[0].compound.id == tdrace_core::physics::surface::CompoundId::HardSlick
+                    {
+                        next_config.fit_grooved_dirt_compound();
+                    }
+                    car.set_config(next_config);
                 }
             }
         }
@@ -10314,6 +10336,11 @@ impl RaceSession {
                 if let Some(id) = catalog_model.and_then(|m| self.active_profile.garage_compound(m.module_id, m.id)) {
                     car_config.set_slick_compound(id);
                 }
+            }
+            if self.track.is_dirt_circuit()
+                && car_config.wheels[0].compound.id == tdrace_core::physics::surface::CompoundId::HardSlick
+            {
+                car_config.fit_grooved_dirt_compound();
             }
 
             let mut car = Car::new(car_config).with_pose(grid_pose.position, grid_pose.angle);

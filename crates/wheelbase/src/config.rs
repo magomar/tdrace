@@ -1522,6 +1522,17 @@ impl CarConfig {
         self
     }
 
+    /// Fits [`CompoundId::GroovedDirt`] when preparing a slick-shod car (such as a Stock Car)
+    /// for a clay or dirt oval circuit.
+    pub fn fit_grooved_dirt_compound(&mut self) {
+        let to = TireCompoundConfig::from_id(CompoundId::GroovedDirt);
+        self.tire.peak_slip_angle_deg = self.tire.peak_slip_angle_deg.max(to.peak_slip_angle_deg);
+        self.tire.peak_slip_ratio = self.tire.peak_slip_ratio.max(to.peak_slip_ratio);
+        self.tire.slide_grip = self.tire.slide_grip.max(to.slide_grip);
+        self.set_compound(CompoundId::GroovedDirt);
+        self.finalize();
+    }
+
     /// Standard balanced sports car tuned for GeneRally-style arcade drift racing.
     pub fn sports_car() -> Self {
         let tire = TireConfig::default();

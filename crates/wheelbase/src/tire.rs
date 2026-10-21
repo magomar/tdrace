@@ -669,6 +669,18 @@ impl TireCompoundConfig {
                 overheat_temp: 90.0,
                 surface_affinity,
             },
+            CompoundId::GroovedDirt => Self {
+                id,
+                name: "Grooved Dirt",
+                base_grip: 1.00,
+                peak_slip_angle_deg: 12.5,
+                peak_slip_ratio: 0.13,
+                slide_grip: 0.92,
+                wear_rate: 0.00000018,
+                optimal_temp_range: (65.0, 95.0),
+                overheat_temp: 115.0,
+                surface_affinity,
+            },
         }
     }
 

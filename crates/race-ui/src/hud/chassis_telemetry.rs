@@ -1371,6 +1371,7 @@ mod tests {
             CompoundId::MonsoonWet,
             CompoundId::ExtremeMud,
             CompoundId::StuddedIce,
+            CompoundId::GroovedDirt,
         ];
 
         let box_w = 190.0;
@@ -1411,6 +1412,7 @@ mod tests {
             CompoundId::MonsoonWet,
             CompoundId::ExtremeMud,
             CompoundId::StuddedIce,
+            CompoundId::GroovedDirt,
         ];
 
         for compound in all_compounds {
