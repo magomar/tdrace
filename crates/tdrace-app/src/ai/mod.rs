@@ -4,6 +4,7 @@
 pub mod bot_harness;
 pub mod career;
 pub mod driver;
+pub mod library_storage;
 pub mod racing_number;
 
 pub use career::{
@@ -16,6 +17,11 @@ pub use racing_number::{
 };
 pub use driver::{DriverCharacter, DriverFavoriteCar, DriverPersonalityOffsets, DriverStats};
 pub use race_kit::ai::humanize;
+pub use race_kit::ai::library::{
+    self, BehaviourStatus, BotBehaviour, BotBehaviourId, BotBehaviourRegistry, BotQuery,
+    BotQueryBuilder, ControllerPayload, CreationMethod, DriverControllerFactory, DrivingPersona,
+    PerformanceSummaryMetrics,
+};
 pub use race_kit::ai::{
     BotAiDriver, BotDrivingStats, BotProfile, BotRaceState, BotRouteStrategy, DriverQuality, DriverTier, DrivingStyle, HumanDriver, HumanTraits,
     LcgRng, MistakeKind, StyleTuning,

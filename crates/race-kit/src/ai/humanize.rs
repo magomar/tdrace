@@ -7,6 +7,7 @@
 //! drives exactly as it did before spec 046.
 
 use arcade_race_core::track::spline::{SplineProjection, TrackSpline};
+use serde::{Deserialize, Serialize};
 use wheelbase::normalize_angle;
 
 use super::rng::LcgRng;
@@ -76,7 +77,7 @@ impl MistakeKind {
 }
 
 /// Tier- and style-derived human behaviour settings (spec 046 §3).
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct HumanTraits {
     /// Standard deviation of the wandering line offset (m).
     pub line_sigma_m: f32,
@@ -102,6 +103,12 @@ pub struct HumanTraits {
     pub max_pass_delay_s: f32,
     /// Distance (m) by which high-tier/aggressive bots may cut onto apex curbs.
     pub curb_cut_m: f32,
+}
+
+impl Default for HumanTraits {
+    fn default() -> Self {
+        Self::none()
+    }
 }
 
 impl HumanTraits {

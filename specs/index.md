@@ -156,6 +156,8 @@ Table of contents providing progressive disclosure of project constitution and t
 | [133](133_physics_exact_qss_velocity_solver_online_sector_grip_memory_and_short_horizon_rollout_bot_controller.md) | Physics-Exact QSS Velocity Solver, Online Sector Grip Memory, and Short-Horizon Rollout Bot Controller | Architecture Spec | `draft` | — | [083](083_evorl_bot_driving_style_and_performance_optimization.md), [110](110_mathematically_ideal_racing_line_visual_aid.md), [131](131_error_free_t4_and_t5_bot_tiers_optimal_racing_line_trajectory_following_and_maximum_pace_controller_unchoking.md) | Upgrades BotAiDriver in race-kit with a forward-backward quasi-steady-state (QSS) friction-circle velocity profile solver, online per-sector adaptive grip memory across laps, and zero-allocation short-horizon Model Predictive Control (MPC) trajectory rollouts for elite tiers. |
 | [134](134_nitrocross_circuit_pack_and_mega_jump_over_under_crossover_geometry.md) | Nitrocross Circuit Pack and Mega Jump Over-Under Crossover Geometry | Feature Spec | `implemented` | `human:mario` | [051](051_rallycross_6tier_career_progression_and_expanded_circuit_roster.md), [081](081_rallycross_joker_lap_segments_for_classic_and_openstreetmap_circuits.md), [102](102_predefined_junction_components_for_road_splits_and_joker_loops.md), [103](103_autocross_and_rallycross_launch_chutes_and_templated_track_components.md), [124](124_mega_jump_dual_wall_gap_trap_and_minimum_gap_sizing.md) | Adds 5 new North American Nitrocross circuits (Utah UMC, Wild Horse Pass, Glen Helen, MidAmerica Outdoors, Calgary Stampede on Ice) alongside ERX Motor Park, and establishes grade-separated Mega Jump Over-Under Crossover geometry where the main track launches over the Joker Lap (or vice versa). |
 | [135](135_rallycross_tier_6_nitrocross_championship_isolation_world_rx_tier_4_5_realignment_and_tier_0_group_b_vault_archival.md) | Rallycross Tier 6 Nitrocross Championship Isolation, World RX Tier 4-5 Realignment, and Tier 0 Group B Vault Archival | Feature Spec | `implemented` | `human:mario` | [051](051_rallycross_6tier_career_progression_and_expanded_circuit_roster.md), [057](057_vault_module_for_archived_and_deprecated_content.md), [066](066_navigation_reorganization_category_circuit_filter_and_tiered_career_championships.md), [134](134_nitrocross_circuit_pack_and_mega_jump_over_under_crossover_geometry.md) | Isolates Tier 6 into an exclusive 6-round North American Nitrocross championship, moves Spa RX and Silverstone RX down into Tiers 4 and 5 World RX calendars, and archives the Tier 0 Group B vehicles and championship into The Vault. |
+| [136](136_migrate_to_standalone_cabinet_repository.md) | Migrate to standalone cabinet repository | Architecture Spec | `implemented` | `human:mario` | - | Migrates the cabinet game shell dependency from embedded crates/cabinet to the standalone multi-engine cabinet repository at ../cabinet, eliminating duplicate assets and enforcing zero Bevy dependencies. |
+| [137](137_bot_behaviour_library_provenance_registry_and_multi_scenario_driving_performance_evaluation_matrix.md) | Bot Behaviour Library, Provenance Registry, and Multi-Scenario Driving Performance Evaluation Matrix | Architecture Spec | `implemented` | `human:mario` | [023](023_orthogonal_ai_driving_styles_and_quality_tiers.md), [046](046_humanlike_bot_driving_with_tiered_mistakes_and_varied_lines.md), [083](083_evorl_bot_driving_style_and_performance_optimization.md), [131](131_error_free_t4_and_t5_bot_tiers_optimal_racing_line_trajectory_following_and_maximum_pace_controller_unchoking.md) | Establishes a persistent, versioned library of bot behaviors with creation provenance (heuristic, EvoRL, QSS+MPC, human imitation), tactical persona tagging, and a multi-scenario driving performance evaluation matrix spanning time trials, multi-participant pack races with varied car models, tires, and driver diversity, and real-race human interaction telemetry. |
 
 ### 🗺️ Specification Dependency Graph
 
@@ -259,6 +261,7 @@ flowchart LR
     133["133: Physics-Exact QSS Velocity Solver, Online Sector Grip Memory, and Short-Horizon Rollout Bot Controller"]
     134["134: Nitrocross Circuit Pack and Mega Jump Over-Under Crossover Geometry"]
     135["135: Rallycross Tier 6 Nitrocross Championship Isolation, World RX Tier 4-5 Realignment, and Tier 0 Group B Vault Archival"]
+    137["137: Bot Behaviour Library, Provenance Registry, and Multi-Scenario Driving Performance Evaluation Matrix"]
     055 --> 047
     062 --> 063
     055 --> 064
@@ -419,4 +422,8 @@ flowchart LR
     057 --> 135
     066 --> 135
     134 --> 135
+    023 --> 137
+    046 --> 137
+    083 --> 137
+    131 --> 137
 ```

@@ -1,0 +1,51 @@
+id = "canonical_bold_t4"
+name = "Canonical Bold Pro (T4)"
+version = "1.0.0"
+status = "baseline"
+created_at = "2026-10-22T00:00:00Z"
+author = "tdrace-system"
+tags = ["bold", "t4", "universal", "canonical", "baseline"]
+description = "Canonical Bold driver behavior calibrated for Tier 4: Pro."
+
+[provenance]
+type = "handcrafted_heuristic"
+engineer = "tdrace-calibration"
+notes = "Canonical baseline tuning"
+
+[persona]
+style = "bold"
+tier = "pro"
+modality_specialization = "universal"
+tactical_notes = "Late braking divebombs and aggressive throttle applications."
+
+[controller]
+controller_kind = "classical_lookahead"
+lookahead_time = 0.31
+speed_factor = 1.01
+steering_kp = 2.70
+steering_kd = 0.04
+brake_margin = 0.88
+aggression = 0.92
+avoidance_distance = 5.2
+
+[controller.traits]
+line_sigma_m = 0.14
+entry_share = 0.22
+apex_share = 0.42
+line_choice_sigma = 0.07
+brake_shift_sigma_m = 0.40
+corner_speed_sigma = 0.035
+reaction_tau_s = 0.05
+mistake_rate = 0.035
+mistake_weights = [0.40, 0.25, 0.20, 0.10, 0.05]
+pressure_gain = 0.09
+max_pass_delay_s = 0.25
+curb_cut_m = 0.40
+
+[performance_summary]
+best_flying_lap_s = 48.75
+mean_flying_lap_s = 49.30
+pace_delta_to_optimal_pct = 1.70
+contacts_per_lap = 0.22
+clean_pass_ratio = 0.78
+human_believability_score = 0.84

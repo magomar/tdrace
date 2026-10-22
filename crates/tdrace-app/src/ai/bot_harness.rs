@@ -72,6 +72,10 @@ pub struct HarnessCarResult {
     /// Separate wall contacts: a `RaceEvent::WallImpact` after at least `WALL_CONTACT_GAP_S` without
     /// one. A scrape along a wall is one contact.
     pub wall_contacts: u32,
+    /// Vehicle-to-vehicle contacts involving this car (Spec 137).
+    pub vehicle_contacts: u32,
+    /// Cumulative impulse magnitude of vehicle-to-vehicle impacts in N*s (Spec 137).
+    pub vehicle_contact_impulse: f32,
     /// Physics ticks the race ran (the same for every car).
     pub race_ticks: u32,
     /// The bot's human-layer counters at the end of the race.
@@ -133,6 +137,7 @@ pub fn run_harness_race(track: &Track, entries: Vec<HarnessEntry>, laps: u32, ma
     let station_len = len / LINE_STATIONS as f32;
     // Ticks since each car's last wall impact.
     let mut off_wall = vec![u32::MAX; n];
+    let mut off_vehicle = vec![u32::MAX; n];
     let gap_ticks = (WALL_CONTACT_GAP_S / HARNESS_DT).round() as u32;
     let mut ticks = 0u32;
 
@@ -157,9 +162,23 @@ pub fn run_harness_race(track: &Track, entries: Vec<HarnessEntry>, laps: u32, ma
         let prev: Vec<(f32, u32)> = world.trackers.iter().map(|t| (t.progress_distance, t.current_lap)).collect();
         world.step(track, &controls, HARNESS_DT);
         let mut touching = vec![false; n];
+        let mut touching_vehicle = vec![false; n];
         for ev in world.events() {
-            if let RaceEvent::WallImpact { car, .. } = ev {
-                touching[*car] = true;
+            match ev {
+                RaceEvent::WallImpact { car, .. } => {
+                    touching[*car] = true;
+                }
+                RaceEvent::VehicleImpact(hit) => {
+                    if hit.car_a_idx < n {
+                        touching_vehicle[hit.car_a_idx] = true;
+                        results[hit.car_a_idx].vehicle_contact_impulse += hit.impulse_magnitude;
+                    }
+                    if hit.car_b_idx < n {
+                        touching_vehicle[hit.car_b_idx] = true;
+                        results[hit.car_b_idx].vehicle_contact_impulse += hit.impulse_magnitude;
+                    }
+                }
+                _ => {}
             }
         }
         for i in 0..n {
@@ -170,6 +189,15 @@ pub fn run_harness_race(track: &Track, entries: Vec<HarnessEntry>, laps: u32, ma
                 off_wall[i] = 0;
             } else {
                 off_wall[i] = off_wall[i].saturating_add(1);
+            }
+
+            if touching_vehicle[i] {
+                if off_vehicle[i] >= gap_ticks && !results[i].finished {
+                    results[i].vehicle_contacts += 1;
+                }
+                off_vehicle[i] = 0;
+            } else {
+                off_vehicle[i] = off_vehicle[i].saturating_add(1);
             }
         }
         let (cars, trackers) = (&world.vehicles, &world.trackers);
@@ -767,4 +795,134 @@ fn try_eval_race(req: &EvalRequest) -> Result<EvalResult, String> {
         return Err("race produced a non-finite value".into());
     }
     Ok(out)
+}
+
+// ============================================================================
+// Spec 137: Bot Behaviour Evaluation Matrix Harness
+// ============================================================================
+
+use race_kit::ai::library::{BotBehaviour, DriverControllerFactory};
+use crate::ai::library_storage::{PackRaceBenchmarkRecord, TimeTrialBenchmarkRecord};
+
+/// Runs a clean-air time trial simulation benchmark for a bot behaviour (Spec 137).
+pub fn run_behaviour_time_trial(
+    track: &Track,
+    track_slug: &str,
+    car_config: CarConfig,
+    car_model: &str,
+    behaviour: &BotBehaviour,
+    laps: u32,
+    max_time_s: f32,
+) -> TimeTrialBenchmarkRecord {
+    let driver = DriverControllerFactory::create_bot_driver(behaviour);
+    let entry = HarnessEntry::bot(driver, car_config);
+    let results = run_harness_race(track, vec![entry], laps, max_time_s);
+    let r = &results[0];
+
+    let flying = r.lap_times.get(1..).unwrap_or(&[]);
+    let fastest_lap_s = flying.iter().copied().reduce(f32::min).unwrap_or_else(|| {
+        r.lap_times.first().copied().unwrap_or(0.0)
+    });
+    let mean_flying_lap_s = if !flying.is_empty() {
+        flying.iter().sum::<f32>() / flying.len() as f32
+    } else {
+        r.lap_times.first().copied().unwrap_or(0.0)
+    };
+
+    let lateral_spread_m = line_spread_m(r);
+    let corners = crate::ai::humanize::find_corners(&track.spline);
+    let brake_onset_spread_m = brake_onset_spread_m(r, &corners, track.spline.total_length());
+
+    let optimal_lap_s = track.spline.total_length() / car_config.top_speed_mps.max(10.0);
+    let optimal_lap_delta_pct = if optimal_lap_s > 0.0 && mean_flying_lap_s > 0.0 {
+        ((mean_flying_lap_s / optimal_lap_s) - 1.0) * 100.0
+    } else {
+        0.0
+    };
+
+    TimeTrialBenchmarkRecord {
+        run_id: format!("tt_{}_{}", behaviour.id, r.controls_hash),
+        behaviour_id: behaviour.id.0.clone(),
+        track_slug: track_slug.to_string(),
+        car_model: car_model.to_string(),
+        tire_compound: format!("{:?}", car_config.wheels[0].compound.id),
+        surface_condition: if track.is_dirt_circuit() { "dirt".to_string() } else { "dry_tarmac".to_string() },
+        laps_completed: r.lap_times.len() as u32,
+        fastest_lap_s,
+        mean_flying_lap_s,
+        optimal_lap_delta_pct,
+        lateral_spread_m,
+        brake_onset_spread_m,
+        spin_count: r.stats.spins,
+        off_track_count: r.stats.offs,
+        wall_impact_count: r.wall_contacts,
+        executed_at: chrono::Utc::now().to_rfc3339(),
+    }
+}
+
+/// Runs a multi-participant pack race simulation benchmark for a bot behaviour against opponents (Spec 137).
+pub fn run_behaviour_pack_race(
+    track: &Track,
+    track_slug: &str,
+    scenario_name: &str,
+    car_config: CarConfig,
+    car_model: &str,
+    subject: &BotBehaviour,
+    opponents: &[BotBehaviour],
+    subject_grid_pos: usize,
+    laps: u32,
+    max_time_s: f32,
+) -> PackRaceBenchmarkRecord {
+    let mut entries = Vec::with_capacity(1 + opponents.len());
+    let subject_driver = DriverControllerFactory::create_bot_driver(subject);
+
+    for (i, opp) in opponents.iter().enumerate() {
+        if i == subject_grid_pos {
+            entries.push(HarnessEntry::bot(subject_driver.clone(), car_config));
+        }
+        let opp_driver = DriverControllerFactory::create_bot_driver(opp);
+        entries.push(HarnessEntry::bot(opp_driver, car_config));
+    }
+    if entries.len() <= subject_grid_pos {
+        entries.push(HarnessEntry::bot(subject_driver, car_config));
+    }
+
+    let results = run_harness_race(track, entries, laps, max_time_s);
+    let s = &results[subject_grid_pos.min(results.len() - 1)];
+
+    let finish_key = |r: &HarnessCarResult| (!r.finished, std::cmp::Reverse(r.lap_times.len()), r.lap_times.iter().sum::<f32>());
+    let rank = 1 + results.iter().filter(|r| finish_key(r) < finish_key(s)).count();
+
+    let laps_count = s.lap_times.len().max(1) as f32;
+    let contacts_per_lap = s.vehicle_contacts as f32 / laps_count;
+    let mean_contact_impulse = if s.vehicle_contacts > 0 {
+        s.vehicle_contact_impulse / s.vehicle_contacts as f32
+    } else {
+        0.0
+    };
+
+    let clean_passes = if rank < subject_grid_pos + 1 {
+        (subject_grid_pos + 1 - rank) as u32
+    } else {
+        0
+    };
+
+    PackRaceBenchmarkRecord {
+        run_id: format!("pack_{}_{}", subject.id, s.controls_hash),
+        behaviour_id: subject.id.0.clone(),
+        scenario_name: scenario_name.to_string(),
+        track_slug: track_slug.to_string(),
+        car_model: car_model.to_string(),
+        grid_size: results.len() as u32,
+        grid_starting_pos: subject_grid_pos as u32 + 1,
+        finish_position: rank as u32,
+        opponent_diversity_profile: "mixed_opponents".to_string(),
+        contacts_per_lap,
+        mean_contact_impulse,
+        clean_passes,
+        divebomb_passes: if contacts_per_lap > 0.5 { 1 } else { 0 },
+        traffic_stall_time_s: s.longest_slow_s,
+        dnf_occurred: !s.finished,
+        executed_at: chrono::Utc::now().to_rfc3339(),
+    }
 }
