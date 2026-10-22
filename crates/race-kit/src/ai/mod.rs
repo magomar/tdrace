@@ -4,9 +4,15 @@
 //! It drives any vehicle that implements [`BotVehicle`] (spec 065), including `wheelbase::Car`.
 
 pub mod humanize;
+pub mod library;
 pub mod rng;
 
 pub use humanize::{BotDrivingStats, HumanDriver, HumanTraits, MistakeKind};
+pub use library::{
+    BehaviourStatus, BotBehaviour, BotBehaviourId, BotBehaviourRegistry, BotQuery, BotQueryBuilder,
+    ControllerPayload, CreationMethod, DriverControllerFactory, DrivingPersona,
+    PerformanceSummaryMetrics,
+};
 pub use rng::LcgRng;
 
 use arcade_race_core::Body2D;

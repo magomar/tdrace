@@ -1,0 +1,51 @@
+id = "canonical_tenacious_t4"
+name = "Canonical Tenacious Pro (T4)"
+version = "1.0.0"
+status = "baseline"
+created_at = "2026-10-22T00:00:00Z"
+author = "tdrace-system"
+tags = ["tenacious", "t4", "universal", "canonical", "baseline"]
+description = "Canonical Tenacious driver behavior calibrated for Tier 4: Pro."
+
+[provenance]
+type = "handcrafted_heuristic"
+engineer = "tdrace-calibration"
+notes = "Canonical baseline tuning"
+
+[persona]
+style = "tenacious"
+tier = "pro"
+modality_specialization = "universal"
+tactical_notes = "Strong defensive positioning on corner entries, difficult to pass."
+
+[controller]
+controller_kind = "classical_lookahead"
+lookahead_time = 0.42
+speed_factor = 0.99
+steering_kp = 2.20
+steering_kd = 0.08
+brake_margin = 1.05
+aggression = 0.82
+avoidance_distance = 6.0
+
+[controller.traits]
+line_sigma_m = 0.09
+entry_share = 0.28
+apex_share = 0.35
+line_choice_sigma = 0.05
+brake_shift_sigma_m = 0.28
+corner_speed_sigma = 0.02
+reaction_tau_s = 0.08
+mistake_rate = 0.018
+mistake_weights = [0.20, 0.20, 0.20, 0.20, 0.20]
+pressure_gain = 0.03
+max_pass_delay_s = 0.45
+curb_cut_m = 0.25
+
+[performance_summary]
+best_flying_lap_s = 49.25
+mean_flying_lap_s = 49.65
+pace_delta_to_optimal_pct = 2.30
+contacts_per_lap = 0.07
+clean_pass_ratio = 0.90
+human_believability_score = 0.89
