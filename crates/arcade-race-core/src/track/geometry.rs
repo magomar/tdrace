@@ -967,6 +967,30 @@ impl JumpRamp {
         (s_takeoff_end, s_landing_start)
     }
 
+    /// Returns `true` when `self.kind == RampKind::MegaRamp` and `point` projects inside the
+    /// open grade-separated gap `[s_takeoff, s_landing]` (shrunk inward by `margin` meters along
+    /// the forward axis) and within the lateral underpass corridor (`half_width + 12.0` m).
+    pub fn is_mega_gap_underpass_point(&self, point: Vec2, margin: f32) -> bool {
+        if self.kind != RampKind::MegaRamp {
+            return false;
+        }
+        let (s_takeoff, s_landing) = self.mega_segment_bounds();
+        let center = self.shape.center();
+        let half = self.half_extents();
+        let half_len = half.x.max(0.5);
+        let half_wid = half.y.max(0.5);
+        let fwd = self.direction.normalize_or_zero();
+        let right = Vec2::new(fwd.y, -fwd.x);
+        let d = point - center;
+        let local_x = d.dot(fwd);
+        let local_y = d.dot(right);
+        let x_takeoff_end = -half_len + s_takeoff * (2.0 * half_len);
+        let x_landing_start = -half_len + s_landing * (2.0 * half_len);
+        local_x >= x_takeoff_end + margin
+            && local_x <= x_landing_start - margin
+            && local_y.abs() <= half_wid + 12.0
+    }
+
     pub fn contains(&self, p: Vec2) -> bool {
         self.shape.contains(p)
     }
@@ -1464,9 +1488,11 @@ impl JumpRampCarExt for wheelbase::Car {
             }
             RampKind::MegaRamp => {
                 let (s_takeoff, s_landing) = ramp.mega_segment_bounds();
+                let len = ramp.length().max(4.0);
                 // Launch at the end of the Take-Off segment (just before the gap)
-                let lip_start = (s_takeoff - 0.025).max(0.10);
-                if s >= lip_start && s <= s_takeoff + 0.02 && speed_along > 3.5 {
+                let lip_start = (s_takeoff - (0.35 / len).clamp(0.008, 0.025)).max(0.10);
+                let lip_end = s_takeoff + (0.65 / len).max(0.025);
+                if s >= lip_start && s <= lip_end && speed_along > 3.5 {
                     let props = wheelbase::JumpRampProperties {
                         direction: ramp.direction,
                         launch_speed: ramp.launch_speed,
@@ -1478,6 +1504,18 @@ impl JumpRampCarExt for wheelbase::Car {
                         return true;
                     }
                 } else if s > s_takeoff && s < s_landing && self.state.ramp_elevation > 0.20 {
+                    if speed_along > 3.5 {
+                        let props = wheelbase::JumpRampProperties {
+                            direction: ramp.direction,
+                            launch_speed: ramp.launch_speed,
+                            ramp_angle_deg: ramp.ramp_angle_deg,
+                            height: ramp.height,
+                        };
+                        if self.try_trigger_jump(true, &props) {
+                            self.state.ramp_elevation = 0.0;
+                            return true;
+                        }
+                    }
                     // Rolled slowly off the take-off lip into the gap
                     self.state.elevation = self.state.ramp_elevation;
                     self.state.ramp_elevation = 0.0;

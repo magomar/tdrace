@@ -1031,7 +1031,8 @@ impl Track {
         }
         let Some(net) = &self.network else { return; };
         if net.segments.is_empty() { return; };
-        let branches = if compiled { Vec::new() } else { branch_segments(net) };
+        let all_branches = branch_segments(net);
+        let branches = if compiled { Vec::new() } else { all_branches.clone() };
         let main_roads: Vec<&RoadSegment> = if compiled {
             let default = net.active_or_default_layout(None).map(|l| l.segment_sequence.as_slice()).unwrap_or(&[]);
             net.segments.iter().filter(|s| default.contains(&s.id)).collect()
@@ -1047,15 +1048,29 @@ impl Track {
             .and_then(|c| c.waypoints.first()?.left_wall_distance)
             .unwrap_or_else(|| self.effective_barrier_offset())
             - 0.5;
+        let mega_ramps: Vec<&JumpRamp> = self
+            .geometry
+            .jump_ramps
+            .iter()
+            .filter(|r| r.kind == geometry::RampKind::MegaRamp)
+            .collect();
 
         let find_conflict = |w: &WallBarrier| -> Option<SegmentId> {
-            for seg in &branches {
-                if !wall_clear_of_roads(std::slice::from_ref(*seg), w, f32::INFINITY, -0.2) {
+            let in_mega_underpass = mega_ramps.iter().any(|r| {
+                r.is_mega_gap_underpass_point(w.segment.midpoint(), -0.5)
+                    || r.is_mega_gap_underpass_point(w.segment.start, -0.5)
+                    || r.is_mega_gap_underpass_point(w.segment.end, -0.5)
+            });
+            let branch_margin = if in_mega_underpass { 0.5 } else { -0.2 };
+            let branch_list = if in_mega_underpass { &all_branches } else { &branches };
+            for seg in branch_list {
+                if !wall_clear_of_roads(std::slice::from_ref(*seg), w, f32::INFINITY, branch_margin) {
                     return Some(seg.id);
                 }
             }
+            let main_elev_gap = if in_mega_underpass { f32::INFINITY } else { 2.0 };
             for seg in &main_roads {
-                if !wall_clear_of_roads(std::slice::from_ref(*seg), w, 2.0, -0.2) {
+                if !wall_clear_of_roads(std::slice::from_ref(*seg), w, main_elev_gap, -0.2) {
                     return Some(seg.id);
                 }
             }
@@ -1261,7 +1276,15 @@ impl Track {
             let main_walls_iter = self.geometry.inner_walls.iter().chain(&self.geometry.outer_walls);
             let throat_bridges = branch_throat_bridges(&walls, main_walls_iter, &net.segments, barrier_type);
             for b in throat_bridges {
-                walls.push(at_road_height(b));
+                let inside_mega = self.geometry.jump_ramps.iter().any(|r| {
+                    r.kind == geometry::RampKind::MegaRamp
+                        && (r.contains(b.segment.start)
+                            || r.contains(b.segment.end)
+                            || r.contains(b.segment.midpoint()))
+                });
+                if !inside_mega {
+                    walls.push(at_road_height(b));
+                }
             }
         }
 

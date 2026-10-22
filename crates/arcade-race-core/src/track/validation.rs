@@ -224,6 +224,17 @@ pub fn validate_track(track: &Track) -> Vec<TrackValidationError> {
                 let seg_j = LineSegment::new(q0, q1);
 
                 if let Some(hit) = seg_i.intersect_segment(&seg_j) {
+                    // Spec 134: Grade-separated MegaRamp jump crossover (upper traffic airborne over
+                    // `[s_takeoff, s_landing]`, lower traffic grounded inside the open gap).
+                    if track
+                        .geometry
+                        .jump_ramps
+                        .iter()
+                        .any(|r| r.is_mega_gap_underpass_point(hit, -1.0))
+                    {
+                        continue;
+                    }
+
                     let elev_i = (samples[i].elevation + samples[next_i].elevation) * 0.5;
                     let elev_j = (samples[j].elevation + samples[next_j].elevation) * 0.5;
                     let clearance = (elev_i - elev_j).abs();
@@ -362,6 +373,14 @@ pub fn validate_track(track: &Track) -> Vec<TrackValidationError> {
                     }
 
                     if let Some(hit) = seg_i.intersect_segment(&seg_j) {
+                        if track
+                            .geometry
+                            .jump_ramps
+                            .iter()
+                            .any(|r| r.is_mega_gap_underpass_point(hit, -2.0))
+                        {
+                            continue;
+                        }
                         let elev_i = (samples[i].elevation + samples[next_i].elevation) * 0.5;
                         let elev_j = (samples[j].elevation + samples[next_j].elevation) * 0.5;
                         if (elev_i - elev_j).abs() < 2.5 {
@@ -2125,6 +2144,36 @@ mod tests {
             "Valid 6m MegaRamp should not emit ERR_MEGA_RAMP_GAP_TOO_SMALL: {:?}",
             diags
         );
+    }
+
+    #[test]
+    fn test_mega_ramp_over_under_crossover_point_and_validation() {
+        use crate::track::geometry::{JumpRamp, RampKind, SurfaceShape};
+        let mega = JumpRamp::new(
+            1,
+            SurfaceShape::OrientedBox {
+                center: glam::Vec2::new(0.0, 0.0),
+                half_extents: glam::Vec2::new(15.0, 6.0),
+                angle: 0.0,
+            },
+            glam::Vec2::X,
+            2.5,
+            7.8,
+            1.5,
+            "Over-Under Mega Jump",
+        )
+        .with_kind(RampKind::MegaRamp)
+        .with_gap_length(13.5);
+
+        let (s_to, s_land) = mega.mega_segment_bounds();
+        let x_to = -15.0 + s_to * 30.0;
+        let x_land = -15.0 + s_land * 30.0;
+        let gap_mid_x = 0.5 * (x_to + x_land);
+
+        assert!(mega.is_mega_gap_underpass_point(glam::Vec2::new(gap_mid_x, 0.0), 0.5));
+        assert!(mega.is_mega_gap_underpass_point(glam::Vec2::new(gap_mid_x, 10.0), 0.5));
+        assert!(!mega.is_mega_gap_underpass_point(glam::Vec2::new(-14.0, 0.0), 0.0));
+        assert!(!mega.is_mega_gap_underpass_point(glam::Vec2::new(14.0, 0.0), 0.0));
     }
 }
 
