@@ -3,7 +3,8 @@ type: Feature Spec
 template: feature
 title: "Rallycross Tier 6 Nitrocross Championship Isolation, World RX Tier 4-5 Realignment, and Tier 0 Group B Vault Archival"
 description: "Isolates Tier 6 into an exclusive 6-round North American Nitrocross championship, moves Spa RX and Silverstone RX down into Tiers 4 and 5 World RX calendars, and archives the Tier 0 Group B vehicles and championship into The Vault."
-status: in_progress
+status: implemented
+receipt: "docs/receipts/spec-135-receipt.md"
 verified: { by: human:mario, at: 2026-10-22T09:20:00Z, hash: "189ce78b22fc" }
 created: 2026-10-21
 generated: { by: agent/antigravity, at: 2026-10-21T21:48:50Z }
