@@ -132,39 +132,39 @@ Following the Inbound Archival Protocol in [Spec 057](057_vault_module_for_archi
 ### Manual Acceptance Criteria (Pseudo-Gherkin)
 
 - **Scenario: Tier 6 championship exclusively features the 6 North American Nitrocross circuits**
-  - [ ] **Given** the Tier 6 Rallycross championship (`rally_apex_group_e`)
-  - [ ] **When** its rounds are inspected
-  - [ ] **Then** it contains exactly 6 rounds (`utah_umc_rx`, `erx_motor_park`, `wild_horse_pass_rx`, `glen_helen_rx`, `midamerica_outdoors_rx`, and `calgary_stampede_rx`), and none of those 6 circuits appear in any Tier 1–5 championship
+  - [x] **Given** the Tier 6 Rallycross championship (`rally_apex_group_e`)
+  - [x] **When** its rounds are inspected
+  - [x] **Then** it contains exactly 6 rounds (`utah_umc_rx`, `erx_motor_park`, `wild_horse_pass_rx`, `glen_helen_rx`, `midamerica_outdoors_rx`, and `calgary_stampede_rx`), and none of those 6 circuits appear in any Tier 1–5 championship
 
 - **Scenario: Spa RX and Silverstone RX unlock in Tiers 4 and 5 and are raced in World RX championships**
-  - [ ] **Given** a player advancing through the Rallycross career mode
-  - [ ] **When** the player reaches Level 4 (Tier 4) and Level 5 (Tier 5)
-  - [ ] **Then** Level 4 unlocks `estering_rx`, `hell_rx`, `loheac_rx`, and `spa_rx` (15 cumulative tracks), Level 5 unlocks `riga_rx`, `killarney_rx`, `catalunya_rx`, and `silverstone_rx` (19 cumulative tracks), and Level 6 unlocks all 6 Nitrocross circuits (25 cumulative tracks)
+  - [x] **Given** a player advancing through the Rallycross career mode
+  - [x] **When** the player reaches Level 4 (Tier 4) and Level 5 (Tier 5)
+  - [x] **Then** Level 4 unlocks `estering_rx`, `hell_rx`, `loheac_rx`, and `spa_rx` (15 cumulative tracks), Level 5 unlocks `riga_rx`, `killarney_rx`, `catalunya_rx`, and `silverstone_rx` (19 cumulative tracks), and Level 6 unlocks all 6 Nitrocross circuits (25 cumulative tracks)
 
 - **Scenario: Tier 0 Group B cars are moved to The Vault and removed from active Rallycross rosters**
-  - [ ] **Given** the vehicle catalog and `RallycrossGameModule` vs `VaultGameModule`
-  - [ ] **When** active `"rallycross"` vehicles and `"vault"` vehicles are queried
-  - [ ] **Then** `rally_vortek_turbo_quattro_t7`, `rally_gallia_corsica_t7`, and `rally_torino_stradale_t7` have `module_id == "vault"`, `"rallycross"` contains exactly 18 career vehicles across Tiers 1–6 (3 per tier), and `VaultGameModule::vehicles()` includes the decommissioned Group B chassis
+  - [x] **Given** the vehicle catalog and `RallycrossGameModule` vs `VaultGameModule`
+  - [x] **When** active `"rallycross"` vehicles and `"vault"` vehicles are queried
+  - [x] **Then** `rally_vortek_turbo_quattro_t7`, `rally_gallia_corsica_t7`, and `rally_torino_stradale_t7` have `module_id == "vault"`, `"rallycross"` contains exactly 18 career vehicles across Tiers 1–6 (3 per tier), and `VaultGameModule::vehicles()` includes the decommissioned Group B chassis
 
 ---
 
 ## 🔗 Traceability & Codebase Mapping
 
 ### Created/Modified Files
-- `[ ]` `crates/tdrace-app/src/catalog/mod.rs` -> Reassigns `rally_vortek_turbo_quattro_t7`, `rally_gallia_corsica_t7`, and `rally_torino_stradale_t7` to `module_id: "vault"`.
-- `[ ]` `crates/tdrace-app/src/module/rally.rs` -> Removes `group_b_beast` from active Rallycross vehicles and updates preset track lists.
-- `[ ]` `crates/tdrace-app/src/module/vault.rs` -> Receives `vault_group_b_beast` and Group B physics configuration.
-- `[ ]` `crates/tdrace-app/src/profile/mod.rs` -> Updates Rallycross Tier 4, 5, and 6 circuit unlock lists and removes Tier 0/7 Group B active Rallycross car pool entry.
-- `[ ]` `crates/tdrace-app/src/codex/mod.rs` -> Updates Rallycross Tier 4, 5, and 6 `unlocked_tracks` metadata.
-- `[ ]` `crates/tdrace-app/src/ai/driver.rs` -> Replaces `rally_vortek_turbo_quattro_t7` in Tier 3 driver favorites with active Tier 3 Euro RX cars.
-- `[ ]` `crates/tdrace-app/src/series/manager.rs` -> Retires `rally_group_b_masters` from active Rallycross career series registration.
-- `[ ]` `series/rally/rally_continental_rx_challenge.toml` -> Updates Tier 3 calendar to 8 Euro RX rounds.
-- `[ ]` `series/rally/rally_world_rallycross_supercars.toml` -> Updates Tier 4 calendar to 10 World RX rounds including `spa_rx` and `silverstone_rx`.
-- `[ ]` `series/rally/rally_rx1e_electric_championship.toml` -> Updates Tier 5 calendar to 10 World RX1e rounds including `spa_rx` and `silverstone_rx`.
-- `[ ]` `series/rally/rally_apex_group_e.toml` -> Replaces European rounds with the 6 exclusive North American Nitrocross rounds.
-- `[ ]` `crates/tdrace-app/tests/module_track_unlock_tests.rs` -> Verifies the 5 / 8 / 11 / 15 / 19 / 25 Rallycross unlock progression.
-- `[ ]` `crates/tdrace-app/tests/vault_module_tests.rs` -> Verifies Group B vehicles in The Vault.
-- `[ ]` `specs/constitution/ROADMAP.md` -> Links Spec 135 under Phase 1 milestones.
+- `[x]` `crates/tdrace-app/src/catalog/mod.rs` -> Reassigns `rally_vortek_turbo_quattro_t7`, `rally_gallia_corsica_t7`, and `rally_torino_stradale_t7` to `module_id: "vault"`.
+- `[x]` `crates/tdrace-app/src/module/rally.rs` -> Removes `group_b_beast` from active Rallycross vehicles and updates preset track lists.
+- `[x]` `crates/tdrace-app/src/module/vault.rs` -> Receives `vault_group_b_beast` and Group B physics configuration.
+- `[x]` `crates/tdrace-app/src/profile/mod.rs` -> Updates Rallycross Tier 4, 5, and 6 circuit unlock lists and removes Tier 0/7 Group B active Rallycross car pool entry.
+- `[x]` `crates/tdrace-app/src/codex/mod.rs` -> Updates Rallycross Tier 4, 5, and 6 `unlocked_tracks` metadata.
+- `[x]` `crates/tdrace-app/src/ai/driver.rs` -> Replaces `rally_vortek_turbo_quattro_t7` in Tier 3 driver favorites with active Tier 3 Euro RX cars.
+- `[x]` `crates/tdrace-app/src/series/manager.rs` -> Retires `rally_group_b_masters` from active Rallycross career series registration.
+- `[x]` `series/rally/rally_continental_rx_challenge.toml` -> Updates Tier 3 calendar to 8 Euro RX rounds.
+- `[x]` `series/rally/rally_world_rallycross_supercars.toml` -> Updates Tier 4 calendar to 10 World RX rounds including `spa_rx` and `silverstone_rx`.
+- `[x]` `series/rally/rally_rx1e_electric_championship.toml` -> Updates Tier 5 calendar to 10 World RX1e rounds including `spa_rx` and `silverstone_rx`.
+- `[x]` `series/rally/rally_nitro_erx.toml` -> Replaces European rounds with the 6 exclusive North American Nitrocross rounds.
+- `[x]` `crates/tdrace-app/tests/module_track_unlock_tests.rs` -> Verifies the 5 / 8 / 11 / 15 / 19 / 25 Rallycross unlock progression.
+- `[x]` `crates/tdrace-app/tests/vault_module_tests.rs` -> Verifies Group B vehicles in The Vault.
+- `[x]` `specs/constitution/ROADMAP.md` -> Links Spec 135 under Phase 1 milestones.
 
 ### Verification Assertions
 - `crates/tdrace-app/src/module/vault.rs` and `crates/tdrace-app/src/profile/mod.rs` reference `specs/135` in their comments.
