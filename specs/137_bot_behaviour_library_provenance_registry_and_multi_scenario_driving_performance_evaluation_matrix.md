@@ -3,8 +3,9 @@ type: Architecture Spec
 template: architecture
 title: "Bot Behaviour Library, Provenance Registry, and Multi-Scenario Driving Performance Evaluation Matrix"
 description: "Establishes a persistent, versioned library of bot behaviors with creation provenance (heuristic, EvoRL, QSS+MPC, human imitation), tactical persona tagging, and a multi-scenario driving performance evaluation matrix spanning time trials, multi-participant pack races with varied car models, tires, and driver diversity, and real-race human interaction telemetry."
-status: in_progress
-verified: { by: human:mario, at: 2026-10-22T19:40:00Z }
+status: implemented
+receipt: "docs/receipts/spec-137-receipt.md"
+verified: { by: "human:mario", at: "2026-10-22T19:40:00Z", hash: "4c6e9166ad52" }
 created: 2026-10-22
 generated: { by: agent/antigravity, at: 2026-10-22T18:44:18Z }
 epic: "tdrace-sp137-acmi8"
