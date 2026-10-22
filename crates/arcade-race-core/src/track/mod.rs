@@ -390,9 +390,9 @@ impl Track {
     /// 6. Grandstand concrete aprons.
     /// 7. Default off-track terrain (`SurfaceType::Grass`, `SurfaceType::DeepSand`).
     pub fn sample_surface(&self, point: Vec2) -> SurfaceType {
-        // 1. Check jump ramps (elevated platforms)
+        // 1. Check jump ramps (elevated platforms; open MegaRamp gap falls through to the underpass road)
         for ramp in &self.geometry.jump_ramps {
-            if ramp.contains(point) {
+            if ramp.contains(point) && !ramp.is_mega_gap_underpass_point(point, 0.0) {
                 return ramp.surface;
             }
         }
@@ -544,7 +544,7 @@ impl Track {
                 let mut overridden = false;
                 if has_ramps {
                     for ramp in &self.geometry.jump_ramps {
-                        if ramp.contains(w_pos) {
+                        if ramp.contains(w_pos) && !ramp.is_mega_gap_underpass_point(w_pos, 0.0) {
                             out[i] = ramp.surface;
                             overridden = true;
                             break;
@@ -590,9 +590,9 @@ impl Track {
 
     /// Samples the surface at `point` with localized spline projection within `window` meters of `hint_dist`.
     pub fn sample_surface_near_window(&self, point: Vec2, hint_dist: f32, window: f32) -> SurfaceType {
-        // 1. Check jump ramps (elevated platforms)
+        // 1. Check jump ramps (elevated platforms; open MegaRamp gap falls through to the underpass road)
         for ramp in &self.geometry.jump_ramps {
-            if ramp.contains(point) {
+            if ramp.contains(point) && !ramp.is_mega_gap_underpass_point(point, 0.0) {
                 return ramp.surface;
             }
         }
@@ -2291,6 +2291,7 @@ impl Track {
         if self.branch_layout.is_some() || !self.spline.closed || self.spline.waypoints.len() < 3 {
             return;
         }
+        let has_compiled_branch = self.branch_layout.is_some();
         let Some(ref mut net) = self.network else {
             return;
         };
@@ -2304,45 +2305,48 @@ impl Track {
 
         // Heal any merged branch segment whose Split or Merge junction sockets drifted out of sync
         // with its first/last waypoint (e.g. from an earlier editor session).
-        let desynced_branches: Vec<SegmentId> = net
-            .segments
-            .iter()
-            .filter(|s| !default_seq.contains(&s.id) && s.exit_junction.is_some() && !s.waypoints.is_empty())
-            .filter_map(|s| {
-                let wp0 = s.waypoints.first()?.point;
-                let wpl = s.waypoints.last()?.point;
-                let entry_desync = s.entry_junction.is_some_and(|sid| {
-                    net.get_junction(sid.junction_id).is_some_and(|j| match &j.kind {
-                        network::JunctionKind::Split {
-                            egress_sockets,
-                            gore_config,
-                            ..
-                        } => {
-                            egress_sockets.iter().any(|sock| sock.point.distance_squared(wp0) > 1e-3)
-                                || gore_config.as_ref().is_some_and(|g| g.apex_point.distance_squared(wp0) > 1e-3)
-                        }
-                        _ => false,
-                    })
-                });
-                let exit_desync = s.exit_junction.is_some_and(|sid| {
-                    net.get_junction(sid.junction_id).is_some_and(|j| match &j.kind {
-                        network::JunctionKind::Merge {
-                            ingress_sockets,
-                            egress_socket,
-                            merge_config,
-                        } => {
-                            egress_socket.point.distance_squared(wpl) > 1e-3
-                                || ingress_sockets.iter().any(|sock| sock.point.distance_squared(wpl) > 1e-3)
-                                || merge_config
-                                    .as_ref()
-                                    .is_some_and(|c| c.convergence_point.distance_squared(wpl) > 1e-3)
-                        }
-                        _ => false,
-                    })
-                });
-                (entry_desync || exit_desync).then_some(s.id)
-            })
-            .collect();
+        let desynced_branches: Vec<SegmentId> = if has_compiled_branch {
+            Vec::new()
+        } else {
+            net.segments
+                .iter()
+                .filter(|s| !default_seq.contains(&s.id) && s.exit_junction.is_some() && !s.waypoints.is_empty())
+                .filter_map(|s| {
+                    let wp0 = s.waypoints.first()?.point;
+                    let wpl = s.waypoints.last()?.point;
+                    let entry_desync = s.entry_junction.is_some_and(|sid| {
+                        net.get_junction(sid.junction_id).is_some_and(|j| match &j.kind {
+                            network::JunctionKind::Split {
+                                egress_sockets,
+                                gore_config,
+                                ..
+                            } => {
+                                egress_sockets.iter().any(|sock| sock.point.distance_squared(wp0) > 1e-3)
+                                    || gore_config.as_ref().is_some_and(|g| g.apex_point.distance_squared(wp0) > 1e-3)
+                            }
+                            _ => false,
+                        })
+                    });
+                    let exit_desync = s.exit_junction.is_some_and(|sid| {
+                        net.get_junction(sid.junction_id).is_some_and(|j| match &j.kind {
+                            network::JunctionKind::Merge {
+                                ingress_sockets,
+                                egress_socket,
+                                merge_config,
+                            } => {
+                                egress_socket.point.distance_squared(wpl) > 1e-3
+                                    || ingress_sockets.iter().any(|sock| sock.point.distance_squared(wpl) > 1e-3)
+                                    || merge_config
+                                        .as_ref()
+                                        .is_some_and(|c| c.convergence_point.distance_squared(wpl) > 1e-3)
+                            }
+                            _ => false,
+                        })
+                    });
+                    (entry_desync || exit_desync).then_some(s.id)
+                })
+                .collect()
+        };
         for b_id in desynced_branches {
             net.rebuild_segment_samples(b_id);
             net.align_segment_junctions_to_spline(b_id, &self.spline);
@@ -2459,6 +2463,27 @@ impl Track {
             };
 
             let sid = default_seq[k];
+            let (entry_sock_id, exit_sock_id) = net
+                .get_segment(sid)
+                .map(|s| (s.entry_junction, s.exit_junction))
+                .unwrap_or((None, None));
+
+            if !(non_wrapping && k + 1 == m) {
+                if let (Some(sid_exit), Some(last)) = (exit_sock_id, expected_wps.last()) {
+                    if let Some(j) = net.get_junction_mut(sid_exit.junction_id) {
+                        if let JunctionKind::Split { ingress_socket, .. } = &mut j.kind {
+                            ingress_socket.point = last.point;
+                            ingress_socket.width = last.width;
+                            ingress_socket.elevation = last.elevation;
+                            ingress_socket.bank_angle = last.bank_angle;
+                            if let Some(surf) = last.surface {
+                                ingress_socket.surface = surf;
+                            }
+                        }
+                    }
+                }
+            }
+
             let needs_update = net
                 .get_segment(sid)
                 .map_or(false, |s| s.waypoints != expected_wps || s.samples.is_empty());
@@ -2466,11 +2491,6 @@ impl Track {
                 continue;
             }
             any_changed = true;
-
-            let (entry_sock_id, exit_sock_id) = net
-                .get_segment(sid)
-                .map(|s| (s.entry_junction, s.exit_junction))
-                .unwrap_or((None, None));
 
             let entry_sock = if non_wrapping && k == 0 {
                 None

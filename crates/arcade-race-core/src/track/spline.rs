@@ -1300,24 +1300,26 @@ impl TrackSpline {
         let track_width = s0.width + (s1.width - s0.width) * best_t;
         let half_w = track_width * 0.5;
 
+        let tangent = s0.tangent.lerp(s1.tangent, best_t).normalize_or_zero();
+        let to_pos = pos - best_point;
+
         // Continuity Plausibility Guard:
         // If the best candidate found in the continuity window is outside the track corridor
-        // (beyond track boundary + curb width), verify whether a global projection finds a
-        // closer point on the circuit. This catches uninitialized trackers, grid placements,
-        // teleports, or window search discontinuities without sacrificing continuity on valid off-track slides.
+        // (beyond track boundary + curb width) or clamped longitudinally at the window boundary,
+        // verify whether a global projection finds a closer point on the circuit. This catches
+        // uninitialized trackers, grid placements, teleports, or window search discontinuities
+        // (such as a longer joker layout progress distance) without sacrificing continuity on valid off-track slides.
         let corridor_limit = half_w + Self::DEFAULT_CURB_WIDTH;
-        if best_dist_sq > corridor_limit * corridor_limit {
+        if best_dist_sq > corridor_limit * corridor_limit || to_pos.dot(tangent).abs() > 1.0 {
             let full = self.project_point(pos);
             if full.distance_to_spline * full.distance_to_spline < best_dist_sq {
                 return full;
             }
         }
 
-        let tangent = s0.tangent.lerp(s1.tangent, best_t).normalize_or_zero();
         let normal = Vec2::new(-tangent.y, tangent.x);
         let right_vector = Vec2::new(tangent.y, -tangent.x);
 
-        let to_pos = pos - best_point;
         let lateral_offset = to_pos.dot(right_vector);
         let distance_to_spline = best_dist_sq.sqrt();
         let left_curb = if best_t < 0.5 { s0.left_curb } else { s1.left_curb };
