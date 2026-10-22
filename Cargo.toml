@@ -8,7 +8,6 @@ members = [
     "crates/tdrace-core",
     "crates/tdrace-app",
     "crates/tdrace-py",
-    "crates/cabinet",
 ]
 
 [workspace.package]
@@ -16,6 +15,10 @@ version = "0.1.0"
 edition = "2021"
 authors = ["TDRace Team"]
 license = "MIT OR Apache-2.0"
+
+[patch."https://github.com/magomar/cabinet.git"]
+cabinet = { path = "../cabinet/crates/cabinet" }
+cabinet-core = { path = "../cabinet/crates/cabinet-core" }
 
 [profile.release]
 opt-level = 3
