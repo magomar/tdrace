@@ -4,6 +4,7 @@ template: feature
 title: "Nitrocross Circuit Pack and Mega Jump Over-Under Crossover Geometry"
 description: "Adds 5 new North American Nitrocross circuits (Utah UMC, Wild Horse Pass, Glen Helen, MidAmerica Outdoors, Calgary Stampede on Ice) alongside ERX Motor Park, and establishes grade-separated Mega Jump Over-Under Crossover geometry where the main track launches over the Joker Lap (or vice versa)."
 status: implemented
+receipt: "docs/receipts/spec-134-receipt.md"
 verified: { by: human:mario, at: 2026-10-22T06:26:05Z, hash: "f4548c092a45" }
 created: 2026-10-21
 generated: { by: agent/antigravity, at: 2026-10-21T21:48:43Z }
