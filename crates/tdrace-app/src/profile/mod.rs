@@ -1283,25 +1283,30 @@ impl ModuleCareerProgress {
                     self.ensure_track("nyirad_rx");
                 }
 
-                // Tier 4 (+3 circuits -> 14 total)
+                // Tier 4 (+4 circuits -> 15 total, moved spa_rx from Tier 6 per Spec 135)
                 if self.level >= 4 {
                     self.ensure_track("estering_rx");
                     self.ensure_track("hell_rx");
                     self.ensure_track("loheac_rx");
+                    self.ensure_track("spa_rx");
                 }
 
-                // Tier 5 (+3 circuits -> 17 total)
+                // Tier 5 (+4 circuits -> 19 total, moved silverstone_rx from Tier 6 per Spec 135)
                 if self.level >= 5 {
                     self.ensure_track("riga_rx");
                     self.ensure_track("killarney_rx");
                     self.ensure_track("catalunya_rx");
+                    self.ensure_track("silverstone_rx");
                 }
 
-                // Tier 6 (+3 NEW circuits -> 20 total)
+                // Tier 6 (+6 exclusive North American Nitrocross circuits -> 25 total per Spec 134 & Spec 135)
                 if self.level >= 6 {
-                    self.ensure_track("spa_rx");
-                    self.ensure_track("silverstone_rx");
+                    self.ensure_track("utah_umc_rx");
                     self.ensure_track("erx_motor_park");
+                    self.ensure_track("wild_horse_pass_rx");
+                    self.ensure_track("glen_helen_rx");
+                    self.ensure_track("midamerica_outdoors_rx");
+                    self.ensure_track("calgary_stampede_rx");
                 }
             }
             "kart" => {
