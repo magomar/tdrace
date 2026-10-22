@@ -4,6 +4,7 @@ template: architecture
 title: "Migrate to standalone cabinet repository"
 description: "Migrates the cabinet game shell dependency from embedded crates/cabinet to the standalone multi-engine cabinet repository at ../cabinet, eliminating duplicate assets and enforcing zero Bevy dependencies."
 status: in_progress
+receipt: "docs/receipts/spec-136-receipt.md"
 created: 2026-10-22
 verified: { by: human:mario, at: 2026-10-22T19:40:19Z, hash: "16851ab0c8da" }
 generated: { by: agent/antigravity, at: 2026-10-22T18:33:39Z }
