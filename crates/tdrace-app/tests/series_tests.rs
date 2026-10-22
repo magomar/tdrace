@@ -446,11 +446,11 @@ fn test_all_motorsport_modules_tiers_1_to_5_specifications() {
         (
             "autocross",
             vec![
-                (1, "autocross_crosscar_junior_trophy", 3, "autocross_ardennes_junior_t1"),
-                (2, "autocross_crosscar_senior_challenge", 4, "autocross_ardennes_pro_t2"),
-                (3, "autocross_buggy1600_championship", 4, "autocross_petersen_buggy1600_t3"),
-                (4, "autocross_touring_masters", 4, "autocross_bohemia_veloce_t4"),
-                (5, "autocross_superbuggy_world_series", 5, "autocross_petersen_superbuggy_t5"),
+                (1, "autocross_crosscar_junior_trophy", 5, "autocross_ardennes_junior_t1"),
+                (2, "autocross_crosscar_senior_challenge", 6, "autocross_ardennes_pro_t2"),
+                (3, "autocross_buggy1600_championship", 7, "autocross_petersen_buggy1600_t3"),
+                (4, "autocross_touring_masters", 8, "autocross_bohemia_veloce_t4"),
+                (5, "autocross_superbuggy_world_series", 10, "autocross_petersen_superbuggy_t5"),
             ],
         ),
     ];
@@ -462,11 +462,7 @@ fn test_all_motorsport_modules_tiers_1_to_5_specifications() {
             .filter(|c| c.series.module_id == module_id)
             .collect();
 
-        let expected_count = if module_id == "rally" || module_id == "rallycross" {
-            expected_tiers.len() + 1
-        } else {
-            expected_tiers.len()
-        };
+        let expected_count = expected_tiers.len();
         assert_eq!(
             module_champs.len(),
             expected_count,
@@ -474,13 +470,6 @@ fn test_all_motorsport_modules_tiers_1_to_5_specifications() {
             module_id,
             expected_count
         );
-
-        if module_id == "rally" || module_id == "rallycross" {
-            let heritage = mgr.get("rally_group_b_masters").expect("Heritage championship must exist");
-            assert_eq!(heritage.series.tier, 0);
-            assert_eq!(heritage.rounds.len(), 9);
-            assert_eq!(heritage.drivers.len(), 8);
-        }
 
         for (tier, id, rounds_len, expected_car) in expected_tiers {
             let def = mgr
@@ -1015,7 +1004,7 @@ fn test_all_preset_championships_launch_with_eligible_and_unlocked_cars() {
 
     let mgr = ChampionshipManager::new();
     let presets = mgr.all_sorted();
-    assert_eq!(presets.len(), 33, "There should be 33 presets (3 modules x 5 tiers + 1 karting x 6 tiers + 1 rally x 6 tiers + 1 rally heritage cup + 1 autocross x 5 tiers)");
+    assert_eq!(presets.len(), 32, "There should be 32 presets (3 modules x 5 tiers + 1 karting x 6 tiers + 1 rally x 6 tiers + 1 autocross x 5 tiers)");
 
     for def in &presets {
         session.launch_or_resume_championship(def);
@@ -1248,7 +1237,6 @@ fn test_championship_lap_calibration_across_all_modules() {
         "rally_world_rallycross_supercars",
         "rally_rx1e_electric_championship",
         "rally_nitro_erx",
-        "rally_group_b_masters",
     ] {
         let def = mgr.get(slug).expect("Rallycross preset must exist");
         assert_eq!(def.series.laps_per_round, 5);
@@ -1361,8 +1349,12 @@ fn test_championship_lap_calibration_across_all_modules() {
             assert_eq!(round.laps, Some(*expected_laps), "Autocross {} round {} laps", slug, round.order);
         }
         session.launch_or_resume_championship(def);
-        // Spec 104: a tournament sprint round opens with a heat, which runs heat_laps.
-        let first_stage_laps = def.series.tournament_config().map(|c| c.heat_laps).unwrap_or(*expected_laps);
+        // Spec 104 + Spec 130: Autocross tournament sprint round opens with Stage 0 Timed Practice (2 laps).
+        let first_stage_laps = def
+            .series
+            .tournament_config()
+            .map(|c| if c.has_superpole() { tdrace_app::series::SUPERPOLE_LAPS } else { c.heat_laps })
+            .unwrap_or(*expected_laps);
         assert_eq!(session.total_laps, first_stage_laps, "Autocross preset {} must run {} laps", slug, first_stage_laps);
     }
 }

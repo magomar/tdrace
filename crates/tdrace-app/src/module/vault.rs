@@ -62,6 +62,28 @@ impl VaultGameModule {
         cfg.tire.peak_slip_angle_deg = 9.0;
         cfg.finalized()
     }
+
+    /// Group B Legend: 500+ BHP Lightweight Turbo Monster (transferred from Rallycross per Spec 135).
+    pub fn car_group_b() -> CarConfig {
+        let mut cfg = crate::module::rally::RallycrossGameModule::car_wrc_rally();
+        cfg.mass = 960.0;
+        cfg.inertia = 1180.0;
+        cfg.max_engine_force = 12500.0;
+        cfg.top_speed_mps = 75.0; // ~270 km/h
+        cfg.counter_steer_assist = 1.6;
+        cfg.front_differential = tdrace_core::physics::config::DifferentialType::LimitedSlip {
+            power_lock: 0.30,
+            coast_lock: 0.15,
+            preload_nm: 35.0,
+        };
+        cfg.rear_differential = tdrace_core::physics::config::DifferentialType::LimitedSlip {
+            power_lock: 0.70,
+            coast_lock: 0.50,
+            preload_nm: 85.0,
+        };
+        cfg.assists = tdrace_core::physics::config::DriverAssistsConfig::raw();
+        cfg.finalized().with_loose_surface_4wd_balance()
+    }
 }
 
 impl Default for VaultGameModule {
@@ -196,6 +218,24 @@ impl GameModule for VaultGameModule {
                     CarColorScheme::from_index(2),
                 ],
                 audio_profile: Some(EngineAudioProfile::racing_mower_v2()),
+            },
+            VehicleModelDefinition {
+                id: "vault_group_b_beast",
+                name: "Quattro Group B Spec",
+                tag: "550 BHP TURBO",
+                description: "Terrifying 1980s Group B turbo legend with explosive boost, flame-spitting anti-lag, and wild slides transferred from Rallycross (Spec 135).",
+                config: Self::car_group_b(),
+                visual_type: VehicleVisualType::RallyHatch {
+                    roof_scoop: true,
+                    mudflaps: true,
+                    large_wing: true,
+                },
+                stats: (0.95, 0.98, 0.75, 0.98),
+                default_schemes: vec![
+                    CarColorScheme::from_index(2), // Historic Racing Red
+                    CarColorScheme::from_index(5), // Rally Yellow / White
+                ],
+                audio_profile: Some(EngineAudioProfile::group_b_inline5()),
             },
         ]
     }

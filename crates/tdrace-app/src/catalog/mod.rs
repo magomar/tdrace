@@ -1958,13 +1958,13 @@ pub static ALL_REAL_CARS: &[RealCarModel] = &[
         primary_color: Color::new(0.80, 0.10, 0.10, 1.0),
         secondary_color: Color::new(0.10, 0.10, 0.12, 1.0),
     },
-    // Heritage: Group B Masters
+    // Heritage: Group B Masters (Archived to The Vault per Spec 135)
     RealCarModel {
         id: "rally_vortek_turbo_quattro_t7",
         name: "Vortek Turbo Quattro Legend T7",
         manufacturer: "Vortek Automobil",
         year: 1985,
-        module_id: "rallycross",
+        module_id: "vault",
         category_name: "Heritage Group B",
         tier: 7,
         bhp: 550,
@@ -1988,7 +1988,7 @@ pub static ALL_REAL_CARS: &[RealCarModel] = &[
         name: "Gallia Corsica Turbo Legend T7",
         manufacturer: "Gallia Sport",
         year: 1985,
-        module_id: "rallycross",
+        module_id: "vault",
         category_name: "Heritage Group B",
         tier: 7,
         bhp: 530,
@@ -2012,7 +2012,7 @@ pub static ALL_REAL_CARS: &[RealCarModel] = &[
         name: "Torino Stradale S4 Legend T7",
         manufacturer: "Torino Corse",
         year: 1986,
-        module_id: "rallycross",
+        module_id: "vault",
         category_name: "Heritage Group B",
         tier: 7,
         bhp: 550,

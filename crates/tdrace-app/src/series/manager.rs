@@ -19,14 +19,13 @@ pub const EMBEDDED_PRESETS: &[(&str, &str)] = &[
     ("stockcar_national_tour", include_str!("../../../../series/nascar/stockcar_national_tour.toml")),
     ("stockcar_premier_speedway_trophy", include_str!("../../../../series/nascar/stockcar_premier_speedway_trophy.toml")),
     ("stockcar_cup_tier5", include_str!("../../../../series/nascar/stockcar_cup_tier5.toml")),
-    // Rallycross Championships (Tiers 1-6 + Heritage)
+    // Rallycross Championships (Tiers 1-6)
     ("rally_grassroots_cup", include_str!("../../../../series/rally/rally_grassroots_cup.toml")),
     ("rally_supercar_lites_trophy", include_str!("../../../../series/rally/rally_supercar_lites_trophy.toml")),
     ("rally_continental_rx_challenge", include_str!("../../../../series/rally/rally_continental_rx_challenge.toml")),
     ("rally_world_rallycross_supercars", include_str!("../../../../series/rally/rally_world_rallycross_supercars.toml")),
     ("rally_rx1e_electric_championship", include_str!("../../../../series/rally/rally_rx1e_electric_championship.toml")),
     ("rally_nitro_erx", include_str!("../../../../series/rally/rally_nitro_erx.toml")),
-    ("rally_group_b_masters", include_str!("../../../../series/rally/rally_group_b_masters.toml")),
     // Karting Championships (Tiers 1-6)
     ("kart_world_cup", include_str!("../../../../series/kart/kart_world_cup.toml")),
     ("kart_junior_trophy", include_str!("../../../../series/kart/kart_junior_trophy.toml")),
@@ -119,11 +118,17 @@ impl SeriesManager {
             for entry in entries.flatten() {
                 let path = entry.path();
                 if path.is_dir() {
+                    let dir_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+                    if dir_name == "vault" || dir_name == "archived" {
+                        continue;
+                    }
                     self.scan_directory_recursive(&path);
                 } else if path.extension().and_then(|e| e.to_str()) == Some("toml") {
                     if let Ok(content) = fs::read_to_string(&path) {
                         if let Ok(def) = SeriesDefinition::from_toml(&content) {
-                            self.series.insert(def.series.id.clone(), def);
+                            if def.series.module_id != "vault" {
+                                self.series.insert(def.series.id.clone(), def);
+                            }
                         }
                     }
                 }

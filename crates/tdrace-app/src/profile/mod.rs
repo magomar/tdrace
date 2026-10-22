@@ -601,7 +601,6 @@ impl ModuleCareerProgress {
             ("rally" | "rallycross" | "rx", 4) => vec!["rally_gallia_lyon_t4".to_string()],
             ("rally" | "rallycross" | "rx", 5) => vec!["rally_gallia_volt_t5".to_string()],
             ("rally" | "rallycross" | "rx", 6) => vec!["rally_nordic_valkyrie_t6".to_string()],
-            ("rally" | "rallycross" | "rx", 0 | 7) => vec!["rally_vortek_turbo_quattro_t7".to_string()],
 
             ("kart", 1) => vec!["kart_blackline_cadet_t1".to_string()],
             ("kart", 2) => vec!["kart_verde_sprint_t2".to_string()],

@@ -27,7 +27,7 @@ fn test_vault_game_module_identity_and_traits() {
     assert_eq!(theme.primary_accent, Color::new(1.0, 0.65, 0.0, 1.0));
 
     let vehicles = vault.vehicles();
-    assert_eq!(vehicles.len(), 6, "Vault should provide 6 decommissioned vehicle models");
+    assert_eq!(vehicles.len(), 7, "Vault should provide 7 decommissioned vehicle models");
 
     let ids: Vec<&str> = vehicles.iter().map(|v| v.id).collect();
     assert!(ids.contains(&"vault_test_mule"));
@@ -36,6 +36,7 @@ fn test_vault_game_module_identity_and_traits() {
     assert!(ids.contains(&"vault_asahi_blade_runner"));
     assert!(ids.contains(&"vault_greenfield_prairie_racer"));
     assert!(ids.contains(&"vault_nordic_valhalla_tractor"));
+    assert!(ids.contains(&"vault_group_b_beast"));
 
     assert_eq!(vault.default_vehicle_id(), "vault_test_mule");
     assert!(vault.drivers().is_empty(), "Vault must not register drivers in official championship grids");
@@ -87,7 +88,15 @@ fn test_vault_grand_hub_dev_mode_gating_and_switching() {
 
 #[test]
 fn test_vault_career_and_driver_isolation() {
-    let vaulted_ids = ["vault_test_mule", "vault_prototype_mower", "vault_drift_trike"];
+    let vaulted_ids = [
+        "vault_test_mule",
+        "vault_prototype_mower",
+        "vault_drift_trike",
+        "vault_group_b_beast",
+        "rally_vortek_turbo_quattro_t7",
+        "rally_gallia_corsica_t7",
+        "rally_torino_stradale_t7",
+    ];
 
     // 1. None of the AI drivers across all modules should have a vaulted vehicle as favorite
     let all_drivers = DriverCharacter::all_across_modules();
