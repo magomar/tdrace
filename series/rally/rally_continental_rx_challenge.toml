@@ -6,7 +6,7 @@
 [championship]
 id = "rally_continental_rx_challenge"
 name = "Continental RX Challenge"
-description = "Continental European championship featuring 380–400 BHP touring supercars across 7 technical rallycross tracks."
+description = "Continental European championship featuring 380–400 BHP touring supercars across 8 technical rallycross tracks."
 module_id = "rallycross"
 tier = 3
 laps_per_round = 5
@@ -33,36 +33,42 @@ laps = 5
 
 [[rounds]]
 order = 2
-track_id = "riga_rx"
-name = "Biķernieki Track Riga"
-laps = 5
-
-[[rounds]]
-order = 3
-track_id = "killarney_rx"
-name = "Killarney International Raceway RX"
-laps = 5
-
-[[rounds]]
-order = 4
 track_id = "lessay_rx"
 name = "Circuit de Lessay"
 laps = 5
 
 [[rounds]]
-order = 5
+order = 3
 track_id = "essay_rx"
 name = "Circuit des Ducs Essay"
 laps = 5
 
 [[rounds]]
+order = 4
+track_id = "nyirad_rx"
+name = "Nyirád Racing Center"
+laps = 5
+
+[[rounds]]
+order = 5
+track_id = "kouvola_rx"
+name = "Tykkimäki Circuit Kouvola"
+laps = 5
+
+[[rounds]]
 order = 6
-track_id = "dreux_rx"
-name = "Circuit de Dreux"
+track_id = "estering_rx"
+name = "Estering Buxtehude"
 laps = 5
 
 [[rounds]]
 order = 7
+track_id = "riga_rx"
+name = "Biķernieki Track Riga"
+laps = 5
+
+[[rounds]]
+order = 8
 track_id = "croft_rx"
 name = "Croft Circuit"
 laps = 5

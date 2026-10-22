@@ -416,10 +416,10 @@ fn test_all_motorsport_modules_tiers_1_to_5_specifications() {
             vec![
                 (1, "rally_grassroots_cup", 5, "rally_gallia_200_t1"),
                 (2, "rally_supercar_lites_trophy", 6, "rally_nordic_rx_lites_t2"),
-                (3, "rally_continental_rx_challenge", 7, "rally_volkskraft_strassen_t3"),
-                (4, "rally_world_rallycross_supercars", 8, "rally_gallia_lyon_t4"),
+                (3, "rally_continental_rx_challenge", 8, "rally_volkskraft_strassen_t3"),
+                (4, "rally_world_rallycross_supercars", 10, "rally_gallia_lyon_t4"),
                 (5, "rally_rx1e_electric_championship", 10, "rally_gallia_volt_t5"),
-                (6, "rally_nitro_erx", 12, "rally_nordic_valkyrie_t6"),
+                (6, "rally_nitro_erx", 6, "rally_nordic_valkyrie_t6"),
             ],
         ),
         (

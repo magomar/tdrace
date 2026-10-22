@@ -27,44 +27,44 @@ clean_race_bonus = false
 
 [[rounds]]
 order = 1
+track_id = "catalunya_rx"
+name = "Circuit de Barcelona-Catalunya RX"
+laps = 5
+
+[[rounds]]
+order = 2
+track_id = "spa_rx"
+name = "Circuit de Spa-Francorchamps RX"
+laps = 5
+
+[[rounds]]
+order = 3
+track_id = "silverstone_rx"
+name = "Silverstone Circuit RX"
+laps = 5
+
+[[rounds]]
+order = 4
 track_id = "nyirad_rx"
 name = "Nyirád Racing Center"
 laps = 5
 
 [[rounds]]
-order = 2
+order = 5
 track_id = "kouvola_rx"
 name = "Tykkimäki Circuit Kouvola"
 laps = 5
 
 [[rounds]]
-order = 3
-track_id = "killarney_rx"
-name = "Killarney International Raceway RX"
-laps = 5
-
-[[rounds]]
-order = 4
-track_id = "estering_rx"
-name = "Estering Buxtehude"
-laps = 5
-
-[[rounds]]
-order = 5
+order = 6
 track_id = "hell_rx"
 name = "Lånkebanen Hell RX"
 laps = 5
 
 [[rounds]]
-order = 6
+order = 7
 track_id = "loheac_rx"
 name = "Circuit de Lohéac"
-laps = 5
-
-[[rounds]]
-order = 7
-track_id = "lavare_rx"
-name = "Circuit de Lavaré"
 laps = 5
 
 [[rounds]]
@@ -75,14 +75,14 @@ laps = 5
 
 [[rounds]]
 order = 9
-track_id = "holjes_rx"
-name = "Höljes Motorstadion"
+track_id = "killarney_rx"
+name = "Killarney International Raceway RX"
 laps = 5
 
 [[rounds]]
 order = 10
-track_id = "silverstone_rx"
-name = "Silverstone Circuit RX"
+track_id = "holjes_rx"
+name = "Höljes Motorstadion"
 laps = 5
 
 [[drivers]]

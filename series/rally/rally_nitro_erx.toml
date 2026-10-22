@@ -6,7 +6,7 @@
 [championship]
 id = "rally_nitro_erx"
 name = "Nitro ERX Trophy"
-description = "1,070 BHP electric FC1-X machines, the most powerful rallycross cars ever raced, across 12 world circuits."
+description = "1,070 BHP electric FC1-X machines, the most powerful rallycross cars ever raced, across 6 exclusive North American Nitrocross stadium and mega-jump venues."
 module_id = "rallycross"
 tier = 6
 laps_per_round = 5
@@ -27,74 +27,38 @@ clean_race_bonus = false
 
 [[rounds]]
 order = 1
-track_id = "catalunya_rx"
-name = "Circuit de Barcelona-Catalunya RX"
+track_id = "utah_umc_rx"
+name = "Utah Motorsports Campus RX"
 laps = 5
 
 [[rounds]]
 order = 2
-track_id = "lessay_rx"
-name = "Circuit de Lessay"
-laps = 5
-
-[[rounds]]
-order = 3
-track_id = "essay_rx"
-name = "Circuit des Ducs Essay"
-laps = 5
-
-[[rounds]]
-order = 4
-track_id = "estering_rx"
-name = "Estering Buxtehude"
-laps = 5
-
-[[rounds]]
-order = 5
-track_id = "hell_rx"
-name = "Lånkebanen Hell RX"
-laps = 5
-
-[[rounds]]
-order = 6
-track_id = "loheac_rx"
-name = "Circuit de Lohéac"
-laps = 5
-
-[[rounds]]
-order = 7
-track_id = "nyirad_rx"
-name = "Nyirád Racing Center"
-laps = 5
-
-[[rounds]]
-order = 8
-track_id = "kouvola_rx"
-name = "Tykkimäki Circuit Kouvola"
-laps = 5
-
-[[rounds]]
-order = 9
-track_id = "killarney_rx"
-name = "Killarney International Raceway RX"
-laps = 5
-
-[[rounds]]
-order = 10
-track_id = "riga_rx"
-name = "Biķernieki Track Riga"
-laps = 5
-
-[[rounds]]
-order = 11
 track_id = "erx_motor_park"
 name = "ERX Motor Park RX"
 laps = 5
 
 [[rounds]]
-order = 12
-track_id = "holjes_rx"
-name = "Höljes Motorstadion"
+order = 3
+track_id = "wild_horse_pass_rx"
+name = "Wild Horse Pass Motorsports Park RX"
+laps = 5
+
+[[rounds]]
+order = 4
+track_id = "glen_helen_rx"
+name = "Glen Helen Raceway RX"
+laps = 5
+
+[[rounds]]
+order = 5
+track_id = "midamerica_outdoors_rx"
+name = "MidAmerica Outdoors RX"
+laps = 5
+
+[[rounds]]
+order = 6
+track_id = "calgary_stampede_rx"
+name = "Calgary Stampede Park RX"
 laps = 5
 
 [[drivers]]

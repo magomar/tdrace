@@ -6,7 +6,7 @@
 [championship]
 id = "rally_world_rallycross_supercars"
 name = "World Rallycross Supercar Trophy"
-description = "The pinnacle of internal combustion rallycross: 600 BHP custom turbo monsters producing 900 Nm of torque with aggressive anti-lag across 8 legendary World Rallycross arenas."
+description = "The pinnacle of internal combustion rallycross: 600 BHP custom turbo monsters producing 900 Nm of torque with aggressive anti-lag across 10 legendary World Rallycross arenas."
 module_id = "rallycross"
 tier = 4
 laps_per_round = 5
@@ -39,38 +39,50 @@ laps = 5
 
 [[rounds]]
 order = 3
+track_id = "silverstone_rx"
+name = "Silverstone Circuit RX"
+laps = 5
+
+[[rounds]]
+order = 4
 track_id = "hell_rx"
 name = "Lånkebanen Hell RX"
 laps = 5
 
 [[rounds]]
-order = 4
+order = 5
 track_id = "loheac_rx"
 name = "Circuit de Lohéac"
 laps = 5
 
 [[rounds]]
-order = 5
+order = 6
+track_id = "estering_rx"
+name = "Estering Buxtehude"
+laps = 5
+
+[[rounds]]
+order = 7
 track_id = "montalegre_rx"
 name = "Pista Automóvel de Montalegre"
 laps = 5
 
 [[rounds]]
-order = 6
+order = 8
 track_id = "riga_rx"
 name = "Biķernieki Track Riga"
 laps = 5
 
 [[rounds]]
-order = 7
-track_id = "holjes_rx"
-name = "Höljes Motorstadion"
+order = 9
+track_id = "killarney_rx"
+name = "Killarney International Raceway RX"
 laps = 5
 
 [[rounds]]
-order = 8
-track_id = "silverstone_rx"
-name = "Silverstone Circuit RX"
+order = 10
+track_id = "holjes_rx"
+name = "Höljes Motorstadion"
 laps = 5
 
 [[drivers]]
