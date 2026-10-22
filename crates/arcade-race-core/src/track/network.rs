@@ -1944,6 +1944,62 @@ mod tests {
     }
 
     #[test]
+    fn test_zero_length_throat_junction_surface_sampling() {
+        // Spec 102 & tdrace-070o: Legacy joker networks emit zero-length junction throats
+        // where ingress and egress sockets meet directly at the split/merge waypoint.
+        // Confirm that zero-length throats fail closed on off-track queries, while road
+        // segments themselves handle on-track surface sampling.
+        let split_pt = Vec2::new(100.0, 0.0);
+        let ingress = SplineSocket::new(split_pt, Vec2::X, 12.0).with_surface(SurfaceType::Asphalt);
+        let egress0 = SplineSocket::new(split_pt, Vec2::X, 12.0).with_surface(SurfaceType::Asphalt);
+        let egress1 = SplineSocket::new(split_pt, Vec2::X, 12.0).with_surface(SurfaceType::Dirt);
+
+        let split_j = RoadJunction::split(
+            JunctionId(0),
+            "Zero Length Split",
+            ingress,
+            vec![egress0, egress1],
+            None,
+        );
+
+        let seg0_wps = vec![
+            TrackWaypoint::new(Vec2::new(0.0, 0.0), 12.0).with_surface(SurfaceType::Asphalt),
+            TrackWaypoint::new(split_pt, 12.0).with_surface(SurfaceType::Asphalt),
+        ];
+        let seg1_wps = vec![
+            TrackWaypoint::new(split_pt, 12.0).with_surface(SurfaceType::Asphalt),
+            TrackWaypoint::new(Vec2::new(200.0, 0.0), 12.0).with_surface(SurfaceType::Asphalt),
+        ];
+        let seg2_wps = vec![
+            TrackWaypoint::new(split_pt, 12.0).with_surface(SurfaceType::Dirt),
+            TrackWaypoint::new(Vec2::new(200.0, 40.0), 12.0).with_surface(SurfaceType::Dirt),
+        ];
+
+        let mut seg0 = RoadSegment::new(SegmentId(0), "Straight", seg0_wps);
+        let mut seg1 = RoadSegment::new(SegmentId(1), "Main", seg1_wps);
+        let mut seg2 = RoadSegment::new(SegmentId(2), "Joker", seg2_wps);
+        seg0.recompute_samples(None, None);
+        seg1.recompute_samples(None, None);
+        seg2.recompute_samples(None, None);
+
+        let mut net = TrackNetwork::new();
+        net.junctions = vec![split_j];
+        net.segments = vec![seg0, seg1, seg2];
+
+        // 1. On road segment 0 before the split: samples Asphalt from segment 0
+        assert_eq!(net.sample_surface(Vec2::new(50.0, 0.0)), Some(SurfaceType::Asphalt));
+
+        // 2. On road segment 1 after the split: samples Asphalt from segment 1
+        assert_eq!(net.sample_surface(Vec2::new(150.0, 0.0)), Some(SurfaceType::Asphalt));
+
+        // 3. On road segment 2 (joker): samples Dirt from segment 2
+        assert_eq!(net.sample_surface(Vec2::new(150.0, 20.0)), Some(SurfaceType::Dirt));
+
+        // 4. Off-track point near the split point: zero-length throat polygon fails closed (returns None)
+        assert_eq!(net.sample_surface(Vec2::new(100.0, 25.0)), None);
+    }
+
+    #[test]
     fn test_track_network_branch_segments_filtering() {
         let seg0 = RoadSegment::new(SegmentId(0), "Main Straight", vec![]);
         let seg1 = RoadSegment::new(SegmentId(1), "Main Turn", vec![]);

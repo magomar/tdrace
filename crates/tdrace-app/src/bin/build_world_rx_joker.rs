@@ -10,7 +10,9 @@
 //!
 //! Spec 102: each circuit's old joker is fitted with a branch layout of two junction components (`rx_joker_fit`),
 //! which compiles into the network. A circuit that cannot be fitted keeps the legacy network already in its file,
-//! untouched. The run writes `docs/circuits/branch_junction_migration.md`.
+//! untouched. In legacy networks, zero-length junction throats (where ingress and egress sockets meet directly at
+//! split/merge waypoints) are intended and fail closed safely in `sample_surface` (tdrace-070o). The run writes
+//! `docs/circuits/branch_junction_migration.md`.
 
 #[path = "rx_joker_fit/mod.rs"]
 mod rx_joker_fit;
