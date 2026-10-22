@@ -13,7 +13,7 @@ fn test_rally_module_tracks_integrity_and_validation() {
     let module = RallyGameModule::new();
     let tracks = module.tracks();
 
-    assert_eq!(tracks.len(), 20, "Rally module should have 20 authentic World RX tracks");
+    assert_eq!(tracks.len(), 25, "Rally module should have 25 authentic World RX and Nitrocross tracks");
 
     let expected_ids = [
         "holjes_rx",
@@ -36,6 +36,11 @@ fn test_rally_module_tracks_integrity_and_validation() {
         "spa_rx",
         "silverstone_rx",
         "erx_motor_park",
+        "utah_umc_rx",
+        "wild_horse_pass_rx",
+        "glen_helen_rx",
+        "midamerica_outdoors_rx",
+        "calgary_stampede_rx",
     ];
 
     for id in &expected_ids {
@@ -382,7 +387,12 @@ fn test_world_rx_jump_ramps_dirt_surface_and_containment_landing() {
         ("croft_rx", false),
         ("spa_rx", true),
         ("silverstone_rx", true),
-        ("erx_motor_park", false),
+        ("erx_motor_park", true),
+        ("utah_umc_rx", true),
+        ("wild_horse_pass_rx", true),
+        ("glen_helen_rx", true),
+        ("midamerica_outdoors_rx", true),
+        ("calgary_stampede_rx", true),
     ];
 
     for &(slug, is_major_fia) in &all_slugs {
@@ -584,7 +594,7 @@ fn test_famous_rally_tracks_in_track_manager_and_menu_resolution() {
     let _ = std::fs::create_dir_all(&temp_dir);
     let tm = TrackManager::new(&temp_dir);
     let rally_catalog = tm.module_catalog_tracks("rally");
-    assert_eq!(rally_catalog.len(), 20);
+    assert_eq!(rally_catalog.len(), 25);
 
     let rally_ids = [
         "holjes_rx",
@@ -607,6 +617,11 @@ fn test_famous_rally_tracks_in_track_manager_and_menu_resolution() {
         "spa_rx",
         "silverstone_rx",
         "erx_motor_park",
+        "utah_umc_rx",
+        "wild_horse_pass_rx",
+        "glen_helen_rx",
+        "midamerica_outdoors_rx",
+        "calgary_stampede_rx",
     ];
 
     for id in &rally_ids {
@@ -823,6 +838,11 @@ fn test_all_20_world_rx_circuits_have_valid_joker_track_networks() {
         "spa_rx",
         "silverstone_rx",
         "erx_motor_park",
+        "utah_umc_rx",
+        "wild_horse_pass_rx",
+        "glen_helen_rx",
+        "midamerica_outdoors_rx",
+        "calgary_stampede_rx",
     ];
 
     for id in &expected_ids {
@@ -982,8 +1002,8 @@ fn test_holjes_rx_joker_lap_time_delta_simulation() {
 }
 
 
-/// The 23 official circuits with a joker layout: 3 Classic RX venues and the 20 World RX circuits.
-const RX_JOKER_TRACKS: [(&str, &str); 23] = [
+/// The 28 official circuits with a joker layout: 3 Classic RX venues and the 25 World RX / Nitrocross circuits.
+const RX_JOKER_TRACKS: [(&str, &str); 28] = [
     ("classic", "rx_quarry_sprint"),
     ("classic", "rx_hilltop_leap"),
     ("classic", "rx_canyon_flyer"),
@@ -1007,6 +1027,11 @@ const RX_JOKER_TRACKS: [(&str, &str); 23] = [
     ("rally", "spa_rx"),
     ("rally", "silverstone_rx"),
     ("rally", "erx_motor_park"),
+    ("rally", "utah_umc_rx"),
+    ("rally", "wild_horse_pass_rx"),
+    ("rally", "glen_helen_rx"),
+    ("rally", "midamerica_outdoors_rx"),
+    ("rally", "calgary_stampede_rx"),
 ];
 
 #[test]
@@ -1420,4 +1445,233 @@ fn test_rx_gore_keeps_the_ingress_surface() {
         }
     }
     assert!(dirt_probed > 0, "no uncovered dirt gore point was probed, the test proves nothing");
+}
+
+const NITROCROSS_PACK_SLUGS: [&str; 6] = [
+    "utah_umc_rx",
+    "erx_motor_park",
+    "wild_horse_pass_rx",
+    "glen_helen_rx",
+    "midamerica_outdoors_rx",
+    "calgary_stampede_rx",
+];
+
+/// Scenario 1: Nitrocross Circuit Pack Integrity and Validation (Spec 134)
+#[test]
+fn test_spec134_scenario_1_nitrocross_circuit_pack_integrity_and_validation() {
+    use tdrace_core::track::geometry::RampKind;
+    use tdrace_core::track::PackedGridPattern;
+
+    for slug in NITROCROSS_PACK_SLUGS {
+        let track = tdrace_core::catalog::official_track("rally", slug);
+        let diags = validate_track(&track);
+        let errors: Vec<_> = diags
+            .into_iter()
+            .filter(|d| d.severity == ValidationSeverity::Error)
+            .collect();
+        assert!(errors.is_empty(), "{}: validation errors: {:?}", slug, errors);
+
+        let total_len = track.spline.total_length();
+        assert!(
+            (950.0..=1350.0).contains(&total_len),
+            "{}: total length {:.1}m must be in 950.0..=1350.0m",
+            slug,
+            total_len
+        );
+
+        let net = track.network.as_ref().expect("track network");
+        assert!(net.get_layout("main").is_some(), "{}: missing main layout", slug);
+        assert!(net.get_layout("joker").is_some(), "{}: missing joker layout", slug);
+
+        let chute = track.launch_chute().expect("launch chute");
+        assert_eq!(
+            PackedGridPattern::from_slots(&chute.grid_slots),
+            Some(PackedGridPattern::RallycrossTwoTwoTwo),
+            "{}: expected 6-car RallycrossTwoTwoTwo launch chute",
+            slug
+        );
+        assert_eq!(track.grid_positions.len(), 6, "{}: expected 6 grid positions", slug);
+
+        let mega_count = track
+            .geometry
+            .jump_ramps
+            .iter()
+            .filter(|r| r.kind == RampKind::MegaRamp && r.gap_length >= 6.0)
+            .count();
+        assert!(
+            mega_count >= 1,
+            "{}: expected at least 1 MegaRamp with gap_length >= 6.0m",
+            slug
+        );
+
+        let secondary_count = track
+            .geometry
+            .jump_ramps
+            .iter()
+            .filter(|r| matches!(r.kind, RampKind::Ramp | RampKind::Whoops))
+            .count();
+        assert!(
+            secondary_count >= 1,
+            "{}: expected at least 1 secondary Ramp or Whoops jump",
+            slug
+        );
+
+        assert!(
+            track.wikipedia_url.as_deref().is_some_and(|s| !s.is_empty()),
+            "{}: missing wikipedia_url",
+            slug
+        );
+        assert!(
+            track.osm_url.as_deref().is_some_and(|s| !s.is_empty()),
+            "{}: missing osm_url",
+            slug
+        );
+        assert!(
+            track.country_code.as_deref().is_some_and(|s| !s.is_empty()),
+            "{}: missing country_code",
+            slug
+        );
+        assert_eq!(track.category_label, "Nitrocross", "{}: category_label must be Nitrocross", slug);
+    }
+}
+
+/// Scenario 2: Grade-Separated Mega Jump Over-Under Joker Crossover Without Collision (Spec 134)
+#[test]
+fn test_spec134_scenario_2_grade_separated_mega_jump_over_under_joker_crossover_without_collision() {
+    use race_kit::{DriveControls, RaceEvent, RaceFormat, RaceRules, RaceWorld};
+    use tdrace_core::physics::{Car, CarConfig};
+    use tdrace_core::track::geometry::RampKind;
+    use tdrace_core::track::network::SegmentId;
+    use tdrace_core::track::{MultiRouteProgressTracker, TrackProgressTracker};
+
+    const DT: f32 = 1.0 / 60.0;
+
+    for slug in NITROCROSS_PACK_SLUGS {
+        let track = tdrace_core::catalog::official_track("rally", slug);
+        let net = track.network.as_ref().expect("network");
+        let seg1 = net.get_segment(SegmentId(1)).expect("Seg 1");
+        let seg2 = net.get_segment(SegmentId(2)).expect("Seg 2");
+        let mega_ramp = track
+            .geometry
+            .jump_ramps
+            .iter()
+            .find(|r| r.kind == RampKind::MegaRamp)
+            .expect("MegaRamp");
+        let (s_takeoff, s_landing) = mega_ramp.mega_segment_bounds();
+
+        // Find the crossing midpoint on Seg 2 inside the MegaRamp open gap
+        assert!(
+            seg2.samples
+                .iter()
+                .any(|s| mega_ramp.is_mega_gap_underpass_point(s.point, 1.5)),
+            "{}: Seg 2 must have an underpass crossing sample",
+            slug
+        );
+        let seg2_cross_dist = seg2.project_point(mega_ramp.shape.center()).progress_distance;
+
+        // Start Car A on Seg 1 just before the takeoff ramp, at 22.0 m/s
+        let proj1 = seg1.project_point(mega_ramp.shape.center());
+        let start_a_dist = (proj1.progress_distance - 10.0).max(0.0);
+        let start_a = seg1.sample_at_distance(start_a_dist);
+        let mut car_a = Car::new(CarConfig::rally_car())
+            .with_pose(start_a.point, start_a.tangent.y.atan2(start_a.tangent.x));
+        car_a.set_velocity(start_a.tangent * 22.0);
+
+        // Start Car B on Seg 2 approaching the underpass crossing at 18.0 m/s
+        let start_b_dist = (seg2_cross_dist - 4.0).max(0.0);
+        let start_b = seg2.sample_at_distance(start_b_dist);
+        let mut car_b = Car::new(CarConfig::rally_car())
+            .with_pose(start_b.point, start_b.tangent.y.atan2(start_b.tangent.x));
+        car_b.set_velocity(start_b.tangent * 18.0);
+
+        let mut world: RaceWorld<Car> = RaceWorld::new(RaceRules {
+            format: RaceFormat::Laps(3),
+            ..RaceRules::default()
+        });
+        let mut tracker_a = TrackProgressTracker::new(track.checkpoints.len(), 3);
+        tracker_a.multi_route = Some(MultiRouteProgressTracker::new("main", SegmentId(0), 3));
+        let mut tracker_b = TrackProgressTracker::new(track.checkpoints.len(), 3);
+        tracker_b.multi_route = Some(MultiRouteProgressTracker::new("main", SegmentId(2), 3));
+
+        world.spawn(car_a, tracker_a);
+        world.spawn(car_b, tracker_b);
+
+        let mut saw_car_a_over_gap = false;
+        let mut saw_car_b_under_gap = false;
+        let ctrl = DriveControls {
+            throttle: 1.0,
+            ..DriveControls::default()
+        };
+
+        for _ in 0..45 {
+            let events = world.step(&track, &[ctrl, ctrl], DT);
+            for ev in events {
+                assert!(
+                    !matches!(ev, RaceEvent::VehicleImpact(_) | RaceEvent::WallImpact { .. }),
+                    "{}: unexpected collision event during over-under crossover: {:?}",
+                    slug,
+                    ev
+                );
+            }
+
+            let a = &world.vehicles[0];
+            if mega_ramp.contains(a.state.position) {
+                let s_a = mega_ramp.progress_along_ramp(a.state.position);
+                if s_a > s_takeoff + 0.02 && s_a < s_landing - 0.02 {
+                    saw_car_a_over_gap = true;
+                    assert!(
+                        a.state.is_airborne,
+                        "{}: Car A must be airborne over the MegaRamp open gap",
+                        slug
+                    );
+                    assert!(
+                        a.state.elevation + a.state.ramp_elevation >= 1.50,
+                        "{}: Car A elevation {:.2}m over gap must be >= 1.50m",
+                        slug,
+                        a.state.elevation + a.state.ramp_elevation
+                    );
+                }
+            }
+
+            let b = &world.vehicles[1];
+            if mega_ramp.is_mega_gap_underpass_point(b.state.position, 0.5) {
+                saw_car_b_under_gap = true;
+                assert_eq!(b.state.elevation, 0.0, "{}: Car B underpass elevation must be 0.0", slug);
+                assert_eq!(
+                    b.state.ramp_elevation, 0.0,
+                    "{}: Car B underpass ramp_elevation must be 0.0",
+                    slug
+                );
+                assert!(!b.state.is_airborne, "{}: Car B underpass must not be airborne", slug);
+            }
+        }
+
+        assert!(saw_car_a_over_gap, "{}: Car A must traverse the MegaRamp open gap", slug);
+        assert!(saw_car_b_under_gap, "{}: Car B must traverse the MegaRamp underpass", slug);
+    }
+}
+
+/// Scenario 3: Calgary Stampede Snow and Ice Surface Composition (Spec 134)
+#[test]
+fn test_spec134_scenario_3_calgary_stampede_snow_and_ice_surface_composition() {
+    let track = tdrace_core::catalog::official_track("rally", "calgary_stampede_rx");
+    assert_eq!(track.default_surface, SurfaceType::DeepSnow);
+
+    for (wi, wp) in track.spline.waypoints.iter().enumerate() {
+        let surf = wp.surface.unwrap_or(track.default_surface);
+        assert!(
+            matches!(surf, SurfaceType::PackedSnow | SurfaceType::SheetIce),
+            "calgary_stampede_rx waypoint #{} surface {:?} must be PackedSnow or SheetIce",
+            wi,
+            surf
+        );
+        assert_eq!(wp.left_runoff_surface, Some(SurfaceType::DeepSnow));
+        assert_eq!(wp.right_runoff_surface, Some(SurfaceType::DeepSnow));
+    }
+
+    let breakdown = track.surface_breakdown();
+    let has_packed_snow = breakdown.iter().any(|(s, pct)| *s == SurfaceType::PackedSnow && *pct > 0.0);
+    let has_sheet_ice = breakdown.iter().any(|(s, pct)| *s == SurfaceType::SheetIce && *pct > 0.0);
+    assert!(has_packed_snow, "calgary_stampede_rx surface breakdown must include PackedSnow");
+    assert!(has_sheet_ice, "calgary_stampede_rx surface breakdown must include SheetIce");
 }
