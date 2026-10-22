@@ -843,6 +843,7 @@ pub fn run_behaviour_time_trial(
     TimeTrialBenchmarkRecord {
         run_id: format!("tt_{}_{}", behaviour.id, r.controls_hash),
         behaviour_id: behaviour.id.0.clone(),
+        behaviour_version: behaviour.version.clone(),
         track_slug: track_slug.to_string(),
         car_model: car_model.to_string(),
         tire_compound: format!("{:?}", car_config.wheels[0].compound.id),
@@ -910,6 +911,7 @@ pub fn run_behaviour_pack_race(
     PackRaceBenchmarkRecord {
         run_id: format!("pack_{}_{}", subject.id, s.controls_hash),
         behaviour_id: subject.id.0.clone(),
+        behaviour_version: subject.version.clone(),
         scenario_name: scenario_name.to_string(),
         track_slug: track_slug.to_string(),
         car_model: car_model.to_string(),

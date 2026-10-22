@@ -15,6 +15,7 @@ pub struct BotQuery {
     pub max_contacts_per_lap: Option<f32>,
     pub max_pace_delta_pct: Option<f32>,
     pub min_human_believability: Option<f32>,
+    pub version: Option<String>,
 }
 
 impl BotQuery {
@@ -70,65 +71,159 @@ impl BotQueryBuilder {
         self
     }
 
+    pub fn version(mut self, version: impl Into<String>) -> Self {
+        self.query.version = Some(version.into());
+        self
+    }
+
     pub fn build(self) -> BotQuery {
         self.query
     }
 }
 
-/// In-memory catalog of registered bot behaviors.
+fn compare_versions(a: &str, b: &str) -> std::cmp::Ordering {
+    let parse_parts = |s: &str| -> Vec<u32> {
+        s.trim_start_matches('v')
+            .split(['.', '-', '_'])
+            .filter_map(|p| p.parse::<u32>().ok())
+            .collect()
+    };
+    let parts_a = parse_parts(a);
+    let parts_b = parse_parts(b);
+    if !parts_a.is_empty() && !parts_b.is_empty() {
+        parts_a.cmp(&parts_b)
+    } else {
+        a.cmp(b)
+    }
+}
+
+/// In-memory catalog of registered bot behaviors supporting multiple concurrent versions.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct BotBehaviourRegistry {
-    behaviours: HashMap<BotBehaviourId, BotBehaviour>,
+    entries: HashMap<(BotBehaviourId, String), BotBehaviour>,
+    versions_by_id: HashMap<BotBehaviourId, Vec<String>>,
 }
 
 impl BotBehaviourRegistry {
     /// Creates an empty registry.
     pub fn new() -> Self {
         Self {
-            behaviours: HashMap::new(),
+            entries: HashMap::new(),
+            versions_by_id: HashMap::new(),
         }
     }
 
-    /// Registers a behavior into the catalog. Overwrites if an exact ID already exists.
+    /// Registers a behavior into the catalog.
+    ///
+    /// Preserves existing versions when a new version of the same ID is registered.
+    /// If an exact (ID, version) combination already exists, it is updated in place.
     pub fn register(&mut self, behaviour: BotBehaviour) {
-        self.behaviours.insert(behaviour.id.clone(), behaviour);
+        let key = (behaviour.id.clone(), behaviour.version.clone());
+        let id = behaviour.id.clone();
+        let version = behaviour.version.clone();
+        self.entries.insert(key, behaviour);
+        let list = self.versions_by_id.entry(id).or_default();
+        if !list.contains(&version) {
+            list.push(version);
+            list.sort_by(|a, b| compare_versions(a, b));
+        }
     }
 
-    /// Retrieves a reference to a behavior by its ID.
+    /// Retrieves the preferred active or latest version of a behavior by its ID.
     pub fn get(&self, id: &BotBehaviourId) -> Option<&BotBehaviour> {
-        self.behaviours.get(id)
+        let versions = self.versions_by_id.get(id)?;
+        // Prefer an Active or Baseline status behavior among versions; otherwise return the latest
+        for v in versions.iter().rev() {
+            if let Some(b) = self.entries.get(&(id.clone(), v.clone())) {
+                if matches!(b.status, BehaviourStatus::Active | BehaviourStatus::Baseline) {
+                    return Some(b);
+                }
+            }
+        }
+        let latest_ver = versions.last()?;
+        self.entries.get(&(id.clone(), latest_ver.clone()))
     }
 
-    /// Checks if a behavior ID is present.
+    /// Retrieves an exact version of a behavior by its ID and semantic version string.
+    pub fn get_version(&self, id: &BotBehaviourId, version: &str) -> Option<&BotBehaviour> {
+        self.entries.get(&(id.clone(), version.to_string()))
+    }
+
+    /// Returns all registered versions of a given behavior ID.
+    pub fn versions_of(&self, id: &BotBehaviourId) -> Vec<&BotBehaviour> {
+        if let Some(versions) = self.versions_by_id.get(id) {
+            versions
+                .iter()
+                .filter_map(|v| self.entries.get(&(id.clone(), v.clone())))
+                .collect()
+        } else {
+            Vec::new()
+        }
+    }
+
+    /// Checks if a behavior ID is present in any version.
     pub fn contains(&self, id: &BotBehaviourId) -> bool {
-        self.behaviours.contains_key(id)
+        self.versions_by_id.contains_key(id)
     }
 
-    /// Removes a behavior by ID.
+    /// Checks if a specific (ID, version) exists.
+    pub fn contains_version(&self, id: &BotBehaviourId, version: &str) -> bool {
+        self.entries.contains_key(&(id.clone(), version.to_string()))
+    }
+
+    /// Removes all versions of a behavior by ID, returning the most recent one if present.
     pub fn remove(&mut self, id: &BotBehaviourId) -> Option<BotBehaviour> {
-        self.behaviours.remove(id)
+        let versions = self.versions_by_id.remove(id)?;
+        let mut last_removed = None;
+        for v in versions {
+            if let Some(b) = self.entries.remove(&(id.clone(), v)) {
+                last_removed = Some(b);
+            }
+        }
+        last_removed
     }
 
-    /// Returns the total number of registered behaviors.
+    /// Removes a specific version of a behavior by ID.
+    pub fn remove_version(&mut self, id: &BotBehaviourId, version: &str) -> Option<BotBehaviour> {
+        if let Some(list) = self.versions_by_id.get_mut(id) {
+            list.retain(|v| v != version);
+            if list.is_empty() {
+                self.versions_by_id.remove(id);
+            }
+        }
+        self.entries.remove(&(id.clone(), version.to_string()))
+    }
+
+    /// Returns the total number of registered behavior versions across all IDs.
     pub fn len(&self) -> usize {
-        self.behaviours.len()
+        self.entries.len()
+    }
+
+    /// Returns the number of distinct behavior IDs registered.
+    pub fn unique_id_count(&self) -> usize {
+        self.versions_by_id.len()
     }
 
     /// Returns `true` if the registry contains no behaviors.
     pub fn is_empty(&self) -> bool {
-        self.behaviours.is_empty()
+        self.entries.is_empty()
     }
 
-    /// Returns an iterator over all registered behaviors.
+    /// Returns an iterator over all registered behaviors across all versions.
     pub fn all(&self) -> impl Iterator<Item = &BotBehaviour> {
-        self.behaviours.values()
+        self.entries.values()
     }
 
     /// Searches for all behaviors that satisfy the query parameters.
     pub fn search(&self, query: &BotQuery) -> Vec<&BotBehaviour> {
-        self.behaviours
+        self.entries
             .values()
             .filter(|b| {
+                if let Some(ref ver) = query.version {
+                    if &b.version != ver {
+                        return false;
+                    }
+                }
                 if let Some(style) = query.style {
                     if b.persona.style != style {
                         return false;
@@ -292,5 +387,47 @@ mod tests {
         );
         assert_eq!(safe_bots.len(), 1);
         assert_eq!(safe_bots[0].id.0, "smooth_safe_pro");
+    }
+
+    #[test]
+    fn test_behaviour_versioning_and_date_retention() {
+        let mut reg = BotBehaviourRegistry::new();
+        let bot_id = BotBehaviourId::from("qss_mpc_legend");
+
+        let mut v1 = BotBehaviour::canonical_baseline(DrivingStyle::Calculating, DriverTier::Legend);
+        v1.id = bot_id.clone();
+        v1.version = "1.0.0".to_string();
+        v1.created_at = "2026-10-22T10:00:00Z".to_string();
+
+        let mut v2 = v1.clone();
+        v2.version = "1.1.0".to_string();
+        v2.created_at = "2026-10-23T15:30:00Z".to_string();
+        v2 = v2.with_updated_at("2026-10-23T16:00:00Z");
+
+        reg.register(v1);
+        reg.register(v2);
+
+        // Both versions are preserved concurrently
+        assert_eq!(reg.len(), 2);
+        assert_eq!(reg.unique_id_count(), 1);
+
+        // get() returns the preferred / latest version
+        let active = reg.get(&bot_id).expect("bot should exist");
+        assert_eq!(active.version, "1.1.0");
+        assert_eq!(active.date(), "2026-10-23T16:00:00Z");
+
+        // get_version() retrieves the exact historical version
+        let historical = reg.get_version(&bot_id, "1.0.0").expect("v1.0.0 must exist");
+        assert_eq!(historical.version, "1.0.0");
+        assert_eq!(historical.date(), "2026-10-22T10:00:00Z");
+
+        // versions_of() returns all versions
+        let all_vers = reg.versions_of(&bot_id);
+        assert_eq!(all_vers.len(), 2);
+
+        // Query filtering by exact version
+        let query_v1 = reg.search(&BotQuery::builder().version("1.0.0").build());
+        assert_eq!(query_v1.len(), 1);
+        assert_eq!(query_v1[0].version, "1.0.0");
     }
 }

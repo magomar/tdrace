@@ -237,6 +237,10 @@ pub struct PerformanceSummaryMetrics {
     pub human_believability_score: Option<f32>,
 }
 
+fn default_behaviour_version() -> String {
+    "1.0.0".to_string()
+}
+
 /// The complete, self-documenting Bot Behaviour asset entity.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct BotBehaviour {
@@ -245,11 +249,16 @@ pub struct BotBehaviour {
     /// User-facing display title.
     pub name: String,
     /// Semantic version or revision string (e.g. "1.0.0").
+    #[serde(default = "default_behaviour_version")]
     pub version: String,
     /// Lifecycle status.
     pub status: BehaviourStatus,
-    /// Creation timestamp (ISO 8601 UTC).
+    /// Creation timestamp (ISO 8601 UTC) or release date.
+    #[serde(alias = "date")]
     pub created_at: String,
+    /// Optional timestamp when this behavior was updated, calibrated, or retuned.
+    #[serde(default)]
+    pub updated_at: Option<String>,
     /// Author, engineer, or automated system that produced this behavior.
     pub author: String,
     /// Searchable categorical tags.
@@ -269,6 +278,34 @@ pub struct BotBehaviour {
 }
 
 impl BotBehaviour {
+    /// Effective date of this behavior (latest of updated_at or created_at).
+    pub fn date(&self) -> &str {
+        self.updated_at.as_deref().unwrap_or(&self.created_at)
+    }
+
+    /// Sets the semantic version or revision string.
+    pub fn with_version(mut self, version: impl Into<String>) -> Self {
+        self.version = version.into();
+        self
+    }
+
+    /// Sets the creation timestamp or date string.
+    pub fn with_created_at(mut self, date: impl Into<String>) -> Self {
+        self.created_at = date.into();
+        self
+    }
+
+    /// Sets the updated timestamp or date string.
+    pub fn with_updated_at(mut self, date: impl Into<String>) -> Self {
+        self.updated_at = Some(date.into());
+        self
+    }
+
+    /// Sets the effective date (convenience alias for with_created_at).
+    pub fn with_date(self, date: impl Into<String>) -> Self {
+        self.with_created_at(date)
+    }
+
     /// Constructs a standard behavior from a [`BotProfile`], target style, and tier.
     pub fn from_profile(
         id: impl Into<BotBehaviourId>,
@@ -289,6 +326,7 @@ impl BotBehaviour {
             version: "1.0.0".to_string(),
             status: BehaviourStatus::Active,
             created_at: "2026-10-22T00:00:00Z".to_string(),
+            updated_at: None,
             author: author.into(),
             tags,
             description: description.into(),

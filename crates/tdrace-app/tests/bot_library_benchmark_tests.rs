@@ -175,6 +175,7 @@ fn test_scenario_ingestion_and_logging_of_real_race_human_telemetry() {
     let human_log = HumanInteractionRecord {
         session_id: "session_user_race_101".to_string(),
         behaviour_id: subject.id.0.clone(),
+        behaviour_version: subject.version.clone(),
         player_id: "mario".to_string(),
         track_slug: "gt_coastal_grand_prix".to_string(),
         car_model: "classic_gt".to_string(),
@@ -211,6 +212,119 @@ fn test_scenario_graceful_fallback_on_corrupted_behavior_asset() {
     let reg = load_bot_library_from_dir(&temp_dir).expect("loading should gracefully succeed");
     assert_eq!(reg.len(), 1);
     assert!(reg.contains(&valid.id));
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
+fn test_scenario_behaviour_versioning_and_date_retention() {
+    // Scenario: Versioning and date retention for behaviours/controllers
+    let temp_dir = std::env::temp_dir().join("tdrace_versioning_test");
+    let _ = fs::remove_dir_all(&temp_dir);
+    fs::create_dir_all(&temp_dir).unwrap();
+
+    let bot_id = BotBehaviourId::from("qss_mpc_legend");
+
+    let v1 = BotBehaviour::canonical_baseline(DrivingStyle::Calculating, DriverTier::Legend)
+        .with_version("1.0.0")
+        .with_date("2026-10-22T10:00:00Z");
+    let mut v1 = v1;
+    v1.id = bot_id.clone();
+    save_behaviour_to_file(&temp_dir.join("qss_legend_v1.0.0.toml"), &v1).unwrap();
+
+    let v2 = BotBehaviour::canonical_baseline(DrivingStyle::Calculating, DriverTier::Legend)
+        .with_version("1.1.0")
+        .with_date("2026-10-23T14:00:00Z")
+        .with_updated_at("2026-10-23T15:30:00Z");
+    let mut v2 = v2;
+    v2.id = bot_id.clone();
+    save_behaviour_to_file(&temp_dir.join("qss_legend_v1.1.0.toml"), &v2).unwrap();
+
+    // 1. Loading preserves both versions concurrently without overwriting
+    let reg = load_bot_library_from_dir(&temp_dir).expect("loading versioned library");
+    assert_eq!(reg.len(), 2);
+    assert_eq!(reg.unique_id_count(), 1);
+
+    // Latest version is accessible via get()
+    let active = reg.get(&bot_id).expect("should find active bot");
+    assert_eq!(active.version, "1.1.0");
+    assert_eq!(active.date(), "2026-10-23T15:30:00Z");
+
+    // Historical version is accessible via get_version()
+    let hist = reg.get_version(&bot_id, "1.0.0").expect("should find v1.0.0");
+    assert_eq!(hist.version, "1.0.0");
+    assert_eq!(hist.date(), "2026-10-22T10:00:00Z");
+
+    // All versions enumerable via versions_of()
+    let versions = reg.versions_of(&bot_id);
+    assert_eq!(versions.len(), 2);
+
+    // 2. Database stores both versions concurrently under composite primary key (id, version)
+    let conn = rusqlite::Connection::open_in_memory().unwrap();
+    db::init_benchmark_database(&conn).unwrap();
+
+    db::upsert_behaviour(&conn, &v1).unwrap();
+    db::upsert_behaviour(&conn, &v2).unwrap();
+
+    let count: i64 = conn.query_row(
+        "SELECT COUNT(*) FROM behaviours WHERE id = ?1",
+        [&bot_id.0],
+        |r| r.get(0),
+    ).unwrap();
+    assert_eq!(count, 2, "Database must store both versions without replacing");
+
+    // 3. Benchmarks are tracked per version
+    let tt_v1 = tdrace_app::ai::library_storage::TimeTrialBenchmarkRecord {
+        run_id: "tt_v1_run".to_string(),
+        behaviour_id: bot_id.0.clone(),
+        behaviour_version: "1.0.0".to_string(),
+        track_slug: "classic_circuit_1".to_string(),
+        car_model: "gt_classic".to_string(),
+        tire_compound: "soft".to_string(),
+        surface_condition: "dry_tarmac".to_string(),
+        laps_completed: 5,
+        fastest_lap_s: 48.0,
+        mean_flying_lap_s: 48.5,
+        optimal_lap_delta_pct: 1.0,
+        lateral_spread_m: 0.1,
+        brake_onset_spread_m: 0.5,
+        spin_count: 0,
+        off_track_count: 0,
+        wall_impact_count: 0,
+        executed_at: "2026-10-22T10:30:00Z".to_string(),
+    };
+    let tt_v2 = tdrace_app::ai::library_storage::TimeTrialBenchmarkRecord {
+        run_id: "tt_v2_run".to_string(),
+        behaviour_id: bot_id.0.clone(),
+        behaviour_version: "1.1.0".to_string(),
+        track_slug: "classic_circuit_1".to_string(),
+        car_model: "gt_classic".to_string(),
+        tire_compound: "soft".to_string(),
+        surface_condition: "dry_tarmac".to_string(),
+        laps_completed: 5,
+        fastest_lap_s: 46.5, // Faster lap in v1.1.0!
+        mean_flying_lap_s: 47.0,
+        optimal_lap_delta_pct: 0.5,
+        lateral_spread_m: 0.08,
+        brake_onset_spread_m: 0.3,
+        spin_count: 0,
+        off_track_count: 0,
+        wall_impact_count: 0,
+        executed_at: "2026-10-23T14:30:00Z".to_string(),
+    };
+
+    db::record_time_trial(&conn, &tt_v1).unwrap();
+    db::record_time_trial(&conn, &tt_v2).unwrap();
+
+    let summary_v1 = db::query_performance_summary_for_version(&conn, &bot_id.0, Some("1.0.0"))
+        .unwrap()
+        .unwrap();
+    assert_eq!(summary_v1.best_flying_lap_s, Some(48.0));
+
+    let summary_v2 = db::query_performance_summary_for_version(&conn, &bot_id.0, Some("1.1.0"))
+        .unwrap()
+        .unwrap();
+    assert_eq!(summary_v2.best_flying_lap_s, Some(46.5));
 
     let _ = fs::remove_dir_all(&temp_dir);
 }

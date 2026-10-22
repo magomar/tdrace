@@ -12,6 +12,7 @@ use race_kit::ai::library::{
 pub struct TimeTrialBenchmarkRecord {
     pub run_id: String,
     pub behaviour_id: String,
+    pub behaviour_version: String,
     pub track_slug: String,
     pub car_model: String,
     pub tire_compound: String,
@@ -33,6 +34,7 @@ pub struct TimeTrialBenchmarkRecord {
 pub struct PackRaceBenchmarkRecord {
     pub run_id: String,
     pub behaviour_id: String,
+    pub behaviour_version: String,
     pub scenario_name: String,
     pub track_slug: String,
     pub car_model: String,
@@ -54,6 +56,7 @@ pub struct PackRaceBenchmarkRecord {
 pub struct HumanInteractionRecord {
     pub session_id: String,
     pub behaviour_id: String,
+    pub behaviour_version: String,
     pub player_id: String,
     pub track_slug: String,
     pub car_model: String,
@@ -122,23 +125,26 @@ pub mod db {
         conn.execute_batch(
             r#"
             CREATE TABLE IF NOT EXISTS behaviours (
-                id TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
+                id TEXT NOT NULL,
                 version TEXT NOT NULL,
+                name TEXT NOT NULL,
                 status TEXT NOT NULL,
                 created_at TEXT NOT NULL,
+                updated_at TEXT,
                 author TEXT NOT NULL,
                 creation_method_type TEXT NOT NULL,
                 driving_style TEXT NOT NULL,
                 driver_tier TEXT NOT NULL,
                 modality_specialization TEXT NOT NULL,
                 controller_kind TEXT NOT NULL,
-                raw_toml TEXT NOT NULL
+                raw_toml TEXT NOT NULL,
+                PRIMARY KEY (id, version)
             );
 
             CREATE TABLE IF NOT EXISTS time_trial_benchmarks (
                 run_id TEXT PRIMARY KEY,
-                behaviour_id TEXT NOT NULL REFERENCES behaviours(id),
+                behaviour_id TEXT NOT NULL,
+                behaviour_version TEXT NOT NULL DEFAULT '1.0.0',
                 track_slug TEXT NOT NULL,
                 car_model TEXT NOT NULL,
                 tire_compound TEXT NOT NULL,
@@ -157,7 +163,8 @@ pub mod db {
 
             CREATE TABLE IF NOT EXISTS pack_race_benchmarks (
                 run_id TEXT PRIMARY KEY,
-                behaviour_id TEXT NOT NULL REFERENCES behaviours(id),
+                behaviour_id TEXT NOT NULL,
+                behaviour_version TEXT NOT NULL DEFAULT '1.0.0',
                 scenario_name TEXT NOT NULL,
                 track_slug TEXT NOT NULL,
                 car_model TEXT NOT NULL,
@@ -176,7 +183,8 @@ pub mod db {
 
             CREATE TABLE IF NOT EXISTS human_interaction_telemetry (
                 session_id TEXT PRIMARY KEY,
-                behaviour_id TEXT NOT NULL REFERENCES behaviours(id),
+                behaviour_id TEXT NOT NULL,
+                behaviour_version TEXT NOT NULL DEFAULT '1.0.0',
                 player_id TEXT NOT NULL,
                 track_slug TEXT NOT NULL,
                 car_model TEXT NOT NULL,
@@ -189,9 +197,9 @@ pub mod db {
                 recorded_at TEXT NOT NULL
             );
 
-            CREATE INDEX IF NOT EXISTS idx_tt_behaviour ON time_trial_benchmarks(behaviour_id, track_slug);
-            CREATE INDEX IF NOT EXISTS idx_pack_behaviour ON pack_race_benchmarks(behaviour_id, scenario_name);
-            CREATE INDEX IF NOT EXISTS idx_human_behaviour ON human_interaction_telemetry(behaviour_id);
+            CREATE INDEX IF NOT EXISTS idx_tt_behaviour ON time_trial_benchmarks(behaviour_id, behaviour_version, track_slug);
+            CREATE INDEX IF NOT EXISTS idx_pack_behaviour ON pack_race_benchmarks(behaviour_id, behaviour_version, scenario_name);
+            CREATE INDEX IF NOT EXISTS idx_human_behaviour ON human_interaction_telemetry(behaviour_id, behaviour_version);
             "#,
         )?;
         Ok(())
@@ -217,22 +225,23 @@ pub mod db {
         conn.execute(
             r#"
             INSERT INTO behaviours (
-                id, name, version, status, created_at, author,
+                id, version, name, status, created_at, updated_at, author,
                 creation_method_type, driving_style, driver_tier,
                 modality_specialization, controller_kind, raw_toml
-            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)
-            ON CONFLICT(id) DO UPDATE SET
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)
+            ON CONFLICT(id, version) DO UPDATE SET
                 name = excluded.name,
-                version = excluded.version,
                 status = excluded.status,
+                updated_at = excluded.updated_at,
                 raw_toml = excluded.raw_toml
             "#,
             params![
                 b.id.0,
-                b.name,
                 b.version,
+                b.name,
                 format!("{:?}", b.status).to_lowercase(),
                 b.created_at,
+                b.updated_at,
                 b.author,
                 creation_type,
                 b.persona.style.as_str(),
@@ -250,15 +259,16 @@ pub mod db {
         conn.execute(
             r#"
             INSERT INTO time_trial_benchmarks (
-                run_id, behaviour_id, track_slug, car_model, tire_compound,
+                run_id, behaviour_id, behaviour_version, track_slug, car_model, tire_compound,
                 surface_condition, laps_completed, fastest_lap_s, mean_flying_lap_s,
                 optimal_lap_delta_pct, lateral_spread_m, brake_onset_spread_m,
                 spin_count, off_track_count, wall_impact_count, executed_at
-            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17)
             "#,
             params![
                 r.run_id,
                 r.behaviour_id,
+                r.behaviour_version,
                 r.track_slug,
                 r.car_model,
                 r.tire_compound,
@@ -283,15 +293,16 @@ pub mod db {
         conn.execute(
             r#"
             INSERT INTO pack_race_benchmarks (
-                run_id, behaviour_id, scenario_name, track_slug, car_model,
+                run_id, behaviour_id, behaviour_version, scenario_name, track_slug, car_model,
                 grid_size, grid_starting_pos, finish_position, opponent_diversity_profile,
                 contacts_per_lap, mean_contact_impulse, clean_passes, divebomb_passes,
                 traffic_stall_time_s, dnf_occurred, executed_at
-            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17)
             "#,
             params![
                 r.run_id,
                 r.behaviour_id,
+                r.behaviour_version,
                 r.scenario_name,
                 r.track_slug,
                 r.car_model,
@@ -316,15 +327,16 @@ pub mod db {
         conn.execute(
             r#"
             INSERT INTO human_interaction_telemetry (
-                session_id, behaviour_id, player_id, track_slug, car_model,
+                session_id, behaviour_id, behaviour_version, player_id, track_slug, car_model,
                 player_contacts, bot_fault_contacts, player_fault_contacts,
                 courtesy_yield_count, overtake_fairness_score, player_restarted,
                 recorded_at
-            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)
             "#,
             params![
                 r.session_id,
                 r.behaviour_id,
+                r.behaviour_version,
                 r.player_id,
                 r.track_slug,
                 r.car_model,
@@ -340,24 +352,33 @@ pub mod db {
         Ok(())
     }
 
-    /// Queries aggregate performance metrics for `behaviour_id` across benchmarks.
+    /// Queries aggregate performance metrics for `behaviour_id` across all benchmarks.
     pub fn query_performance_summary(
         conn: &Connection,
         behaviour_id: &str,
     ) -> Result<Option<PerformanceSummaryMetrics>> {
+        query_performance_summary_for_version(conn, behaviour_id, None)
+    }
+
+    /// Queries aggregate performance metrics for `behaviour_id` and an optional specific `version`.
+    pub fn query_performance_summary_for_version(
+        conn: &Connection,
+        behaviour_id: &str,
+        version: Option<&str>,
+    ) -> Result<Option<PerformanceSummaryMetrics>> {
         let mut stmt = conn.prepare(
             r#"
             SELECT
-                (SELECT MIN(fastest_lap_s) FROM time_trial_benchmarks WHERE behaviour_id = ?1),
-                (SELECT AVG(mean_flying_lap_s) FROM time_trial_benchmarks WHERE behaviour_id = ?1),
-                (SELECT AVG(optimal_lap_delta_pct) FROM time_trial_benchmarks WHERE behaviour_id = ?1),
-                (SELECT AVG(contacts_per_lap) FROM pack_race_benchmarks WHERE behaviour_id = ?1),
-                (SELECT CAST(SUM(clean_passes) AS REAL) / MAX(1, SUM(clean_passes + divebomb_passes)) FROM pack_race_benchmarks WHERE behaviour_id = ?1),
-                (SELECT AVG(overtake_fairness_score) FROM human_interaction_telemetry WHERE behaviour_id = ?1)
+                (SELECT MIN(fastest_lap_s) FROM time_trial_benchmarks WHERE behaviour_id = ?1 AND (?2 IS NULL OR behaviour_version = ?2)),
+                (SELECT AVG(mean_flying_lap_s) FROM time_trial_benchmarks WHERE behaviour_id = ?1 AND (?2 IS NULL OR behaviour_version = ?2)),
+                (SELECT AVG(optimal_lap_delta_pct) FROM time_trial_benchmarks WHERE behaviour_id = ?1 AND (?2 IS NULL OR behaviour_version = ?2)),
+                (SELECT AVG(contacts_per_lap) FROM pack_race_benchmarks WHERE behaviour_id = ?1 AND (?2 IS NULL OR behaviour_version = ?2)),
+                (SELECT CAST(SUM(clean_passes) AS REAL) / MAX(1, SUM(clean_passes + divebomb_passes)) FROM pack_race_benchmarks WHERE behaviour_id = ?1 AND (?2 IS NULL OR behaviour_version = ?2)),
+                (SELECT AVG(overtake_fairness_score) FROM human_interaction_telemetry WHERE behaviour_id = ?1 AND (?2 IS NULL OR behaviour_version = ?2))
             "#,
         )?;
 
-        let row = stmt.query_row(params![behaviour_id], |row| {
+        let row = stmt.query_row(params![behaviour_id, version], |row| {
             Ok(PerformanceSummaryMetrics {
                 best_flying_lap_s: row.get(0)?,
                 mean_flying_lap_s: row.get(1)?,
@@ -434,6 +455,7 @@ mod tests {
         let tt = TimeTrialBenchmarkRecord {
             run_id: "tt_001".to_string(),
             behaviour_id: b.id.0.clone(),
+            behaviour_version: b.version.clone(),
             track_slug: "classic_circuit_1".to_string(),
             car_model: "gt_classic".to_string(),
             tire_compound: "soft".to_string(),
@@ -454,6 +476,7 @@ mod tests {
         let pack = PackRaceBenchmarkRecord {
             run_id: "pack_001".to_string(),
             behaviour_id: b.id.0.clone(),
+            behaviour_version: b.version.clone(),
             scenario_name: "grid_8_autocross".to_string(),
             track_slug: "autocross_track_1".to_string(),
             car_model: "buggy_1600".to_string(),

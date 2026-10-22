@@ -26,11 +26,12 @@ fn main() {
 
     match cmd {
         "list" => {
-            println!("╔══════════════════════════════════════════════════════════════════════════════════════════════╗");
-            println!("║ TDRace Bot Behaviour Library (Spec 137)                                                      ║");
-            println!("╠══════════════════════════════════════════════════════════════════════════════════════════════╣");
-            println!("║ {:<32} │ {:<10} │ {:<12} │ {:<10} │ {:<18} ║", "ID", "STATUS", "STYLE", "TIER", "METHOD");
-            println!("╟──────────────────────────────────┼────────────┼──────────────┼────────────┼──────────────────╢");
+            let width = 110;
+            println!("╔{}╗", "═".repeat(width));
+            println!("║ {:<width$} ║", "TDRace Bot Behaviour Library (Spec 137)", width = width - 2);
+            println!("╠{}╣", "═".repeat(width));
+            println!("║ {:<32} │ {:<7} │ {:<10} │ {:<9} │ {:<11} │ {:<5} │ {:<18} ║", "ID", "VERSION", "DATE", "STATUS", "STYLE", "TIER", "METHOD");
+            println!("╟──────────────────────────────────┼─────────┼────────────┼───────────┼─────────────┼───────┼────────────────────╢");
             for b in registry.all() {
                 let method_name = match &b.provenance {
                     race_kit::ai::library::CreationMethod::HandcraftedHeuristic { .. } => "Heuristic",
@@ -40,33 +41,47 @@ fn main() {
                     race_kit::ai::library::CreationMethod::ReinforcementLearningPolicy { .. } => "RL Policy",
                     race_kit::ai::library::CreationMethod::CompositeHybrid { .. } => "Composite Hybrid",
                 };
+                let date_str: String = b.date().chars().take(10).collect();
                 println!(
-                    "║ {:<32} │ {:<10?} │ {:<12?} │ {:<10} │ {:<18} ║",
+                    "║ {:<32} │ {:<7} │ {:<10} │ {:<9?} │ {:<11?} │ {:<5} │ {:<18} ║",
                     b.id.0,
+                    b.version,
+                    date_str,
                     b.status,
                     b.persona.style,
                     b.persona.tier.tag(),
                     method_name
                 );
             }
-            println!("╚══════════════════════════════════════════════════════════════════════════════════════════════╝");
-            println!("Total behaviours: {}\n", registry.len());
+            println!("╚{}╝", "═".repeat(width));
+            println!("Total behaviours: {} ({} unique controllers)\n", registry.len(), registry.unique_id_count());
         }
         "info" => {
             let id = match args.get(2) {
                 Some(id) => BotBehaviourId::from(id.as_str()),
                 None => {
-                    eprintln!("Usage: bot_library_manager info <behaviour_id>");
+                    eprintln!("Usage: bot_library_manager info <behaviour_id> [version]");
                     std::process::exit(1);
                 }
             };
-            match registry.get(&id) {
+            let version_opt = args.get(3).map(|s| s.as_str());
+            let b = match version_opt {
+                Some(ver) => registry.get_version(&id, ver),
+                None => registry.get(&id),
+            };
+            match b {
                 Some(b) => {
                     let toml_str = toml::to_string_pretty(b).unwrap_or_default();
-                    println!("--- Behaviour Details: {} ---\n{}", b.id, toml_str);
+                    let versions = registry.versions_of(&id);
+                    let vers_list: Vec<&str> = versions.iter().map(|v| v.version.as_str()).collect();
+                    println!("--- Behaviour Details: {} (v{}, Date: {}) ---", b.id, b.version, b.date());
+                    if vers_list.len() > 1 {
+                        println!("All available versions: {:?}", vers_list);
+                    }
+                    println!("\n{}", toml_str);
                 }
                 None => {
-                    eprintln!("Behaviour '{}' not found in library.", id);
+                    eprintln!("Behaviour '{}' (version: {:?}) not found in library.", id, version_opt);
                     std::process::exit(1);
                 }
             }
@@ -75,16 +90,26 @@ fn main() {
             let id = match args.get(2) {
                 Some(id) => BotBehaviourId::from(id.as_str()),
                 None => {
-                    eprintln!("Usage: bot_library_manager benchmark <behaviour_id>");
+                    eprintln!("Usage: bot_library_manager benchmark <behaviour_id> [version]");
                     std::process::exit(1);
                 }
             };
-            let b = match registry.get(&id) {
-                Some(b) => b,
-                None => {
-                    eprintln!("Behaviour '{}' not found in library.", id);
-                    std::process::exit(1);
-                }
+            let version_opt = args.get(3).map(|s| s.as_str());
+            let b = match version_opt {
+                Some(ver) => match registry.get_version(&id, ver) {
+                    Some(b) => b,
+                    None => {
+                        eprintln!("Behaviour '{}' version '{}' not found in library.", id, ver);
+                        std::process::exit(1);
+                    }
+                },
+                None => match registry.get(&id) {
+                    Some(b) => b,
+                    None => {
+                        eprintln!("Behaviour '{}' not found in library.", id);
+                        std::process::exit(1);
+                    }
+                },
             };
 
             println!("Running evaluation benchmark for '{}'...", b.id);
