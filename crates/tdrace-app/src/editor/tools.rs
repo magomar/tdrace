@@ -165,6 +165,7 @@ pub struct ToolSettings {
     pub drag_initial_checkpoints: Vec<(usize, Vec2, Vec2)>,
     pub drag_initial_grid_slots: Vec<(usize, Vec2)>,
     pub drag_initial_pit_box: Option<(Vec2, Vec2)>,
+    pub drag_initial_pit_lane: Option<PitLane>,
 
     // Bar control selection and inline manual text editing
     pub selected_bar: Option<String>,
@@ -314,6 +315,7 @@ impl Default for ToolSettings {
             drag_initial_checkpoints: Vec::new(),
             drag_initial_grid_slots: Vec::new(),
             drag_initial_pit_box: None,
+            drag_initial_pit_lane: None,
             selected_bar: None,
             editing_bar: None,
             inspector: InspectorView::default(),
@@ -550,19 +552,63 @@ impl ToolSettings {
         true
     }
 
+    /// Explicitly selects all splines across the track (main track spline, split / branch segments, and pit lane).
+    pub fn select_all_splines(&mut self, state: &mut EditorState) -> bool {
+        let waypoints: Vec<usize> = (0..state.track.spline.waypoints.len()).collect();
+        let mut branch_waypoints = Vec::new();
+        if let Some(ref net) = state.track.network {
+            for seg in &net.segments {
+                if net.is_branch_segment(seg.id) {
+                    for i in 0..seg.waypoints.len() {
+                        branch_waypoints.push((seg.id, i));
+                    }
+                }
+            }
+        }
+        let pit_box = state.track.pit_box_area.is_some() || state.track.pit_lane.is_some();
+        let selection = Selection::from_multi_with_branches(
+            waypoints,
+            branch_waypoints,
+            vec![],
+            vec![],
+            vec![],
+            vec![],
+            vec![],
+            pit_box,
+        );
+
+        if selection.is_none() {
+            false
+        } else {
+            state.select(selection);
+            true
+        }
+    }
+
     /// Selects all elements matching the active tool (or all track elements if Select tool is active).
     pub fn select_all_for_active_tool(&mut self, state: &mut EditorState) -> bool {
         let selection = match self.active_tool {
             EditorToolType::Select => {
                 let waypoints = (0..state.track.spline.waypoints.len()).collect();
+                let mut branch_waypoints = Vec::new();
+                if let Some(ref net) = state.track.network {
+                    for seg in &net.segments {
+                        if net.is_branch_segment(seg.id) {
+                            for i in 0..seg.waypoints.len() {
+                                branch_waypoints.push((seg.id, i));
+                            }
+                        }
+                    }
+                }
                 let surface_zones = (0..state.track.geometry.surface_zones.len()).collect();
                 let obstacles = (0..state.track.geometry.obstacles.len()).collect();
                 let jump_ramps = (0..state.track.geometry.jump_ramps.len()).collect();
                 let checkpoints = (0..state.track.checkpoints.len()).collect();
                 let grid_slots = (0..state.track.grid_positions.len()).collect();
-                let pit_box = state.track.pit_box_area.is_some();
-                Selection::from_multi(
+                let pit_box = state.track.pit_box_area.is_some() || state.track.pit_lane.is_some();
+                Selection::from_multi_with_branches(
                     waypoints,
+                    branch_waypoints,
                     surface_zones,
                     obstacles,
                     jump_ramps,
@@ -572,8 +618,7 @@ impl ToolSettings {
                 )
             }
             EditorToolType::RoadSpline | EditorToolType::RoadSplit | EditorToolType::LaunchChute => {
-                let waypoints = (0..state.track.spline.waypoints.len()).collect();
-                Selection::from_multi(waypoints, vec![], vec![], vec![], vec![], vec![], false)
+                return self.select_all_splines(state);
             }
             EditorToolType::SurfaceZone => {
                 let surface_zones = (0..state.track.geometry.surface_zones.len()).collect();
@@ -1654,6 +1699,7 @@ impl ToolSettings {
             self.drag_initial_checkpoints.clear();
             self.drag_initial_grid_slots.clear();
             self.drag_initial_pit_box = None;
+            self.drag_initial_pit_lane = None;
         }
     }
 
@@ -1753,6 +1799,27 @@ impl ToolSettings {
             }
         }
 
+        if let Some(ref init_lane) = self.drag_initial_pit_lane {
+            if let Some(lane) = &mut state.track.pit_lane {
+                let mut shifted = init_lane.clone();
+                for wp in &mut shifted.spline.waypoints {
+                    wp.point += delta;
+                }
+                for s in &mut shifted.spline.samples {
+                    s.point += delta;
+                }
+                for b in &mut shifted.pit_boxes {
+                    b.position += delta;
+                }
+                shifted.entry_gate.start += delta;
+                shifted.entry_gate.end += delta;
+                shifted.exit_gate.start += delta;
+                shifted.exit_gate.end += delta;
+                *lane = shifted;
+                geometry_dirty = true;
+            }
+        }
+
         if !affected_branch_segs.is_empty() {
             state.rebuild_branch_segments_interactive(&affected_branch_segs);
         } else if geometry_dirty {
@@ -1801,6 +1868,7 @@ impl ToolSettings {
             self.drag_initial_checkpoints.clear();
         }
         self.drag_initial_grid_slots.clear();
+        self.drag_initial_pit_lane = None;
 
         state.revalidate();
     }
@@ -1914,14 +1982,38 @@ impl ToolSettings {
             }
         }
 
-        if move_pit_box && matches!(state.track.pit_box_area, Some(SurfaceShape::Aabb { .. })) {
-            if !any_moved {
-                state.record_undo();
-                any_moved = true;
+        if move_pit_box {
+            if matches!(state.track.pit_box_area, Some(SurfaceShape::Aabb { .. })) {
+                if !any_moved {
+                    state.record_undo();
+                    any_moved = true;
+                }
+                if let Some(SurfaceShape::Aabb { min, max }) = &mut state.track.pit_box_area {
+                    *min += delta;
+                    *max += delta;
+                }
             }
-            if let Some(SurfaceShape::Aabb { min, max }) = &mut state.track.pit_box_area {
-                *min += delta;
-                *max += delta;
+            if state.track.pit_lane.is_some() {
+                if !any_moved {
+                    state.record_undo();
+                    any_moved = true;
+                }
+                if let Some(lane) = &mut state.track.pit_lane {
+                    for wp in &mut lane.spline.waypoints {
+                        wp.point += delta;
+                    }
+                    for s in &mut lane.spline.samples {
+                        s.point += delta;
+                    }
+                    for b in &mut lane.pit_boxes {
+                        b.position += delta;
+                    }
+                    lane.entry_gate.start += delta;
+                    lane.entry_gate.end += delta;
+                    lane.exit_gate.start += delta;
+                    lane.exit_gate.end += delta;
+                    geometry_dirty = true;
+                }
             }
         }
 
@@ -3565,6 +3657,12 @@ fn prepare_drag_initial_positions(state: &EditorState, tools: &mut ToolSettings)
     } else {
         None
     };
+
+    tools.drag_initial_pit_lane = if state.selection.is_pit_box_selected() {
+        state.track.pit_lane.clone()
+    } else {
+        None
+    };
 }
 
 fn point_in_aabb(p: Vec2, min: Vec2, max: Vec2) -> bool {
@@ -3736,6 +3834,22 @@ pub fn find_entities_in_box(state: &EditorState, min: Vec2, max: Vec2) -> Select
 
     if let Some(ref pb) = state.track.pit_box_area {
         if surface_shape_intersects_aabb(pb, min, max) {
+            pit_box = true;
+        }
+    }
+    if let Some(ref lane) = state.track.pit_lane {
+        if lane.pit_boxes.iter().any(|b| {
+            point_in_aabb(b.position, min, max)
+                || (b.position.x >= min.x - b.stop_radius
+                    && b.position.x <= max.x + b.stop_radius
+                    && b.position.y >= min.y - b.stop_radius
+                    && b.position.y <= max.y + b.stop_radius)
+        })
+            || lane.spline.waypoints.iter().any(|w| point_in_aabb(w.point, min, max))
+            || (lane.spline.total_length > 1.0 && lane.spline.samples.iter().any(|s| point_in_aabb(s.point, min, max)))
+            || line_segment_intersects_aabb(lane.entry_gate.start, lane.entry_gate.end, min, max)
+            || line_segment_intersects_aabb(lane.exit_gate.start, lane.exit_gate.end, min, max)
+        {
             pit_box = true;
         }
     }
@@ -5293,7 +5407,7 @@ mod tests {
             + state.track.geometry.jump_ramps.len()
             + state.track.checkpoints.len()
             + state.track.grid_positions.len()
-            + if state.track.pit_box_area.is_some() { 1 } else { 0 }
+            + if state.track.pit_box_area.is_some() || state.track.pit_lane.is_some() { 1 } else { 0 }
         );
 
         // 2. RoadSpline Tool selects only waypoints
@@ -5326,6 +5440,106 @@ mod tests {
         tools.active_tool = EditorToolType::Checkpoint;
         assert!(tools.select_all_for_active_tool(&mut state));
         assert_eq!(state.selection.selected_checkpoint_indices().len(), state.track.checkpoints.len());
+    }
+
+    #[test]
+    fn test_select_all_splines_includes_splits_and_pit_lane() {
+        use tdrace_core::track::network::TrackNetwork;
+
+        let mut track = tdrace_core::catalog::official_track("classic", "gt_coastal_grand_prix");
+        let wps_branch = vec![
+            TrackWaypoint::new(Vec2::new(50.0, 0.0), 10.0),
+            TrackWaypoint::new(Vec2::new(50.0, 40.0), 10.0),
+            TrackWaypoint::new(Vec2::new(80.0, 40.0), 10.0),
+        ];
+        let seg_main = RoadSegment::new(SegmentId(0), "Main", track.spline.waypoints.clone());
+        let seg_branch = RoadSegment::new(SegmentId(1), "JokerBranch", wps_branch);
+        let mut net = TrackNetwork::new();
+        net.segments = vec![seg_main, seg_branch];
+        net.layouts = vec![
+            TrackLayout {
+                id: "main".into(),
+                display_name: "Main".into(),
+                entry_segment: None,
+                segment_sequence: vec![SegmentId(0)],
+                is_closed: true,
+                total_lap_length: 500.0,
+                start_finish_segment: SegmentId(0),
+                checkpoint_ids: Vec::new(),
+            },
+        ];
+        net.default_layout_id = "main".into();
+        track.network = Some(net);
+
+        let pit_wps = vec![
+            TrackWaypoint::new(Vec2::new(10.0, 10.0), 5.0),
+            TrackWaypoint::new(Vec2::new(20.0, 10.0), 5.0),
+            TrackWaypoint::new(Vec2::new(30.0, 10.0), 5.0),
+        ];
+        let pit_spline = TrackSpline::new(pit_wps, false);
+        track.pit_lane = Some(PitLane::new(
+            pit_spline,
+            5.0,
+            16.67,
+            vec![],
+            LineSegment::new(Vec2::new(10.0, 8.0), Vec2::new(10.0, 12.0)),
+            LineSegment::new(Vec2::new(30.0, 8.0), Vec2::new(30.0, 12.0)),
+        ));
+
+        let mut state = EditorState::new(track);
+        let mut tools = ToolSettings::default();
+
+        // 1. select_all_splines selects main waypoints, branch waypoints, and pit lane
+        assert!(tools.select_all_splines(&mut state));
+        assert!(matches!(state.selection, Selection::Multi { .. }));
+        assert_eq!(state.selection.selected_waypoint_indices().len(), state.track.spline.waypoints.len());
+        assert_eq!(state.selection.selected_branch_waypoints().len(), 3);
+        assert!(state.selection.is_branch_waypoint_selected(SegmentId(1), 0));
+        assert!(state.selection.is_branch_waypoint_selected(SegmentId(1), 1));
+        assert!(state.selection.is_branch_waypoint_selected(SegmentId(1), 2));
+        assert!(state.selection.is_pit_box_selected());
+
+        // 2. RoadSpline tool triggers select_all_splines
+        state.selection = Selection::None;
+        tools.active_tool = EditorToolType::RoadSpline;
+        assert!(tools.select_all_for_active_tool(&mut state));
+        assert!(matches!(state.selection, Selection::Multi { .. }));
+        assert_eq!(state.selection.selected_branch_waypoints().len(), 3);
+        assert!(state.selection.is_pit_box_selected());
+
+        // 3. RoadSplit tool triggers select_all_splines
+        state.selection = Selection::None;
+        tools.active_tool = EditorToolType::RoadSplit;
+        assert!(tools.select_all_for_active_tool(&mut state));
+        assert_eq!(state.selection.selected_branch_waypoints().len(), 3);
+        assert!(state.selection.is_pit_box_selected());
+
+        // 4. LaunchChute tool triggers select_all_splines
+        state.selection = Selection::None;
+        tools.active_tool = EditorToolType::LaunchChute;
+        assert!(tools.select_all_for_active_tool(&mut state));
+        assert_eq!(state.selection.selected_branch_waypoints().len(), 3);
+        assert!(state.selection.is_pit_box_selected());
+
+        // 5. Select tool includes splines, branches, and pit lane alongside others
+        state.selection = Selection::None;
+        tools.active_tool = EditorToolType::Select;
+        assert!(tools.select_all_for_active_tool(&mut state));
+        assert!(matches!(state.selection, Selection::Multi { .. }));
+        assert_eq!(state.selection.selected_branch_waypoints().len(), 3);
+        assert!(state.selection.is_pit_box_selected());
+
+        // 6. Translating selection moves main waypoints, branch waypoints, and pit lane
+        let p_main_before = state.track.spline.waypoints[0].point;
+        let p_branch_before = state.track.network.as_ref().unwrap().segments[1].waypoints[0].point;
+        let p_pit_before = state.track.pit_lane.as_ref().unwrap().spline.waypoints[0].point;
+
+        let delta = Vec2::new(12.0, -8.0);
+        assert!(tools.translate_selected(&mut state, delta));
+
+        assert_eq!(state.track.spline.waypoints[0].point, p_main_before + delta);
+        assert_eq!(state.track.network.as_ref().unwrap().segments[1].waypoints[0].point, p_branch_before + delta);
+        assert_eq!(state.track.pit_lane.as_ref().unwrap().spline.waypoints[0].point, p_pit_before + delta);
     }
 
     #[test]

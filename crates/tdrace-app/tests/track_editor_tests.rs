@@ -1320,10 +1320,11 @@ fn test_track_editor_select_all_and_marquee_box_selection() {
     assert!(state.selection.is_obstacle_selected(0));
     assert!(state.selection.is_waypoint_selected(0));
 
-    // 2. Test Select All with RoadSpline Tool
+    // 2. Test Select All with RoadSpline Tool (selects all splines including pit lane)
     tools.active_tool = EditorToolType::RoadSpline;
     assert!(tools.select_all_for_active_tool(&mut state));
-    assert!(matches!(state.selection, Selection::MultipleWaypoints(_)));
+    assert!(matches!(state.selection, Selection::Multi { .. }));
+    assert!(state.selection.is_pit_box_selected());
     assert_eq!(state.selection.selected_waypoint_indices().len(), state.track.spline.waypoints.len());
 
     // 3. Test Select All with PitLane Tool
@@ -2537,17 +2538,17 @@ fn test_concrete_surface_editing_and_batch_assignment() {
 
 #[test]
 fn test_editor_keeps_track_barrier_setup_on_rebuild() {
-    // Daytona is walled with 1.5 m concrete; opening it in the editor must not reset that to defaults.
+    // Daytona is walled with 1.2 m steel; opening it in the editor must not reset that to defaults.
     let track = tdrace_core::catalog::official_track("nascar", "daytona_superspeedway");
     let mut state = EditorState::new(track);
-    assert!((state.barrier_offset - 1.5).abs() < 0.11, "barrier offset {} should stay ~1.5 m", state.barrier_offset);
-    assert_eq!(state.barrier_type, BarrierType::Concrete);
+    assert!((state.barrier_offset - 1.2).abs() < 0.11, "barrier offset {} should stay ~1.2 m", state.barrier_offset);
+    assert_eq!(state.barrier_type, BarrierType::Steel);
 
     state.rebuild_geometry();
     let walls = state.track.geometry.inner_walls.iter().chain(&state.track.geometry.outer_walls);
     assert!(walls.clone().count() > 0);
-    assert!(walls.clone().all(|w| w.barrier_type == BarrierType::Concrete));
-    assert!((state.track.effective_barrier_offset() - 1.5).abs() < 0.11);
+    assert!(walls.clone().all(|w| w.barrier_type == BarrierType::Steel));
+    assert!((state.track.effective_barrier_offset() - 1.2).abs() < 0.11);
 }
 
 #[test]
