@@ -1,7 +1,8 @@
-use macroquad::color::Color;
-use macroquad::input::{
-    is_key_down, is_key_pressed, is_mouse_button_pressed, mouse_position, KeyCode, MouseButton,
+use crate::game::{
+    get_char_pressed, is_key_down, is_key_pressed, is_mouse_button_pressed, mouse_position_safe,
 };
+use macroquad::color::Color;
+use macroquad::input::{KeyCode, MouseButton};
 use macroquad::prelude::{screen_height, screen_width};
 use macroquad::shapes::draw_rectangle;
 
@@ -583,8 +584,8 @@ fn render_tab_calendar(
 
         // Actions hint
         fonts.draw_ui_regular(
-            "[Up/Down Reorder • [D] Del • [L] Laps]",
-            x + w - scaler.s(180.0),
+            "[Up/Down] Reorder • [D] Del • [L] Laps",
+            x + w - scaler.s(190.0),
             card_y + scaler.s(26.0),
             scaler.font_s(9.0),
             COLOR_DARK_GRAY,
@@ -783,10 +784,10 @@ fn render_footer(
     footer.render_frame();
 
     let hints = match state.active_tab {
-        ChampionshipEditorTab::Rules => "[O] Open Cup • [N] New Cup • [Tab] Next Tab • [Up/Down] Select Field • [Enter] Edit • [Esc / B] Exit",
-        ChampionshipEditorTab::Calendar => "[O] Open Cup • [N] New Cup • [Tab] Next Tab • [A] Add Round • [Up/Down] Reorder • [D] Delete Round • [Esc / B] Exit",
-        ChampionshipEditorTab::Grid => "[O] Open Cup • [N] New Cup • [Tab] Next Tab • [Up/Down] Select Driver • [Enter] Edit Name • [M] Change Car • [Esc / B] Exit",
-        ChampionshipEditorTab::Export => "[O] Open Cup • [N] New Cup • [Tab] Next Tab • [L / F5] Launch Test Cup • [S] Save TOML • [Esc / B] Exit",
+        ChampionshipEditorTab::Rules => "[O] Open Cup • [N] New Cup • [Q/E / Tab] Tabs • [Up/Down] Select Field • [Enter] Edit • [Esc / B] Exit",
+        ChampionshipEditorTab::Calendar => "[O] Open Cup • [N] New Cup • [Q/E / Tab] Tabs • [W/S] Select • [Up/Down] Reorder • [A] Add Round • [D] Delete Round • [L] Laps • [Esc / B] Exit",
+        ChampionshipEditorTab::Grid => "[O] Open Cup • [N] New Cup • [Q/E / Tab] Tabs • [Up/Down] Select Driver • [Enter] Edit Name • [M] Change Car • [Esc / B] Exit",
+        ChampionshipEditorTab::Export => "[O] Open Cup • [N] New Cup • [Q/E / Tab] Tabs • [L / F5] Launch Test Cup • [S] Save TOML • [Esc / B] Exit",
     };
 
     fonts.draw_ui_regular(hints, scaler.s(24.0), y + scaler.s(22.0), scaler.font_s(11.0), COLOR_LIGHT_GRAY);
@@ -980,7 +981,7 @@ pub fn handle_championship_editor_input(
                 }
             }
             if is_mouse_button_pressed(MouseButton::Left) {
-                let (mx, my) = mouse_position();
+                let (mx, my) = mouse_position_safe();
                 let sw = screen_width();
                 let sh = screen_height();
                 let scaler = UiScaler::new(sw, sh);
@@ -1072,7 +1073,7 @@ pub fn handle_championship_editor_input(
                 value.pop();
             }
             // Capture printable characters
-            while let Some(c) = macroquad::input::get_char_pressed() {
+            while let Some(c) = get_char_pressed() {
                 if !c.is_control() {
                     value.push(c);
                 }
@@ -1119,6 +1120,17 @@ pub fn handle_championship_editor_input(
 
     if is_key_pressed(KeyCode::N) {
         return ChampionshipEditorAction::NewChampionship;
+    }
+
+    // Tab switching hotkeys: Q / E, Tab / Shift+Tab, and 1..4
+    if is_key_pressed(KeyCode::Q) {
+        state.active_tab = state.active_tab.prev();
+        return ChampionshipEditorAction::None;
+    }
+
+    if is_key_pressed(KeyCode::E) {
+        state.active_tab = state.active_tab.next();
+        return ChampionshipEditorAction::None;
     }
 
     if is_key_pressed(KeyCode::Tab) {
@@ -1228,12 +1240,44 @@ pub fn handle_championship_editor_input(
             }
         }
         ChampionshipEditorTab::Calendar => {
-            if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) {
+            // W / S navigate round selection without reordering
+            let is_shift = is_key_down(KeyCode::LeftShift) || is_key_down(KeyCode::RightShift);
+            if is_key_pressed(KeyCode::W) && !is_shift {
                 state.selected_round_idx = state.selected_round_idx.saturating_sub(1);
             }
-            if (is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S)) && !state.def.rounds.is_empty() {
+            if is_key_pressed(KeyCode::S) && !is_shift && !state.def.rounds.is_empty() {
                 state.selected_round_idx = (state.selected_round_idx + 1).min(state.def.rounds.len() - 1);
             }
+
+            // Up / Down (or Shift+W / Shift+S) reorder the selected round in the calendar
+            let want_reorder_up = is_key_pressed(KeyCode::Up)
+                || (is_shift && is_key_pressed(KeyCode::W));
+            let want_reorder_down = is_key_pressed(KeyCode::Down)
+                || (is_shift && is_key_pressed(KeyCode::S));
+
+            if want_reorder_up {
+                if state.selected_round_idx > 0 && state.selected_round_idx < state.def.rounds.len() {
+                    let curr = state.selected_round_idx;
+                    state.def.rounds.swap(curr, curr - 1);
+                    state.selected_round_idx -= 1;
+                    for (i, r) in state.def.rounds.iter_mut().enumerate() {
+                        r.order = i + 1;
+                    }
+                    state.set_status("Reordered round in calendar", 1.5);
+                }
+            }
+            if want_reorder_down {
+                if !state.def.rounds.is_empty() && state.selected_round_idx + 1 < state.def.rounds.len() {
+                    let curr = state.selected_round_idx;
+                    state.def.rounds.swap(curr, curr + 1);
+                    state.selected_round_idx += 1;
+                    for (i, r) in state.def.rounds.iter_mut().enumerate() {
+                        r.order = i + 1;
+                    }
+                    state.set_status("Reordered round in calendar", 1.5);
+                }
+            }
+
             // Add Round
             if is_key_pressed(KeyCode::A) {
                 state.modal = ChampionshipEditorModal::AddTrack { selected_idx: 0 };
@@ -1242,6 +1286,9 @@ pub fn handle_championship_editor_input(
             if is_key_pressed(KeyCode::D) || is_key_pressed(KeyCode::Delete) {
                 if state.selected_round_idx < state.def.rounds.len() {
                     state.def.rounds.remove(state.selected_round_idx);
+                    for (i, r) in state.def.rounds.iter_mut().enumerate() {
+                        r.order = i + 1;
+                    }
                     if state.selected_round_idx >= state.def.rounds.len() {
                         state.selected_round_idx = state.def.rounds.len().saturating_sub(1);
                     }
@@ -1307,7 +1354,7 @@ pub fn handle_championship_editor_input(
 
     // Mouse click handling
     if is_mouse_button_pressed(MouseButton::Left) {
-        let (mx, my) = mouse_position();
+        let (mx, my) = mouse_position_safe();
         let sw = screen_width();
         let sh = screen_height();
         let scaler = UiScaler::new(sw, sh);
@@ -1352,6 +1399,38 @@ pub fn handle_championship_editor_input(
         let col_w = (sw - pad_x * 2.0 - scaler.s(24.0)) * 0.5;
         let btn_y = scaler.s(286.0);
         let btn_h = scaler.s(38.0);
+
+        if state.active_tab == ChampionshipEditorTab::Calendar {
+            let header_h = scaler.s(52.0);
+            let body_y = header_h + scaler.s(14.0);
+            let body_h = sh - body_y - scaler.s(44.0);
+            let body_w = sw - pad_x * 2.0;
+
+            // "+ ADD ROUND" button click
+            let add_btn_w = scaler.s(150.0);
+            let add_btn_h = scaler.s(28.0);
+            let add_btn_x = pad_x + body_w - add_btn_w;
+            let add_btn_y = body_y;
+            if mx >= add_btn_x && mx <= add_btn_x + add_btn_w && my >= add_btn_y && my <= add_btn_y + add_btn_h {
+                state.modal = ChampionshipEditorModal::AddTrack { selected_idx: 0 };
+                return ChampionshipEditorAction::None;
+            }
+
+            // Round card click selection
+            let start_y = body_y + scaler.s(34.0);
+            let row_h = scaler.s(44.0);
+            let gap = scaler.s(6.0);
+            for idx in 0..state.def.rounds.len() {
+                let card_y = start_y + (idx as f32) * (row_h + gap);
+                if card_y + row_h > body_y + body_h {
+                    break;
+                }
+                if mx >= pad_x && mx <= pad_x + body_w && my >= card_y && my <= card_y + row_h {
+                    state.selected_round_idx = idx;
+                    break;
+                }
+            }
+        }
 
         if state.active_tab == ChampionshipEditorTab::Export {
             // Launch Test Cup button click

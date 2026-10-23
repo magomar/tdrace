@@ -41,7 +41,7 @@ pub fn inject_key_presses_for_tests(keys: &[KeyCode]) {
 }
 
 #[inline]
-fn is_key_pressed(k: KeyCode) -> bool {
+pub(crate) fn is_key_pressed(k: KeyCode) -> bool {
     if is_window_active() {
         return macroquad::input::is_key_pressed(k);
     }
@@ -49,15 +49,15 @@ fn is_key_pressed(k: KeyCode) -> bool {
 }
 
 #[inline]
-fn is_key_down(k: KeyCode) -> bool {
+pub(crate) fn is_key_down(k: KeyCode) -> bool {
     if !is_window_active() {
-        return false;
+        return INJECTED_KEY_PRESSES.with(|keys| keys.borrow().contains(&k));
     }
     macroquad::input::is_key_down(k)
 }
 
 #[inline]
-fn is_mouse_button_pressed(btn: macroquad::input::MouseButton) -> bool {
+pub(crate) fn is_mouse_button_pressed(btn: macroquad::input::MouseButton) -> bool {
     if !is_window_active() {
         return false;
     }
@@ -81,7 +81,7 @@ fn is_mouse_button_released(btn: macroquad::input::MouseButton) -> bool {
 }
 
 #[inline]
-fn mouse_position_safe() -> (f32, f32) {
+pub(crate) fn mouse_position_safe() -> (f32, f32) {
     if !is_window_active() {
         return (0.0, 0.0);
     }
@@ -97,7 +97,7 @@ fn mouse_wheel_safe() -> (f32, f32) {
 }
 
 #[inline]
-fn get_char_pressed() -> Option<char> {
+pub(crate) fn get_char_pressed() -> Option<char> {
     if !is_window_active() {
         return None;
     }

@@ -1514,3 +1514,166 @@ fn test_championship_studio_exits_with_gamepad_b() {
     );
     assert!(session.championship_editor_state.is_none());
 }
+
+#[test]
+fn test_championship_studio_q_and_e_tab_navigation() {
+    use tdrace_app::game::inject_key_presses_for_tests;
+    use tdrace_app::ui::ChampionshipEditorTab;
+    use macroquad::input::KeyCode;
+
+    let mut session = RaceSession::new();
+    session.enter_championship_editor(None);
+    assert_eq!(session.state, GameState::ChampionshipEditor);
+    assert_eq!(
+        session.championship_editor_state.as_ref().unwrap().active_tab,
+        ChampionshipEditorTab::Rules
+    );
+
+    // E navigates forward: Rules -> Calendar -> Grid -> Export -> Rules
+    inject_key_presses_for_tests(&[KeyCode::E]);
+    session.update_championship_editor(0.016);
+    assert_eq!(
+        session.championship_editor_state.as_ref().unwrap().active_tab,
+        ChampionshipEditorTab::Calendar
+    );
+
+    inject_key_presses_for_tests(&[KeyCode::E]);
+    session.update_championship_editor(0.016);
+    assert_eq!(
+        session.championship_editor_state.as_ref().unwrap().active_tab,
+        ChampionshipEditorTab::Grid
+    );
+
+    inject_key_presses_for_tests(&[KeyCode::E]);
+    session.update_championship_editor(0.016);
+    assert_eq!(
+        session.championship_editor_state.as_ref().unwrap().active_tab,
+        ChampionshipEditorTab::Export
+    );
+
+    inject_key_presses_for_tests(&[KeyCode::E]);
+    session.update_championship_editor(0.016);
+    assert_eq!(
+        session.championship_editor_state.as_ref().unwrap().active_tab,
+        ChampionshipEditorTab::Rules
+    );
+
+    // Q navigates backward: Rules -> Export -> Grid -> Calendar -> Rules
+    inject_key_presses_for_tests(&[KeyCode::Q]);
+    session.update_championship_editor(0.016);
+    assert_eq!(
+        session.championship_editor_state.as_ref().unwrap().active_tab,
+        ChampionshipEditorTab::Export
+    );
+
+    inject_key_presses_for_tests(&[KeyCode::Q]);
+    session.update_championship_editor(0.016);
+    assert_eq!(
+        session.championship_editor_state.as_ref().unwrap().active_tab,
+        ChampionshipEditorTab::Grid
+    );
+
+    inject_key_presses_for_tests(&[KeyCode::Q]);
+    session.update_championship_editor(0.016);
+    assert_eq!(
+        session.championship_editor_state.as_ref().unwrap().active_tab,
+        ChampionshipEditorTab::Calendar
+    );
+
+    inject_key_presses_for_tests(&[KeyCode::Q]);
+    session.update_championship_editor(0.016);
+    assert_eq!(
+        session.championship_editor_state.as_ref().unwrap().active_tab,
+        ChampionshipEditorTab::Rules
+    );
+
+    inject_key_presses_for_tests(&[]);
+}
+
+#[test]
+fn test_championship_studio_calendar_up_down_reorder_and_ws_navigation() {
+    use tdrace_app::game::inject_key_presses_for_tests;
+    use tdrace_app::ui::ChampionshipEditorTab;
+    use macroquad::input::KeyCode;
+
+    let mut session = RaceSession::new();
+    session.enter_championship_editor(None);
+
+    // Switch to Calendar tab
+    inject_key_presses_for_tests(&[KeyCode::E]);
+    session.update_championship_editor(0.016);
+    assert_eq!(
+        session.championship_editor_state.as_ref().unwrap().active_tab,
+        ChampionshipEditorTab::Calendar
+    );
+
+    let state = session.championship_editor_state.as_mut().unwrap();
+    assert!(state.def.rounds.len() >= 3, "default series should have multiple rounds");
+
+    let original_r0 = state.def.rounds[0].track_id.clone();
+    let original_r1 = state.def.rounds[1].track_id.clone();
+    let original_r2 = state.def.rounds[2].track_id.clone();
+    state.selected_round_idx = 1;
+
+    // Up reorders: swaps index 1 with index 0
+    inject_key_presses_for_tests(&[KeyCode::Up]);
+    session.update_championship_editor(0.016);
+
+    {
+        let st = session.championship_editor_state.as_ref().unwrap();
+        assert_eq!(st.selected_round_idx, 0, "selected round follows moved item to index 0");
+        assert_eq!(st.def.rounds[0].track_id, original_r1);
+        assert_eq!(st.def.rounds[1].track_id, original_r0);
+        assert_eq!(st.def.rounds[2].track_id, original_r2);
+        assert_eq!(st.def.rounds[0].order, 1);
+        assert_eq!(st.def.rounds[1].order, 2);
+    }
+
+    // Down reorders: swaps index 0 back with index 1
+    inject_key_presses_for_tests(&[KeyCode::Down]);
+    session.update_championship_editor(0.016);
+
+    {
+        let st = session.championship_editor_state.as_ref().unwrap();
+        assert_eq!(st.selected_round_idx, 1, "selected round follows moved item to index 1");
+        assert_eq!(st.def.rounds[0].track_id, original_r0);
+        assert_eq!(st.def.rounds[1].track_id, original_r1);
+        assert_eq!(st.def.rounds[2].track_id, original_r2);
+        assert_eq!(st.def.rounds[0].order, 1);
+        assert_eq!(st.def.rounds[1].order, 2);
+    }
+
+    // W navigates selection without reordering
+    inject_key_presses_for_tests(&[KeyCode::W]);
+    session.update_championship_editor(0.016);
+
+    {
+        let st = session.championship_editor_state.as_ref().unwrap();
+        assert_eq!(st.selected_round_idx, 0, "W navigates up to index 0");
+        assert_eq!(st.def.rounds[0].track_id, original_r0, "tracks remain in same order");
+        assert_eq!(st.def.rounds[1].track_id, original_r1, "tracks remain in same order");
+    }
+
+    // Up at index 0 is a boundary - no reordering or panic
+    inject_key_presses_for_tests(&[KeyCode::Up]);
+    session.update_championship_editor(0.016);
+
+    {
+        let st = session.championship_editor_state.as_ref().unwrap();
+        assert_eq!(st.selected_round_idx, 0);
+        assert_eq!(st.def.rounds[0].track_id, original_r0);
+    }
+
+    // S navigates selection down without reordering
+    inject_key_presses_for_tests(&[KeyCode::S]);
+    session.update_championship_editor(0.016);
+
+    {
+        let st = session.championship_editor_state.as_ref().unwrap();
+        assert_eq!(st.selected_round_idx, 1, "S navigates down to index 1");
+        assert_eq!(st.def.rounds[0].track_id, original_r0);
+        assert_eq!(st.def.rounds[1].track_id, original_r1);
+    }
+
+    inject_key_presses_for_tests(&[]);
+}
