@@ -1301,7 +1301,7 @@ impl Track {
     /// Median gap between the main road edge and the nearest main wall, over the main spline
     /// samples inside the box `min`..`max`. Gaps of 10 m or more are not walls of that road and
     /// are skipped. `None` when no sample qualifies.
-    pub(crate) fn local_barrier_offset(&self, min: Vec2, max: Vec2) -> Option<f32> {
+    pub fn local_barrier_offset(&self, min: Vec2, max: Vec2) -> Option<f32> {
         let mut dists = Vec::new();
         for s in self.spline.samples.iter().filter(|s| s.point.cmpge(min).all() && s.point.cmple(max).all()) {
             let hw = s.width * 0.5;

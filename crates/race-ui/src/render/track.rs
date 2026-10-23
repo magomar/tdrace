@@ -42,6 +42,17 @@ pub fn compute_runoff_outer_point(
     side: Side,
     suppressed: bool,
 ) -> Vec2 {
+    compute_runoff_outer_point_with_fallback(sample, side, suppressed, TrackSpline::DEFAULT_WALL_DISTANCE)
+}
+
+/// Computes outer runoff quad vertices for a segment sample station with a configurable fallback wall distance.
+#[inline]
+pub fn compute_runoff_outer_point_with_fallback(
+    sample: &SplineSample,
+    side: Side,
+    suppressed: bool,
+    fallback_wall_distance: f32,
+) -> Vec2 {
     let hw = sample.width * 0.5;
     let curb_w = match side {
         Side::Left => if sample.left_curb { 1.35 } else { 0.0 },
@@ -49,11 +60,45 @@ pub fn compute_runoff_outer_point(
     };
     let normal_sign = side.sign();
     let wall_dist = match side {
-        Side::Left => sample.left_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE),
-        Side::Right => sample.right_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE),
+        Side::Left => sample.left_wall_distance.unwrap_or(fallback_wall_distance),
+        Side::Right => sample.right_wall_distance.unwrap_or(fallback_wall_distance),
     };
     let eff_dist = if suppressed { curb_w } else { wall_dist };
     sample.point + sample.normal * (normal_sign * (hw + eff_dist))
+}
+
+/// Clamps an outer runoff point along the radial ray from `p_inner` to `p_outer` against physical barrier walls.
+/// Ensures the runoff corridor never penetrates or extends beyond physical walls.
+#[inline]
+pub fn clamp_runoff_outer_to_walls(p_inner: Vec2, p_outer: Vec2, walls: &[LineSegment]) -> Vec2 {
+    let total_len = (p_outer - p_inner).length();
+    if total_len < 1e-4 {
+        return p_outer;
+    }
+    let ray = LineSegment::new(p_inner, p_outer);
+    let ray_min = p_inner.min(p_outer);
+    let ray_max = p_inner.max(p_outer);
+    let mut closest_t = 1.0f32;
+
+    for wall in walls {
+        let w_min = wall.start.min(wall.end);
+        let w_max = wall.start.max(wall.end);
+        if w_max.x < ray_min.x || w_min.x > ray_max.x || w_max.y < ray_min.y || w_min.y > ray_max.y {
+            continue;
+        }
+        if let Some(hit) = ray.intersect_segment(wall) {
+            let t = (hit - p_inner).length() / total_len;
+            if t < closest_t {
+                closest_t = t;
+            }
+        }
+    }
+
+    if closest_t < 1.0 {
+        p_inner + (p_outer - p_inner) * closest_t
+    } else {
+        p_outer
+    }
 }
 
 /// 4-vertex quadrilateral defining a segment of the track runoff shoulder.
@@ -77,6 +122,29 @@ pub fn compute_runoff_quad_vertices(
     suppressed_s0: bool,
     suppressed_s1: bool,
 ) -> Option<RunoffQuadVertices> {
+    compute_runoff_quad_vertices_with_fallback(
+        s0,
+        s1,
+        side,
+        s0_inner,
+        s1_inner,
+        suppressed_s0,
+        suppressed_s1,
+        TrackSpline::DEFAULT_WALL_DISTANCE,
+    )
+}
+
+/// Computes the 4 vertices of a runoff shoulder quad with a configurable fallback wall distance.
+pub fn compute_runoff_quad_vertices_with_fallback(
+    s0: &SplineSample,
+    s1: &SplineSample,
+    side: Side,
+    s0_inner: Vec2,
+    s1_inner: Vec2,
+    suppressed_s0: bool,
+    suppressed_s1: bool,
+    fallback_wall_distance: f32,
+) -> Option<RunoffQuadVertices> {
     if suppressed_s0 && suppressed_s1 {
         return None;
     }
@@ -93,12 +161,12 @@ pub fn compute_runoff_quad_vertices(
     let p0_outer = if suppressed_s0 {
         s0_inner
     } else {
-        compute_runoff_outer_point(s0, side, false) + s0.normal * (side.sign() * extra0)
+        compute_runoff_outer_point_with_fallback(s0, side, false, fallback_wall_distance) + s0.normal * (side.sign() * extra0)
     };
     let p1_outer = if suppressed_s1 {
         s1_inner
     } else {
-        compute_runoff_outer_point(s1, side, false) + s1.normal * (side.sign() * extra1)
+        compute_runoff_outer_point_with_fallback(s1, side, false, fallback_wall_distance) + s1.normal * (side.sign() * extra1)
     };
     Some(RunoffQuadVertices {
         p0_inner: s0_inner,
@@ -308,6 +376,7 @@ pub struct CachedRibbonPass {
 }
 
 impl CachedRibbonPass {
+    #[allow(clippy::too_many_arguments)]
     pub fn build(
         spline: &TrackSpline,
         elevated: bool,
@@ -316,6 +385,8 @@ impl CachedRibbonPass {
         wall_suppressions: Option<&[WallSuppressionRecord]>,
         is_main_spline: bool,
         include_runoff_and_curbs: bool,
+        fallback_wall_distance: f32,
+        physical_walls: Option<&[LineSegment]>,
     ) -> Self {
         let samples = &spline.samples;
         let n = samples.len();
@@ -341,8 +412,8 @@ impl CachedRibbonPass {
                 has_matching_seg = true;
                 let max_wall = s0
                     .left_wall_distance
-                    .unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE)
-                    .max(s0.right_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE))
+                    .unwrap_or(fallback_wall_distance)
+                    .max(s0.right_wall_distance.unwrap_or(fallback_wall_distance))
                     .max(4.5);
                 let pad = s0.width.max(s1.width) * 0.5 + max_wall + 4.0;
                 let s_min = s0.point.min(s1.point) - Vec2::splat(pad);
@@ -363,6 +434,8 @@ impl CachedRibbonPass {
                             boundaries,
                             wall_suppressions,
                             is_main_spline,
+                            fallback_wall_distance,
+                            physical_walls,
                         ),
                         build_curbs_range_meshes(
                             spline,
@@ -509,6 +582,20 @@ impl TrackRenderCache {
         let mut main_suppressions = Vec::new();
         let mut branch_segments = Vec::new();
 
+        let ground_walls: Vec<LineSegment> = track
+            .geometry
+            .all_walls()
+            .filter(|w| w.is_physical() && !w.is_bridge)
+            .map(|w| w.segment)
+            .collect();
+        let elevated_walls: Vec<LineSegment> = track
+            .geometry
+            .all_walls()
+            .filter(|w| w.is_physical() && w.is_bridge)
+            .map(|w| w.segment)
+            .collect();
+        let track_barrier_offset = track.effective_barrier_offset();
+
         if let Some(ref net) = track.network {
             let branch_segs = net.branch_segments();
             main_suppressions = compute_segment_edge_suppressions(
@@ -536,6 +623,13 @@ impl TrackRenderCache {
                         &branch_bnd.2[..],
                         &branch_bnd.3[..],
                     );
+                    let (min, max) = seg.samples.iter().fold((Vec2::splat(f32::MAX), Vec2::splat(f32::MIN)), |(lo, hi), s| {
+                        (lo.min(s.point), hi.max(s.point))
+                    });
+                    let seg_barrier_offset = track
+                        .local_barrier_offset(min - Vec2::splat(20.0), max + Vec2::splat(20.0))
+                        .unwrap_or(track_barrier_offset);
+
                     let ground_pass = CachedRibbonPass::build(
                         &seg_spline,
                         false,
@@ -544,6 +638,8 @@ impl TrackRenderCache {
                         Some(&track.geometry.wall_suppressions),
                         false,
                         true,
+                        seg_barrier_offset,
+                        Some(&ground_walls),
                     );
                     let elevated_pass = CachedRibbonPass::build(
                         &seg_spline,
@@ -553,6 +649,8 @@ impl TrackRenderCache {
                         Some(&track.geometry.wall_suppressions),
                         false,
                         true,
+                        seg_barrier_offset,
+                        Some(&elevated_walls),
                     );
                     branch_segments.push(CachedSegmentRenderData {
                         id: seg.id,
@@ -585,6 +683,8 @@ impl TrackRenderCache {
             Some(&track.geometry.wall_suppressions),
             true,
             true,
+            track_barrier_offset,
+            Some(&ground_walls),
         );
         let main_elevated_pass = CachedRibbonPass::build(
             &track.spline,
@@ -594,6 +694,8 @@ impl TrackRenderCache {
             Some(&track.geometry.wall_suppressions),
             true,
             true,
+            track_barrier_offset,
+            Some(&elevated_walls),
         );
 
         let pit_lane_boundaries = track.pit_lane.as_ref().map(|lane| {
@@ -605,7 +707,17 @@ impl TrackRenderCache {
             .zip(pit_lane_boundaries.as_ref())
             .map(|(lane, bnd)| {
                 let b_slices = (&bnd.0[..], &bnd.1[..], &bnd.2[..], &bnd.3[..]);
-                CachedRibbonPass::build(&lane.spline, false, None, b_slices, None, false, true)
+                CachedRibbonPass::build(
+                    &lane.spline,
+                    false,
+                    None,
+                    b_slices,
+                    None,
+                    false,
+                    true,
+                    track_barrier_offset,
+                    Some(&ground_walls),
+                )
             });
         let pit_lane_junctions = track.pit_lane_junctions.clone().or_else(|| track.compute_pit_lane_junctions());
 
@@ -1769,6 +1881,8 @@ fn build_runoff_range_meshes(
     boundaries: UntangledBoundarySlices,
     wall_suppressions: Option<&[WallSuppressionRecord]>,
     is_main_spline: bool,
+    fallback_wall_distance: f32,
+    physical_walls: Option<&[LineSegment]>,
 ) -> Vec<CachedMesh> {
     let samples = &spline.samples;
     let n = samples.len();
@@ -1817,8 +1931,8 @@ fn build_runoff_range_meshes(
                 let curb_w0 = if s0.left_curb { curb_extra_width } else { 0.0 };
                 let curb_w1 = if s1.left_curb { curb_extra_width } else { 0.0 };
 
-                let wall_dist0 = s0.left_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
-                let wall_dist1 = s1.left_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
+                let wall_dist0 = s0.left_wall_distance.unwrap_or(fallback_wall_distance);
+                let wall_dist1 = s1.left_wall_distance.unwrap_or(fallback_wall_distance);
 
                 if wall_dist0 > curb_w0 && wall_dist1 > curb_w1 {
                     let p0_inner = if s0.left_curb { untangled_curb_left[i] } else { untangled_road_left[i] };
@@ -1828,9 +1942,13 @@ fn build_runoff_range_meshes(
                     let is_supp0 = is_wall_suppressed_at(wall_suppressions, Side::Left, s0.distance, wall_pt0, is_main_spline);
                     let is_supp1 = is_wall_suppressed_at(wall_suppressions, Side::Left, s1.distance, wall_pt1, is_main_spline);
 
-                    if let Some(quad) = compute_runoff_quad_vertices(s0, s1, Side::Left, p0_inner, p1_inner, is_supp0, is_supp1) {
-                        let p0_outer = quad.p0_outer;
-                        let p1_outer = quad.p1_outer;
+                    if let Some(quad) = compute_runoff_quad_vertices_with_fallback(s0, s1, Side::Left, p0_inner, p1_inner, is_supp0, is_supp1, fallback_wall_distance) {
+                        let mut p0_outer = quad.p0_outer;
+                        let mut p1_outer = quad.p1_outer;
+                        if let Some(walls) = physical_walls {
+                            p0_outer = clamp_runoff_outer_to_walls(p0_inner, p0_outer, walls);
+                            p1_outer = clamp_runoff_outer_to_walls(p1_inner, p1_outer, walls);
+                        }
 
                         if is_quad_valid(p0_inner, p1_inner, p1_outer, p0_outer) {
                             let builder = runoff_builders.entry(runoff_surf).or_insert_with(|| {
@@ -1866,8 +1984,12 @@ fn build_runoff_range_meshes(
 
                                 // Outer organic fringe feathering
                                 if is_main_spline && fringe_builder.texture.is_some() {
-                                    let p0_fringe = if is_supp0 { p0_outer } else { p0_outer + s0.normal * 0.6 };
-                                    let p1_fringe = if is_supp1 { p1_outer } else { p1_outer + s1.normal * 0.6 };
+                                    let mut p0_fringe = if is_supp0 { p0_outer } else { p0_outer + s0.normal * 0.6 };
+                                    let mut p1_fringe = if is_supp1 { p1_outer } else { p1_outer + s1.normal * 0.6 };
+                                    if let Some(walls) = physical_walls {
+                                        p0_fringe = clamp_runoff_outer_to_walls(p0_outer, p0_fringe, walls);
+                                        p1_fringe = clamp_runoff_outer_to_walls(p1_outer, p1_fringe, walls);
+                                    }
                                     let fringe_c = Color::new(fill_col.r, fill_col.g, fill_col.b, 0.75);
                                     fringe_builder.push_quad(
                                         p0_outer, macroquad::prelude::Vec2::new(u0, 1.0), fringe_c,
@@ -1893,8 +2015,8 @@ fn build_runoff_range_meshes(
                 let curb_w0 = if s0.right_curb { curb_extra_width } else { 0.0 };
                 let curb_w1 = if s1.right_curb { curb_extra_width } else { 0.0 };
 
-                let wall_dist0 = s0.right_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
-                let wall_dist1 = s1.right_wall_distance.unwrap_or(TrackSpline::DEFAULT_WALL_DISTANCE);
+                let wall_dist0 = s0.right_wall_distance.unwrap_or(fallback_wall_distance);
+                let wall_dist1 = s1.right_wall_distance.unwrap_or(fallback_wall_distance);
 
                 if wall_dist0 > curb_w0 && wall_dist1 > curb_w1 {
                     let p0_inner = if s0.right_curb { untangled_curb_right[i] } else { untangled_road_right[i] };
@@ -1904,9 +2026,13 @@ fn build_runoff_range_meshes(
                     let is_supp0 = is_wall_suppressed_at(wall_suppressions, Side::Right, s0.distance, wall_pt0, is_main_spline);
                     let is_supp1 = is_wall_suppressed_at(wall_suppressions, Side::Right, s1.distance, wall_pt1, is_main_spline);
 
-                    if let Some(quad) = compute_runoff_quad_vertices(s0, s1, Side::Right, p0_inner, p1_inner, is_supp0, is_supp1) {
-                        let p0_outer = quad.p0_outer;
-                        let p1_outer = quad.p1_outer;
+                    if let Some(quad) = compute_runoff_quad_vertices_with_fallback(s0, s1, Side::Right, p0_inner, p1_inner, is_supp0, is_supp1, fallback_wall_distance) {
+                        let mut p0_outer = quad.p0_outer;
+                        let mut p1_outer = quad.p1_outer;
+                        if let Some(walls) = physical_walls {
+                            p0_outer = clamp_runoff_outer_to_walls(p0_inner, p0_outer, walls);
+                            p1_outer = clamp_runoff_outer_to_walls(p1_inner, p1_outer, walls);
+                        }
 
                         if is_quad_valid(p0_inner, p1_inner, p1_outer, p0_outer) {
                             let builder = runoff_builders.entry(runoff_surf).or_insert_with(|| {
@@ -1942,8 +2068,12 @@ fn build_runoff_range_meshes(
 
                                 // Outer organic fringe feathering
                                 if is_main_spline && fringe_builder.texture.is_some() {
-                                    let p0_fringe = if is_supp0 { p0_outer } else { p0_outer - s0.normal * 0.6 };
-                                    let p1_fringe = if is_supp1 { p1_outer } else { p1_outer - s1.normal * 0.6 };
+                                    let mut p0_fringe = if is_supp0 { p0_outer } else { p0_outer - s0.normal * 0.6 };
+                                    let mut p1_fringe = if is_supp1 { p1_outer } else { p1_outer - s1.normal * 0.6 };
+                                    if let Some(walls) = physical_walls {
+                                        p0_fringe = clamp_runoff_outer_to_walls(p0_outer, p0_fringe, walls);
+                                        p1_fringe = clamp_runoff_outer_to_walls(p1_outer, p1_fringe, walls);
+                                    }
                                     let fringe_c = Color::new(fill_col.r, fill_col.g, fill_col.b, 0.75);
                                     fringe_builder.push_quad(
                                         p0_outer, macroquad::prelude::Vec2::new(u0, 1.0), fringe_c,
@@ -2001,6 +2131,8 @@ fn render_runoff_pass_filtered(
         boundaries,
         wall_suppressions,
         is_main_spline,
+        TrackSpline::DEFAULT_WALL_DISTANCE,
+        None,
     );
     if is_render_context_active() {
         for m in &meshes {
@@ -3017,6 +3149,8 @@ pub fn draw_quad(p0: Vec2, p1: Vec2, p2: Vec2, p3: Vec2, color: Color) {
 mod tests {
     use super::*;
 
+    static RENDER_CACHE_TEST_MUTEX: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
     #[test]
     fn test_empty_and_insufficient_spline_rendering_does_not_panic() {
         let empty_spline = TrackSpline::empty();
@@ -3089,7 +3223,7 @@ mod tests {
 
     #[test]
     fn test_textured_rendering_across_quality_levels() {
-        
+        let _lock = RENDER_CACHE_TEST_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
         let track = arcade_race_core::track::create_prototypical_track("gt", arcade_race_core::track::TrackShape::Oval, arcade_race_core::track::RaceDirection::Right);
         let qualities = [
             SurfaceTextureQuality::Off,
@@ -3312,6 +3446,7 @@ mod tests {
 
     #[test]
     fn test_track_render_cache_hit_and_performance() {
+        let _lock = RENDER_CACHE_TEST_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
         clear_track_render_cache();
         let track = arcade_race_core::track::create_prototypical_track(
             "gt",
@@ -3337,6 +3472,7 @@ mod tests {
 
     #[test]
     fn test_track_render_cache_filters_default_layout_segments_from_branches() {
+        let _lock = RENDER_CACHE_TEST_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
         use arcade_race_core::track::network::{RoadSegment, SegmentId, TrackLayout, TrackNetwork};
         use arcade_race_core::track::spline::TrackWaypoint;
 
@@ -3464,6 +3600,7 @@ mod tests {
 
     #[test]
     fn test_spec_119_track_render_cache_prebuilt_mesh_chunks_and_quality_invalidation() {
+        let _lock = RENDER_CACHE_TEST_MUTEX.lock().unwrap_or_else(|e| e.into_inner());
         clear_track_render_cache();
         set_surface_texture_quality(SurfaceTextureQuality::High);
         let track = arcade_race_core::track::create_prototypical_track(

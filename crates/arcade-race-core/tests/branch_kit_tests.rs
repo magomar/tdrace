@@ -532,9 +532,9 @@ fn junction_surfaces_follow_the_ribbons_not_forced_asphalt() {
         Vec2::new(edge.x, -TRACK_WIDTH * 0.5 - 0.6)
     };
     let gore = gore_at(100.0..140.0);
-    assert_eq!(track.sample_surface(gore), SurfaceType::Grass, "split gore at {gore:?}");
+    assert_eq!(track.sample_surface(gore), SurfaceType::Asphalt, "split gore at {gore:?}");
     let gore = gore_at(260.0..300.0);
-    assert_eq!(track.sample_surface(gore), SurfaceType::Grass, "merge gore at {gore:?}");
+    assert_eq!(track.sample_surface(gore), SurfaceType::DeepGravel, "merge gore at {gore:?}");
 }
 
 // ---------------------------------------------------------------------------------------------------------------

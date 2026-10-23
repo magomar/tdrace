@@ -1,9 +1,14 @@
 //! Integration tests for track rendering, runoff consistency, and wall suppression tapering (Spec 112).
 
 use glam::Vec2;
+use arcade_race_core::track::geometry::LineSegment;
 use arcade_race_core::track::junction_kit::Side;
 use arcade_race_core::track::spline::SplineSample;
-use race_ui::render::track::{compute_runoff_outer_point, compute_runoff_quad_vertices};
+use race_ui::render::track::{
+    clamp_runoff_outer_to_walls, compute_runoff_outer_point,
+    compute_runoff_outer_point_with_fallback, compute_runoff_quad_vertices,
+    compute_runoff_quad_vertices_with_fallback,
+};
 
 #[test]
 fn test_runoff_shoulder_tapers_where_wall_suppressed() {
@@ -87,4 +92,45 @@ fn test_runoff_quad_follows_widened_pit_side_bay_boundary() {
     assert!((quad.p0_outer.y - (-8.6)).abs() < 1e-4, "expected outer edge at -8.6m, got {:?}", quad.p0_outer);
     assert!((quad.p1_outer.y - (-8.6)).abs() < 1e-4, "expected outer edge at -8.6m, got {:?}", quad.p1_outer);
 }
+
+#[test]
+fn test_runoff_clamped_against_physical_walls_and_respects_fallback_distance() {
+    let mut s0 = SplineSample::default();
+    s0.point = Vec2::new(0.0, 0.0);
+    s0.tangent = Vec2::new(1.0, 0.0);
+    s0.normal = Vec2::new(0.0, 1.0);
+    s0.width = 10.0;
+    // None for wall distances, simulating branch segments or standard tracks
+    s0.left_wall_distance = None;
+    s0.right_wall_distance = None;
+
+    let mut s1 = s0.clone();
+    s1.point = Vec2::new(10.0, 0.0);
+
+    // 1. With 3.5m fallback barrier offset, outer point is at 5.0 + 3.5 = 8.5m instead of 5.0 + 8.0 = 13.0m
+    let p_fallback = compute_runoff_outer_point_with_fallback(&s0, Side::Left, false, 3.5);
+    assert!((p_fallback.y - 8.5).abs() < 1e-4);
+
+    let p0_inner = Vec2::new(0.0, 5.0);
+    let p1_inner = Vec2::new(10.0, 5.0);
+    let quad = compute_runoff_quad_vertices_with_fallback(
+        &s0, &s1, Side::Left, p0_inner, p1_inner, false, false, 3.5,
+    ).expect("quad should exist");
+    assert!((quad.p0_outer.y - 8.5).abs() < 1e-4);
+    assert!((quad.p1_outer.y - 8.5).abs() < 1e-4);
+
+    // 2. Physical wall positioned at y = 7.0 (between inner at 5.0 and unconstrained outer at 8.5)
+    // Runoff ray from (0.0, 5.0) to (0.0, 8.5) must be clamped precisely to the wall at y = 7.0
+    let walls = [LineSegment::new(Vec2::new(-5.0, 7.0), Vec2::new(15.0, 7.0))];
+    let clamped_p0 = clamp_runoff_outer_to_walls(quad.p0_inner, quad.p0_outer, &walls);
+    let clamped_p1 = clamp_runoff_outer_to_walls(quad.p1_inner, quad.p1_outer, &walls);
+    assert!((clamped_p0.y - 7.0).abs() < 1e-4, "runoff must terminate at the wall, got {:?}", clamped_p0);
+    assert!((clamped_p1.y - 7.0).abs() < 1e-4, "runoff must terminate at the wall, got {:?}", clamped_p1);
+
+    // 3. Wall behind outer point at y = 10.0 does not clamp outer point
+    let distant_walls = [LineSegment::new(Vec2::new(-5.0, 10.0), Vec2::new(15.0, 10.0))];
+    let unclamped_p0 = clamp_runoff_outer_to_walls(quad.p0_inner, quad.p0_outer, &distant_walls);
+    assert!((unclamped_p0.y - 8.5).abs() < 1e-4);
+}
+
 
