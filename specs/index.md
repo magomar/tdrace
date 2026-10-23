@@ -158,6 +158,7 @@ Table of contents providing progressive disclosure of project constitution and t
 | [135](135_rallycross_tier_6_nitrocross_championship_isolation_world_rx_tier_4_5_realignment_and_tier_0_group_b_vault_archival.md) | Rallycross Tier 6 Nitrocross Championship Isolation, World RX Tier 4-5 Realignment, and Tier 0 Group B Vault Archival | Feature Spec | `implemented` | `human:mario` | [051](051_rallycross_6tier_career_progression_and_expanded_circuit_roster.md), [057](057_vault_module_for_archived_and_deprecated_content.md), [066](066_navigation_reorganization_category_circuit_filter_and_tiered_career_championships.md), [134](134_nitrocross_circuit_pack_and_mega_jump_over_under_crossover_geometry.md) | Isolates Tier 6 into an exclusive 6-round North American Nitrocross championship, moves Spa RX and Silverstone RX down into Tiers 4 and 5 World RX calendars, and archives the Tier 0 Group B vehicles and championship into The Vault. |
 | [136](136_migrate_to_standalone_cabinet_repository.md) | Migrate to standalone cabinet repository | Architecture Spec | `implemented` | `human:mario` | - | Migrates the cabinet game shell dependency from embedded crates/cabinet to the standalone multi-engine cabinet repository at ../cabinet, eliminating duplicate assets and enforcing zero Bevy dependencies. |
 | [137](137_bot_behaviour_library_provenance_registry_and_multi_scenario_driving_performance_evaluation_matrix.md) | Bot Behaviour Library, Provenance Registry, and Multi-Scenario Driving Performance Evaluation Matrix | Architecture Spec | `implemented` | `human:mario` | [023](023_orthogonal_ai_driving_styles_and_quality_tiers.md), [046](046_humanlike_bot_driving_with_tiered_mistakes_and_varied_lines.md), [083](083_evorl_bot_driving_style_and_performance_optimization.md), [131](131_error_free_t4_and_t5_bot_tiers_optimal_racing_line_trajectory_following_and_maximum_pace_controller_unchoking.md) | Establishes a persistent, versioned library of bot behaviors with creation provenance (heuristic, EvoRL, QSS+MPC, human imitation), tactical persona tagging, and a multi-scenario driving performance evaluation matrix spanning time trials, multi-participant pack races with varied car models, tires, and driver diversity, and real-race human interaction telemetry. |
+| [138](138_track_studio_scenery_manipulation_interactive_translation_rotation_and_selection.md) | Track Studio Scenery Manipulation: Interactive Translation, Rotation, and Selection | Feature Spec | `draft` | — | [012](012_track_scenery_and_decorative_elements.md) | Refactors Track Studio CAD editor to support selecting, translating, rotating, scaling, duplicating, and inspecting Buildings, Trees, Grandstands, and Rocks with interactive CAD gizmos, unified multi-spline selection across splits and pit lanes, and Inspector controls. |
 
 ### 🗺️ Specification Dependency Graph
 
@@ -166,6 +167,7 @@ flowchart LR
     006["006: Road Split Segments, Branching Splines & Alternative Circuit Layouts"]
     009["009: Real-World Vehicle Rosters, Physics Balance & Interactive Garage"]
     011["011: Game Asset Catalogue & Technical Reference Portals"]
+    012["012: Track Scenery and Decorative Elements (Grades & Trees)"]
     017["017: Declarative Series Format and Series Studio Editor (Championships & Cups)"]
     020["020: Per-Discipline and Per-Tier Driver Favorite Cars & 12-Pilot Rosters"]
     021["021: Authentic OpenStreetMap References and Circuit Provenance"]
@@ -262,6 +264,7 @@ flowchart LR
     134["134: Nitrocross Circuit Pack and Mega Jump Over-Under Crossover Geometry"]
     135["135: Rallycross Tier 6 Nitrocross Championship Isolation, World RX Tier 4-5 Realignment, and Tier 0 Group B Vault Archival"]
     137["137: Bot Behaviour Library, Provenance Registry, and Multi-Scenario Driving Performance Evaluation Matrix"]
+    138["138: Track Studio Scenery Manipulation: Interactive Translation, Rotation, and Selection"]
     055 --> 047
     062 --> 063
     055 --> 064
@@ -426,4 +429,5 @@ flowchart LR
     046 --> 137
     083 --> 137
     131 --> 137
+    012 --> 138
 ```
