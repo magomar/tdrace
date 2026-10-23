@@ -1501,6 +1501,16 @@ impl JumpRampCarExt for wheelbase::Car {
                     };
                     if self.try_trigger_jump(true, &props) {
                         self.state.ramp_elevation = 0.0;
+                        let gap = ramp.effective_gap_length();
+                        if gap > 14.0 && speed_along >= 14.5 {
+                            let v_horiz = self.state.velocity.dot(ramp.direction).max(14.5);
+                            let t_gap = (gap * 1.06 + 2.0) / v_horiz;
+                            let v_z_needed =
+                                0.5 * 13.5 * t_gap - (0.08 * ramp.height) / t_gap.max(0.2);
+                            if self.state.vertical_velocity < v_z_needed {
+                                self.state.vertical_velocity = v_z_needed;
+                            }
+                        }
                         return true;
                     }
                 } else if s > s_takeoff && s < s_landing && self.state.ramp_elevation > 0.20 {
@@ -1513,6 +1523,16 @@ impl JumpRampCarExt for wheelbase::Car {
                         };
                         if self.try_trigger_jump(true, &props) {
                             self.state.ramp_elevation = 0.0;
+                            let gap = ramp.effective_gap_length();
+                            if gap > 14.0 && speed_along >= 14.5 {
+                                let v_horiz = self.state.velocity.dot(ramp.direction).max(14.5);
+                                let t_gap = (gap * 1.06 + 2.0) / v_horiz;
+                                let v_z_needed =
+                                    0.5 * 13.5 * t_gap - (0.08 * ramp.height) / t_gap.max(0.2);
+                                if self.state.vertical_velocity < v_z_needed {
+                                    self.state.vertical_velocity = v_z_needed;
+                                }
+                            }
                             return true;
                         }
                     }

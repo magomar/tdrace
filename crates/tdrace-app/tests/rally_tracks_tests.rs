@@ -443,6 +443,8 @@ fn test_world_rx_jump_ramps_dirt_surface_and_containment_landing() {
             slug
         );
 
+        let is_nitrocross = NITROCROSS_PACK_SLUGS.contains(&slug);
+
         for ramp in &track.geometry.jump_ramps {
             // 1. Verify surface is Dirt
             assert_eq!(
@@ -475,9 +477,13 @@ fn test_world_rx_jump_ramps_dirt_surface_and_containment_landing() {
                 max_bend
             );
 
-            // 2. Verify ramp dimensions fit the track corridor
+            // 2. Verify ramp dimensions fit the track corridor (FIA World RX vs North American Nitrocross Mega Jumps)
             if let SurfaceShape::OrientedBox { half_extents, .. } = ramp.shape {
-                let max_half_len = if ramp.kind == RampKind::MegaRamp { 10.0 } else { 4.5 };
+                let max_half_len = if ramp.kind == RampKind::MegaRamp {
+                    if is_nitrocross { 32.0 } else { 10.0 }
+                } else {
+                    4.5
+                };
                 assert!(
                     half_extents.x <= max_half_len,
                     "Track {} ramp half length must be <= {:.1}m, got {:.1}m",
@@ -485,6 +491,14 @@ fn test_world_rx_jump_ramps_dirt_surface_and_containment_landing() {
                     max_half_len,
                     half_extents.x
                 );
+                if is_nitrocross && ramp.kind == RampKind::MegaRamp {
+                    assert!(
+                        ramp.effective_gap_length() >= 22.0,
+                        "Nitrocross track {} MegaRamp open gap {:.1}m must be >= 22.0m (72ft)",
+                        slug,
+                        ramp.effective_gap_length()
+                    );
+                }
                 assert!(
                     half_extents.y <= 6.5,
                     "Track {} ramp half width must fit track corridor (<= 6.5m), got {:.1}m",
@@ -511,6 +525,16 @@ fn test_world_rx_jump_ramps_dirt_surface_and_containment_landing() {
             );
 
             // 4. Test physical jump containment at high rally speeds: 30 m/s (108 km/h) and 42 m/s (151 km/h)
+            let max_apex_elev = if is_nitrocross && ramp.kind == RampKind::MegaRamp {
+                3.6
+            } else {
+                2.2
+            };
+            let max_landing_steps = if is_nitrocross && ramp.kind == RampKind::MegaRamp {
+                75
+            } else {
+                66
+            };
             for &approach_speed in &[30.0f32, 42.0f32] {
                 let mut car = Car::new(CarConfig::rally_car()).with_pose(ramp.shape.center(), 0.0);
                 car.state.velocity = ramp.direction * approach_speed;
@@ -538,18 +562,17 @@ fn test_world_rx_jump_ramps_dirt_surface_and_containment_landing() {
                 assert!(!car.state.is_airborne);
                 assert_eq!(car.state.elevation, 0.0);
 
-                // Apex elevation must be modest and realistic (~0.35m - 2.2m)
                 assert!(
-                    apex_elevation >= 0.35 && apex_elevation <= 2.2,
-                    "Track {} apex elevation at {:.1} m/s must be between 0.35m and 2.2m, got {:.2}m",
+                    apex_elevation >= 0.35 && apex_elevation <= max_apex_elev,
+                    "Track {} apex elevation at {:.1} m/s must be between 0.35m and {:.1}m, got {:.2}m",
                     slug,
                     approach_speed,
+                    max_apex_elev,
                     apex_elevation
                 );
 
-                // Air time must be snappy (~0.25s to 1.1s)
                 assert!(
-                    steps_to_landing >= 15 && steps_to_landing <= 66,
+                    steps_to_landing >= 15 && steps_to_landing <= max_landing_steps,
                     "Track {} jump at {:.1} m/s took {} steps ({:.2}s)",
                     slug,
                     approach_speed,
@@ -1492,17 +1515,25 @@ fn test_spec134_scenario_1_nitrocross_circuit_pack_integrity_and_validation() {
         );
         assert_eq!(track.grid_positions.len(), 6, "{}: expected 6 grid positions", slug);
 
-        let mega_count = track
+        let mega_ramp = track
             .geometry
             .jump_ramps
             .iter()
-            .filter(|r| r.kind == RampKind::MegaRamp && r.gap_length >= 6.0)
-            .count();
+            .find(|r| r.kind == RampKind::MegaRamp && r.effective_gap_length() >= 22.0);
         assert!(
-            mega_count >= 1,
-            "{}: expected at least 1 MegaRamp with gap_length >= 6.0m",
+            mega_ramp.is_some(),
+            "{}: expected at least 1 Nitrocross MegaRamp with gap_length >= 22.0m (72ft)",
             slug
         );
+        if slug == "utah_umc_rx" {
+            let utah_gap = mega_ramp.unwrap().effective_gap_length();
+            assert!(
+                utah_gap >= 33.0,
+                "utah_umc_rx MegaRamp open chasm {:.1}m ({:.1}ft) must exceed 100 feet (>= 33.0m)",
+                utah_gap,
+                utah_gap * 3.28084
+            );
+        }
 
         let secondary_count = track
             .geometry
@@ -1533,6 +1564,23 @@ fn test_spec134_scenario_1_nitrocross_circuit_pack_integrity_and_validation() {
         );
         assert_eq!(track.category_label, "Nitrocross", "{}: category_label must be Nitrocross", slug);
     }
+
+    // Verify all 6 Nitrocross circuits have distinct real-world silhouettes (aspect ratios & elevation profiles)
+    let mut aspect_ratios = Vec::new();
+    for slug in NITROCROSS_PACK_SLUGS {
+        let track = tdrace_core::catalog::official_track("rally", slug);
+        let min_x = track.spline.samples.iter().map(|s| s.point.x).fold(f32::INFINITY, f32::min);
+        let max_x = track.spline.samples.iter().map(|s| s.point.x).fold(f32::NEG_INFINITY, f32::max);
+        let min_y = track.spline.samples.iter().map(|s| s.point.y).fold(f32::INFINITY, f32::min);
+        let max_y = track.spline.samples.iter().map(|s| s.point.y).fold(f32::NEG_INFINITY, f32::max);
+        let ar = (max_x - min_x) / (max_y - min_y).max(1.0);
+        aspect_ratios.push((slug, ar));
+    }
+    // Glen Helen is a North-South canyon circuit (AR < 1.05), while Wild Horse Pass is an elongated desert hybrid (AR > 2.2)
+    let gh_ar = aspect_ratios.iter().find(|(s, _)| *s == "glen_helen_rx").unwrap().1;
+    let whp_ar = aspect_ratios.iter().find(|(s, _)| *s == "wild_horse_pass_rx").unwrap().1;
+    assert!(gh_ar < 1.05, "glen_helen_rx should have North-South canyon aspect ratio < 1.05, got {:.2}", gh_ar);
+    assert!(whp_ar > 2.20, "wild_horse_pass_rx should have elongated desert aspect ratio > 2.20, got {:.2}", whp_ar);
 }
 
 /// Scenario 2: Grade-Separated Mega Jump Over-Under Joker Crossover Without Collision (Spec 134)
@@ -1569,20 +1617,20 @@ fn test_spec134_scenario_2_grade_separated_mega_jump_over_under_joker_crossover_
         );
         let seg2_cross_dist = seg2.project_point(mega_ramp.shape.center()).progress_distance;
 
-        // Start Car A on Seg 1 just before the takeoff ramp, at 22.0 m/s
+        // Start Car A on Seg 1 on the takeoff ramp 4.0m before the takeoff lip, at 28.0 m/s (101 km/h)
         let proj1 = seg1.project_point(mega_ramp.shape.center());
-        let start_a_dist = (proj1.progress_distance - 10.0).max(0.0);
+        let start_a_dist = (proj1.progress_distance - (mega_ramp.effective_gap_length() * 0.5 + 4.0)).max(0.0);
         let start_a = seg1.sample_at_distance(start_a_dist);
         let mut car_a = Car::new(CarConfig::rally_car())
             .with_pose(start_a.point, start_a.tangent.y.atan2(start_a.tangent.x));
-        car_a.set_velocity(start_a.tangent * 22.0);
+        car_a.set_velocity(start_a.tangent * 28.0);
 
-        // Start Car B on Seg 2 approaching the underpass crossing at 18.0 m/s
+        // Start Car B on Seg 2 approaching the underpass crossing at 14.0 m/s
         let start_b_dist = (seg2_cross_dist - 4.0).max(0.0);
         let start_b = seg2.sample_at_distance(start_b_dist);
         let mut car_b = Car::new(CarConfig::rally_car())
             .with_pose(start_b.point, start_b.tangent.y.atan2(start_b.tangent.x));
-        car_b.set_velocity(start_b.tangent * 18.0);
+        car_b.set_velocity(start_b.tangent * 14.0);
 
         let mut world: RaceWorld<Car> = RaceWorld::new(RaceRules {
             format: RaceFormat::Laps(3),
@@ -1597,14 +1645,37 @@ fn test_spec134_scenario_2_grade_separated_mega_jump_over_under_joker_crossover_
         world.spawn(car_b, tracker_b);
 
         let mut saw_car_a_over_gap = false;
+        let mut saw_car_a_clear_gap = false;
         let mut saw_car_b_under_gap = false;
-        let ctrl = DriveControls {
-            throttle: 1.0,
-            ..DriveControls::default()
-        };
 
-        for _ in 0..45 {
-            let events = world.step(&track, &[ctrl, ctrl], DT);
+        for _ in 0..85 {
+            let ctrl_a = DriveControls {
+                throttle: 1.0,
+                ..DriveControls::default()
+            };
+            // Steer Car B along Seg 2 centerline so it follows the Joker curve after the underpass
+            let b_pos = world.vehicles[1].state.position;
+            let b_proj = seg2.project_point(b_pos);
+            let b_target = seg2.sample_at_distance((b_proj.progress_distance + 10.0).min(seg2.length));
+            let b_to_target = (b_target.point - b_pos).normalize_or_zero();
+            let b_fwd = world.vehicles[1].forward_vector();
+            let steer_b = b_fwd.perp_dot(b_to_target).clamp(-1.0, 1.0);
+            let ctrl_b = if saw_car_b_under_gap {
+                DriveControls {
+                    throttle: 0.0,
+                    brake: 1.0,
+                    steer: steer_b,
+                    ..DriveControls::default()
+                }
+            } else {
+                DriveControls {
+                    throttle: 0.6,
+                    steer: steer_b,
+                    ..DriveControls::default()
+                }
+            };
+
+            let events = world.step(&track, &[ctrl_a, ctrl_b], DT);
             for ev in events {
                 assert!(
                     !matches!(ev, RaceEvent::VehicleImpact(_) | RaceEvent::WallImpact { .. }),
@@ -1630,6 +1701,8 @@ fn test_spec134_scenario_2_grade_separated_mega_jump_over_under_joker_crossover_
                         slug,
                         a.state.elevation + a.state.ramp_elevation
                     );
+                } else if s_a >= s_landing {
+                    saw_car_a_clear_gap = true;
                 }
             }
 
@@ -1647,6 +1720,7 @@ fn test_spec134_scenario_2_grade_separated_mega_jump_over_under_joker_crossover_
         }
 
         assert!(saw_car_a_over_gap, "{}: Car A must traverse the MegaRamp open gap", slug);
+        assert!(saw_car_a_clear_gap, "{}: Car A must clear the entire MegaRamp chasm onto the landing deck", slug);
         assert!(saw_car_b_under_gap, "{}: Car B must traverse the MegaRamp underpass", slug);
     }
 }

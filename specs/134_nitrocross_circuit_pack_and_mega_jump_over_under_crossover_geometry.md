@@ -45,12 +45,12 @@ Each circuit is calibrated at `1:1` scale with a 6-car Rallycross launch chute (
 
 | # | Track Slug | Official Venue Name | Location | Primary Surface & Runoff | Signature Mega Jump Crossover Feature |
 | :---: | :--- | :--- | :--- | :--- | :--- |
-| 1 | **`utah_umc_rx`** | **Utah Motorsports Campus RX** | Grantsville, Utah, USA | `Dirt` / `Asphalt` (`DeepGravel` runoff) | **100+ ft Nitro Gap Jump** launching over the Joker Lap underpass lane, plus 30° banked "Talladega" asphalt turn (`way/38461281`). |
-| 2 | **`erx_motor_park`** | **ERX Motor Park RX** | Elk River, Minnesota, USA | `Dirt` (`DeepGravel` runoff) | **70+ ft Stadium Tabletop Mega Jump** crossing over the clay bowl Joker detour, plus rolling rhythm whoops (`way/1023648273`). |
-| 3 | **`wild_horse_pass_rx`** | **Wild Horse Pass Motorsports Park RX** | Chandler, Arizona, USA | `Dirt` / `Asphalt` (`PackedSand` runoff) | **Desert Over-Under Flyover Mega Jump** where the main straight leaps over the lower Joker switchback chute (`way/227645012`). |
-| 4 | **`glen_helen_rx`** | **Glen Helen Raceway RX** | San Bernardino, California, USA | `Dirt` (`DeepGravel` runoff) | **Mt. St. Helens Elevation Drop & Step-Up Mega Jump** soaring across the canyon Joker loop (`way/134507638`). |
-| 5 | **`midamerica_outdoors_rx`** | **MidAmerica Outdoors RX** | Jay, Oklahoma, USA | `Dirt` (`Grass` / `DeepGravel` runoff) | **Forested Red-Clay Tabletop Mega Jump** flying over the wooded Joker shortcut (`assets/osm/midamerica_outdoors_rx.osm`). |
-| 6 | **`calgary_stampede_rx`** | **Calgary Stampede Park RX** | Calgary, Alberta, Canada | `PackedSnow` / `SheetIce` (`DeepSnow` runoff) | **"Nitrocross on Ice" Snow Kicker Mega Jump** launching studded-tire EVs over the icy Joker underpass (`way/35252855`). |
+| 1 | **`utah_umc_rx`** | **Utah Motorsports Campus RX** | Grantsville, Utah, USA | `Dirt` / `Asphalt` (`DeepGravel` runoff) | **112 ft (`34.0 m` gap / `60.0 m` structure) Nitro Gap Jump** launching over the Joker Lap underpass lane, plus 24° banked "Talladega" asphalt turn (`way/476963551`). |
+| 2 | **`erx_motor_park`** | **ERX Motor Park RX** | Elk River, Minnesota, USA | `Dirt` (`DeepGravel` runoff) | **74 ft (`22.5 m` gap / `46.0 m` structure) Stadium Tabletop Mega Jump** crossing over the clay bowl Joker detour, plus rolling rhythm whoops (`way/1023648273`). |
+| 3 | **`wild_horse_pass_rx`** | **Wild Horse Pass Motorsports Park RX** | Chandler, Arizona, USA | `Dirt` / `Asphalt` (`PackedSand` runoff) | **90 ft (`27.5 m` gap / `52.0 m` structure) Desert Over-Under Flyover Mega Jump** where the main straight leaps over the lower Joker switchback chute (`way/317246335`). |
+| 4 | **`glen_helen_rx`** | **Glen Helen Raceway RX** | San Bernardino, California, USA | `Dirt` (`DeepGravel` runoff) | **95 ft (`29.0 m` gap / `54.0 m` structure) Mt. St. Helens Step-Up Mega Jump** soaring across the canyon Joker loop (`way/887673423`). |
+| 5 | **`midamerica_outdoors_rx`** | **MidAmerica Outdoors RX** | Jay, Oklahoma, USA | `Dirt` (`Grass` / `DeepGravel` runoff) | **102 ft (`31.0 m` gap / `57.0 m` structure) Ozark Red-Clay Tabletop Mega Jump** flying over the wooded Joker shortcut (`way/887408204`). |
+| 6 | **`calgary_stampede_rx`** | **Calgary Stampede Park RX** | Calgary, Alberta, Canada | `PackedSnow` / `SheetIce` (`DeepSnow` runoff) | **85 ft (`26.0 m` gap / `50.0 m` structure) "Nitrocross on Ice" Snow Kicker Mega Jump** launching studded-tire EVs over the icy Joker underpass (`relation/3014962`). |
 
 ### 2. Grade-Separated Mega Jump Over-Under Crossover Geometry
 
@@ -58,8 +58,8 @@ To support a `RampKind::MegaRamp` crossing over a live track segment (the Joker 
 
 1. **Gap Corridor Sizing for Underpass Road**:
    - The `MegaRamp` is centered on the intersection `(x_cross, y_cross)` of the upper road and the lower road, oriented along the upper road's tangent `fwd`.
-   - Its physical gap length $L_{\text{gap}} = (s_{\text{landing}} - s_{\text{takeoff}}) \cdot L_{\text{ramp}}$ is sized to span the full width of the lower road $W_{\text{lower}}$ plus lateral clearance margins:
-     $$L_{\text{gap}} \ge W_{\text{lower}} + 2.0\text{ m} \quad (\text{typically } 14.0\text{ m} \le L_{\text{gap}} \le 18.0\text{ m},\; L_{\text{ramp}} \in [32.0\text{ m}, 44.0\text{ m}])$$
+   - Its physical gap length $L_{\text{gap}} = (s_{\text{landing}} - s_{\text{takeoff}}) \cdot L_{\text{ramp}}$ is sized to span the full width of the lower road $W_{\text{lower}}$ plus real-world Nitrocross chasm clearance margins:
+     $$L_{\text{gap}} \ge W_{\text{lower}} + 2.0\text{ m} \quad (\text{typically } 22.5\text{ m} \le L_{\text{gap}} \le 34.0\text{ m},\; L_{\text{ramp}} \in [46.0\text{ m}, 60.0\text{ m}])$$
    - `mega_takeoff_wall` (at `s = s_takeoff`) and `mega_landing_wall` (at `s = s_landing`) sit outside the lower road's drivable edges, functioning both as the vertical bridge abutments for the upper jump ([Spec 124](124_mega_jump_dual_wall_gap_trap_and_minimum_gap_sizing.md)) and as the concrete side retaining walls flanking the lower underpass lane.
 2. **Mutual Side-Wall Trimming at Mega Jump Underpasses**:
    - In [`crates/arcade-race-core/src/track/mod.rs`](../crates/arcade-race-core/src/track/mod.rs):

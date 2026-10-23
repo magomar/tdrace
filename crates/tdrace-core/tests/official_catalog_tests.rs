@@ -30,11 +30,11 @@ fn test_catalog_counts_per_module() {
     let vault_count = catalog::module_circuits("vault").count();
     assert_eq!(
         counts,
-        vec![classic_count, 20, 18, 20, 17, 20, 17, vault_count],
+        vec![classic_count, 20, 18, 20, 17, 25, 17, vault_count],
         "circuits per module {:?}",
         MODULES
     );
-    assert_eq!(catalog::circuits().len(), classic_count + 112 + vault_count);
+    assert_eq!(catalog::circuits().len(), classic_count + 117 + vault_count);
 }
 
 #[test]
@@ -150,7 +150,7 @@ fn test_rebuild_reproduces_every_osm_circuit() {
 fn test_catalog_rallycross_synonym() {
     let rx_count = catalog::module_circuits("rallycross").count();
     let rally_count = catalog::module_circuits("rally").count();
-    assert_eq!(rx_count, 20);
+    assert_eq!(rx_count, 25);
     assert_eq!(rx_count, rally_count);
     assert!(catalog::find("hell", Some("rallycross")).is_some());
     assert!(catalog::find("hell", Some("rally")).is_some());

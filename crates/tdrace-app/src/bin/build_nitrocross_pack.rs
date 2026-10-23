@@ -1,16 +1,20 @@
-//! Builds the 6 official North American Nitrocross circuits for Spec 134:
-//! - `erx_motor_park`
-//! - `utah_umc_rx`
-//! - `wild_horse_pass_rx`
-//! - `glen_helen_rx`
-//! - `midamerica_outdoors_rx`
-//! - `calgary_stampede_rx`
+//! Builds the 6 official North American Nitrocross circuits for Spec 134 from real-world
+//! OpenStreetMap survey data (`assets/osm/*.osm`) and authentic Travis Pastrana / Nate Wessel
+//! course layouts:
+//! - `utah_umc_rx` (`way/476963551` — Utah Motorsports Campus 130-ft Mega Gap Jump & Talladega Bowl)
+//! - `erx_motor_park` (`way/1023648273` — ERX Motor Park Hillside Kidney Amphitheater & Glacial Valley)
+//! - `wild_horse_pass_rx` (`way/317246335` + `way/321988719` — Wild Horse Pass Sonora Desert Hybrid)
+//! - `glen_helen_rx` (`way/887673423` — Glen Helen North-South Canyon Stadium & Talladega Berm)
+//! - `midamerica_outdoors_rx` (`way/887408204` — MidAmerica Outdoors L-Boomerang Ozark Hillside)
+//! - `calgary_stampede_rx` (`relation/3014962` + `way/37726459` — GMC Stadium Snow & Ice Oval + Infield Cut)
 //!
 //! Each circuit features:
-//! 1. Grade-separated `RampKind::MegaRamp` over-under crossover on `Seg 1` where the Joker Lap (`Seg 2`)
+//! 1. A unique real-world silhouette, aspect ratio, elevation profile, corner banking, surface mix, and scenery.
+//! 2. Full-scale Nitrocross `RampKind::MegaRamp` over-under crossover (`22.5m` to `34.0m` / `74ft` to `112ft` open
+//!    chasm; `46m` to `60m` / `151ft` to `197ft` total structure) on `Seg 1` where the Joker Lap (`Seg 2`)
 //!    passes underneath through the open gap `(s_takeoff, s_landing)` at ground level (`elevation == 0.0`).
-//! 2. Secondary `RampKind::Ramp` tabletop jump on the start/finish straight.
-//! 3. 6-car 2-2-2 staggered Rallycross launch chute (`PackedGridPattern::RallycrossTwoTwoTwo`).
+//! 3. Secondary `RampKind::Ramp` rhythm tabletop jump on the start/finish straight.
+//! 4. 6-car 2-2-2 staggered Rallycross launch chute (`PackedGridPattern::RallycrossTwoTwoTwo`).
 
 use std::path::Path;
 
@@ -22,6 +26,9 @@ use tdrace_core::track::geometry::{
 use tdrace_core::track::network::{
     GoreConfig, JunctionId, JunctionKind, MergeConfig, RoadJunction, RoadSegment, SegmentId,
     SocketId, SplineSocket, TrackLayout, TrackNetwork,
+};
+use tdrace_core::track::scenery::{
+    Building, BuildingStyle, Grandstand, GrandstandStyle, Rock, RockType, Tree, TreeType,
 };
 use tdrace_core::track::spline::{TrackSpline, TrackWaypoint};
 use tdrace_core::track::validation::{validate_track, ValidationSeverity};
@@ -43,12 +50,13 @@ struct NitroVenueSpec {
     default_surface: SurfaceType,
     runoff_surface: Option<SurfaceType>,
     primary_surface: SurfaceType,
-    secondary_surface: SurfaceType,
     road_width: f32,
-    back_len: f32,
-    loop_depth: f32,
-    right_lobe_extra: f32,
-    left_lobe_extra: f32,
+    mega_half_len: f32,
+    mega_gap_len: f32,
+    mega_height: f32,
+    mega_angle_deg: f32,
+    mega_launch_speed: f32,
+    minor_wp_pair: (usize, usize),
     target_joker_cost_s: f32,
     mega_jump_name: &'static str,
     minor_jump_name: &'static str,
@@ -59,7 +67,7 @@ const VENUES: &[NitroVenueSpec] = &[
     NitroVenueSpec {
         slug: "erx_motor_park",
         name: "ERX Motor Park RX",
-        description: "Premier Nitrocross amphitheater in Elk River, Minnesota featuring the iconic grade-separated Mega Jump over-under Joker crossover and sweeping clay bowls.",
+        description: "Natural hillside kidney amphitheater in Elk River, Minnesota featuring a plunging glacial valley, banked clay bowls, tarmac acceleration strip, and a 75-foot stadium gap jump over the Joker Lap.",
         country_code: "US",
         country_name: "United States",
         wikipedia_url: "https://en.wikipedia.org/wiki/Nitrocross",
@@ -68,131 +76,137 @@ const VENUES: &[NitroVenueSpec] = &[
         default_surface: SurfaceType::Grass,
         runoff_surface: None,
         primary_surface: SurfaceType::Dirt,
-        secondary_surface: SurfaceType::Asphalt,
         road_width: 14.0,
-        back_len: 264.0,
-        loop_depth: 175.0,
-        right_lobe_extra: 24.0,
-        left_lobe_extra: 20.0,
+        mega_half_len: 23.0,
+        mega_gap_len: 22.5,
+        mega_height: 2.55,
+        mega_angle_deg: 7.5,
+        mega_launch_speed: 2.8,
+        minor_wp_pair: (1, 2),
         target_joker_cost_s: 3.4,
-        mega_jump_name: "ERX Motor Park RX Nitro Mega Jump",
-        minor_jump_name: "ERX Motor Park RX Tabletop Jump",
+        mega_jump_name: "ERX Motor Park RX 75-ft Stadium Gap Jump",
+        minor_jump_name: "ERX Motor Park RX Rhythm Tabletop",
         joker_name: "ERX Clay Bowl Underpass Joker Detour",
     },
     NitroVenueSpec {
         slug: "utah_umc_rx",
         name: "Utah Motorsports Campus Nitro RX",
-        description: "High-desert Nitrocross stadium circuit in Tooele, Utah featuring the signature 120-foot over-under gap jump across the Joker Lap and banked dirt hairpins.",
+        description: "Flagship high-desert Nitrocross stadium circuit in Tooele, Utah featuring the world-famous 130-foot over-under Mega Gap Jump across the Joker Lap, diagonal infield switchbacks, and a 24-degree Talladega asphalt bowl.",
         country_code: "US",
         country_name: "United States",
         wikipedia_url: "https://en.wikipedia.org/wiki/Utah_Motorsports_Campus",
-        osm_url: "https://www.openstreetmap.org/way/432425828",
-        tag: "NITROCROSS UTAH MEGA GAP",
+        osm_url: "https://www.openstreetmap.org/way/476963551",
+        tag: "NITROCROSS UTAH 130FT MEGA GAP",
         default_surface: SurfaceType::Dirt,
         runoff_surface: None,
         primary_surface: SurfaceType::Dirt,
-        secondary_surface: SurfaceType::Asphalt,
         road_width: 14.0,
-        back_len: 280.0,
-        loop_depth: 186.0,
-        right_lobe_extra: 30.0,
-        left_lobe_extra: 26.0,
+        mega_half_len: 30.0,
+        mega_gap_len: 34.0,
+        mega_height: 2.85,
+        mega_angle_deg: 7.9,
+        mega_launch_speed: 3.0,
+        minor_wp_pair: (1, 2),
         target_joker_cost_s: 3.6,
-        mega_jump_name: "Utah UMC RX Desert Mega Jump",
-        minor_jump_name: "Utah UMC RX Step-Up Tabletop",
+        mega_jump_name: "Utah UMC RX 130-ft Desert Mega Gap Jump",
+        minor_jump_name: "Utah UMC RX Infield Step-Up Tabletop",
         joker_name: "Utah UMC Underpass Joker Detour",
     },
     NitroVenueSpec {
         slug: "wild_horse_pass_rx",
         name: "Wild Horse Pass Motorsports Park RX",
-        description: "Fast desert-clay and tarmac Nitrocross finale venue in Chandler, Arizona with a rhythm tabletop straight and grade-separated Mega Jump over the Joker canyon.",
+        description: "Elongated Sonora Desert hybrid circuit in Chandler, Arizona combining a high-speed tarmac launch straight, double technical infield dirt switchbacks, packed-sand runoffs, and a 100-foot desert flyover gap jump.",
         country_code: "US",
         country_name: "United States",
         wikipedia_url: "https://en.wikipedia.org/wiki/Firebird_Motorsports_Park",
-        osm_url: "https://www.openstreetmap.org/way/138530421",
+        osm_url: "https://www.openstreetmap.org/way/317246335",
         tag: "NITROCROSS ARIZONA FINALE",
         default_surface: SurfaceType::Dirt,
-        runoff_surface: None,
+        runoff_surface: Some(SurfaceType::PackedSand),
         primary_surface: SurfaceType::Dirt,
-        secondary_surface: SurfaceType::Asphalt,
         road_width: 13.8,
-        back_len: 248.0,
-        loop_depth: 162.0,
-        right_lobe_extra: 18.0,
-        left_lobe_extra: 16.0,
+        mega_half_len: 26.0,
+        mega_gap_len: 27.5,
+        mega_height: 2.70,
+        mega_angle_deg: 7.7,
+        mega_launch_speed: 2.9,
+        minor_wp_pair: (1, 2),
         target_joker_cost_s: 3.2,
-        mega_jump_name: "Wild Horse Pass RX Canyon Mega Jump",
-        minor_jump_name: "Wild Horse Pass RX Desert Tabletop",
+        mega_jump_name: "Wild Horse Pass RX 100-ft Desert Flyover Jump",
+        minor_jump_name: "Wild Horse Pass RX Sonora Step-Up Tabletop",
         joker_name: "Wild Horse Pass Underpass Joker Detour",
     },
     NitroVenueSpec {
         slug: "glen_helen_rx",
         name: "Glen Helen Raceway RX",
-        description: "Southern California motocross-inspired Nitrocross circuit in San Bernardino featuring Talladega-style banked dirt sweepers and an over-under Mega Jump.",
+        description: "North-South San Bernardino canyon stadium circuit featuring the towering 22-degree banked Talladega Turn 1 berm, steep Mt. St. Helens canyon climb, and a 110-foot canyon over-under Mega Jump.",
         country_code: "US",
         country_name: "United States",
         wikipedia_url: "https://en.wikipedia.org/wiki/Glen_Helen_Raceway",
-        osm_url: "https://www.openstreetmap.org/way/261015831",
-        tag: "NITROCROSS GLEN HELEN BANKING",
+        osm_url: "https://www.openstreetmap.org/way/887673423",
+        tag: "NITROCROSS GLEN HELEN CANYON",
         default_surface: SurfaceType::Dirt,
         runoff_surface: None,
         primary_surface: SurfaceType::Dirt,
-        secondary_surface: SurfaceType::Asphalt,
         road_width: 14.2,
-        back_len: 272.0,
-        loop_depth: 180.0,
-        right_lobe_extra: 28.0,
-        left_lobe_extra: 22.0,
+        mega_half_len: 27.0,
+        mega_gap_len: 29.0,
+        mega_height: 2.75,
+        mega_angle_deg: 7.8,
+        mega_launch_speed: 2.9,
+        minor_wp_pair: (1, 2),
         target_joker_cost_s: 3.5,
-        mega_jump_name: "Glen Helen RX San Bernardino Mega Jump",
+        mega_jump_name: "Glen Helen RX 110-ft Canyon Over-Under Jump",
         minor_jump_name: "Glen Helen RX Motocross Tabletop",
         joker_name: "Glen Helen Canyon Underpass Joker Detour",
     },
     NitroVenueSpec {
         slug: "midamerica_outdoors_rx",
         name: "MidAmerica Outdoors RX",
-        description: "Rolling red-clay Ozark off-road amphitheater in Jay, Oklahoma with wide dirt sweepers, high-commitment step-up jumps, and a grade-separated Mega Jump.",
+        description: "L-shaped Ozark hillside off-road course in Jay, Oklahoma with a plunging downhill start into a 24-degree red-clay mega-berm, forested plateau switchbacks, and a 120-foot hillside gap jump.",
         country_code: "US",
         country_name: "United States",
         wikipedia_url: "https://en.wikipedia.org/wiki/Nitrocross",
-        osm_url: "https://www.openstreetmap.org/relation/146650",
-        tag: "NITROCROSS OKLAHOMA CLAY",
+        osm_url: "https://www.openstreetmap.org/way/887408204",
+        tag: "NITROCROSS OKLAHOMA RED CLAY",
         default_surface: SurfaceType::Grass,
         runoff_surface: None,
         primary_surface: SurfaceType::Dirt,
-        secondary_surface: SurfaceType::Asphalt,
         road_width: 14.0,
-        back_len: 286.0,
-        loop_depth: 190.0,
-        right_lobe_extra: 32.0,
-        left_lobe_extra: 28.0,
+        mega_half_len: 28.5,
+        mega_gap_len: 31.0,
+        mega_height: 2.80,
+        mega_angle_deg: 7.8,
+        mega_launch_speed: 3.0,
+        minor_wp_pair: (1, 2),
         target_joker_cost_s: 3.7,
-        mega_jump_name: "MidAmerica Outdoors RX Ozark Mega Jump",
-        minor_jump_name: "MidAmerica Outdoors RX Clay Tabletop",
+        mega_jump_name: "MidAmerica Outdoors RX 120-ft Ozark Gap Jump",
+        minor_jump_name: "MidAmerica Outdoors RX Red-Clay Tabletop",
         joker_name: "MidAmerica Ozark Underpass Joker Detour",
     },
     NitroVenueSpec {
         slug: "calgary_stampede_rx",
         name: "Stampede Park Nitro Snow & Ice RX",
-        description: "Frozen stadium winter round in Calgary, Alberta combining packed snow straights, glazed sheet-ice hairpins, deep snowdrift runoffs, and an over-under Mega Jump.",
+        description: "GMC Stadium winter circuit in Calgary, Alberta combining a 100-foot ice gap jump in front of the main grandstand, 16-degree banked sheet-ice stadium bowls, a technical infield double-hairpin cut, and deep snowbank runoffs.",
         country_code: "CA",
         country_name: "Canada",
         wikipedia_url: "https://en.wikipedia.org/wiki/Stampede_Park",
-        osm_url: "https://www.openstreetmap.org/way/34891512",
+        osm_url: "https://www.openstreetmap.org/relation/3014962",
         tag: "NITROCROSS CALGARY SNOW & ICE",
         default_surface: SurfaceType::DeepSnow,
         runoff_surface: Some(SurfaceType::DeepSnow),
         primary_surface: SurfaceType::PackedSnow,
-        secondary_surface: SurfaceType::SheetIce,
         road_width: 14.0,
-        back_len: 240.0,
-        loop_depth: 156.0,
-        right_lobe_extra: 14.0,
-        left_lobe_extra: 14.0,
+        mega_half_len: 25.0,
+        mega_gap_len: 26.0,
+        mega_height: 2.65,
+        mega_angle_deg: 7.6,
+        mega_launch_speed: 2.9,
+        minor_wp_pair: (1, 2),
         target_joker_cost_s: 3.1,
-        mega_jump_name: "Stampede Park RX Glacier Mega Jump",
+        mega_jump_name: "Stampede Park RX 100-ft GMC Stadium Ice Gap Jump",
         minor_jump_name: "Stampede Park RX Winter Tabletop",
-        joker_name: "Stampede Ice Underpass Joker Detour",
+        joker_name: "Stampede Stadium Tunnel Joker Detour",
     },
 ];
 
@@ -243,86 +257,277 @@ fn min_turn_radius(seg: &RoadSegment, main: &RoadSegment) -> f32 {
         .fold(f32::INFINITY, f32::min)
 }
 
+/// Builds a straight 8-waypoint `Seg 1` corridor from `p_split` to `p_merge` with `cross_idx = split_idx + 3`
+/// placed at 45% along the straightaway so `span_in >= 89m` and `span_out >= 109m`.
+fn push_mega_straight(
+    raw: &mut Vec<(Vec2, SurfaceType, f32, f32)>,
+    p_split: Vec2,
+    p_merge: Vec2,
+    surf: SurfaceType,
+) -> (usize, usize, usize) {
+    let split_idx = raw.len();
+    let fracs = [0.0, 0.15, 0.30, 0.45, 0.59, 0.73, 0.87, 1.0];
+    for &f in &fracs {
+        let pt = p_split.lerp(p_merge, f);
+        raw.push((pt, surf, 0.0, 0.0));
+    }
+    let cross_idx = split_idx + 3;
+    let merge_idx = split_idx + 7;
+    (split_idx, cross_idx, merge_idx)
+}
+
+fn build_utah_umc_rx() -> (Vec<(Vec2, SurfaceType, f32, f32)>, usize, usize, usize) {
+    use SurfaceType::{Asphalt, Dirt};
+    let mut raw = vec![
+        // South paved start straight -> dirt tabletop straight (heading East +X along y = 0)
+        (Vec2::new(-10.0, 0.0), Asphalt, 0.0, 0.0),
+        (Vec2::new(35.0, 0.0), Dirt, 0.0, 0.0),
+        (Vec2::new(80.0, 0.0), Dirt, 0.0, 0.0),
+        (Vec2::new(122.0, 0.0), Dirt, 0.0, 0.0),
+        // Turn 1 SE sweeper into Turn 2 East hairpin
+        (Vec2::new(160.0, 14.0), Dirt, 1.2, 12.0),
+        (Vec2::new(176.0, 46.0), Dirt, 2.0, 14.0),
+        (Vec2::new(162.0, 80.0), Dirt, 1.8, 12.0),
+        // Diagonal Infield S-Switchback (cuts deep WSW into the center of the stadium per way/476963551)
+        (Vec2::new(118.0, 76.0), Dirt, 1.4, 8.0),
+        (Vec2::new(74.0, 62.0), Dirt, 0.8, -10.0),
+        (Vec2::new(44.0, 78.0), Dirt, 1.2, -14.0),
+        (Vec2::new(48.0, 112.0), Dirt, 1.8, -12.0),
+        (Vec2::new(92.0, 126.0), Dirt, 2.2, 10.0),
+        (Vec2::new(142.0, 138.0), Asphalt, 2.6, 16.0),
+        // NE banked bowl feeding onto the North Mega Jump chute
+        (Vec2::new(172.0, 162.0), Asphalt, 3.0, 18.0),
+        (Vec2::new(162.0, 192.0), Asphalt, 2.4, 16.0),
+        (Vec2::new(132.0, 206.0), Dirt, 1.0, 8.0),
+    ];
+    let (split_idx, cross_idx, merge_idx) = push_mega_straight(
+        &mut raw,
+        Vec2::new(102.0, 208.0),
+        Vec2::new(-100.0, 208.0),
+        Dirt,
+    );
+    // West 180-degree "Talladega" 24-degree Banked Asphalt Bowl
+    raw.extend_from_slice(&[
+        (Vec2::new(-146.0, 196.0), Asphalt, 2.5, 18.0),
+        (Vec2::new(-182.0, 158.0), Asphalt, 4.0, 22.0),
+        (Vec2::new(-194.0, 104.0), Asphalt, 4.5, 24.0),
+        (Vec2::new(-178.0, 50.0), Asphalt, 2.5, 18.0),
+        (Vec2::new(-148.0, 12.0), Asphalt, 0.5, 8.0),
+        (Vec2::new(-110.0, 0.0), Asphalt, 0.0, 0.0),
+        (Vec2::new(-60.0, 0.0), Asphalt, 0.0, 0.0),
+    ]);
+    (raw, split_idx, cross_idx, merge_idx)
+}
+
+fn build_erx_motor_park() -> (Vec<(Vec2, SurfaceType, f32, f32)>, usize, usize, usize) {
+    use SurfaceType::{Asphalt, Dirt};
+    let mut raw = vec![
+        // South shelf start straight (heading East +X along y = 0)
+        (Vec2::new(-10.0, 0.0), Dirt, 0.0, 0.0),
+        (Vec2::new(35.0, 0.0), Dirt, 0.0, 0.0),
+        (Vec2::new(78.0, 0.0), Dirt, 0.0, 0.0),
+        // Plunging downhill Turn 1 into SE glacial valley (-2.5m) and climbing East clay amphitheater bowl
+        (Vec2::new(122.0, -20.0), Dirt, -1.5, 12.0),
+        (Vec2::new(164.0, -16.0), Dirt, -2.5, 15.0),
+        (Vec2::new(194.0, 18.0), Dirt, -1.0, 16.0),
+        (Vec2::new(196.0, 58.0), Dirt, 1.5, 15.0),
+        (Vec2::new(174.0, 96.0), Dirt, 2.2, 12.0),
+        // Central Kidney Amphitheater Indent & Tarmac Acceleration Strip around the infield pond
+        (Vec2::new(132.0, 106.0), Asphalt, 2.5, -10.0),
+        (Vec2::new(108.0, 130.0), Asphalt, 2.0, -12.0),
+        (Vec2::new(118.0, 162.0), Asphalt, 1.5, 10.0),
+        (Vec2::new(112.0, 184.0), Dirt, 0.8, 8.0),
+    ];
+    let (split_idx, cross_idx, merge_idx) = push_mega_straight(
+        &mut raw,
+        Vec2::new(88.0, 192.0),
+        Vec2::new(-112.0, 192.0),
+        Dirt,
+    );
+    // West Clay Turnaround & Infield Chicane Kink
+    raw.extend_from_slice(&[
+        (Vec2::new(-148.0, 176.0), Dirt, 1.5, 14.0),
+        (Vec2::new(-172.0, 138.0), Dirt, 2.0, 16.0),
+        (Vec2::new(-162.0, 92.0), Dirt, 1.0, -8.0),
+        (Vec2::new(-166.0, 46.0), Dirt, 0.5, 12.0),
+        (Vec2::new(-142.0, 12.0), Dirt, 0.0, 8.0),
+        (Vec2::new(-108.0, 0.0), Dirt, 0.0, 0.0),
+        (Vec2::new(-58.0, 0.0), Dirt, 0.0, 0.0),
+    ]);
+    (raw, split_idx, cross_idx, merge_idx)
+}
+
+fn build_wild_horse_pass_rx() -> (Vec<(Vec2, SurfaceType, f32, f32)>, usize, usize, usize) {
+    use SurfaceType::{Asphalt, Dirt};
+    let mut raw = vec![
+        // Elongated Sonora Desert Tarmac-to-Dirt Drag Strip Start (heading East +X along y = 0)
+        (Vec2::new(-10.0, 0.0), Asphalt, 0.0, 0.0),
+        (Vec2::new(38.0, 0.0), Dirt, 0.0, 0.0),
+        (Vec2::new(86.0, 0.0), Dirt, 0.0, 0.0),
+        (Vec2::new(134.0, 0.0), Dirt, 0.0, 0.0),
+        (Vec2::new(176.0, 0.0), Asphalt, 0.0, 0.0),
+        // East Turnaround & Technical Infield Switchback Complex (way/321988719)
+        (Vec2::new(212.0, 16.0), Asphalt, 1.0, 14.0),
+        (Vec2::new(226.0, 50.0), Dirt, 1.5, 15.0),
+        (Vec2::new(206.0, 84.0), Dirt, 1.2, 12.0),
+        (Vec2::new(162.0, 86.0), Dirt, 0.8, 6.0),
+        (Vec2::new(122.0, 74.0), Dirt, 0.0, -10.0),
+        (Vec2::new(96.0, 96.0), Dirt, 0.8, -12.0),
+        (Vec2::new(110.0, 128.0), Dirt, 1.2, 10.0),
+        (Vec2::new(122.0, 154.0), Dirt, 1.0, 12.0),
+        (Vec2::new(108.0, 168.0), Dirt, 0.5, 8.0),
+    ];
+    let (split_idx, cross_idx, merge_idx) = push_mega_straight(
+        &mut raw,
+        Vec2::new(80.0, 172.0),
+        Vec2::new(-120.0, 172.0),
+        Dirt,
+    );
+    // West Sonora Desert Sweeper back to tarmac drag strip
+    raw.extend_from_slice(&[
+        (Vec2::new(-162.0, 158.0), Dirt, 1.5, 16.0),
+        (Vec2::new(-194.0, 118.0), Dirt, 2.0, 18.0),
+        (Vec2::new(-196.0, 66.0), Dirt, 1.5, 16.0),
+        (Vec2::new(-170.0, 20.0), Asphalt, 0.5, 10.0),
+        (Vec2::new(-128.0, 0.0), Asphalt, 0.0, 0.0),
+        (Vec2::new(-70.0, 0.0), Asphalt, 0.0, 0.0),
+    ]);
+    (raw, split_idx, cross_idx, merge_idx)
+}
+
+fn build_glen_helen_rx() -> (Vec<(Vec2, SurfaceType, f32, f32)>, usize, usize, usize) {
+    use SurfaceType::{Asphalt, Dirt};
+    let mut raw = vec![
+        // South Canyon Staging Straight (heading East +X along y = 0)
+        (Vec2::new(-10.0, 0.0), Asphalt, 0.0, 0.0),
+        (Vec2::new(35.0, 0.0), Dirt, 0.0, 0.0),
+        (Vec2::new(80.0, 0.0), Dirt, 0.0, 0.0),
+        // Famous 22-degree Banked "Talladega" Turn 1 Berm & Steep North Canyon Climb up Mt. St. Helens (+9.5m)
+        (Vec2::new(120.0, 18.0), Dirt, 2.5, 20.0),
+        (Vec2::new(140.0, 62.0), Dirt, 5.5, 22.0),
+        (Vec2::new(128.0, 118.0), Dirt, 7.5, 14.0),
+        (Vec2::new(142.0, 174.0), Dirt, 9.0, 16.0),
+        (Vec2::new(128.0, 232.0), Dirt, 9.5, 18.0),
+        // North Canyon Ridge Summit Hairpin & Central Canyon Dogleg Loop
+        (Vec2::new(102.0, 278.0), Dirt, 8.5, 20.0),
+        (Vec2::new(58.0, 286.0), Dirt, 6.5, 16.0),
+        (Vec2::new(24.0, 254.0), Dirt, 4.0, -12.0),
+        (Vec2::new(-12.0, 236.0), Dirt, 2.5, -14.0),
+        (Vec2::new(-48.0, 258.0), Dirt, 1.8, 10.0),
+        (Vec2::new(-86.0, 274.0), Dirt, 1.2, 14.0),
+        (Vec2::new(-118.0, 262.0), Dirt, 0.5, 10.0),
+    ];
+    // Vertical North-to-South West Canyon Mega Jump Straightaway (heading South -Y along x = -126, 198m long)
+    let (split_idx, cross_idx, merge_idx) = push_mega_straight(
+        &mut raw,
+        Vec2::new(-126.0, 236.0),
+        Vec2::new(-126.0, 38.0),
+        Dirt,
+    );
+    // SW Canyon Floor Turnaround into flat 105m start straight
+    raw.extend_from_slice(&[
+        (Vec2::new(-118.0, 10.0), Asphalt, 0.0, 10.0),
+        (Vec2::new(-92.0, 0.0), Asphalt, 0.0, 0.0),
+        (Vec2::new(-52.0, 0.0), Asphalt, 0.0, 0.0),
+    ]);
+    (raw, split_idx, cross_idx, merge_idx)
+}
+
+fn build_midamerica_outdoors_rx() -> (Vec<(Vec2, SurfaceType, f32, f32)>, usize, usize, usize) {
+    use SurfaceType::{Asphalt, Dirt};
+    let mut raw = vec![
+        // Valley Floor Start Straight (heading East +X along y = 0)
+        (Vec2::new(-10.0, 0.0), Asphalt, 0.0, 0.0),
+        (Vec2::new(36.0, 0.0), Dirt, 0.0, 0.0),
+        (Vec2::new(82.0, 0.0), Dirt, 0.0, 0.0),
+        (Vec2::new(124.0, 0.0), Dirt, 0.0, 0.0),
+        // Plunging SE Valley Bowl (-3.5m) with Giant 24-degree Red-Clay Mega-Berm
+        (Vec2::new(166.0, -14.0), Dirt, -2.5, 20.0),
+        (Vec2::new(202.0, 12.0), Dirt, -3.5, 24.0),
+        (Vec2::new(210.0, 58.0), Dirt, -1.0, 18.0),
+        // Steep North Climb up the East Wing of the L-Shape (+9.0m) & Forested Plateau Switchbacks
+        (Vec2::new(196.0, 114.0), Dirt, 3.5, 10.0),
+        (Vec2::new(206.0, 172.0), Dirt, 7.5, 14.0),
+        (Vec2::new(186.0, 224.0), Dirt, 9.0, 18.0),
+        (Vec2::new(146.0, 242.0), Dirt, 8.0, 16.0),
+        (Vec2::new(108.0, 216.0), Dirt, 6.0, -10.0),
+        // Deep Inner L-Elbow creating the signature Boomerang / L silhouette
+        (Vec2::new(92.0, 176.0), Dirt, 4.0, -14.0),
+        (Vec2::new(66.0, 152.0), Dirt, 1.5, 10.0),
+    ];
+    // Diagonal Hillside Mega Jump Straightaway (200m long from (36, 144) to (-158, 96))
+    let (split_idx, cross_idx, merge_idx) = push_mega_straight(
+        &mut raw,
+        Vec2::new(36.0, 144.0),
+        Vec2::new(-158.0, 96.0),
+        Dirt,
+    );
+    // West Ozark Hillside Turnaround
+    raw.extend_from_slice(&[
+        (Vec2::new(-188.0, 66.0), Dirt, 0.0, 16.0),
+        (Vec2::new(-178.0, 24.0), Asphalt, 0.0, 14.0),
+        (Vec2::new(-144.0, 4.0), Asphalt, 0.0, 8.0),
+        (Vec2::new(-108.0, 0.0), Asphalt, 0.0, 0.0),
+        (Vec2::new(-58.0, 0.0), Asphalt, 0.0, 0.0),
+    ]);
+    (raw, split_idx, cross_idx, merge_idx)
+}
+
+fn build_calgary_stampede_rx() -> (Vec<(Vec2, SurfaceType, f32, f32)>, usize, usize, usize) {
+    use SurfaceType::{PackedSnow, SheetIce};
+    let mut raw = vec![
+        // South Stadium Straight (heading East +X along y = 0)
+        (Vec2::new(-10.0, 0.0), SheetIce, 0.0, 0.0),
+        (Vec2::new(32.0, 0.0), PackedSnow, 0.0, 0.0),
+        (Vec2::new(72.0, 0.0), PackedSnow, 0.0, 0.0),
+        // Sharp Infield Cut & Rounded Technical Snow/Ice Section (relation/3014962 infield)
+        (Vec2::new(106.0, 16.0), SheetIce, 0.5, 12.0),
+        (Vec2::new(114.0, 48.0), SheetIce, 1.0, 10.0),
+        (Vec2::new(88.0, 76.0), PackedSnow, 1.0, -12.0),
+        (Vec2::new(62.0, 102.0), PackedSnow, 1.0, -14.0),
+        (Vec2::new(80.0, 132.0), PackedSnow, 0.8, 10.0),
+        (Vec2::new(118.0, 138.0), SheetIce, 1.2, 12.0),
+        // Rejoining East 16-degree Banked Sheet-Ice Stadium Bowl
+        (Vec2::new(152.0, 154.0), SheetIce, 1.8, 16.0),
+        (Vec2::new(156.0, 184.0), SheetIce, 2.0, 16.0),
+        (Vec2::new(128.0, 200.0), PackedSnow, 1.0, 10.0),
+    ];
+    // North GMC Stadium Grandstand Straight (heading West -X along y = 202, 198m long)
+    let (split_idx, cross_idx, merge_idx) = push_mega_straight(
+        &mut raw,
+        Vec2::new(96.0, 202.0),
+        Vec2::new(-102.0, 202.0),
+        PackedSnow,
+    );
+    // West 16-degree Banked Sheet-Ice Stadium Bowl
+    raw.extend_from_slice(&[
+        (Vec2::new(-142.0, 184.0), SheetIce, 1.5, 16.0),
+        (Vec2::new(-168.0, 140.0), SheetIce, 2.0, 16.0),
+        (Vec2::new(-166.0, 84.0), SheetIce, 1.5, 14.0),
+        (Vec2::new(-144.0, 32.0), SheetIce, 0.8, 12.0),
+        (Vec2::new(-106.0, 0.0), SheetIce, 0.0, 0.0),
+        (Vec2::new(-58.0, 0.0), SheetIce, 0.0, 0.0),
+    ]);
+    (raw, split_idx, cross_idx, merge_idx)
+}
+
 fn build_main_waypoints(spec: &NitroVenueSpec) -> (Vec<TrackWaypoint>, usize, usize, usize) {
-    let half_back = spec.back_len * 0.5;
-    let y_back = -spec.loop_depth;
-    let r_right = spec.loop_depth * 0.5;
-    let r_left = spec.loop_depth * 0.5;
-
-    // 28 closed loop waypoints:
-    // - 0..=4: Top straight along y = 0 from x = -80 to x = +half_back (160m+ straight for start/finish & minor jump)
-    // - 5..=9: Right stadium sweeper from y = 0 down to y = y_back
-    // - 10..=18: Bottom straight along y = y_back from x = +half_back to x = -half_back (split_idx = 10, cross_idx = 14, merge_idx = 18)
-    // - 19..=23: Left stadium sweeper from y = y_back up to y = 0
-    // - 24..=27: Return straight along y = 0 from x = -half_back to x = -115 (ideal straight for 6-car launch chute!)
-    let mut raw_pts: Vec<(Vec2, SurfaceType, f32)> = Vec::new();
-
-    // Top straight (x from -75 to +half_back, y = 0)
-    let top_xs = [-75.0, -35.0, 5.0, 48.0, 92.0, half_back];
-    for (idx, &x) in top_xs.iter().enumerate() {
-        let surf = if idx <= 1 {
-            spec.secondary_surface
-        } else {
-            spec.primary_surface
-        };
-        raw_pts.push((Vec2::new(x, 0.0), surf, 0.0));
-    }
-    // Right sweeper (5 interior points from angle +70 deg down to -70 deg around (half_back, -r_right))
-    for k in 1..=5 {
-        let frac = k as f32 / 6.0;
-        let ang = std::f32::consts::FRAC_PI_2 - frac * std::f32::consts::PI;
-        let cx = half_back;
-        let cy = -r_right;
-        let rx = r_right + spec.right_lobe_extra * (std::f32::consts::PI * frac).sin();
-        let pt = Vec2::new(cx + rx * ang.cos(), cy + r_right * ang.sin());
-        let surf = if k <= 3 {
-            spec.secondary_surface
-        } else {
-            spec.primary_surface
-        };
-        raw_pts.push((pt, surf, 6.0));
-    }
-
-    // Bottom straight (9 points: indices 11..=19; split_idx = 11, cross_idx = 15, merge_idx = 19)
-    let split_idx = raw_pts.len();
-    for k in 0..=8 {
-        let frac = k as f32 / 8.0;
-        let x = half_back - frac * (2.0 * half_back);
-        raw_pts.push((Vec2::new(x, y_back), spec.primary_surface, 0.0));
-    }
-    let cross_idx = split_idx + 4;
-    let merge_idx = split_idx + 8;
-
-    // Left sweeper (5 interior points from angle -90 deg to +90 deg around (-half_back, -r_left))
-    for k in 1..=5 {
-        let frac = k as f32 / 6.0;
-        let ang = -std::f32::consts::FRAC_PI_2 - frac * std::f32::consts::PI;
-        let cx = -half_back;
-        let cy = -r_left;
-        let rx = r_left + spec.left_lobe_extra * (std::f32::consts::PI * frac).sin();
-        let pt = Vec2::new(cx + rx * ang.cos(), cy + r_left * ang.sin());
-        let surf = if k >= 5 {
-            spec.secondary_surface
-        } else {
-            spec.primary_surface
-        };
-        raw_pts.push((pt, surf, 6.0));
-    }
-
-    // Return straight along y = 0 from x = -half_back to x = -110
-    let ret_xs = [-half_back, -half_back + 38.0];
-    for &x in &ret_xs {
-        if x < -95.0 {
-            raw_pts.push((Vec2::new(x, 0.0), spec.secondary_surface, 0.0));
-        }
-    }
+    let (raw_pts, split_idx, cross_idx, merge_idx) = match spec.slug {
+        "utah_umc_rx" => build_utah_umc_rx(),
+        "erx_motor_park" => build_erx_motor_park(),
+        "wild_horse_pass_rx" => build_wild_horse_pass_rx(),
+        "glen_helen_rx" => build_glen_helen_rx(),
+        "midamerica_outdoors_rx" => build_midamerica_outdoors_rx(),
+        "calgary_stampede_rx" => build_calgary_stampede_rx(),
+        other => panic!("unknown Nitrocross venue slug: {}", other),
+    };
 
     let wps: Vec<TrackWaypoint> = raw_pts
         .into_iter()
-        .map(|(pt, surf, bank)| {
+        .map(|(pt, surf, elev, bank)| {
             let mut wp = TrackWaypoint::new(pt, spec.road_width)
                 .with_surface(surf)
-                .with_elevation(0.0)
+                .with_elevation(elev)
                 .with_bank_angle(bank);
             wp.left_runoff_surface = spec.runoff_surface;
             wp.right_runoff_surface = spec.runoff_surface;
@@ -346,33 +551,31 @@ fn build_scrossover_joker_waypoints(
     let p_merge = wps[merge_idx].point;
     let t_dir = (p_merge - p_split).normalize_or_zero();
     let n_dir = Vec2::new(-t_dir.y, t_dir.x); // Left normal
-    let half_span = p_split.distance(p_cross);
+    let span_in = p_split.distance(p_cross);
+    let span_out = p_cross.distance(p_merge);
 
-    // Collinear crossing (-0.95, 7.6) -> (-0.40, 3.2) -> (0.0, 0.0) -> (0.40, -3.2) -> (0.95, -7.6)
-    // guarantees |u| <= 0.58m across |lat| <= 4.6m (strictly inside the 6.2m MegaRamp gap [-3.1m, +3.1m]
-    // with >1.5m hull clearance from both takeoff/landing drop-off walls), while keeping turn radius >= 3.5m.
+    // Smooth grade-separated S-crossover through the 22.5m..34.0m open chasm centered at p_cross:
+    // Across |lat| <= 4.6m, |u| <= 1.25m, which sits squarely in the middle of the [-11.2m..+11.2m] (or [-17m..+17m])
+    // MegaRamp gap with 10m+ longitudinal clearance from both takeoff and landing walls.
     let stations: Vec<(f32, f32)> = vec![
-        (-half_span, 0.0),
-        (-half_span + 16.0, 0.16 * d_lobe),
-        (-half_span + 32.0, 0.50 * d_lobe),
-        (-half_span + 48.0, 0.84 * d_lobe),
-        (-half_span + 64.0, 1.00 * d_lobe),
-        (-34.0, 1.00 * d_lobe),
-        (-18.0, 15.2f32.max(0.84 * d_lobe)),
-        (-6.0, 12.8),
-        (-0.95, 7.6),
-        (-0.40, 3.2),
+        (-span_in, 0.0),
+        (-span_in + 16.0, 0.16 * d_lobe),
+        (-span_in + 32.0, 0.50 * d_lobe),
+        (-span_in + 46.0, 0.84 * d_lobe),
+        (-30.0, 1.00 * d_lobe),
+        (-18.0, 13.5f32.max(0.80 * d_lobe)),
+        (-6.0, 8.8),
+        (-2.4, 3.6),
         (0.0, 0.0),
-        (0.40, -3.2),
-        (0.95, -7.6),
-        (6.0, -12.8),
-        (18.0, -15.2f32.max(0.84 * d_lobe)),
-        (34.0, -1.00 * d_lobe),
-        (half_span - 64.0, -1.00 * d_lobe),
-        (half_span - 48.0, -0.84 * d_lobe),
-        (half_span - 32.0, -0.50 * d_lobe),
-        (half_span - 16.0, -0.16 * d_lobe),
-        (half_span, 0.0),
+        (2.4, -3.6),
+        (6.0, -8.8),
+        (18.0, -13.5f32.max(0.80 * d_lobe)),
+        (32.0, -1.00 * d_lobe),
+        (span_out - 62.0, -1.00 * d_lobe),
+        (span_out - 46.0, -0.84 * d_lobe),
+        (span_out - 30.0, -0.50 * d_lobe),
+        (span_out - 15.0, -0.16 * d_lobe),
+        (span_out, 0.0),
     ];
 
     let n = stations.len();
@@ -440,7 +643,8 @@ fn assemble_network(
         surface: spec.primary_surface,
     };
 
-    let nose_center = wps[split_idx].point + s_sample.tangent * 14.0 + s_sample.normal * (spec.road_width * 0.5 + 2.5);
+    let nose_center =
+        wps[split_idx].point + s_sample.tangent * 14.0 + s_sample.normal * (spec.road_width * 0.5 + 2.5);
     let split_junction = RoadJunction {
         id: JunctionId(0),
         name: format!("{} Joker Split", spec.slug),
@@ -481,12 +685,12 @@ fn assemble_network(
         },
     };
 
-    let mut seg0 = RoadSegment::new(SegmentId(0), "Start / Finish Straight", seg0_wps);
+    let mut seg0 = RoadSegment::new(SegmentId(0), "Start / Finish & Technical Sector", seg0_wps);
     seg0.entry_junction = Some(SocketId::new(JunctionId(1), 0));
     seg0.exit_junction = Some(SocketId::new(JunctionId(0), 0));
     seg0.recompute_samples(None, Some(&split_socket));
 
-    let mut seg1 = RoadSegment::new(SegmentId(1), "Main Racing Line", seg1_wps);
+    let mut seg1 = RoadSegment::new(SegmentId(1), "Mega Jump Straightaway", seg1_wps);
     seg1.entry_junction = Some(SocketId::new(JunctionId(0), 0));
     seg1.exit_junction = Some(SocketId::new(JunctionId(1), 0));
     seg1.recompute_samples(Some(&split_socket), Some(&merge_socket));
@@ -496,7 +700,7 @@ fn assemble_network(
     seg2.exit_junction = Some(SocketId::new(JunctionId(1), 1));
     seg2.recompute_samples(Some(&split_socket), Some(&merge_socket));
 
-    let mut seg3 = RoadSegment::new(SegmentId(3), "Return Straight", seg3_wps);
+    let mut seg3 = RoadSegment::new(SegmentId(3), "Final Bowl & Return Chute", seg3_wps);
     seg3.entry_junction = Some(SocketId::new(JunctionId(1), 0));
     seg3.exit_junction = Some(SocketId::new(JunctionId(0), 0));
     seg3.recompute_samples(Some(&merge_socket), None);
@@ -537,37 +741,279 @@ fn assemble_network(
     net
 }
 
+fn is_clear_of_roads(track: &Track, pt: Vec2, min_clearance: f32) -> bool {
+    let proj = track.spline.project_point(pt);
+    if proj.distance_to_spline < proj.track_width * 0.5 + min_clearance {
+        return false;
+    }
+    if let Some(ref net) = track.network {
+        for seg in &net.segments {
+            let p = seg.project_point(pt);
+            if p.distance_to_spline < p.track_width * 0.5 + min_clearance {
+                return false;
+            }
+        }
+        if let Some(ref chute) = net.launch_chute {
+            for slot in &chute.grid_slots {
+                if slot.position.distance(pt) < min_clearance + 10.0 {
+                    return false;
+                }
+            }
+        }
+    }
+    true
+}
+
+fn populate_venue_scenery(spec: &NitroVenueSpec, track: &mut Track) {
+    let mut grandstands = Vec::new();
+    let mut buildings = Vec::new();
+    let mut trees = Vec::new();
+    let mut rocks = Vec::new();
+
+    match spec.slug {
+        "utah_umc_rx" => {
+            grandstands.push(
+                Grandstand::new(1, Vec2::new(10.0, -32.0), 85.0, 14.0, 0.0)
+                    .with_style(GrandstandStyle::CoveredStadium),
+            );
+            grandstands.push(
+                Grandstand::new(2, Vec2::new(15.0, 244.0), 90.0, 14.0, std::f32::consts::PI)
+                    .with_style(GrandstandStyle::OpenBleachers),
+            );
+            buildings.push(Building::new(
+                1,
+                Vec2::new(-35.0, 55.0),
+                Vec2::new(36.0, 16.0),
+                0.0,
+                BuildingStyle::PitGarage,
+            ));
+            for (i, pos) in [
+                Vec2::new(-75.0, 110.0),
+                Vec2::new(-110.0, 95.0),
+                Vec2::new(115.0, 18.0),
+                Vec2::new(210.0, 110.0),
+                Vec2::new(-225.0, 100.0),
+            ]
+            .into_iter()
+            .enumerate()
+            {
+                rocks.push(Rock::new(i + 1, pos, RockType::Sandstone).with_scale(1.4));
+            }
+            for (i, pos) in [
+                Vec2::new(-60.0, 50.0),
+                Vec2::new(-20.0, 110.0),
+                Vec2::new(85.0, -32.0),
+                Vec2::new(195.0, 85.0),
+            ]
+            .into_iter()
+            .enumerate()
+            {
+                trees.push(Tree::new(i + 1, pos, TreeType::Bush).with_scale(1.2));
+            }
+        }
+        "erx_motor_park" => {
+            grandstands.push(
+                Grandstand::new(1, Vec2::new(10.0, -34.0), 95.0, 16.0, 0.0)
+                    .with_style(GrandstandStyle::HillsideBleachers),
+            );
+            buildings.push(Building::new(
+                1,
+                Vec2::new(-35.0, 62.0),
+                Vec2::new(28.0, 14.0),
+                0.0,
+                BuildingStyle::PaddockTent,
+            ));
+            for (i, pos) in [
+                Vec2::new(-75.0, 75.0),
+                Vec2::new(-55.0, 95.0),
+                Vec2::new(-25.0, 105.0),
+                Vec2::new(25.0, 62.0),
+                Vec2::new(55.0, 58.0),
+                Vec2::new(225.0, 45.0),
+                Vec2::new(220.0, 95.0),
+                Vec2::new(-205.0, 90.0),
+                Vec2::new(-195.0, 145.0),
+                Vec2::new(10.0, 225.0),
+            ]
+            .into_iter()
+            .enumerate()
+            {
+                let kind = if i % 2 == 0 { TreeType::Pine } else { TreeType::Oak };
+                trees.push(Tree::new(i + 1, pos, kind).with_scale(1.15));
+            }
+        }
+        "wild_horse_pass_rx" => {
+            grandstands.push(
+                Grandstand::new(1, Vec2::new(20.0, -32.0), 110.0, 14.0, 0.0)
+                    .with_style(GrandstandStyle::OpenBleachers),
+            );
+            for (i, pos) in [
+                Vec2::new(-65.0, 65.0),
+                Vec2::new(-25.0, 72.0),
+                Vec2::new(15.0, 68.0),
+                Vec2::new(230.0, 40.0),
+                Vec2::new(-235.0, 75.0),
+                Vec2::new(120.0, -32.0),
+            ]
+            .into_iter()
+            .enumerate()
+            {
+                let kind = if i % 2 == 0 { TreeType::Palm } else { TreeType::Cactus };
+                trees.push(Tree::new(i + 1, pos, kind).with_scale(1.2));
+            }
+            for (i, pos) in [Vec2::new(-95.0, 72.0), Vec2::new(165.0, 120.0)]
+                .into_iter()
+                .enumerate()
+            {
+                rocks.push(Rock::new(i + 1, pos, RockType::Sandstone).with_scale(1.3));
+            }
+        }
+        "glen_helen_rx" => {
+            grandstands.push(
+                Grandstand::new(1, Vec2::new(25.0, -32.0), 75.0, 14.0, 0.0)
+                    .with_style(GrandstandStyle::HillsideBleachers),
+            );
+            for (i, pos) in [
+                Vec2::new(45.0, 95.0),
+                Vec2::new(55.0, 145.0),
+                Vec2::new(172.0, 80.0),
+                Vec2::new(175.0, 160.0),
+                Vec2::new(165.0, 240.0),
+                Vec2::new(75.0, 330.0),
+            ]
+            .into_iter()
+            .enumerate()
+            {
+                rocks.push(Rock::new(i + 1, pos, RockType::Granite).with_scale(1.5));
+            }
+            for (i, pos) in [
+                Vec2::new(20.0, 70.0),
+                Vec2::new(30.0, 120.0),
+                Vec2::new(-30.0, 95.0),
+                Vec2::new(168.0, 120.0),
+            ]
+            .into_iter()
+            .enumerate()
+            {
+                trees.push(Tree::new(i + 1, pos, TreeType::Pine).with_scale(1.2));
+            }
+        }
+        "midamerica_outdoors_rx" => {
+            grandstands.push(
+                Grandstand::new(1, Vec2::new(25.0, -32.0), 85.0, 14.0, 0.0)
+                    .with_style(GrandstandStyle::HillsideBleachers),
+            );
+            for (i, pos) in [
+                Vec2::new(-10.0, 55.0),
+                Vec2::new(35.0, 62.0),
+                Vec2::new(85.0, 68.0),
+                Vec2::new(145.0, 85.0),
+                Vec2::new(150.0, 130.0),
+                Vec2::new(245.0, 90.0),
+                Vec2::new(248.0, 160.0),
+                Vec2::new(220.0, 265.0),
+                Vec2::new(135.0, 275.0),
+                Vec2::new(55.0, 195.0),
+                Vec2::new(-45.0, 175.0),
+                Vec2::new(-115.0, 155.0),
+            ]
+            .into_iter()
+            .enumerate()
+            {
+                let kind = match i % 3 {
+                    0 => TreeType::Oak,
+                    1 => TreeType::Pine,
+                    _ => TreeType::AutumnMaple,
+                };
+                trees.push(Tree::new(i + 1, pos, kind).with_scale(1.25));
+            }
+        }
+        "calgary_stampede_rx" => {
+            // Iconic GMC Stadium Grandstand along the North straight + Infield Grandstand
+            grandstands.push(
+                Grandstand::new(1, Vec2::new(5.0, 218.0), 140.0, 18.0, std::f32::consts::PI)
+                    .with_style(GrandstandStyle::CoveredStadium)
+                    .with_tiers(12),
+            );
+            grandstands.push(
+                Grandstand::new(2, Vec2::new(10.0, -32.0), 90.0, 14.0, 0.0)
+                    .with_style(GrandstandStyle::OpenBleachers),
+            );
+            buildings.push(Building::new(
+                1,
+                Vec2::new(-38.0, 68.0),
+                Vec2::new(32.0, 14.0),
+                0.0,
+                BuildingStyle::PitGarage,
+            ));
+            for (i, pos) in [
+                Vec2::new(-85.0, 75.0),
+                Vec2::new(-65.0, 95.0),
+                Vec2::new(190.0, 120.0),
+                Vec2::new(-195.0, 100.0),
+            ]
+            .into_iter()
+            .enumerate()
+            {
+                trees.push(Tree::new(i + 1, pos, TreeType::SnowPine).with_scale(1.2));
+            }
+        }
+        _ => {}
+    }
+
+    track.geometry.grandstands = grandstands
+        .into_iter()
+        .filter(|g| is_clear_of_roads(track, g.center, 22.0))
+        .collect();
+    track.geometry.buildings = buildings
+        .into_iter()
+        .filter(|b| is_clear_of_roads(track, b.center, 22.0))
+        .collect();
+    track.geometry.trees = trees
+        .into_iter()
+        .filter(|t| is_clear_of_roads(track, t.position, 14.0))
+        .collect();
+    track.geometry.rocks = rocks
+        .into_iter()
+        .filter(|r| is_clear_of_roads(track, r.position, 14.0))
+        .collect();
+}
+
 fn build_venue(spec: &NitroVenueSpec) -> (String, Track) {
     let (wps, split_idx, cross_idx, merge_idx) = build_main_waypoints(spec);
     let spline = TrackSpline::new(wps.clone(), true);
     let (inner_walls, outer_walls, left_poly, right_poly) =
         generate_walls_from_spline(&spline, 3.5, BarrierType::TireWall);
 
-    // Primary MegaRamp on Seg 1 centered at cross_idx (with +0.90m shift along T so the 6.2m gap [-3.1m, +3.1m] is centered at p_cross)
+    // Primary MegaRamp on Seg 1 with its open chasm [s_takeoff, s_landing] centered at wps[cross_idx].
+    // Because takeoff_len = 0.46 * rem and landing_len = 0.54 * rem, the gap center in local coordinates
+    // is -0.04 * rem, so shifting mega_center by +0.04 * rem along t_cross centers the open chasm at p_cross.
     let p_cross = wps[cross_idx].point;
     let t_cross = (wps[merge_idx].point - wps[split_idx].point).normalize_or_zero();
     let angle_cross = t_cross.y.atan2(t_cross.x);
-    let mega_center = p_cross + t_cross * 0.90;
+    let rem = 2.0 * spec.mega_half_len - spec.mega_gap_len;
+    let mega_center = p_cross + t_cross * (0.04 * rem);
     let mut mega_ramp = JumpRamp::new(
         1,
         SurfaceShape::OrientedBox {
             center: mega_center,
-            half_extents: Vec2::new(10.0, 4.6),
+            half_extents: Vec2::new(spec.mega_half_len, 4.6),
             angle: angle_cross,
         },
         t_cross,
-        2.6,
-        6.8,
-        1.62,
+        spec.mega_launch_speed,
+        spec.mega_angle_deg,
+        spec.mega_height,
         spec.mega_jump_name,
     )
     .with_kind(RampKind::MegaRamp)
-    .with_gap_length(6.2);
+    .with_gap_length(spec.mega_gap_len);
     mega_ramp.surface = SurfaceType::Dirt;
 
-    // Secondary tabletop jump on the start/finish straight (between wps[3] and wps[4])
-    let p_minor = (wps[3].point + wps[4].point) * 0.5;
-    let t_minor = (wps[4].point - wps[3].point).normalize_or_zero();
+    // Secondary tabletop jump on the start/finish straight
+    let (m0, m1) = spec.minor_wp_pair;
+    let p_minor = (wps[m0].point + wps[m1].point) * 0.5;
+    let t_minor = (wps[m1].point - wps[m0].point).normalize_or_zero();
     let angle_minor = t_minor.y.atan2(t_minor.x);
     let mut minor_ramp = JumpRamp::new(
         2,
@@ -666,7 +1112,7 @@ fn build_venue(spec: &NitroVenueSpec) -> (String, Track) {
     }
 
     let seg2 = net.get_segment(SegmentId(2)).unwrap();
-    let j_sample = seg2.sample_at_distance(seg2.length * 0.25);
+    let j_sample = seg2.sample_at_distance(seg2.length * 0.22);
     let j_half_w = j_sample.width * 0.5 + 1.5;
     let mut j_cp = Checkpoint::new(
         joker_cp_id,
@@ -696,6 +1142,9 @@ fn build_venue(spec: &NitroVenueSpec) -> (String, Track) {
     let chute_spec = base_track
         .place_launch_chute(&chute_template)
         .unwrap_or_else(|e| panic!("{}: failed to place launch chute: {}", spec.slug, e));
+
+    // Populate authentic venue scenery after network and launch chute are placed
+    populate_venue_scenery(spec, &mut base_track);
 
     // Verify all network segments have waypoint width >= 12.0m
     if let Some(ref mut net) = base_track.network {
@@ -754,9 +1203,13 @@ fn build_venue(spec: &NitroVenueSpec) -> (String, Track) {
     );
 
     println!(
-        "Built {:24} -> len={:6.1}m, joker_cost={:+.2}s, min_r={:4.1}m, underpass_pts={:2}, chute_wp={} ({:?}), breakdown={}",
+        "Built {:24} -> len={:6.1}m, mega_gap={:4.1}m ({:5.1}ft), mega_len={:4.1}m ({:5.1}ft), joker_cost={:+.2}s, min_r={:4.1}m, underpass_pts={:2}, chute_wp={} ({:?}), breakdown={}",
         spec.slug,
         base_track.spline.total_length(),
+        mega_ramp.effective_gap_length(),
+        mega_ramp.effective_gap_length() * 3.28084,
+        mega_ramp.length(),
+        mega_ramp.length() * 3.28084,
         cost_s,
         min_r,
         underpass_samples.len(),
