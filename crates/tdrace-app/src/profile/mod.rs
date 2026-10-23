@@ -1299,14 +1299,15 @@ impl ModuleCareerProgress {
                     self.ensure_track("silverstone_rx");
                 }
 
-                // Tier 6 (+6 exclusive North American Nitrocross circuits -> 25 total per Spec 134 & Spec 135)
+                // Tier 6 (+7 exclusive North American Nitrocross / iRX circuits -> 26 total per Spec 134 & Spec 135)
                 if self.level >= 6 {
                     self.ensure_track("utah_umc_rx");
-                    self.ensure_track("erx_motor_park");
-                    self.ensure_track("wild_horse_pass_rx");
-                    self.ensure_track("glen_helen_rx");
-                    self.ensure_track("midamerica_outdoors_rx");
-                    self.ensure_track("calgary_stampede_rx");
+                    self.ensure_track("phoenix_rx");
+                    self.ensure_track("daytona_rx");
+                    self.ensure_track("sonoma_rx");
+                    self.ensure_track("atlanta_rx");
+                    self.ensure_track("charlotte_rx");
+                    self.ensure_track("iowa_rx");
                 }
             }
             "kart" => {

@@ -314,7 +314,7 @@ impl GameModule for RallycrossGameModule {
                     "croft_rx".to_string(),
                     "spa_rx".to_string(),
                     "silverstone_rx".to_string(),
-                    "erx_motor_park".to_string(),
+                    "daytona_rx".to_string(),
                 ],
             },
             TournamentFormat::Championship {
@@ -340,7 +340,7 @@ impl GameModule for RallycrossGameModule {
                     "croft_rx".to_string(),
                     "spa_rx".to_string(),
                     "silverstone_rx".to_string(),
-                    "erx_motor_park".to_string(),
+                    "daytona_rx".to_string(),
                 ],
                 laps_per_round: 5,
             },

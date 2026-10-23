@@ -42,7 +42,7 @@ fn test_rally_six_tier_circuit_unlock_matrix() {
         (3, 11, vec!["kouvola_rx", "montalegre_rx", "nyirad_rx"]),
         (4, 15, vec!["estering_rx", "hell_rx", "loheac_rx", "spa_rx"]),
         (5, 19, vec!["riga_rx", "killarney_rx", "catalunya_rx", "silverstone_rx"]),
-        (6, 25, vec!["utah_umc_rx", "erx_motor_park", "wild_horse_pass_rx", "glen_helen_rx", "midamerica_outdoors_rx", "calgary_stampede_rx"]),
+        (6, 26, vec!["utah_umc_rx", "phoenix_rx", "daytona_rx", "sonoma_rx", "atlanta_rx", "charlotte_rx", "iowa_rx"]),
     ];
 
     for (lvl, total_count, new_tracks) in expected_steps {

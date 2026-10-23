@@ -6,7 +6,7 @@
 [championship]
 id = "rally_nitro_erx"
 name = "Nitro ERX Trophy"
-description = "1,070 BHP electric FC1-X machines, the most powerful rallycross cars ever raced, across 6 exclusive North American Nitrocross stadium and mega-jump venues."
+description = "1,070 BHP electric FC1-X machines, the most powerful rallycross cars ever raced, across 7 exclusive North American Nitrocross and iRX mega-jump venues."
 module_id = "rallycross"
 tier = 6
 laps_per_round = 5
@@ -33,32 +33,38 @@ laps = 5
 
 [[rounds]]
 order = 2
-track_id = "erx_motor_park"
-name = "ERX Motor Park RX"
+track_id = "phoenix_rx"
+name = "Phoenix Raceway RX"
 laps = 5
 
 [[rounds]]
 order = 3
-track_id = "wild_horse_pass_rx"
-name = "Wild Horse Pass Motorsports Park RX"
+track_id = "daytona_rx"
+name = "Daytona International Speedway RX"
 laps = 5
 
 [[rounds]]
 order = 4
-track_id = "glen_helen_rx"
-name = "Glen Helen Raceway RX"
+track_id = "sonoma_rx"
+name = "Sonoma Raceway RX"
 laps = 5
 
 [[rounds]]
 order = 5
-track_id = "midamerica_outdoors_rx"
-name = "MidAmerica Outdoors RX"
+track_id = "atlanta_rx"
+name = "Atlanta Motor Speedway RX"
 laps = 5
 
 [[rounds]]
 order = 6
-track_id = "calgary_stampede_rx"
-name = "Calgary Stampede Park RX"
+track_id = "charlotte_rx"
+name = "Charlotte Motor Speedway RX"
+laps = 5
+
+[[rounds]]
+order = 7
+track_id = "iowa_rx"
+name = "Iowa Speedway RX"
 laps = 5
 
 [[drivers]]

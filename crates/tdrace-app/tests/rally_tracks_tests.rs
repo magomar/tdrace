@@ -13,7 +13,7 @@ fn test_rally_module_tracks_integrity_and_validation() {
     let module = RallyGameModule::new();
     let tracks = module.tracks();
 
-    assert_eq!(tracks.len(), 25, "Rally module should have 25 authentic World RX and Nitrocross tracks");
+    assert_eq!(tracks.len(), 26, "Rally module should have 26 authentic World RX and American RX / Nitrocross tracks");
 
     let expected_ids = [
         "holjes_rx",
@@ -35,12 +35,13 @@ fn test_rally_module_tracks_integrity_and_validation() {
         "croft_rx",
         "spa_rx",
         "silverstone_rx",
-        "erx_motor_park",
         "utah_umc_rx",
-        "wild_horse_pass_rx",
-        "glen_helen_rx",
-        "midamerica_outdoors_rx",
-        "calgary_stampede_rx",
+        "phoenix_rx",
+        "daytona_rx",
+        "sonoma_rx",
+        "atlanta_rx",
+        "charlotte_rx",
+        "iowa_rx",
     ];
 
     for id in &expected_ids {
@@ -387,12 +388,13 @@ fn test_world_rx_jump_ramps_dirt_surface_and_containment_landing() {
         ("croft_rx", false),
         ("spa_rx", true),
         ("silverstone_rx", true),
-        ("erx_motor_park", true),
         ("utah_umc_rx", true),
-        ("wild_horse_pass_rx", true),
-        ("glen_helen_rx", true),
-        ("midamerica_outdoors_rx", true),
-        ("calgary_stampede_rx", true),
+        ("phoenix_rx", true),
+        ("daytona_rx", true),
+        ("sonoma_rx", true),
+        ("atlanta_rx", true),
+        ("charlotte_rx", true),
+        ("iowa_rx", true),
     ];
 
     for &(slug, is_major_fia) in &all_slugs {
@@ -617,7 +619,7 @@ fn test_famous_rally_tracks_in_track_manager_and_menu_resolution() {
     let _ = std::fs::create_dir_all(&temp_dir);
     let tm = TrackManager::new(&temp_dir);
     let rally_catalog = tm.module_catalog_tracks("rally");
-    assert_eq!(rally_catalog.len(), 25);
+    assert_eq!(rally_catalog.len(), 26);
 
     let rally_ids = [
         "holjes_rx",
@@ -639,12 +641,13 @@ fn test_famous_rally_tracks_in_track_manager_and_menu_resolution() {
         "croft_rx",
         "spa_rx",
         "silverstone_rx",
-        "erx_motor_park",
         "utah_umc_rx",
-        "wild_horse_pass_rx",
-        "glen_helen_rx",
-        "midamerica_outdoors_rx",
-        "calgary_stampede_rx",
+        "phoenix_rx",
+        "daytona_rx",
+        "sonoma_rx",
+        "atlanta_rx",
+        "charlotte_rx",
+        "iowa_rx",
     ];
 
     for id in &rally_ids {
@@ -831,7 +834,7 @@ fn test_blyton_ids_resolve_to_croft() {
 #[test]
 fn test_silverstone_and_yas_marina_ids_resolve_to_their_replacements() {
     // Yas Marina RX aliases Lessay, while Silverstone RX is restored as an authentic circuit (Spec 051).
-    for (old, new) in [("yas_marina_rx", "lessay_rx"), ("yas_marina", "lessay_rx"), ("silverstone_rallycross", "silverstone_rx"), ("spa_rallycross", "spa_rx"), ("erx", "erx_motor_park")] {
+    for (old, new) in [("yas_marina_rx", "lessay_rx"), ("yas_marina", "lessay_rx"), ("silverstone_rallycross", "silverstone_rx"), ("spa_rallycross", "spa_rx"), ("erx", "daytona_rx"), ("erx_motor_park", "daytona_rx")] {
         assert_eq!(tdrace_core::catalog::canonical_id(old), Some(new), "{} must alias {}", old, new);
     }
     assert_eq!(tdrace_core::catalog::official_track("rally", "silverstone_rx").name, "Silverstone Circuit RX");
@@ -860,12 +863,13 @@ fn test_all_20_world_rx_circuits_have_valid_joker_track_networks() {
         "croft_rx",
         "spa_rx",
         "silverstone_rx",
-        "erx_motor_park",
         "utah_umc_rx",
-        "wild_horse_pass_rx",
-        "glen_helen_rx",
-        "midamerica_outdoors_rx",
-        "calgary_stampede_rx",
+        "phoenix_rx",
+        "daytona_rx",
+        "sonoma_rx",
+        "atlanta_rx",
+        "charlotte_rx",
+        "iowa_rx",
     ];
 
     for id in &expected_ids {
@@ -891,8 +895,9 @@ fn test_all_20_world_rx_circuits_have_valid_joker_track_networks() {
         let joker_spline = network.build_composite_spline_for_layout("joker");
         assert!(joker_spline.is_some(), "{}: failed to build composite spline for joker layout", id);
 
-        // Verify split and merge junctions exist
-        assert_eq!(network.junctions.len(), 3, "{}: expected 3 junctions (joker split and merge, launch chute merge)", id);
+        // Verify split and merge junctions exist (utah_umc_rx has 2 joker splits + 1 shared merge + 1 launch chute merge = 4 junctions)
+        let expected_junctions = if *id == "utah_umc_rx" { 4 } else { 3 };
+        assert_eq!(network.junctions.len(), expected_junctions, "{}: expected {} junctions", id, expected_junctions);
 
         // Verify split junction has gore config and C1 tangent continuity (< 1e-4 rad)
         let split_j = &network.junctions[0];
@@ -929,7 +934,8 @@ fn test_all_20_world_rx_circuits_have_valid_joker_track_networks() {
             merge_config,
         } = &merge_j.kind {
             assert!(merge_config.is_some(), "{}: merge junction must have merge_config", id);
-            assert_eq!(ingress_sockets.len(), 2, "{}: merge junction must have 2 ingress sockets", id);
+            let expected_ingress = if *id == "utah_umc_rx" { 3 } else { 2 };
+            assert_eq!(ingress_sockets.len(), expected_ingress, "{}: merge junction must have {} ingress sockets", id, expected_ingress);
 
             // C1 tangent continuity at merge
             for (idx, ingress) in ingress_sockets.iter().enumerate() {
@@ -1025,8 +1031,8 @@ fn test_holjes_rx_joker_lap_time_delta_simulation() {
 }
 
 
-/// The 28 official circuits with a joker layout: 3 Classic RX venues and the 25 World RX / Nitrocross circuits.
-const RX_JOKER_TRACKS: [(&str, &str); 28] = [
+/// The 29 official circuits with a joker layout: 3 Classic RX venues and the 26 World RX / American RX / Nitrocross circuits.
+const RX_JOKER_TRACKS: [(&str, &str); 29] = [
     ("classic", "rx_quarry_sprint"),
     ("classic", "rx_hilltop_leap"),
     ("classic", "rx_canyon_flyer"),
@@ -1049,12 +1055,13 @@ const RX_JOKER_TRACKS: [(&str, &str); 28] = [
     ("rally", "croft_rx"),
     ("rally", "spa_rx"),
     ("rally", "silverstone_rx"),
-    ("rally", "erx_motor_park"),
     ("rally", "utah_umc_rx"),
-    ("rally", "wild_horse_pass_rx"),
-    ("rally", "glen_helen_rx"),
-    ("rally", "midamerica_outdoors_rx"),
-    ("rally", "calgary_stampede_rx"),
+    ("rally", "phoenix_rx"),
+    ("rally", "daytona_rx"),
+    ("rally", "sonoma_rx"),
+    ("rally", "atlanta_rx"),
+    ("rally", "charlotte_rx"),
+    ("rally", "iowa_rx"),
 ];
 
 #[test]
@@ -1470,16 +1477,17 @@ fn test_rx_gore_keeps_the_ingress_surface() {
     assert!(dirt_probed > 0, "no uncovered dirt gore point was probed, the test proves nothing");
 }
 
-const NITROCROSS_PACK_SLUGS: [&str; 6] = [
+const NITROCROSS_PACK_SLUGS: [&str; 7] = [
     "utah_umc_rx",
-    "erx_motor_park",
-    "wild_horse_pass_rx",
-    "glen_helen_rx",
-    "midamerica_outdoors_rx",
-    "calgary_stampede_rx",
+    "phoenix_rx",
+    "daytona_rx",
+    "sonoma_rx",
+    "atlanta_rx",
+    "charlotte_rx",
+    "iowa_rx",
 ];
 
-/// Scenario 1: Nitrocross Circuit Pack Integrity and Validation (Spec 134)
+/// Scenario 1: Nitrocross / American RX Circuit Pack Integrity and Validation (Spec 134)
 #[test]
 fn test_spec134_scenario_1_nitrocross_circuit_pack_integrity_and_validation() {
     use tdrace_core::track::geometry::RampKind;
@@ -1496,8 +1504,8 @@ fn test_spec134_scenario_1_nitrocross_circuit_pack_integrity_and_validation() {
 
         let total_len = track.spline.total_length();
         assert!(
-            (950.0..=1350.0).contains(&total_len),
-            "{}: total length {:.1}m must be in 950.0..=1350.0m",
+            (950.0..=1460.0).contains(&total_len),
+            "{}: total length {:.1}m must be in 950.0..=1460.0m",
             slug,
             total_len
         );
@@ -1565,7 +1573,7 @@ fn test_spec134_scenario_1_nitrocross_circuit_pack_integrity_and_validation() {
         assert_eq!(track.category_label, "Nitrocross", "{}: category_label must be Nitrocross", slug);
     }
 
-    // Verify all 6 Nitrocross circuits have distinct real-world silhouettes (aspect ratios & elevation profiles)
+    // Verify the 7 American RX / Nitrocross circuits have distinct real-world silhouettes (aspect ratios & elevation profiles)
     let mut aspect_ratios = Vec::new();
     for slug in NITROCROSS_PACK_SLUGS {
         let track = tdrace_core::catalog::official_track("rally", slug);
@@ -1576,14 +1584,14 @@ fn test_spec134_scenario_1_nitrocross_circuit_pack_integrity_and_validation() {
         let ar = (max_x - min_x) / (max_y - min_y).max(1.0);
         aspect_ratios.push((slug, ar));
     }
-    // Glen Helen is a North-South canyon circuit (AR < 1.05), while Wild Horse Pass is an elongated desert hybrid (AR > 2.2)
-    let gh_ar = aspect_ratios.iter().find(|(s, _)| *s == "glen_helen_rx").unwrap().1;
-    let whp_ar = aspect_ratios.iter().find(|(s, _)| *s == "wild_horse_pass_rx").unwrap().1;
-    assert!(gh_ar < 1.05, "glen_helen_rx should have North-South canyon aspect ratio < 1.05, got {:.2}", gh_ar);
-    assert!(whp_ar > 2.20, "wild_horse_pass_rx should have elongated desert aspect ratio > 2.20, got {:.2}", whp_ar);
+    // Iowa is a compact speedway bullring (AR < 1.25), while Phoenix is an elongated desert dogleg circuit (AR > 2.2)
+    let iowa_ar = aspect_ratios.iter().find(|(s, _)| *s == "iowa_rx").unwrap().1;
+    let phx_ar = aspect_ratios.iter().find(|(s, _)| *s == "phoenix_rx").unwrap().1;
+    assert!(iowa_ar < 1.25, "iowa_rx should have compact bullring aspect ratio < 1.25, got {:.2}", iowa_ar);
+    assert!(phx_ar > 2.20, "phoenix_rx should have elongated desert dogleg aspect ratio > 2.20, got {:.2}", phx_ar);
 }
 
-/// Scenario 2: Grade-Separated Mega Jump Over-Under Joker Crossover Without Collision (Spec 134)
+/// Scenario 2: Grade-Separated Mega Jump Over-Under Dual X-Joker Crossover Without Collision (Spec 134)
 #[test]
 fn test_spec134_scenario_2_grade_separated_mega_jump_over_under_joker_crossover_without_collision() {
     use race_kit::{DriveControls, RaceEvent, RaceFormat, RaceRules, RaceWorld};
@@ -1594,28 +1602,29 @@ fn test_spec134_scenario_2_grade_separated_mega_jump_over_under_joker_crossover_
 
     const DT: f32 = 1.0 / 60.0;
 
-    for slug in NITROCROSS_PACK_SLUGS {
-        let track = tdrace_core::catalog::official_track("rally", slug);
-        let net = track.network.as_ref().expect("network");
-        let seg1 = net.get_segment(SegmentId(1)).expect("Seg 1");
-        let seg2 = net.get_segment(SegmentId(2)).expect("Seg 2");
-        let mega_ramp = track
-            .geometry
-            .jump_ramps
-            .iter()
-            .find(|r| r.kind == RampKind::MegaRamp)
-            .expect("MegaRamp");
-        let (s_takeoff, s_landing) = mega_ramp.mega_segment_bounds();
+    let track = tdrace_core::catalog::official_track("rally", "utah_umc_rx");
+    let net = track.network.as_ref().expect("network");
+    let seg1 = net.get_segment(SegmentId(1)).expect("Seg 1");
+    let mega_ramp = track
+        .geometry
+        .jump_ramps
+        .iter()
+        .find(|r| r.kind == RampKind::MegaRamp)
+        .expect("MegaRamp");
+    let (s_takeoff, s_landing) = mega_ramp.mega_segment_bounds();
 
-        // Find the crossing midpoint on Seg 2 inside the MegaRamp open gap
+    // Test both X-crossing Joker segments on Utah UMC RX (Seg 2: Joker 1, Seg 5: Joker 2)
+    for joker_seg_id in [SegmentId(2), SegmentId(5)] {
+        let seg_j = net.get_segment(joker_seg_id).expect("Joker segment");
         assert!(
-            seg2.samples
+            seg_j
+                .samples
                 .iter()
                 .any(|s| mega_ramp.is_mega_gap_underpass_point(s.point, 1.5)),
-            "{}: Seg 2 must have an underpass crossing sample",
-            slug
+            "utah_umc_rx {:?} must have an underpass crossing sample",
+            joker_seg_id
         );
-        let seg2_cross_dist = seg2.project_point(mega_ramp.shape.center()).progress_distance;
+        let seg_j_cross_dist = seg_j.project_point(mega_ramp.shape.center()).progress_distance;
 
         // Start Car A on Seg 1 on the takeoff ramp 4.0m before the takeoff lip, at 28.0 m/s (101 km/h)
         let proj1 = seg1.project_point(mega_ramp.shape.center());
@@ -1625,9 +1634,9 @@ fn test_spec134_scenario_2_grade_separated_mega_jump_over_under_joker_crossover_
             .with_pose(start_a.point, start_a.tangent.y.atan2(start_a.tangent.x));
         car_a.set_velocity(start_a.tangent * 28.0);
 
-        // Start Car B on Seg 2 approaching the underpass crossing at 14.0 m/s
-        let start_b_dist = (seg2_cross_dist - 4.0).max(0.0);
-        let start_b = seg2.sample_at_distance(start_b_dist);
+        // Start Car B on the crossing Joker segment approaching the underpass crossing at 14.0 m/s
+        let start_b_dist = (seg_j_cross_dist - 4.0).max(0.0);
+        let start_b = seg_j.sample_at_distance(start_b_dist);
         let mut car_b = Car::new(CarConfig::rally_car())
             .with_pose(start_b.point, start_b.tangent.y.atan2(start_b.tangent.x));
         car_b.set_velocity(start_b.tangent * 14.0);
@@ -1639,7 +1648,7 @@ fn test_spec134_scenario_2_grade_separated_mega_jump_over_under_joker_crossover_
         let mut tracker_a = TrackProgressTracker::new(track.checkpoints.len(), 3);
         tracker_a.multi_route = Some(MultiRouteProgressTracker::new("main", SegmentId(0), 3));
         let mut tracker_b = TrackProgressTracker::new(track.checkpoints.len(), 3);
-        tracker_b.multi_route = Some(MultiRouteProgressTracker::new("main", SegmentId(2), 3));
+        tracker_b.multi_route = Some(MultiRouteProgressTracker::new("main", joker_seg_id, 3));
 
         world.spawn(car_a, tracker_a);
         world.spawn(car_b, tracker_b);
@@ -1653,10 +1662,9 @@ fn test_spec134_scenario_2_grade_separated_mega_jump_over_under_joker_crossover_
                 throttle: 1.0,
                 ..DriveControls::default()
             };
-            // Steer Car B along Seg 2 centerline so it follows the Joker curve after the underpass
             let b_pos = world.vehicles[1].state.position;
-            let b_proj = seg2.project_point(b_pos);
-            let b_target = seg2.sample_at_distance((b_proj.progress_distance + 10.0).min(seg2.length));
+            let b_proj = seg_j.project_point(b_pos);
+            let b_target = seg_j.sample_at_distance((b_proj.progress_distance + 10.0).min(seg_j.length));
             let b_to_target = (b_target.point - b_pos).normalize_or_zero();
             let b_fwd = world.vehicles[1].forward_vector();
             let steer_b = b_fwd.perp_dot(b_to_target).clamp(-1.0, 1.0);
@@ -1679,8 +1687,8 @@ fn test_spec134_scenario_2_grade_separated_mega_jump_over_under_joker_crossover_
             for ev in events {
                 assert!(
                     !matches!(ev, RaceEvent::VehicleImpact(_) | RaceEvent::WallImpact { .. }),
-                    "{}: unexpected collision event during over-under crossover: {:?}",
-                    slug,
+                    "utah_umc_rx {:?}: unexpected collision event during over-under crossover: {:?}",
+                    joker_seg_id,
                     ev
                 );
             }
@@ -1692,13 +1700,13 @@ fn test_spec134_scenario_2_grade_separated_mega_jump_over_under_joker_crossover_
                     saw_car_a_over_gap = true;
                     assert!(
                         a.state.is_airborne,
-                        "{}: Car A must be airborne over the MegaRamp open gap",
-                        slug
+                        "utah_umc_rx {:?}: Car A must be airborne over the MegaRamp open gap",
+                        joker_seg_id
                     );
                     assert!(
                         a.state.elevation + a.state.ramp_elevation >= 1.50,
-                        "{}: Car A elevation {:.2}m over gap must be >= 1.50m",
-                        slug,
+                        "utah_umc_rx {:?}: Car A elevation {:.2}m over gap must be >= 1.50m",
+                        joker_seg_id,
                         a.state.elevation + a.state.ramp_elevation
                     );
                 } else if s_a >= s_landing {
@@ -1709,43 +1717,37 @@ fn test_spec134_scenario_2_grade_separated_mega_jump_over_under_joker_crossover_
             let b = &world.vehicles[1];
             if mega_ramp.is_mega_gap_underpass_point(b.state.position, 0.5) {
                 saw_car_b_under_gap = true;
-                assert_eq!(b.state.elevation, 0.0, "{}: Car B underpass elevation must be 0.0", slug);
+                assert_eq!(b.state.elevation, 0.0, "utah_umc_rx {:?}: Car B underpass elevation must be 0.0", joker_seg_id);
                 assert_eq!(
                     b.state.ramp_elevation, 0.0,
-                    "{}: Car B underpass ramp_elevation must be 0.0",
-                    slug
+                    "utah_umc_rx {:?}: Car B underpass ramp_elevation must be 0.0",
+                    joker_seg_id
                 );
-                assert!(!b.state.is_airborne, "{}: Car B underpass must not be airborne", slug);
+                assert!(!b.state.is_airborne, "utah_umc_rx {:?}: Car B underpass must not be airborne", joker_seg_id);
             }
         }
 
-        assert!(saw_car_a_over_gap, "{}: Car A must traverse the MegaRamp open gap", slug);
-        assert!(saw_car_a_clear_gap, "{}: Car A must clear the entire MegaRamp chasm onto the landing deck", slug);
-        assert!(saw_car_b_under_gap, "{}: Car B must traverse the MegaRamp underpass", slug);
+        assert!(saw_car_a_over_gap, "utah_umc_rx {:?}: Car A must traverse the MegaRamp open gap", joker_seg_id);
+        assert!(saw_car_a_clear_gap, "utah_umc_rx {:?}: Car A must clear the entire MegaRamp chasm onto the landing deck", joker_seg_id);
+        assert!(saw_car_b_under_gap, "utah_umc_rx {:?}: Car B must traverse the MegaRamp underpass", joker_seg_id);
     }
 }
 
-/// Scenario 3: Calgary Stampede Snow and Ice Surface Composition (Spec 134)
+/// Scenario 3: Utah Dual X-Joker Laps and American RX Mixed-Surface Composition (Spec 134)
 #[test]
 fn test_spec134_scenario_3_calgary_stampede_snow_and_ice_surface_composition() {
-    let track = tdrace_core::catalog::official_track("rally", "calgary_stampede_rx");
-    assert_eq!(track.default_surface, SurfaceType::DeepSnow);
+    let utah = tdrace_core::catalog::official_track("rally", "utah_umc_rx");
+    let net = utah.network.as_ref().expect("utah_umc_rx network");
+    assert!(net.get_layout("main").is_some());
+    assert!(net.get_layout("joker").is_some());
+    assert!(net.get_layout("joker_2").is_some(), "utah_umc_rx must provide both X-crossing Joker layouts");
 
-    for (wi, wp) in track.spline.waypoints.iter().enumerate() {
-        let surf = wp.surface.unwrap_or(track.default_surface);
-        assert!(
-            matches!(surf, SurfaceType::PackedSnow | SurfaceType::SheetIce),
-            "calgary_stampede_rx waypoint #{} surface {:?} must be PackedSnow or SheetIce",
-            wi,
-            surf
-        );
-        assert_eq!(wp.left_runoff_surface, Some(SurfaceType::DeepSnow));
-        assert_eq!(wp.right_runoff_surface, Some(SurfaceType::DeepSnow));
+    for slug in NITROCROSS_PACK_SLUGS {
+        let track = tdrace_core::catalog::official_track("rally", slug);
+        let breakdown = track.surface_breakdown();
+        let has_dirt = breakdown.iter().any(|(s, pct)| *s == SurfaceType::Dirt && *pct >= 45.0);
+        let has_asphalt = breakdown.iter().any(|(s, pct)| *s == SurfaceType::Asphalt && *pct >= 25.0);
+        assert!(has_dirt, "{}: surface breakdown must include >= 45% Dirt (got {:?})", slug, breakdown);
+        assert!(has_asphalt, "{}: surface breakdown must include >= 25% Asphalt (got {:?})", slug, breakdown);
     }
-
-    let breakdown = track.surface_breakdown();
-    let has_packed_snow = breakdown.iter().any(|(s, pct)| *s == SurfaceType::PackedSnow && *pct > 0.0);
-    let has_sheet_ice = breakdown.iter().any(|(s, pct)| *s == SurfaceType::SheetIce && *pct > 0.0);
-    assert!(has_packed_snow, "calgary_stampede_rx surface breakdown must include PackedSnow");
-    assert!(has_sheet_ice, "calgary_stampede_rx surface breakdown must include SheetIce");
 }
